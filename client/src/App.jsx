@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
+  console.log("API URL:", import.meta.env.VITE_API_URL);
   const [count, setCount] = useState(0)
 
   return (
