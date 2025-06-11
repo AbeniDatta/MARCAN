@@ -38,10 +38,10 @@ const SignUp = () => {
           <div className="bg-white mx-auto max-w-5xl px-12 py-16 relative">
             {/* Hero Section */}
             <div className="mb-16">
-              <h1 className="text-[50px] lg:text-[64px] font-bold text-black font-inter leading-tight mb-6">
+              <h1 className="text-[50px] lg:text-[50px] font-bold text-black font-inter leading-tight mb-6">
                 Set up your profile
               </h1>
-              <p className="text-[25px] lg:text-[30px] text-[#4A3F3F] font-inria-sans font-normal">
+              <p className="text-[25px] lg:text-[25px] text-[#4A3F3F] font-inria-sans font-normal">
                 Set the tone with a strong company profile.
               </p>
             </div>
@@ -50,7 +50,7 @@ const SignUp = () => {
             <form className="space-y-12">
               {/* Company Name */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Company Name <span className="text-[#DB1233]">*</span>
                 </label>
                 <Input
@@ -61,7 +61,7 @@ const SignUp = () => {
 
               {/* Location */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Location <span className="text-[#DB1233]">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -111,7 +111,7 @@ const SignUp = () => {
 
               {/* Website */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Website
                 </label>
                 <Input
@@ -122,7 +122,7 @@ const SignUp = () => {
 
               {/* Description */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Description <span className="text-[#DB1233]">*</span>
                 </label>
                 <Textarea
@@ -133,7 +133,7 @@ const SignUp = () => {
 
               {/* Logo Upload */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Logo <span className="text-[#DB1233]">*</span>
                 </label>
                 <div className="w-[173px] h-[139px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors">
@@ -146,7 +146,7 @@ const SignUp = () => {
 
               {/* Contact Details */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Contact Details <span className="text-[#DB1233]">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -164,7 +164,7 @@ const SignUp = () => {
 
               {/* Password Fields */}
               <div className="space-y-4">
-                <label className="block text-2xl font-semibold text-black font-inter">
+                <label className="block text-xl font-semibold text-black font-inter">
                   Password <span className="text-[#DB1233]">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -184,7 +184,7 @@ const SignUp = () => {
 
             {/* Create Account Button */}
             <div className="flex justify-center pt-8 mt-12">
-              <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[28px] font-semibold rounded-[15px] py-6 h-auto font-inter min-w-[40px] px-[50px] pl-16">
+              <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[24px] font-semibold rounded-[15px] py-6 h-auto font-inter min-w-[40px] px-[50px] pl-16">
                 Create Account
               </Button>
             </div>
