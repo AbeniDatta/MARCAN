@@ -1,12 +1,143 @@
-# React + Vite
+# MARCAN - B2B Marketplace Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React + TypeScript + Tailwind CSS application for a Canadian B2B marketplace.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+
+- npm, yarn, or pnpm
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Installation
+
+1. **Clone or download the project files**
+2. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server:**
+
+   ```bash
+   npm run dev
+   ```
+
+4. **Open your browser to:**
+   ```
+   http://localhost:5173
+   ```
+
+## 📁 Project Structure
+
+```
+src/
+├── components/
+│   ├── ui/                 # Reusable UI components
+│   ├── Header.tsx          # Header with logo and auth
+│   ├── Hero.tsx            # Hero section with search
+│   ├── FeaturedCategories.tsx  # Categories grid
+│   ├── LatestListings.tsx  # Listings section
+│   ├── ProductCard.tsx     # Product card component
+│   └── FiltersSidebar.tsx  # Filters sidebar
+├── pages/
+│   ├── Index.tsx           # Main landing page
+│   └── NotFound.tsx        # 404 page
+├── lib/
+│   └── utils.ts            # Utility functions
+└── hooks/                  # Custom React hooks
+```
+
+## 🎨 Features
+
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Modern UI**: Clean, professional B2B marketplace design
+- **Component Library**: Pre-built UI components with Radix UI
+- **TypeScript**: Full type safety
+- **Tailwind CSS**: Utility-first CSS framework
+- **React Router**: Client-side routing
+
+## 🛠️ Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## 🎯 Key Components
+
+### Header
+
+- MARCAN logo with Canadian maple leaf
+- Log In and Sign Up buttons
+
+### Hero Section
+
+- Main headline and subtitle
+- Search bar with custom styling
+- Red search button
+
+### Featured Categories
+
+- 9 category cards in responsive grid
+- Hover effects and proper spacing
+
+### Latest Listings
+
+- Product grid layout (currently shows placeholder)
+- Individual product cards with badges
+- Action buttons for each listing
+
+## 🔧 Customization
+
+### Colors
+
+The design uses these primary colors:
+
+- Primary Red: `#DB1233`
+- Background: `#F9F9F9`
+- Text: Various shades of black and gray
+
+### Fonts
+
+- **Inter**: Primary font for headings and UI
+- **Inria Sans**: Secondary font for subtitles
+
+### Adding New Pages
+
+1. Create a new component in `src/pages/`
+2. Add the route in `src/App.tsx`
+
+## 📦 Dependencies
+
+### Core
+
+- React 18
+- TypeScript
+- Vite (build tool)
+- React Router
+
+### UI & Styling
+
+- Tailwind CSS
+- Radix UI components
+- Lucide React (icons)
+- Framer Motion (animations)
+
+### State & Data
+
+- TanStack Query
+- React Hook Form
+- Zod (validation)
+
+## 🌐 Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## 📄 License
+
+This project is private and proprietary.
