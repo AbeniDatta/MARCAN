@@ -10,6 +10,9 @@ server/dist/
 client/.env
 server/.env
 
+# Account keys
+server/serviceAccountKey.json
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
