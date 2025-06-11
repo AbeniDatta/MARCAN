@@ -28,10 +28,6 @@ const SignUp = () => {
               MARCAN
             </h1>
           </Link>
-
-          <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[20px] font-semibold rounded-lg px-[30px] py-2.5 h-auto font-inter">
-            Save
-          </Button>
         </div>
       </header>
 
@@ -46,7 +42,7 @@ const SignUp = () => {
                 Set up your profile
               </h1>
               <p className="text-[25px] lg:text-[30px] text-[#4A3F3F] font-inria-sans font-normal">
-                Provide details about your company and offerings.
+                Set the tone with a strong company profile.
               </p>
             </div>
 
@@ -84,24 +80,25 @@ const SignUp = () => {
                     placeholder="City"
                   />
                   <Select>
-                    <SelectTrigger className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white">
-                      <SelectValue placeholder="Province" />
+                    <SelectTrigger className="h-[55px] text-[15px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white">
+                      <SelectValue
+                        placeholder="Province"
+                        className="text-[14px] opacity-50"
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="on">Ontario</SelectItem>
-                      <SelectItem value="qc">Quebec</SelectItem>
-                      <SelectItem value="bc">British Columbia</SelectItem>
                       <SelectItem value="ab">Alberta</SelectItem>
+                      <SelectItem value="bc">British Columbia</SelectItem>
                       <SelectItem value="mb">Manitoba</SelectItem>
-                      <SelectItem value="sk">Saskatchewan</SelectItem>
-                      <SelectItem value="ns">Nova Scotia</SelectItem>
                       <SelectItem value="nb">New Brunswick</SelectItem>
-                      <SelectItem value="nl">
-                        Newfoundland and Labrador
-                      </SelectItem>
-                      <SelectItem value="pe">Prince Edward Island</SelectItem>
+                      <SelectItem value="nl">Newfoundland and Labrador</SelectItem>
+                      <SelectItem value="ns">Nova Scotia</SelectItem>  
                       <SelectItem value="nt">Northwest Territories</SelectItem>
                       <SelectItem value="nu">Nunavut</SelectItem>
+                      <SelectItem value="on">Ontario</SelectItem>
+                      <SelectItem value="pe">Prince Edward Island</SelectItem>
+                      <SelectItem value="qc">Quebec</SelectItem>
+                      <SelectItem value="sk">Saskatchewan</SelectItem>                  
                       <SelectItem value="yt">Yukon</SelectItem>
                     </SelectContent>
                   </Select>
@@ -129,7 +126,7 @@ const SignUp = () => {
                   Description <span className="text-[#DB1233]">*</span>
                 </label>
                 <Textarea
-                  className="min-h-[129px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
+                  className="min-h-[129px] text-[15px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
                   placeholder="Add a description about your company"
                 />
               </div>
@@ -160,7 +157,7 @@ const SignUp = () => {
                   <Input
                     type="email"
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
-                    placeholder="Email"
+                    placeholder="Email Address"
                   />
                 </div>
               </div>
@@ -183,14 +180,14 @@ const SignUp = () => {
                   />
                 </div>
               </div>
-
-              {/* Create Account Button */}
-              <div className="flex justify-center pt-8">
-                <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[32px] font-semibold rounded-[15px] px-16 py-6 h-auto font-inter min-w-[430px]">
-                  Create Account
-                </Button>
-              </div>
             </form>
+
+            {/* Create Account Button */}
+            <div className="flex justify-center pt-8 mt-12">
+              <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[28px] font-semibold rounded-[15px] py-6 h-auto font-inter min-w-[40px] px-[50px] pl-16">
+                Create Account
+              </Button>
+            </div>
 
             {/* Login Link */}
             <p className="text-center text-gray-600 mt-8 text-lg">
