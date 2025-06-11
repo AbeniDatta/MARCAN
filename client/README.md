@@ -58,36 +58,12 @@ src/
 - **Tailwind CSS**: Utility-first CSS framework
 - **React Router**: Client-side routing
 
-## 🛠️ Available Scripts
+## 🛠️ Some Scripts To Run
 
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
-
-## 🎯 Key Components
-
-### Header
-
-- MARCAN logo with Canadian maple leaf
-- Log In and Sign Up buttons
-
-### Hero Section
-
-- Main headline and subtitle
-- Search bar with custom styling
-- Red search button
-
-### Featured Categories
-
-- 9 category cards in responsive grid
-- Hover effects and proper spacing
-
-### Latest Listings
-
-- Product grid layout (currently shows placeholder)
-- Individual product cards with badges
-- Action buttons for each listing
 
 ## 🔧 Customization
 
