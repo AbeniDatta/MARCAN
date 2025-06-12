@@ -12,14 +12,16 @@ const AuthenticatedHeader = () => {
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         {/* Logo Section */}
         <div className="flex items-center gap-3">
-          <img
-            src={canadianMapleLeaf}
-            alt="Canadian maple leaf"
-            className="w-[40px] h-[40px]"
-          />
-          <h1 className="text-[36px] font-bold text-black font-inter">
-            MARCAN
-          </h1>
+          <Link to="/dashboard" className="flex items-center gap-3">
+            <img
+              src={canadianMapleLeaf}
+              alt="Canadian maple leaf"
+              className="w-[38px] h-[38px]"
+            />
+            <h1 className="text-[36px] font-bold text-black font-inter">
+              MARCAN
+            </h1>
+          </Link>
         </div>
 
         {/* Navigation */}
