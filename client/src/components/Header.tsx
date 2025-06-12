@@ -23,13 +23,13 @@ const Header = () => {
           <Link to="/login">
             <Button
               variant="ghost"
-              className="text-[20px] font-semibold text-black hover:bg-gray-100 font-inter px-5 py-2.5 h-auto"
+              className="text-[20px] font-semibold text-black hover:bg-gray-100 font-inter px-6 py-2.5 h-auto"
             >
               Log In
             </Button>
           </Link>
           <Link to="/signup">
-            <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[20px] font-semibold rounded-lg px-[30px] py-2.5 h-auto font-inter">
+            <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[20px] font-semibold rounded-lg px-[20px] py-2.5 h-auto font-inter">
               Sign Up
             </Button>
           </Link>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,11 +9,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Upload } from "lucide-react";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Form state
+  const [formData, setFormData] = useState({
+    companyName: "",
+    address1: "",
+    address2: "",
+    city: "",
+    province: "",
+    postalCode: "",
+    website: "",
+    description: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleProvinceChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      province: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Create user in Firebase
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password,
+      );
+
+      // If successful, navigate to dashboard
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
       {/* Header with logo - same format as homepage */}
@@ -46,16 +115,26 @@ const SignUp = () => {
               </p>
             </div>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Form */}
-            <form className="space-y-12">
+            <form className="space-y-12" onSubmit={handleSubmit}>
               {/* Company Name */}
               <div className="space-y-4">
                 <label className="block text-xl font-semibold text-black font-inter">
                   Company Name <span className="text-[#DB1233]">*</span>
                 </label>
                 <Input
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleInputChange}
                   className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                   placeholder=""
+                  required
                 />
               </div>
 
@@ -66,20 +145,34 @@ const SignUp = () => {
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Input
+                    name="address1"
+                    value={formData.address1}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Address line 1"
+                    required
                   />
                   <Input
+                    name="address2"
+                    value={formData.address2}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Address line 2 (optional)"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="City"
+                    required
                   />
-                  <Select>
+                  <Select
+                    onValueChange={handleProvinceChange}
+                    value={formData.province}
+                  >
                     <SelectTrigger className="h-[55px] text-[15px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white">
                       <SelectValue
                         placeholder="Province"
@@ -91,20 +184,26 @@ const SignUp = () => {
                       <SelectItem value="bc">British Columbia</SelectItem>
                       <SelectItem value="mb">Manitoba</SelectItem>
                       <SelectItem value="nb">New Brunswick</SelectItem>
-                      <SelectItem value="nl">Newfoundland and Labrador</SelectItem>
-                      <SelectItem value="ns">Nova Scotia</SelectItem>  
+                      <SelectItem value="nl">
+                        Newfoundland and Labrador
+                      </SelectItem>
+                      <SelectItem value="ns">Nova Scotia</SelectItem>
                       <SelectItem value="nt">Northwest Territories</SelectItem>
                       <SelectItem value="nu">Nunavut</SelectItem>
                       <SelectItem value="on">Ontario</SelectItem>
                       <SelectItem value="pe">Prince Edward Island</SelectItem>
                       <SelectItem value="qc">Quebec</SelectItem>
-                      <SelectItem value="sk">Saskatchewan</SelectItem>                  
+                      <SelectItem value="sk">Saskatchewan</SelectItem>
                       <SelectItem value="yt">Yukon</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
+                    name="postalCode"
+                    value={formData.postalCode}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Postal code"
+                    required
                   />
                 </div>
               </div>
@@ -115,6 +214,9 @@ const SignUp = () => {
                   Website
                 </label>
                 <Input
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
                   className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white max-w-2xl"
                   placeholder="Add a link to your website"
                 />
@@ -126,8 +228,12 @@ const SignUp = () => {
                   Description <span className="text-[#DB1233]">*</span>
                 </label>
                 <Textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
                   className="min-h-[129px] text-[15px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
                   placeholder="Add a description about your company"
+                  required
                 />
               </div>
 
@@ -151,13 +257,21 @@ const SignUp = () => {
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Input
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Phone"
+                    required
                   />
                   <Input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Email Address"
+                    required
                   />
                 </div>
               </div>
@@ -170,24 +284,36 @@ const SignUp = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Input
                     type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Password"
+                    required
                   />
                   <Input
                     type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                     placeholder="Re-enter Password"
+                    required
                   />
                 </div>
               </div>
-            </form>
 
-            {/* Create Account Button */}
-            <div className="flex justify-center pt-8 mt-12">
-              <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[24px] font-semibold rounded-[15px] py-6 h-auto font-inter min-w-[40px] px-[50px] pl-16">
-                Create Account
-              </Button>
-            </div>
+              {/* Create Account Button */}
+              <div className="flex justify-center pt-8 mt-12">
+                <Button
+                  type="submit"
+                  className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[24px] font-semibold rounded-[15px] py-6 h-auto font-inter min-w-[40px] px-[50px] pl-16"
+                  disabled={loading}
+                >
+                  {loading ? "Creating Account..." : "Create Account"}
+                </Button>
+              </div>
+            </form>
 
             {/* Login Link */}
             <p className="text-center text-gray-600 mt-8 text-lg">

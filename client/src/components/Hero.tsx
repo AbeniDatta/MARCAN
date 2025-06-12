@@ -21,10 +21,10 @@ const Hero = () => {
           <div className="flex-1 relative">
             <Input
               placeholder="Search products, businesses, services..."
-              className="h-[86px] !text-[20px] font-medium text-[#7A7777] border border-black rounded-lg rounded-r-none border-r-0 px-6 font-inter placeholder:text-[#7A7777] focus:outline-none focus:ring-0 focus:border-black"
+              className="h-[79px] !text-[20px] font-medium text-[#7A7777] border border-black rounded-lg rounded-r-none border-r-0 px-6 font-inter placeholder:text-[#7A7777] focus:outline-none focus:ring-0 focus:border-black"
             />
           </div>
-          <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white h-[86px] px-12 rounded-lg rounded-l-none text-3xl font-semibold font-inter">
+          <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white h-[80px] px-12 rounded-lg rounded-l-none text-3xl font-semibold font-inter">
             <Search className="h-8 w-8" />
             Search
           </Button>
