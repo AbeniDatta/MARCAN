@@ -18,14 +18,21 @@ const ProductCard = ({
   inStock = false,
   exportReady = false,
 }: ProductCardProps) => {
+  // Fallback image if no image is provided
+  const imageUrl = image || "https://via.placeholder.com/69x49?text=No+Image";
+
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 w-[242px] h-[225px] flex flex-col">
       {/* Product Image */}
       <div className="w-[69px] h-[49px] mb-4">
         <img
-          src={image}
+          src={imageUrl}
           alt={title}
           className="w-full h-full object-cover bg-gray-200 rounded"
+          onError={(e) => {
+            // Fallback to placeholder if image fails to load
+            e.currentTarget.src = "https://via.placeholder.com/69x49?text=No+Image";
+          }}
         />
       </div>
 

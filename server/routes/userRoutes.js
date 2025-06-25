@@ -1,7 +1,11 @@
 const express = require('express');
-const { createUser } = require('../controllers/userController.js');
+const { createUser, createOrUpdateProfile, getUserProfile, getUserProfileById } = require('../controllers/userController.js');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 router.post('/users', createUser);
+router.post('/profile', authenticateToken, createOrUpdateProfile);
+router.get('/profile/:firebaseUid', authenticateToken, getUserProfile);
+router.get('/profile/id/:userId', getUserProfileById);
 
 module.exports = router;

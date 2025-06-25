@@ -10,15 +10,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
-import { Upload } from "lucide-react";
+import { Upload, Eye, EyeOff } from "lucide-react";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
+import { profileApi } from "@/services/api";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -66,6 +69,7 @@ const SignUp = () => {
     }
 
     try {
+      console.log('Creating Firebase user with email:', formData.email);
       // Create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -73,9 +77,33 @@ const SignUp = () => {
         formData.password,
       );
 
+      console.log('Firebase user created successfully:', userCredential.user.uid);
+
+      // Save profile data to database
+      const profileData = {
+        firebaseUid: userCredential.user.uid,
+        email: formData.email,
+        name: formData.companyName, // Use company name as the display name
+        companyName: formData.companyName,
+        address1: formData.address1,
+        address2: formData.address2,
+        city: formData.city,
+        province: formData.province,
+        postalCode: formData.postalCode,
+        website: formData.website,
+        description: formData.description,
+        phone: formData.phone,
+        logoUrl: "", // Will be implemented later for logo upload
+      };
+
+      console.log('Saving profile data:', profileData);
+      await profileApi.createOrUpdateProfile(profileData);
+      console.log('Profile saved successfully');
+
       // If successful, navigate to dashboard
       navigate("/dashboard");
     } catch (err: any) {
+      console.error('Error during signup:', err);
       setError(err.message || "Failed to create account");
     } finally {
       setLoading(false);
@@ -282,24 +310,42 @@ const SignUp = () => {
                   Password <span className="text-[#DB1233]">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <Input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
-                    placeholder="Password"
-                    required
-                  />
-                  <Input
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
-                    placeholder="Re-enter Password"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 pr-12 font-inter bg-white"
+                      placeholder="Password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 pr-12 font-inter bg-white"
+                      placeholder="Re-enter Password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

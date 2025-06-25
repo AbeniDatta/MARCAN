@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
-import api from '@/api';
+import { listingApi, Listing } from '@/services/api';
+import ListingCard from './ListingCard';
 
 const LatestListings = () => {
-  const [listings, setListings] = useState<Array<{ id: number; title: string; description: string; price: number }>>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchListings = async () => {
       try {
-        const res = await api.get('/listings');
-        setListings(res.data);
+        const data = await listingApi.getAllListings();
+        console.log('Fetched listings:', data);
+        setListings(data);
       } catch (err) {
         console.error('Failed to fetch listings', err);
       } finally {
@@ -36,16 +38,9 @@ const LatestListings = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {listings.map((listing) => (
-            <div
-              key={listing.id}
-              className="bg-white p-6 rounded-lg border shadow hover:shadow-md transition"
-            >
-              <h3 className="text-xl font-semibold mb-2">{listing.title}</h3>
-              <p className="text-gray-700 mb-1">{listing.description}</p>
-              <p className="text-gray-500 text-sm">${listing.price}</p>
-            </div>
+            <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
       )}

@@ -1,20 +1,55 @@
-const prisma = require('../prismaClient');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const { getOrCreateUserFromFirebase } = require('./userController');
 
 // Create a new listing
 const createListing = async (req, res) => {
-  const { title, description, price, userId } = req.body;
   try {
+    console.log('Received request body:', req.body);
+    const { title, description, price, tags, categories, imageUrl } = req.body;
+
+    // Get the Firebase user from the request (set by auth middleware)
+    const firebaseUser = req.user;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Get or create the user in our database
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+    console.log('Found/created user:', user);
+
+    // Determine company name with fallbacks
+    let companyName = user.companyName;
+    if (!companyName) {
+      // Try to extract company name from email domain
+      const emailDomain = user.email.split('@')[1];
+      if (emailDomain) {
+        companyName = emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1);
+      } else {
+        companyName = user.name; // Fallback to user's name
+      }
+    }
+
+    const listingData = {
+      title,
+      description,
+      price: parseFloat(price),
+      companyName,
+      imageUrl,
+      tags,
+      categories,
+      userId: user.id // Use the actual user ID from our database
+    };
+
+    console.log('Creating listing with data:', listingData);
     const newListing = await prisma.listing.create({
-      data: {
-        title,
-        description,
-        price,
-        userId,
-      },
+      data: listingData
     });
-    res.status(201).json(newListing);
-  } catch (err) {
-    res.status(400).json({ error: 'Failed to create listing', details: err });
+    console.log('Successfully created listing:', newListing);
+    res.json(newListing);
+  } catch (error) {
+    console.error('Error creating listing:', error);
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -60,14 +95,59 @@ const getListingsByUserId = async (req, res) => {
   }
 };
 
+// Get listings by current user
+const getListingsByCurrentUser = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+    const listings = await prisma.listing.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(listings);
+  } catch (err) {
+    res.status(400).json({ error: 'Error fetching user listings' });
+  }
+};
+
+// Get listings by Firebase UID
+const getListingsByFirebaseUid = async (req, res) => {
+  const { firebaseUid } = req.params;
+  try {
+    // First find the user by Firebase UID
+    const user = await prisma.user.findFirst({
+      where: { firebaseUid: firebaseUid }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Then get all listings for that user
+    const listings = await prisma.listing.findMany({
+      where: { userId: user.id },
+      include: { user: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(listings);
+  } catch (err) {
+    console.error('Error fetching listings by Firebase UID:', err);
+    res.status(400).json({ error: 'Error fetching user listings' });
+  }
+};
+
 // Update a listing
 const updateListing = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price } = req.body;
+  const { title, description, price, tags, categories, imageUrl } = req.body;
   try {
     const updated = await prisma.listing.update({
       where: { id: parseInt(id) },
-      data: { title, description, price },
+      data: { title, description, price, tags, categories, imageUrl },
     });
     res.json(updated);
   } catch (err) {
@@ -91,6 +171,8 @@ module.exports = {
   getAllListings,
   getListingById,
   getListingsByUserId,
+  getListingsByCurrentUser,
+  getListingsByFirebaseUid,
   updateListing,
   deleteListing,
 };

@@ -5,6 +5,7 @@ import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
+import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,15 +73,22 @@ const Login = () => {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                className="h-12 text-base font-medium text-[#7A7777] border border-gray-300 rounded-lg px-4 font-inter"
+                className="h-12 text-base font-medium text-[#7A7777] border border-gray-300 rounded-lg px-4 pr-12 font-inter"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             <Button

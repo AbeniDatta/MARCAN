@@ -108,7 +108,7 @@ const Listings = () => {
       {/* Page Header */}
       <section className="bg-[#F9F9F9] px-4 lg:px-20 py-12">
         <div className="max-w-screen-xl mx-auto">
-          <h1 className="text-[50px] font-bold text-black font-inter leading-tight">
+          <h1 className="text-[40px] md:text-[50px] font-bold text-black font-inter leading-tight">
             All Listings
           </h1>
           <p className="text-[25px] text-[#4A3F3F] font-inria-sans font-normal mb-8">
@@ -122,15 +122,23 @@ const Listings = () => {
         <div className="max-w-screen-xl mx-auto flex gap-8">
           {/* Main Content - Listings Grid */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
               {sampleListings.map((listing) => (
                 <div
                   key={listing.id}
                   className="bg-white rounded-lg p-6 shadow-sm border border-gray-100"
                 >
                   {/* Product Image */}
-                  <div className="w-[69px] h-[49px] bg-gray-200 rounded mb-4 flex items-center justify-center">
-                    <span className="text-gray-500 text-xs">Image</span>
+                  <div className="w-[69px] h-[49px] bg-gray-200 rounded mb-4 flex items-center justify-center overflow-hidden">
+                    {listing.image ? (
+                      <img
+                        src={listing.image}
+                        alt={listing.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-500 text-xs">Image</span>
+                    )}
                   </div>
 
                   {/* Product Title */}
@@ -139,12 +147,12 @@ const Listings = () => {
                   </h3>
 
                   {/* Company Name */}
-                  <p className="text-[12px] font-medium text-black font-inter mb-3">
+                  <p className="text-[14px] font-medium text-black font-inter mb-3">
                     {listing.company}
                   </p>
 
                   {/* Description */}
-                  <p className="text-[8px] font-medium text-black font-inter mb-4 leading-tight">
+                  <p className="text-[12px] font-medium text-black font-inter mb-4 leading-tight">
                     {listing.description}
                   </p>
 
@@ -165,11 +173,10 @@ const Listings = () => {
                     {listing.buttons.map((button, index) => (
                       <button
                         key={index}
-                        className={`px-3 py-2 rounded text-[13px] font-medium text-white font-inter ${
-                          button.variant === "blue"
-                            ? "bg-[#2545AB] hover:bg-[#1e3a8a]"
-                            : "bg-[#DB1233] hover:bg-[#c10e2b]"
-                        } transition-colors`}
+                        className={`px-3 py-2 rounded text-[13px] font-medium text-white font-inter ${button.variant === "blue"
+                          ? "bg-[#2545AB] hover:bg-[#1e3a8a]"
+                          : "bg-[#DB1233] hover:bg-[#c10e2b]"
+                          } transition-colors`}
                       >
                         {button.text}
                       </button>

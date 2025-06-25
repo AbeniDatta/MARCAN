@@ -14,11 +14,23 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  listings  Listing[] @relation("UserListings")  // <--- Add this line
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  firebaseUid String    @unique
+  companyName String?
+  address1    String?
+  address2    String?
+  city        String?
+  province    String?
+  postalCode  String?
+  website     String?
+  description String?
+  phone       String?
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  listings    Listing[] @relation("UserListings")
 }
 
 model Listing {
@@ -26,6 +38,10 @@ model Listing {
   title       String
   description String
   price       Float
+  companyName String?
+  imageUrl    String?
+  tags        String[]
+  categories  String[]
   userId      Int
   user        User     @relation("UserListings", fields: [userId], references: [id])
   createdAt   DateTime @default(now())

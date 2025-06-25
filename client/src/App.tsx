@@ -13,6 +13,11 @@ import Dashboard from "./pages/Dashboard";
 import Listings from "./pages/Listings";
 import ForgotPassword from "./pages/ForgotPassword";
 import MyAccount from "./pages/MyAccount";
+import CreateListing from "./pages/CreateListing";
+import EditProfile from "./pages/EditProfile";
+import ChangeEmail from "./pages/ChangeEmail";
+import ChangePassword from "./pages/ChangePassword";
+import SupplierProfile from "./pages/SupplierProfile";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +81,39 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/create-listing"
+            element={
+              <ProtectedRoute>
+                <CreateListing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-profile"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/change-email"
+            element={
+              <ProtectedRoute>
+                <ChangeEmail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/supplier/:supplierId" element={<SupplierProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
