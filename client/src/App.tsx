@@ -14,6 +14,7 @@ import Listings from "./pages/Listings";
 import ForgotPassword from "./pages/ForgotPassword";
 import MyAccount from "./pages/MyAccount";
 import CreateListing from "./pages/CreateListing";
+import UpdateListing from "./pages/UpdateListing";
 import EditProfile from "./pages/EditProfile";
 import ChangeEmail from "./pages/ChangeEmail";
 import ChangePassword from "./pages/ChangePassword";
@@ -86,6 +87,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CreateListing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/update-listing/:listingId"
+            element={
+              <ProtectedRoute>
+                <UpdateListing />
               </ProtectedRoute>
             }
           />
