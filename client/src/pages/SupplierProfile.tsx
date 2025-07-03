@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { auth } from "@/firebase";
 import { profileApi, UserProfile } from "@/services/api";
 import { listingApi, Listing } from "@/services/api";
+import AuthenticatedHeader from "@/components/AuthenticatedHeader";
+import FlippableProductCard from "@/components/FlippableProductCard";
 
 const SupplierProfile = () => {
   const { supplierId } = useParams<{ supplierId: string }>();
@@ -64,7 +65,7 @@ const SupplierProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
-        <Header />
+        <AuthenticatedHeader />
         <div className="flex items-center justify-center min-h-screen">
           <p className="text-gray-500">Loading supplier information...</p>
         </div>
@@ -75,7 +76,7 @@ const SupplierProfile = () => {
   if (error || !profileData) {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
-        <Header />
+        <AuthenticatedHeader />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <p className="text-red-500 mb-4">{error || "Supplier not found"}</p>
@@ -93,7 +94,7 @@ const SupplierProfile = () => {
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
-      <Header />
+      <AuthenticatedHeader />
 
       <main className="px-4 lg:px-20 py-8 max-w-screen-xl mx-auto">
         <h1 className="text-[40px] md:text-[50px] font-bold text-black font-inter mb-8">
@@ -166,51 +167,8 @@ const SupplierProfile = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((listing) => (
-                <div
-                  key={listing.id}
-                  className="bg-white rounded-lg p-6 shadow-sm border border-gray-100"
-                >
-                  <div className="w-[69px] h-[49px] bg-gray-200 rounded mb-4 flex items-center justify-center overflow-hidden">
-                    {listing.imageUrl ? (
-                      <img
-                        src={listing.imageUrl}
-                        alt={listing.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-gray-500 text-s">Image</span>
-                    )}
-                  </div>
-                  <h3 className="text-[16px] font-semibold text-black font-inter mb-2">
-                    {listing.title}
-                  </h3>
-                  <p className="text-[14px] font-medium text-black font-inter mb-3">
-                    {listing.companyName}
-                  </p>
-                  <p className="text-[12px] font-medium text-black font-inter mb-4">
-                    {listing.description}
-                  </p>
-                  <div className="flex gap-2 mb-4">
-                    {listing.tags?.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-[#E0F2FF] rounded-[10px] text-[11px] font-medium text-black font-inter"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-[14px] font-semibold text-[#DB1233] mb-4">
-                    ${listing.price} CAD
-                  </p>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors">
-                      View Details
-                    </button>
-                    <button className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#DB1233] hover:bg-[#c10e2b] transition-colors">
-                      Contact Supplier
-                    </button>
-                  </div>
+                <div key={listing.id} className="h-[400px]">
+                  <FlippableProductCard listing={listing} />
                 </div>
               ))}
             </div>
@@ -218,57 +176,6 @@ const SupplierProfile = () => {
         </div>
       </main>
     </div>
-  );
-};
-
-const Header = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setIsAuthenticated(!!user);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  return (
-    <header className="bg-[#F9F9F9] px-4 lg:px-20 py-4">
-      <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-        <Link to="/" className="flex items-center gap-3">
-          <img
-            src={canadianMapleLeaf}
-            alt="Canadian maple leaf"
-            className="w-[38px] h-[38px]"
-          />
-          <h1 className="text-[32px] font-bold text-black font-inter">MARCAN</h1>
-        </Link>
-        <div className="flex gap-4">
-          {isAuthenticated ? (
-            <Link to="/my-account">
-              <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white">
-                My Account
-              </Button>
-            </Link>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button
-                  variant="outline"
-                  className="text-[#DB1233] border-[#DB1233] hover:bg-[#DB1233] hover:text-white"
-                >
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-[#DB1233] hover:bg-[#c10e2b] text-white">
-                  Sign Up
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
   );
 };
 

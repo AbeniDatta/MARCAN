@@ -61,6 +61,7 @@ export interface Listing {
     categories: string[];
     userId: number;
     createdAt: string;
+    isDraft?: boolean;
     user?: {
         id: number;
         name: string;
@@ -179,6 +180,39 @@ export const listingApi = {
             await api.delete(`/listings/${id}`);
         } catch (error) {
             console.error('Error deleting listing:', error);
+            throw error;
+        }
+    },
+
+    // Save listing as draft
+    saveDraft: async (data: ListingInput) => {
+        try {
+            const response = await api.post<Listing>('/listings/draft', { ...data, isDraft: true });
+            return response.data;
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            throw error;
+        }
+    },
+
+    // Get current user's drafts
+    getMyDrafts: async () => {
+        try {
+            const response = await api.get<Listing[]>('/listings/my-drafts');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching my drafts:', error);
+            throw error;
+        }
+    },
+
+    // Publish draft
+    publishDraft: async (id: number) => {
+        try {
+            const response = await api.put<Listing>(`/listings/${id}/publish`, { isDraft: false });
+            return response.data;
+        } catch (error) {
+            console.error('Error publishing draft:', error);
             throw error;
         }
     },

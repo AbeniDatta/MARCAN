@@ -82,9 +82,9 @@ const ChangeEmail = () => {
 
             setSuccess("Email updated successfully! Please check your new email for verification.");
 
-            // Navigate back to dashboard after a short delay
+            // Navigate back to my account after a short delay
             setTimeout(() => {
-                navigate("/dashboard");
+                navigate("/my-account");
             }, 3000);
         } catch (err: any) {
             console.error('Error updating email:', err);
@@ -114,7 +114,7 @@ const ChangeEmail = () => {
                         </h1>
                         <Button
                             variant="outline"
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate("/my-account")}
                             className="text-gray-600 hover:text-gray-900"
                         >
                             Cancel
@@ -217,7 +217,7 @@ const ChangeEmail = () => {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => navigate("/dashboard")}
+                                onClick={() => navigate("/my-account")}
                                 className="px-8 py-3 text-lg font-semibold"
                             >
                                 Cancel

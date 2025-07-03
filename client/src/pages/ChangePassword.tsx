@@ -70,9 +70,9 @@ const ChangePassword = () => {
 
             setSuccess("Password updated successfully!");
 
-            // Navigate back to dashboard after a short delay
+            // Navigate back to my account after a short delay
             setTimeout(() => {
-                navigate("/dashboard");
+                navigate("/my-account");
             }, 1500);
         } catch (err: any) {
             console.error('Error updating password:', err);
@@ -100,7 +100,7 @@ const ChangePassword = () => {
                         </h1>
                         <Button
                             variant="outline"
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate("/my-account")}
                             className="text-gray-600 hover:text-gray-900"
                         >
                             Cancel
@@ -203,7 +203,7 @@ const ChangePassword = () => {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => navigate("/dashboard")}
+                                onClick={() => navigate("/my-account")}
                                 className="px-8 py-3 text-lg font-semibold"
                             >
                                 Cancel

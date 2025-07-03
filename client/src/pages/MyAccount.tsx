@@ -5,6 +5,7 @@ import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import ProductCard from "@/components/ProductCard";
 import AddListingCard from "@/components/AddListingCard";
 import ListingCard from "@/components/ListingCard";
+import MyListingCard from "@/components/MyListingCard";
 import { Button } from "@/components/ui/button";
 import { listingApi, Listing } from "@/services/api";
 import { profileApi, UserProfile } from "@/services/api";
@@ -13,7 +14,9 @@ const MyAccount = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'account' | 'listings'>('account');
   const [listings, setListings] = useState<Listing[]>([]);
+  const [drafts, setDrafts] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [draftsLoading, setDraftsLoading] = useState(true);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
@@ -33,6 +36,7 @@ const MyAccount = () => {
 
   useEffect(() => {
     fetchMyListings();
+    fetchMyDrafts();
   }, []);
 
   const fetchProfileData = async (firebaseUid: string) => {
@@ -108,6 +112,18 @@ const MyAccount = () => {
     }
   };
 
+  const fetchMyDrafts = async () => {
+    try {
+      setDraftsLoading(true);
+      const data = await listingApi.getMyDrafts();
+      setDrafts(data);
+    } catch (err: any) {
+      console.error("Failed to fetch my drafts", err);
+    } finally {
+      setDraftsLoading(false);
+    }
+  };
+
   // Format address for display
   const formatAddress = () => {
     if (!profileData) return '';
@@ -167,7 +183,7 @@ const MyAccount = () => {
 
         {/* Account Tab Content */}
         {activeTab === 'account' ? (
-          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100 max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100 w-full">
             <h1 className="text-[36px] font-bold text-black font-inter mb-8">
               My Account
             </h1>
@@ -176,17 +192,17 @@ const MyAccount = () => {
               {/* Profile Section */}
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Profile Image Placeholder */}
-               <div className="w-[130px] h-[163px] bg-gray-100 rounded-none flex items-center justify-center overflow-hidden">
+                <div className="w-[130px] h-[163px] bg-gray-100 rounded-none flex items-center justify-center overflow-hidden">
                   {profileData?.logoUrl ? (
                     <img
                       src={profileData.logoUrl}
                       alt="Company Logo"
                       className="max-w-full max-h-full object-contain"
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }}/>
-                        ) : (
-                        <span className="text-gray-400 text-sm">No Logo</span>
-                      )}
-               </div>
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  ) : (
+                    <span className="text-gray-400 text-sm">No Logo</span>
+                  )}
+                </div>
 
                 {/* Profile Info */}
                 <div className="flex-1 space-y-4">
@@ -270,13 +286,6 @@ const MyAccount = () => {
                   <Button
                     variant="outline"
                     className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
-                    onClick={() => setActiveTab('listings')}
-                  >
-                    Manage Listings
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
                   >
                     Account Settings
                   </Button>
@@ -298,27 +307,62 @@ const MyAccount = () => {
         ) : (
           /* Listings Tab Content */
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-[28px] md:text-[32px] font-bold text-black font-inter">
-                My Listings:
-              </h2>
+            {/* Published Listings */}
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-[28px] md:text-[32px] font-bold text-black font-inter">
+                  Published Listings:
+                </h2>
+              </div>
+
+              {loading ? (
+                <p className="text-gray-500">Loading listings...</p>
+              ) : listings.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 mb-4">No published listings yet.</p>
+                  <AddListingCard />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {listings.map((listing) => (
+                    <div key={listing.id} className="h-[400px]">
+                      <MyListingCard listing={listing} onDelete={fetchMyListings} />
+                    </div>
+                  ))}
+                  <AddListingCard />
+                </div>
+              )}
             </div>
 
-            {loading ? (
-              <p className="text-gray-500">Loading listings...</p>
-            ) : listings.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">No listings yet.</p>
-                <AddListingCard />
+            {/* Drafts */}
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-[28px] md:text-[32px] font-bold text-black font-inter">
+                  Drafts:
+                </h2>
+                {drafts.length > 0 && (
+                  <span className="text-sm text-gray-500">
+                    {drafts.length}/10 drafts
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-                <AddListingCard />
-              </div>
-            )}
+
+              {draftsLoading ? (
+                <p className="text-gray-500">Loading drafts...</p>
+              ) : drafts.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">No drafts yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {drafts.map((draft) => (
+                    <div key={draft.id} className="h-[400px]">
+                      <MyListingCard listing={draft} onDelete={fetchMyDrafts} isDraft={true} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

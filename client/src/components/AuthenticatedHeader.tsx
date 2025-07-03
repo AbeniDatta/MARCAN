@@ -55,18 +55,9 @@ const AuthenticatedHeader = () => {
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
           <Link to="/listings">
             <span
-              className={`text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity ${isActive("/listings") ? "text-[#DB1233]" : "text-black"
-                }`}
+              className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black"
             >
               Listings
-            </span>
-          </Link>
-          <Link to="/dashboard">
-            <span
-              className={`text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity ${isActive("/dashboard") ? "text-[#DB1233]" : "text-black"
-                }`}
-            >
-              Dashboard
             </span>
           </Link>
           <Link to="/my-account">
@@ -118,32 +109,15 @@ const AuthenticatedHeader = () => {
             <div className="py-2">
               <Link
                 to="/listings"
-                className={`flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${isActive("/listings")
-                  ? "bg-red-50 text-[#DB1233] border-r-2 border-[#DB1233]"
-                  : ""
-                  }`}
+                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <span className="font-medium">Listings</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
 
               <Link
-                to="/dashboard"
-                className={`flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${isActive("/dashboard")
-                  ? "bg-red-50 text-[#DB1233] border-r-2 border-[#DB1233]"
-                  : ""
-                  }`}
-              >
-                <span className="font-medium">Dashboard</span>
-                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
-              </Link>
-
-              <Link
                 to="/my-account"
-                className={`flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors ${isActive("/my-account")
-                  ? "bg-red-50 text-[#DB1233] border-r-2 border-[#DB1233]"
-                  : ""
-                  }`}
+                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <span className="font-medium">My Account</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />

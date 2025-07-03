@@ -22,7 +22,7 @@ const Login = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard"); // Redirect to dashboard after successful login
+      navigate("/listings"); // Redirect to listings after successful login
     } catch (err: any) {
       setError(err.message || "Failed to login. Please try again.");
     } finally {

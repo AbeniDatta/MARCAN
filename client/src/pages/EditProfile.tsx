@@ -123,9 +123,9 @@ const EditProfile = () => {
             await profileApi.createOrUpdateProfile(profileData);
             setSuccess("Profile updated successfully!");
 
-            // Navigate back to dashboard after a short delay
+            // Navigate back to my account after a short delay
             setTimeout(() => {
-                navigate("/dashboard");
+                navigate("/my-account");
             }, 1500);
         } catch (err: any) {
             console.error('Error updating profile:', err);
@@ -158,7 +158,7 @@ const EditProfile = () => {
                         </h1>
                         <Button
                             variant="outline"
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate("/my-account")}
                             className="text-gray-600 hover:text-gray-900"
                         >
                             Cancel
@@ -307,7 +307,7 @@ const EditProfile = () => {
                                 disabled
                             />
                             <p className="text-sm text-gray-600">
-                                To change your email address, use the "Change Email" button in your dashboard.
+                                To change your email address, use the "Change Email" button in your account.
                             </p>
                         </div>
 
@@ -316,7 +316,7 @@ const EditProfile = () => {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => navigate("/dashboard")}
+                                onClick={() => navigate("/my-account")}
                                 className="px-8 py-3 text-lg font-semibold"
                             >
                                 Cancel

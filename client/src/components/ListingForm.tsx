@@ -26,6 +26,8 @@ interface ListingFormData {
 interface ListingFormProps {
     initialData?: Partial<Listing>;
     onSubmit: (listing: Listing) => void;
+    onSaveDraft?: (listing: Listing) => void;
+    draftCount?: number;
 }
 
 // Categories from the main search page
@@ -54,7 +56,7 @@ const PREDEFINED_TAGS = [
     "Made in Canada"
 ];
 
-const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit }) => {
+const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, draftCount = 0 }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
@@ -114,6 +116,49 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit }) => {
         } catch (err: any) {
             console.error('Error submitting listing:', err);
             setError(err.message || 'Failed to submit listing');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveDraft = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            const user = auth.currentUser;
+            if (!user) {
+                throw new Error('You must be logged in to save a draft');
+            }
+
+            // Check draft limit (only for new drafts, not editing existing ones)
+            if (!initialData?.id && draftCount >= 10) {
+                throw new Error('You have reached the maximum limit of 10 drafts. Please delete some drafts before creating new ones.');
+            }
+
+            const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
+
+            const listingData: ListingInput = {
+                ...formData,
+                price: parseFloat(formData.price) || 0,
+                imageUrl
+            };
+
+            console.log('Saving draft data:', listingData);
+
+            let result;
+            if (initialData?.id) {
+                result = await listingApi.updateListing(initialData.id, { ...listingData, isDraft: true });
+            } else {
+                result = await listingApi.saveDraft(listingData);
+            }
+
+            if (onSaveDraft) {
+                onSaveDraft(result);
+            }
+        } catch (err: any) {
+            console.error('Error saving draft:', err);
+            setError(err.message || 'Failed to save draft');
         } finally {
             setLoading(false);
         }
@@ -458,13 +503,34 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit }) => {
                 </div>
             </div>
 
-            <Button
-                type="submit"
-                className="w-full bg-[#DB1233] hover:bg-[#c10e2b] text-white"
-                disabled={loading}
-            >
-                {loading ? 'Saving...' : initialData?.id ? 'Update Listing' : 'Create Listing'}
-            </Button>
+            <div className="flex gap-4">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/my-account')}
+                    className="flex-1 border border-gray-300 hover:bg-gray-50"
+                >
+                    Cancel
+                </Button>
+                {!initialData?.id && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSaveDraft}
+                        disabled={loading}
+                        className="flex-1 border border-blue-300 text-blue-600 hover:bg-blue-50"
+                    >
+                        {loading ? 'Saving...' : 'Save Draft'}
+                    </Button>
+                )}
+                <Button
+                    type="submit"
+                    className="flex-1 bg-[#DB1233] hover:bg-[#c10e2b] text-white"
+                    disabled={loading}
+                >
+                    {loading ? 'Saving...' : initialData?.id ? 'Update Listing' : 'Create Listing'}
+                </Button>
+            </div>
         </form>
     );
 };

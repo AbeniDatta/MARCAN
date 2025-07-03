@@ -3,12 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { auth } from "@/firebase";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import ListingForm from "@/components/ListingForm";
-import { Listing } from "@/services/api";
+import { Listing, listingApi } from "@/services/api";
 
 const CreateListing = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [editListing, setEditListing] = useState<Listing | null>(null);
+    const [draftCount, setDraftCount] = useState(0);
 
     useEffect(() => {
         // Check if user is logged in
@@ -23,11 +24,28 @@ const CreateListing = () => {
             setEditListing(location.state.editListing);
         }
 
+        // Fetch draft count
+        fetchDraftCount();
+
         return () => unsubscribe();
     }, [navigate, location.state]);
 
     const handleSubmit = (listing: Listing) => {
         console.log('Listing saved:', listing);
+        navigate('/my-account');
+    };
+
+    const fetchDraftCount = async () => {
+        try {
+            const drafts = await listingApi.getMyDrafts();
+            setDraftCount(drafts.length);
+        } catch (err) {
+            console.error('Failed to fetch draft count:', err);
+        }
+    };
+
+    const handleSaveDraft = (listing: Listing) => {
+        console.log('Draft saved:', listing);
         navigate('/my-account');
     };
 
@@ -44,6 +62,8 @@ const CreateListing = () => {
                         <ListingForm
                             initialData={editListing || undefined}
                             onSubmit={handleSubmit}
+                            onSaveDraft={handleSaveDraft}
+                            draftCount={draftCount}
                         />
                     </div>
                 </div>

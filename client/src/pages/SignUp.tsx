@@ -94,7 +94,7 @@ const SignUp = () => {
       };
 
       await profileApi.createOrUpdateProfile(profileData);
-      navigate("/dashboard");
+      navigate("/listings");
     } catch (err: any) {
       console.error("Error during signup:", err);
       setError(err.message || "Failed to create account");
