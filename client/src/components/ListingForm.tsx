@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +77,20 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         categories: initialData?.categories || []
     });
 
+  const uploadImageToCloudinary = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+  const response = await axios.post(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    formData
+  );
+
+  return response.data.secure_url;
+};
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -95,7 +110,13 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             // For now, we'll use a placeholder image URL since we haven't implemented file upload to server
             // In a real implementation, you would upload the file to a service like Firebase Storage or AWS S3
-            const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
+            //const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
+            let imageUrl = initialData?.imageUrl || '';
+
+            if (formData.imageFile) {
+                imageUrl = await uploadImageToCloudinary(formData.imageFile);
+                console.log('Image uploaded to Cloudinary:', imageUrl)
+            }
 
             const listingData: ListingInput = {
                 ...formData,
@@ -136,7 +157,13 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 throw new Error('You have reached the maximum limit of 10 drafts. Please delete some drafts before creating new ones.');
             }
 
-            const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
+            //const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
+            let imageUrl = initialData?.imageUrl || '';
+
+            if (formData.imageFile) {
+                imageUrl = await uploadImageToCloudinary(formData.imageFile);
+            console.log('Image uploaded to Cloudinary:', imageUrl);
+            }   
 
             const listingData: ListingInput = {
                 ...formData,

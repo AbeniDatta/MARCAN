@@ -197,8 +197,8 @@ const MyAccount = () => {
                     <img
                       src={profileData.logoUrl}
                       alt="Company Logo"
-                      className="max-w-full max-h-full object-contain"
-                      style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                      className="max-w-full max-h-full object-cover"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <span className="text-gray-400 text-sm">No Logo</span>
                   )}

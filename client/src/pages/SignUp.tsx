@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,6 +58,21 @@ const SignUp = () => {
     }));
   };
 
+  const uploadImageToCloudinary = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+  const response = await axios.post(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    formData
+  );
+
+  return response.data.secure_url;
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -75,7 +91,11 @@ const SignUp = () => {
         formData.password
       );
 
-      const logoUrl = logoPreview || "";
+      //const logoUrl = logoPreview || "";
+      let logoUrl = "";
+      if (logoFile) {
+        logoUrl = await uploadImageToCloudinary(logoFile);
+      }
 
       const profileData = {
         firebaseUid: userCredential.user.uid,
