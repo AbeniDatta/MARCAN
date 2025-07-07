@@ -102,7 +102,17 @@ const SupplierProfile = () => {
         </h1>
 
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
-          <div className="w-[235px] h-[163px] bg-[#D9D9D9] rounded-none flex-shrink-0" />
+          {profileData.logoUrl ? (
+          <img
+          src={profileData.logoUrl}
+          alt={`${profileData.companyName} Logo`}
+          className="w-[235px] h-[163px] object-cover bg-white rounded-md border border-gray-200"
+          />
+          ) : (
+          <div className="w-[235px] h-[163px] bg-[#D9D9D9] rounded-md flex items-center justify-center text-gray-500 text-sm">
+          No Logo
+          </div>
+          )}
           <div className="flex-1 space-y-4">
             <h2 className="text-[22px] md:text-[26px] font-bold text-black font-inter">
               {profileData.companyName || "Company Name Not Set"}
