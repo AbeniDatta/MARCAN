@@ -177,10 +177,10 @@ const SupplierProfile = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((listing) => (
-                <div key={listing.id} className="h-[400px]">
-                  <FlippableProductCard listing={listing} />
-                </div>
-              ))}
+               <div key={listing.id} className="h-[400px]">
+               <FlippableProductCard listing={listing} readonly />
+               </div>
+             ))}
             </div>
           )}
         </div>

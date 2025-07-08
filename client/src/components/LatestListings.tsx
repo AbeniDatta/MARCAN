@@ -2,8 +2,20 @@ import { useEffect, useState } from 'react';
 import { listingApi, Listing } from '@/services/api';
 import ListingCard from './ListingCard';
 
-const LatestListings = () => {
+interface Filters {
+  categories: string[];
+  tags: string[];
+  location: string;
+  capacity: string[]; // Optional if you don't use it in this component
+}
+
+interface LatestListingsProps {
+  filters: Filters;
+}
+
+const LatestListings = ({ filters }: LatestListingsProps) => {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -12,6 +24,7 @@ const LatestListings = () => {
         const data = await listingApi.getAllListings();
         console.log('Fetched listings:', data);
         setListings(data);
+        setFilteredListings(data);
       } catch (err) {
         console.error('Failed to fetch listings', err);
       } finally {
@@ -21,6 +34,29 @@ const LatestListings = () => {
 
     fetchListings();
   }, []);
+
+
+  useEffect(() => {
+    const filtered = listings.filter((listing) => {
+      const matchCategory =
+        filters.categories.length === 0 ||
+        filters.categories.some((cat) => listing.categories.includes(cat));
+
+      const matchLocation =
+        !filters.location ||
+        listing.companyName
+          ?.toLowerCase()
+          .includes(filters.location.toLowerCase());
+
+      const matchTags =
+        filters.tags.length === 0 ||
+        filters.tags.every((tag) => listing.tags.includes(tag));
+
+      return matchCategory && matchLocation && matchTags;
+    });
+
+    setFilteredListings(filtered);
+  }, [filters, listings]);
 
   return (
     <div>
@@ -39,7 +75,7 @@ const LatestListings = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {listings.map((listing) => (
+          {filteredListings.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>

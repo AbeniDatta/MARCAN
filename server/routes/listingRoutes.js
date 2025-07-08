@@ -6,6 +6,7 @@ const {
   getListingsByUserId,
   getListingsByCurrentUser,
   getListingsByFirebaseUid,
+  getFilterOptions,
   updateListing,
   deleteListing,
 } = require('../controllers/listingController');
@@ -23,6 +24,7 @@ router.delete('/:id', authenticateToken, deleteListing);
 // Public routes
 router.get('/', getAllListings);
 router.get('/firebase-uid/:firebaseUid', getListingsByFirebaseUid);
+router.get('/filters', getFilterOptions);
 router.get('/:id', getListingById);
 
 module.exports = router;

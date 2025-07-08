@@ -1,125 +1,109 @@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { listingApi } from "@/services/api";
 
-const FiltersSidebar = () => {
+interface FiltersSidebarProps {
+  filters: {
+    categories: string[];
+    tags: string[];
+    location: string;
+    capacity: string[];
+  };
+  onFilterChange: (updated: FiltersSidebarProps["filters"]) => void;
+}
+
+const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [tagOptions, setTagOptions] = useState<string[]>([]);
 
-  const categoryOptions = [
-    "Metal Fabrication",
-    "Tools & Die",
-    "Machining",
-    "Welding",
-    "CNC Services",
-    "Sheet Metal",
-    "Custom Manufacturing",
-    "Assembly",
-    "Quality Control",
-    "Engineering Services"
-  ];
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const { categories, tags } = await listingApi.getFilterOptions();
+        setCategoryOptions(categories);
+        setTagOptions(tags);
+      } catch (error) {
+        console.error("Failed to fetch filter options", error);
+      }
+    };
 
-  const tagOptions = ["Export-ready", "Eco-certified"];
+    fetchFilterOptions();
+  }, []);
 
-  const capacityOptions = ["Available now", "Limited"];
+  // const categoryOptions = [
+  //   "Metal Fabrication", "Tools & Die", "Machining", "Welding",
+  //   "CNC Services", "Sheet Metal", "Custom Manufacturing",
+  //   "Assembly", "Quality Control", "Engineering Services"
+  // ];
 
-  // Get visible categories based on expanded state
-  const visibleCategories = isExpanded
-    ? categoryOptions
-    : categoryOptions.slice(0, 3);
+  // const tagOptions = ["Export-ready", "Eco-certified"];
+
+  const handleCheckboxChange = (type: "categories" | "tags", value: string) => {
+    const current = filters[type];
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    onFilterChange({ ...filters, [type]: updated });
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFilterChange({ ...filters, location: e.target.value });
+  };
+
+  const visibleCategories = isExpanded ? categoryOptions : categoryOptions.slice(0, 3);
 
   return (
-    <aside className="bg-white border border-[#DB1233] p-6 w-48 h-fit rounded-lg">
+    <aside className="bg-white border border-[#DB1233] p-6 w-full md:w-48 rounded-lg">
       <h3 className="text-3xl font-bold text-black font-inter mb-8">Filters</h3>
 
-      {/* Category Section */}
       <div className="mb-8">
-        <h4 className="text-xl font-semibold text-black font-inter mb-4">
-          Category
-        </h4>
+        <h4 className="text-xl font-semibold text-black mb-4">Category</h4>
         <div className="space-y-3">
+          {/* {categoryOptions.map((option, index) => ( */}
           {visibleCategories.map((option, index) => (
             <div key={index} className="flex items-center space-x-3">
               <Checkbox
+                checked={filters.categories.includes(option)}
+                onCheckedChange={() => handleCheckboxChange("categories", option)}
                 id={`category-${index}`}
-                className="w-[18px] h-[18px] border border-[#CBCACA] rounded-sm"
               />
-              <label
-                htmlFor={`category-${index}`}
-                className="text-base text-black font-inter cursor-pointer"
-              >
+              <label htmlFor={`category-${index}`} className="text-base cursor-pointer">
                 {option}
               </label>
             </div>
           ))}
-
-          {/* Expand/Collapse Button */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-[#DB1233] font-semibold text-center text-sm hover:underline focus:outline-none"
+            className="text-[#DB1233] text-sm hover:underline"
           >
             {isExpanded ? "Show Less" : "Show More"}
           </button>
         </div>
       </div>
 
-      {/* Location Section */}
       <div className="mb-8">
-        <h4 className="text-xl font-semibold text-black font-inter mb-4">
-          Location
-        </h4>
+        <h4 className="text-xl font-semibold text-black mb-4">Location</h4>
         <Input
-          className="w-36 h-10 border border-[#CBCACA] rounded text-sm"
+          className="w-full"
+          value={filters.location}
+          onChange={handleLocationChange}
           placeholder="Enter location"
         />
       </div>
 
-      {/* Tags Section */}
       <div className="mb-8">
-        <h4 className="text-xl font-semibold text-black font-inter mb-4">
-          Tags
-        </h4>
+        <h4 className="text-xl font-semibold text-black mb-4">Tags</h4>
         <div className="space-y-3">
           {tagOptions.map((option, index) => (
             <div key={index} className="flex items-center space-x-3">
               <Checkbox
+                checked={filters.tags.includes(option)}
+                onCheckedChange={() => handleCheckboxChange("tags", option)}
                 id={`tag-${index}`}
-                className="w-[18px] h-[18px] border border-[#CBCACA] rounded-sm"
               />
-              <label
-                htmlFor={`tag-${index}`}
-                className="text-base text-black font-inter cursor-pointer"
-              >
-                {option}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Capacity Section */}
-      <div>
-        <h4 className="text-xl font-semibold text-black font-inter mb-4">
-          Capacity
-        </h4>
-        <div className="space-y-3">
-          {capacityOptions.map((option, index) => (
-            <div key={index} className="flex items-center space-x-3">
-              <Checkbox
-                id={`capacity-${index}`}
-                className="w-[18px] h-[18px] border border-[#CBCACA] rounded-sm"
-              />
-              <label
-                htmlFor={`capacity-${index}`}
-                className="text-base text-black font-inter cursor-pointer"
-              >
+              <label htmlFor={`tag-${index}`} className="text-base cursor-pointer">
                 {option}
               </label>
             </div>

@@ -11,6 +11,13 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [filters, setFilters] = useState({
+    categories: [] as string[],
+    tags: [] as string[],
+    location: "",
+    capacity: [] as string[],
+  });
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsAuthenticated(!!user);
@@ -37,15 +44,17 @@ const Index = () => {
 
       {/* Latest Listings with Sidebar */}
       <section className="bg-[#F9F9F9] px-4 lg:px-20 pb-16">
-        <div className="max-w-screen-xl mx-auto flex gap-8">
+        <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row gap-8">
+          {/* Filters Sidebar */}
+          <div className="w-full lg:w-[220px]">
+            <FiltersSidebar
+              filters={filters}
+              onFilterChange={(updated) => setFilters(updated)}
+            />
+          </div>
           {/* Main Content */}
           <div className="flex-1">
-            <LatestListings />
-          </div>
-
-          {/* Filters Sidebar */}
-          <div className="flex-shrink-0 mt-16">
-            <FiltersSidebar />
+            <LatestListings filters={filters} />
           </div>
         </div>
       </section>

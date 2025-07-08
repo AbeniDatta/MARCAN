@@ -6,9 +6,10 @@ import { auth } from '@/firebase';
 
 interface FlippableProductCardProps {
   listing: Listing;
+  readonly?: boolean;
 }
 
-const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing }) => {
+const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly }) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const [supplierData, setSupplierData] = useState<UserProfile | null>(null);
@@ -130,7 +131,8 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing }) 
             </p>
 
             <div className="flex gap-2 mt-auto flex-shrink-0">
-              {isOwner ? (
+            {!readonly ? (
+              isOwner ? (
                 <>
                   <button
                     onClick={() => navigate(`/update-listing/${listing.id}`)}
@@ -160,8 +162,9 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing }) 
                     Contact Supplier
                   </button>
                 </>
-              )}
-            </div>
+              )
+            ) : null}
+          </div>
           </div>
         </div>
 

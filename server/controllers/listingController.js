@@ -166,6 +166,31 @@ const deleteListing = async (req, res) => {
   }
 };
 
+const getFilterOptions = async (req, res) => {
+  try {
+    const listings = await prisma.listing.findMany({
+      select: { categories: true, tags: true }
+    });
+
+    // Flatten arrays and dedupe
+    const categorySet = new Set();
+    const tagSet = new Set();
+
+    listings.forEach(listing => {
+      (listing.categories || []).forEach(cat => categorySet.add(cat));
+      (listing.tags || []).forEach(tag => tagSet.add(tag));
+    });
+
+    const categories = Array.from(categorySet);
+    const tags = Array.from(tagSet);
+
+    res.json({ categories, tags });
+  } catch (err) {
+    console.error("Error in getFilterOptions:", err);
+    res.status(400).json({ error: "Error fetching listing" });
+  }
+};
+
 module.exports = {
   createListing,
   getAllListings,
@@ -173,6 +198,7 @@ module.exports = {
   getListingsByUserId,
   getListingsByCurrentUser,
   getListingsByFirebaseUid,
+  getFilterOptions,
   updateListing,
   deleteListing,
 };

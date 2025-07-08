@@ -59,6 +59,8 @@ export interface Listing {
     imageUrl?: string;
     tags: string[];
     categories: string[];
+    city?: string;
+    capacity?: string;
     userId: number;
     createdAt: string;
     isDraft?: boolean;
@@ -159,6 +161,16 @@ export const listingApi = {
             return response.data;
         } catch (error) {
             console.error('Error fetching my listings:', error);
+            throw error;
+        }
+    },
+
+    getFilterOptions: async () => {
+        try {
+            const response = await api.get<{ categories: string[]; tags: string[] }>('/listings/filters');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching filter options:', error);
             throw error;
         }
     },
