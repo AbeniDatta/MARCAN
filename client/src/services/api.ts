@@ -121,6 +121,20 @@ export const listingApi = {
         }
     },
 
+    // Search listings
+    searchListings: async (query: string) => {
+        try {
+            const url = `/listings/search?query=${encodeURIComponent(query)}`;
+            console.log('Making search request to:', url);
+            const response = await api.get<Listing[]>(url);
+            console.log('Search response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error searching listings:', error);
+            throw error;
+        }
+    },
+
     // Get a specific listing
     getListingById: async (id: number) => {
         try {

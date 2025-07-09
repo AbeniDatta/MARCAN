@@ -9,8 +9,11 @@ import {
   Lightbulb,
   Car,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const FeaturedCategories = () => {
+  const navigate = useNavigate();
+
   const categories = [
     { name: "Metal Fabrication", icon: Wrench },
     { name: "Tool & Die", icon: Hammer },
@@ -22,6 +25,10 @@ const FeaturedCategories = () => {
     { name: "Lighting & Fixtures", icon: Lightbulb },
     { name: "Automotive Services", icon: Car },
   ];
+
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/listings?category=${encodeURIComponent(categoryName)}`);
+  };
 
   return (
     <section className="bg-[#F9F9F9] px-4 lg:px-20 py-16">
@@ -39,6 +46,7 @@ const FeaturedCategories = () => {
                 <div
                   key={index}
                   className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity -mr-1"
+                  onClick={() => handleCategoryClick(category.name)}
                 >
                   <div className="w-20 h-20 mb-4 flex items-center justify-center">
                     <IconComponent
@@ -62,6 +70,7 @@ const FeaturedCategories = () => {
                 <div
                   key={index + 5}
                   className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity -mr-1"
+                  onClick={() => handleCategoryClick(category.name)}
                 >
                   <div className="w-20 h-20 mb-4 flex items-center justify-center">
                     <IconComponent

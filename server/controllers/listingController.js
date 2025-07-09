@@ -60,8 +60,11 @@ const getAllListings = async (req, res) => {
       include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
+    console.log('All listings count:', listings.length);
+    console.log('Sample listing:', listings[0]);
     res.json(listings);
   } catch (err) {
+    console.error('Error fetching all listings:', err);
     res.status(500).json({ error: 'Failed to fetch listings' });
   }
 };
@@ -191,6 +194,132 @@ const getFilterOptions = async (req, res) => {
   }
 };
 
+// Search listings by keyword
+const searchListings = async (req, res) => {
+  try {
+    const { query } = req.query;
+    console.log('Search query received:', query);
+
+    if (!query || query.trim() === '') {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchTerm = query.trim().toLowerCase();
+    console.log('Search term:', searchTerm);
+
+    // First, let's get all listings to debug
+    const allListings = await prisma.listing.findMany({
+      include: { user: true },
+    });
+    console.log('All listings for debugging:', allListings.map(l => ({
+      id: l.id,
+      title: l.title,
+      description: l.description,
+      categories: l.categories,
+      tags: l.tags
+    })));
+
+    // Try multiple search strategies
+    let listings = [];
+
+    // Strategy 1: Direct contains search
+    listings = await prisma.listing.findMany({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          },
+          {
+            description: {
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          },
+          {
+            companyName: {
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          }
+        ]
+      },
+      include: { user: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Strategy 2: Search in arrays (categories and tags)
+    if (listings.length === 0) {
+      const arrayListings = await prisma.listing.findMany({
+        where: {
+          OR: [
+            {
+              categories: {
+                hasSome: [searchTerm]
+              }
+            },
+            {
+              tags: {
+                hasSome: [searchTerm]
+              }
+            }
+          ]
+        },
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // Combine results and remove duplicates
+      const allListings = [...listings, ...arrayListings];
+      const uniqueListings = allListings.filter((listing, index, self) =>
+        index === self.findIndex(l => l.id === listing.id)
+      );
+      listings = uniqueListings;
+    }
+
+    // Strategy 3: If still no results, try partial word matching
+    if (listings.length === 0) {
+      const partialListings = await prisma.listing.findMany({
+        where: {
+          OR: [
+            {
+              title: {
+                contains: searchTerm.split(' ')[0], // Use first word
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: searchTerm.split(' ')[0],
+                mode: 'insensitive'
+              }
+            }
+          ]
+        },
+        include: { user: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      listings = partialListings;
+    }
+
+    console.log('Search results:', listings.length, 'listings found');
+    console.log('Search results details:', listings.map(l => ({
+      id: l.id,
+      title: l.title,
+      description: l.description,
+      categories: l.categories,
+      tags: l.tags
+    })));
+
+    res.json(listings);
+  } catch (err) {
+    console.error("Error in searchListings:", err);
+    res.status(500).json({ error: "Error searching listings" });
+  }
+};
+
 module.exports = {
   createListing,
   getAllListings,
@@ -199,6 +328,7 @@ module.exports = {
   getListingsByCurrentUser,
   getListingsByFirebaseUid,
   getFilterOptions,
+  searchListings,
   updateListing,
   deleteListing,
 };

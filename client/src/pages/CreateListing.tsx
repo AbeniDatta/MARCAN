@@ -4,6 +4,7 @@ import { auth } from "@/firebase";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import ListingForm from "@/components/ListingForm";
 import { Listing, listingApi } from "@/services/api";
+import { Button } from "@/components/ui/button";
 
 const CreateListing = () => {
     const navigate = useNavigate();
@@ -59,6 +60,16 @@ const CreateListing = () => {
                         {editListing ? 'Edit Listing' : 'Create New Listing'}
                     </h1>
                     <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-8">
+                            <div></div>
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate("/my-account")}
+                                className="text-gray-600 hover:text-gray-900"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
                         <ListingForm
                             initialData={editListing || undefined}
                             onSubmit={handleSubmit}

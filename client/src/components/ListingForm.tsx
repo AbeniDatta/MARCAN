@@ -77,20 +77,20 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         categories: initialData?.categories || []
     });
 
-  const uploadImageToCloudinary = async (file: File): Promise<string> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    const uploadImageToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
-  const response = await axios.post(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    formData
-  );
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            formData
+        );
 
-  return response.data.secure_url;
-};
+        return response.data.secure_url;
+    };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -162,8 +162,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             if (formData.imageFile) {
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
-            console.log('Image uploaded to Cloudinary:', imageUrl);
-            }   
+                console.log('Image uploaded to Cloudinary:', imageUrl);
+            }
 
             const listingData: ListingInput = {
                 ...formData,
@@ -531,14 +531,6 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             </div>
 
             <div className="flex gap-4">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/my-account')}
-                    className="flex-1 border border-gray-300 hover:bg-gray-50"
-                >
-                    Cancel
-                </Button>
                 {!initialData?.id && (
                     <Button
                         type="button"

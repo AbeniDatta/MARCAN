@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import Header from "@/components/Header";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
@@ -8,6 +9,7 @@ import LatestListings from "@/components/LatestListings";
 import FiltersSidebar from "@/components/FiltersSidebar";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +39,7 @@ const Index = () => {
       {isAuthenticated ? <AuthenticatedHeader /> : <Header />}
 
       {/* Hero Section */}
-      <Hero />
+      <Hero onSearch={(query) => navigate(`/listings?search=${encodeURIComponent(query)}`)} />
 
       {/* Featured Categories */}
       <FeaturedCategories />

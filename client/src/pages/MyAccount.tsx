@@ -283,12 +283,6 @@ const MyAccount = () => {
                   >
                     Create New Listing
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
-                  >
-                    Account Settings
-                  </Button>
                 </div>
               </div>
 
