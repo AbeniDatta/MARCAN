@@ -22,6 +22,7 @@ interface ListingFormData {
     imageFile: File | null;
     tags: string[];
     categories: string[];
+    city: string;
 }
 
 interface ListingFormProps {
@@ -74,7 +75,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         price: initialData?.price?.toString() || '',
         imageFile: null,
         tags: initialData?.tags || [],
-        categories: initialData?.categories || []
+        categories: initialData?.categories || [],
+        city: initialData?.city || ''
     });
 
     const uploadImageToCloudinary = async (file: File): Promise<string> => {
@@ -121,7 +123,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             const listingData: ListingInput = {
                 ...formData,
                 price: parseFloat(formData.price) || 0,
-                imageUrl
+                imageUrl,
+                city: formData.city
             };
 
             console.log('Submitting listing data:', listingData);
@@ -168,7 +171,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             const listingData: ListingInput = {
                 ...formData,
                 price: parseFloat(formData.price) || 0,
-                imageUrl
+                imageUrl,
+                city: formData.city
             };
 
             console.log('Saving draft data:', listingData);
@@ -406,6 +410,18 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                     placeholder="Enter price in CAD"
                     required
                     className="w-full"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-lg font-semibold">City</label>
+                <Input
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder="Enter the city where this product/service is available"
+                required
+                className="w-full"
                 />
             </div>
 

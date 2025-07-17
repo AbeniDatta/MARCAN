@@ -6,7 +6,7 @@ const { getOrCreateUserFromFirebase } = require('./userController');
 const createListing = async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { title, description, price, tags, categories, imageUrl } = req.body;
+    const { title, description, price, tags, categories, imageUrl, city} = req.body;
 
     // Get the Firebase user from the request (set by auth middleware)
     const firebaseUser = req.user;
@@ -38,6 +38,7 @@ const createListing = async (req, res) => {
       imageUrl,
       tags,
       categories,
+      city,
       userId: user.id // Use the actual user ID from our database
     };
 
@@ -63,7 +64,7 @@ const getAllListings = async (req, res) => {
     console.log('All listings count:', listings.length);
     console.log('Sample listing:', listings[0]);
     res.json(listings);
-  } catch (err) {
+  } catch (err) {                           
     console.error('Error fetching all listings:', err);
     res.status(500).json({ error: 'Failed to fetch listings' });
   }
@@ -146,11 +147,11 @@ const getListingsByFirebaseUid = async (req, res) => {
 // Update a listing
 const updateListing = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price, tags, categories, imageUrl } = req.body;
+  const { title, description, price, tags, categories, imageUrl, city } = req.body;
   try {
     const updated = await prisma.listing.update({
       where: { id: parseInt(id) },
-      data: { title, description, price, tags, categories, imageUrl },
+      data: { title, description, price, tags, categories, imageUrl, city },
     });
     res.json(updated);
   } catch (err) {

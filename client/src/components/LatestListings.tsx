@@ -11,7 +11,7 @@ interface Filters {
 
 interface LatestListingsProps {
   filters: Filters;
-}
+}         
 
 const LatestListings = ({ filters }: LatestListingsProps) => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -44,7 +44,7 @@ const LatestListings = ({ filters }: LatestListingsProps) => {
 
       const matchLocation =
         !filters.location ||
-        listing.companyName
+        listing.city
           ?.toLowerCase()
           .includes(filters.location.toLowerCase());
 

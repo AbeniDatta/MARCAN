@@ -42,6 +42,7 @@ model Listing {
   imageUrl    String?
   tags        String[]
   categories  String[]
+  city        String?
   userId      Int
   user        User     @relation("UserListings", fields: [userId], references: [id])
   createdAt   DateTime @default(now())
