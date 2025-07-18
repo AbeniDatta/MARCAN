@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import { profileApi, UserProfile } from "@/services/api";
+import { Upload } from "lucide-react";
 
 const EditProfile = () => {
     const navigate = useNavigate();
@@ -20,6 +22,8 @@ const EditProfile = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -65,6 +69,7 @@ const EditProfile = () => {
                 description: data.description || "",
                 phone: data.phone || "",
             });
+            setLogoPreview(data.logoUrl || null);
         } catch (err: any) {
             console.error("Failed to fetch profile data", err);
             setError("Failed to load profile data");
@@ -90,6 +95,20 @@ const EditProfile = () => {
         }));
     };
 
+    const uploadImageToCloudinary = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            formData
+        );
+        return response.data.secure_url;
+    };
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -101,6 +120,11 @@ const EditProfile = () => {
             if (!user) {
                 setError("User not authenticated");
                 return;
+            }
+
+            let logoUrl = logoPreview || "";
+            if (logoFile) {
+                logoUrl = await uploadImageToCloudinary(logoFile);
             }
 
             // Update profile data
@@ -117,7 +141,7 @@ const EditProfile = () => {
                 website: formData.website,
                 description: formData.description,
                 phone: formData.phone,
-                logoUrl: "", // Will be implemented later for logo upload
+                logoUrl, // Will be implemented later for logo upload
             };
 
             await profileApi.createOrUpdateProfile(profileData);
@@ -190,6 +214,37 @@ const EditProfile = () => {
                                 className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                                 placeholder="Enter company name"
                                 required
+                            />
+                        </div>
+
+                         {/* Logo */}
+                        <div className="space-y-4">
+                            <label className="block text-xl font-semibold text-black font-inter">Company Logo</label>
+                            <div
+                                className="w-[173px] h-[139px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors overflow-hidden"
+                                onClick={() => document.getElementById("logoInput")?.click()}
+                            >
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-contain" />
+                                ) : (
+                                    <>
+                                        <Upload className="w-12 h-12 text-[#DB1233] mb-2" />
+                                        <span className="text-[#DB1233] font-semibold">Upload image</span>
+                                    </>
+                                )}
+                            </div>
+                            <input
+                                id="logoInput"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setLogoFile(file);
+                                        setLogoPreview(URL.createObjectURL(file));
+                                    }
+                                }}
                             />
                         </div>
 
