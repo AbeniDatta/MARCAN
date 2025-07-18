@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 const userRoutes = require('./routes/userRoutes');
 const listingRoutes = require('./routes/listingRoutes');
@@ -10,7 +11,9 @@ const PORT = process.env.PORT || 5050;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite's default port
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://marcan-marketplace.onrender.com', 'https://your-custom-domain.com']
+    : 'http://localhost:5173', // Vite's default port
   credentials: true
 }));
 app.use(express.json());
@@ -22,10 +25,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/chat', chatRoutes);
+
+// Serve static files from the React app
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -35,7 +48,11 @@ app.use((err, req, res, next) => {
 
 // Sample route
 app.get("/", (req, res) => {
-  res.send("MARCAN API is running.");
+  if (process.env.NODE_ENV === 'production') {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  } else {
+    res.send("MARCAN API is running.");
+  }
 });
 
 // Start server

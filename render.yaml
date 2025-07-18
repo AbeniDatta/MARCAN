@@ -1,0 +1,34 @@
+services:
+  # Full-stack application (Frontend + Backend)
+  - type: web
+    name: marcan-marketplace
+    env: node
+    plan: free
+    buildCommand: npm run install-all && cd client && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: marcan-db
+          property: connectionString
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: /api/*
+      - type: rewrite
+        source: /*
+        destination: /client/dist/index.html
+
+databases:
+  - name: marcan-db
+    databaseName: marcan
+    user: marcan_user
+    plan: free 
