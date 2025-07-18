@@ -19,13 +19,6 @@ services:
         sync: false
       - key: FIREBASE_PRIVATE_KEY
         sync: false
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: /api/*
-      - type: rewrite
-        source: /*
-        destination: /client/dist/index.html
 
 databases:
   - name: marcan-db
