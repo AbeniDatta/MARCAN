@@ -14,4 +14,7 @@ npm run build
 cd ../server
 npm install
 
+# Generate Prisma client
+npx prisma generate
+
 echo "Build completed successfully!" 
