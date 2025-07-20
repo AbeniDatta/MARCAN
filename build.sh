@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Exit on any error
+set -e
+
+# Install global dependencies
+npm install -g prisma
+
 # Install root dependencies
 npm install
 
@@ -14,7 +20,7 @@ npm run build
 cd ../server
 npm install --include=dev
 
-# Generate Prisma client using npx
-npx prisma generate
+# Generate Prisma client
+prisma generate
 
 echo "Build completed successfully!" 
