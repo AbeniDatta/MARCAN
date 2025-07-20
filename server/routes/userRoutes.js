@@ -3,7 +3,7 @@ const { createUser, createOrUpdateProfile, getUserProfile, getUserProfileById } 
 const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/users', createUser);
+router.post('/', createUser);
 router.post('/profile', authenticateToken, createOrUpdateProfile);
 router.get('/profile/:firebaseUid', authenticateToken, getUserProfile);
 router.get('/profile/id/:userId', getUserProfileById);
