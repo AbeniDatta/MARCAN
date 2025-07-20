@@ -22,11 +22,11 @@ router.get('/user/:userId', authenticateToken, getListingsByUserId);
 router.put('/:id', authenticateToken, updateListing);
 router.delete('/:id', authenticateToken, deleteListing);
 
-// Public routes
+// Public routes - order matters! More specific routes first
 router.get('/', getAllListings);
 router.get('/search', searchListings);
-router.get('/firebase-uid/:firebaseUid', getListingsByFirebaseUid);
 router.get('/filters', getFilterOptions);
+router.get('/firebase-uid/:firebaseUid', getListingsByFirebaseUid);
 router.get('/:id', getListingById);
 
 module.exports = router;
