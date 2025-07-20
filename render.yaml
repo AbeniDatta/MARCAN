@@ -4,7 +4,7 @@ services:
     name: marcan-marketplace
     env: node
     plan: free
-    buildCommand: npm install -g typescript vite && npm install && cd client && npm install && npm run build && cd ../server && npm install
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: cd server && npm start
     envVars:
       - key: NODE_ENV
