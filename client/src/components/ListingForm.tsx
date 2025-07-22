@@ -14,6 +14,14 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Upload, X, Plus } from 'lucide-react';
+import { CANADIAN_CITIES } from "@/lib/canadianCities";
+import {
+    Command,
+    CommandInput,
+    CommandList,
+    CommandItem,
+    CommandEmpty,
+} from "@/components/ui/command";
 
 interface ListingFormData {
     title: string;
@@ -68,6 +76,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [manualCity, setManualCity] = useState("");
 
     const [formData, setFormData] = useState<ListingFormData>({
         title: initialData?.title || '',
@@ -95,50 +104,63 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
 
+        // Validation for all required fields
+        if (!formData.title.trim()) {
+            setError('Product title is required.');
+            return;
+        }
+        if (!imagePreview && !formData.imageFile) {
+            setError('Product image is required.');
+            return;
+        }
+        if (!formData.description.trim()) {
+            setError('Description is required.');
+            return;
+        }
+        if (!formData.price.trim() || isNaN(Number(formData.price))) {
+            setError('A valid price is required.');
+            return;
+        }
+        if (!manualCity.trim() && !formData.city.trim()) {
+            setError('Please select a city or enter one manually.');
+            return;
+        }
+        if (formData.categories.length === 0) {
+            setError('Please select at least one category.');
+            return;
+        }
+        if (formData.tags.length === 0) {
+            setError('Please select at least one tag.');
+            return;
+        }
+
+        setLoading(true);
         try {
             const user = auth.currentUser;
-            console.log('Current user:', user);
-
             if (!user) {
                 throw new Error('You must be logged in to create a listing');
             }
-
-            // Get the token explicitly to verify it exists
             const token = await user.getIdToken();
-            console.log('User token:', token.substring(0, 20) + '...');
-
-            // For now, we'll use a placeholder image URL since we haven't implemented file upload to server
-            // In a real implementation, you would upload the file to a service like Firebase Storage or AWS S3
-            //const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
             let imageUrl = initialData?.imageUrl || '';
-
             if (formData.imageFile) {
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
-                console.log('Image uploaded to Cloudinary:', imageUrl)
             }
-
             const listingData: ListingInput = {
                 ...formData,
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
-                city: formData.city
+                city: manualCity.trim() ? manualCity : formData.city
             };
-
-            console.log('Submitting listing data:', listingData);
-
             let result;
             if (initialData?.id) {
                 result = await listingApi.updateListing(initialData.id, listingData);
             } else {
                 result = await listingApi.createListing(listingData);
             }
-
             onSubmit(result);
         } catch (err: any) {
-            console.error('Error submitting listing:', err);
             setError(err.message || 'Failed to submit listing');
         } finally {
             setLoading(false);
@@ -148,47 +170,70 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const handleSaveDraft = async () => {
         setLoading(true);
         setError('');
-
+        // Validation for all required fields (except draft count logic)
+        if (!formData.title.trim()) {
+            setError('Product title is required.');
+            setLoading(false);
+            return;
+        }
+        if (!imagePreview && !formData.imageFile) {
+            setError('Product image is required.');
+            setLoading(false);
+            return;
+        }
+        if (!formData.description.trim()) {
+            setError('Description is required.');
+            setLoading(false);
+            return;
+        }
+        if (!formData.price.trim() || isNaN(Number(formData.price))) {
+            setError('A valid price is required.');
+            setLoading(false);
+            return;
+        }
+        if (!manualCity.trim() && !formData.city.trim()) {
+            setError('Please select a city or enter one manually.');
+            setLoading(false);
+            return;
+        }
+        if (formData.categories.length === 0) {
+            setError('Please select at least one category.');
+            setLoading(false);
+            return;
+        }
+        if (formData.tags.length === 0) {
+            setError('Please select at least one tag.');
+            setLoading(false);
+            return;
+        }
         try {
             const user = auth.currentUser;
             if (!user) {
                 throw new Error('You must be logged in to save a draft');
             }
-
-            // Check draft limit (only for new drafts, not editing existing ones)
             if (!initialData?.id && draftCount >= 10) {
                 throw new Error('You have reached the maximum limit of 10 drafts. Please delete some drafts before creating new ones.');
             }
-
-            //const imageUrl = formData.imageFile ? URL.createObjectURL(formData.imageFile) : initialData?.imageUrl || '';
             let imageUrl = initialData?.imageUrl || '';
-
             if (formData.imageFile) {
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
-                console.log('Image uploaded to Cloudinary:', imageUrl);
             }
-
             const listingData: ListingInput = {
                 ...formData,
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
-                city: formData.city
+                city: manualCity.trim() ? manualCity : formData.city
             };
-
-            console.log('Saving draft data:', listingData);
-
             let result;
             if (initialData?.id) {
                 result = await listingApi.updateListing(initialData.id, { ...listingData, isDraft: true });
             } else {
                 result = await listingApi.saveDraft(listingData);
             }
-
             if (onSaveDraft) {
                 onSaveDraft(result);
             }
         } catch (err: any) {
-            console.error('Error saving draft:', err);
             setError(err.message || 'Failed to save draft');
         } finally {
             setLoading(false);
@@ -415,14 +460,39 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             <div className="space-y-2">
                 <label className="text-lg font-semibold">City</label>
-                <Input
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                placeholder="Enter the city where this product/service is available"
-                required
-                className="w-full"
-                />
+                {/* Autocomplete city input */}
+                <Command className="border border-input rounded-md bg-background">
+                    <CommandInput
+                        placeholder="Start typing a city name..."
+                        value={formData.city}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, city: value }))}
+                    />
+                    {formData.city && (
+                        <CommandList>
+                            <CommandEmpty>No cities found.</CommandEmpty>
+                            {CANADIAN_CITIES.filter(city =>
+                                city.toLowerCase().includes(formData.city.toLowerCase())
+                            ).map(city => (
+                                <CommandItem
+                                    key={city}
+                                    value={city}
+                                    onSelect={() => setFormData((prev) => ({ ...prev, city }))}
+                                >
+                                    {city}
+                                </CommandItem>
+                            ))}
+                        </CommandList>
+                    )}
+                </Command>
+                <div className="mt-2">
+                    <label className="block text-sm text-gray-600 mb-1">If your city is not in the list, enter it here:</label>
+                    <Input
+                        name="manual-city"
+                        value={manualCity}
+                        onChange={e => setManualCity(e.target.value)}
+                        placeholder="Enter your city name"
+                    />
+                </div>
             </div>
 
             <div className="space-y-2">

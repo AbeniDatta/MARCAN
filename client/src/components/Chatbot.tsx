@@ -19,7 +19,7 @@ const Chatbot = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: "1",
-            text: "Hi! I'm your AI assistant. I can help you find products, suppliers, or answer questions about this marketplace. What would you like to know?",
+            text: "Hey there! 👋 I'm your AI assistant for the MARCAN website. \n\nNeed help finding suppliers, managing listings, or navigating the marketplace? I’ve got you covered.\n\nHere’s what I can do:\n• Match you with manufacturers\n• Help manage and optimize listings\n• Guide you through platform features\n• Answer any questions along the way\n\nWhat can I help you with today? 😊",
             isUser: false,
             timestamp: new Date(),
         },
@@ -48,7 +48,7 @@ const Chatbot = () => {
         setMessages([
             {
                 id: Date.now().toString(),
-                text: "Hi! I'm your AI assistant. I can help you find products, suppliers, or answer questions about this marketplace. What would you like to know?",
+                text: "Hey there! 👋 I'm your AI assistant for the MARCAN website. \n\nNeed help finding suppliers, managing listings, or navigating the marketplace? I’ve got you covered.\n\nHere’s what I can do:\n• Match you with manufacturers\n• Help manage and optimize listings\n• Guide you through platform features\n• Answer any questions along the way\n\nWhat can I help you with today? 😊",
                 isUser: false,
                 timestamp: new Date(),
             },
@@ -141,24 +141,23 @@ const Chatbot = () => {
             {!isOpen && (
                 <Button
                     onClick={() => setIsOpen(true)}
-                    className="h-14 w-14 rounded-full bg-red-600 hover:bg-red-700 shadow-lg border-2 border-white"
-                    size="icon"
+                    className="h-14 px-4 rounded-full bg-red-600 hover:bg-red-700 shadow-lg border-2 border-white"
                 >
-                    <MessageCircle className="h-6 w-6 text-white" />
+                    <span className="text-white font-semibold text-sm">Ask Marcy</span>
                 </Button>
             )}
 
             {/* Chat Window */}
             {isOpen && (
-                <Card className="w-80 h-96 shadow-xl border-2 border-red-200 bg-white">
+                <Card className="w-96 h-[500px] shadow-xl border-2 border-red-200 bg-white">
                     <CardContent className="p-0 h-full flex flex-col">
                         {/* Header */}
                         <div className="bg-red-600 text-white p-4 rounded-t-lg flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Bot className="h-5 w-5" />
-                                <span className="font-semibold">AI Assistant</span>
+                                <span className="font-bold text-lg">Ask Marcy</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                                 <Button
                                     onClick={clearChat}
                                     variant="ghost"
@@ -173,6 +172,7 @@ const Chatbot = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 text-white hover:bg-red-700"
+                                    title="Minimize chat"
                                 >
                                     <X className="h-4 w-4" />
                                 </Button>
@@ -247,4 +247,4 @@ const Chatbot = () => {
     );
 };
 
-export default Chatbot; 
+export default Chatbot;

@@ -39,6 +39,7 @@ const SignUp = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    chatbotName: "",
   });
 
   const handleInputChange = (
@@ -71,6 +72,30 @@ const SignUp = () => {
     );
 
     return response.data.secure_url;
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('border-[#DB1233]', 'bg-red-50');
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-[#DB1233]', 'bg-red-50');
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('border-[#DB1233]', 'bg-red-50');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        setLogoFile(file);
+        setLogoPreview(URL.createObjectURL(file));
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +136,7 @@ const SignUp = () => {
         description: formData.description,
         phone: formData.phone,
         logoUrl,
+        chatbotName: formData.chatbotName,
       };
 
       await profileApi.createOrUpdateProfile(profileData);
@@ -161,7 +187,7 @@ const SignUp = () => {
             <form className="space-y-12" onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Company Name *
+                  Company Name <span className="text-red-500">*</span>
                 </label>
                 <Input
                   name="companyName"
@@ -173,7 +199,7 @@ const SignUp = () => {
 
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Location *
+                  Location <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Input
@@ -243,7 +269,7 @@ const SignUp = () => {
 
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Description *
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <Textarea
                   name="description"
@@ -255,23 +281,34 @@ const SignUp = () => {
 
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Logo *
+                  Logo <span className="text-red-500">*</span>
                 </label>
                 <div
-                  className="w-[173px] h-[139px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors overflow-hidden"
+                  className="w-[173px] h-[139px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors overflow-hidden relative"
                   onClick={() => document.getElementById("logoInput")?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                 >
                   {logoPreview ? (
-                    <img
-                      src={logoPreview}
-                      alt="Logo Preview"
-                      className="w-full h-full object-contain"
-                    />
+                    <>
+                      <img
+                        src={logoPreview}
+                        alt="Logo Preview"
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <span className="text-white font-semibold text-sm">Change logo</span>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <Upload className="w-12 h-12 text-[#DB1233] mb-2" />
                       <span className="text-[#DB1233] font-semibold">
                         Upload image
+                      </span>
+                      <span className="text-gray-500 text-xs mt-1">
+                        or drag & drop
                       </span>
                     </>
                   )}
@@ -288,12 +325,26 @@ const SignUp = () => {
                       setLogoPreview(URL.createObjectURL(file));
                     }
                   }}
+                  required
                 />
               </div>
 
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Contact Details *
+                  Your chatbot name
+                </label>
+                <Input
+                  name="chatbotName"
+                  value={formData.chatbotName}
+                  onChange={handleInputChange}
+                  placeholder="Give a personalized name for your chatbot assistant"
+                />
+                <p className="text-sm text-gray-600">By default it's "Marcy" and it's totally fine if you don't want tochange it.</p>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-xl font-semibold text-black">
+                  Contact Details <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <Input
@@ -316,7 +367,7 @@ const SignUp = () => {
 
               <div className="space-y-4">
                 <label className="text-xl font-semibold text-black">
-                  Password *
+                  Password <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="relative">

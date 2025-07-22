@@ -9,6 +9,10 @@ import MyListingCard from "@/components/MyListingCard";
 import { Button } from "@/components/ui/button";
 import { listingApi, Listing } from "@/services/api";
 import { profileApi, UserProfile } from "@/services/api";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { signInWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { Eye, EyeOff } from "lucide-react";
 
 const MyAccount = () => {
   const navigate = useNavigate();
@@ -19,6 +23,13 @@ const MyAccount = () => {
   const [draftsLoading, setDraftsLoading] = useState(true);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  // Restore two-dialog logic: showDeleteDialog for confirmation, showPasswordPrompt for password entry
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -139,6 +150,44 @@ const MyAccount = () => {
     return parts.join(', ');
   };
 
+  // Add this function to handle account deletion
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    setDeleteLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        setDeleteError('No user is currently signed in.');
+        setDeleteLoading(false);
+        return;
+      }
+      // Re-authenticate
+      await signInWithEmailAndPassword(auth, user.email, password);
+      // Delete user
+      await deleteUser(user);
+      setDeleteLoading(false);
+      setShowPasswordPrompt(false);
+      setShowDeleteDialog(false);
+      // Sign out and redirect
+      await auth.signOut();
+      navigate('/');
+    } catch (err: any) {
+      // Firebase error for wrong password is 'auth/wrong-password' or 'auth/invalid-credential'
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setDeleteError('Your password is incorrect.');
+        setDeleteLoading(false);
+        return;
+      }
+      if (err.code === 'auth/requires-recent-login') {
+        setDeleteError('For security, please sign out, log in again, and then try deleting your account.');
+        setDeleteLoading(false);
+        return;
+      }
+      setDeleteError('Failed to delete account. Please try again.');
+      setDeleteLoading(false);
+    }
+  };
+
   if (profileLoading) {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
@@ -254,7 +303,7 @@ const MyAccount = () => {
                 <h2 className="text-[24px] font-semibold text-black font-inter">
                   Account Actions
                 </h2>
-                <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button
                     variant="outline"
                     className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
@@ -295,6 +344,71 @@ const MyAccount = () => {
                 >
                   Sign Out
                 </Button>
+              </div>
+              {/* Delete Account (below Sign Out) */}
+              <div className="pt-4">
+                <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      className="w-full justify-center h-12 text-base bg-red-600 text-white hover:bg-red-700 border-none"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure you want to delete your account?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. All your data and listings will be permanently deleted.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction onClick={() => { setShowDeleteDialog(false); setShowPasswordPrompt(true); }}>
+                        Yes, Delete My Account
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                {/* Password Prompt Dialog */}
+                <AlertDialog open={showPasswordPrompt} onOpenChange={setShowPasswordPrompt}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirm Account Deletion</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Please enter your password to confirm account deletion.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="mt-2 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 mt-2"
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                    {deleteError && <div className="text-red-600 text-sm mt-2">{deleteError}</div>}
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setShowPasswordPrompt(false)}>
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteAccount} disabled={deleteLoading} className="bg-red-600 text-white hover:bg-red-700">
+                        {deleteLoading ? 'Deleting...' : 'Delete Account'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           </div>
