@@ -371,9 +371,6 @@ const EditProfile = () => {
                                 className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                                 placeholder="Give a personalized name for your chatbot assistant"
                             />
-                            <p className="text-sm text-gray-600">
-                                By default it's "Marcy" and it's totally fine if you don't want to change it.
-                            </p>
                         </div>
 
                         {/* Email (Read-only) */}
