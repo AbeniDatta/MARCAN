@@ -37,6 +37,7 @@ interface ListingFormProps {
     initialData?: Partial<Listing>;
     onSubmit: (listing: Listing) => void;
     onSaveDraft?: (listing: Listing) => void;
+    onCancel?: () => void;
     draftCount?: number;
 }
 
@@ -66,7 +67,7 @@ const PREDEFINED_TAGS = [
     "Made in Canada"
 ];
 
-const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, draftCount = 0 }) => {
+const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, onCancel, draftCount = 0 }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
@@ -393,18 +394,19 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 <div className="space-y-4">
                     {imagePreview ? (
                         <div className="relative">
-                            <img
-                                src={imagePreview}
-                                alt="Product preview"
-                                className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                            />
-                            <button
-                                type="button"
-                                onClick={removeImage}
-                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                            <div
+                                className="w-[173px] h-[139px] border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors overflow-hidden relative"
+                                onClick={() => fileInputRef.current?.click()}
                             >
-                                <X className="w-4 h-4" />
-                            </button>
+                                <img
+                                    src={imagePreview}
+                                    alt="Product Preview"
+                                    className="w-full h-full object-contain"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                    <span className="text-white font-semibold text-sm">Change image</span>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div
@@ -635,6 +637,17 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 >
                     {loading ? 'Saving...' : initialData?.id ? 'Update Listing' : 'Create Listing'}
                 </Button>
+                {onCancel && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onCancel}
+                        disabled={loading}
+                        className="flex-1 border border-gray-300 text-gray-600 hover:bg-gray-100"
+                    >
+                        Cancel
+                    </Button>
+                )}
             </div>
         </form>
     );

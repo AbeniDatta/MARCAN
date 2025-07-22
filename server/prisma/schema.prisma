@@ -28,6 +28,7 @@ model User {
   description String?
   phone       String?
   logoUrl     String?
+  chatbotName String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   listings    Listing[] @relation("UserListings")

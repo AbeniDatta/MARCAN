@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import { updateEmail, EmailAuthProvider, reauthenticateWithCredential, sendEmailVerification } from "firebase/auth";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 
 const ChangeEmail = () => {
     const navigate = useNavigate();
@@ -113,11 +113,12 @@ const ChangeEmail = () => {
                             Change Email Address
                         </h1>
                         <Button
-                            variant="outline"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => navigate("/my-account")}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="h-8 w-8 text-gray-600 hover:text-gray-900"
                         >
-                            Cancel
+                            <X className="h-4 w-4" />
                         </Button>
                     </div>
 
@@ -213,7 +214,15 @@ const ChangeEmail = () => {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="flex justify-end pt-6">
+                        <div className="flex gap-4 pt-6">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => navigate("/my-account")}
+                                className="px-8 py-3 text-lg font-semibold"
+                            >
+                                Cancel
+                            </Button>
                             <Button
                                 type="submit"
                                 disabled={loading}

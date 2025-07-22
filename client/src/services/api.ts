@@ -87,6 +87,7 @@ export interface UserProfile {
     description?: string;
     phone?: string;
     logoUrl?: string;
+    chatbotName?: string;
     createdAt: string;
     updatedAt: string;
 }

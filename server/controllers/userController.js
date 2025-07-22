@@ -37,6 +37,7 @@ const createOrUpdateProfile = async (req, res) => {
     description,
     phone,
     logoUrl,
+    chatbotName,
     firebaseUid,
     email
   } = req.body;
@@ -65,6 +66,7 @@ const createOrUpdateProfile = async (req, res) => {
           description,
           phone,
           logoUrl,
+          chatbotName,
           email: email || user.email, // Update email if provided, otherwise keep existing
         },
       });
@@ -87,6 +89,7 @@ const createOrUpdateProfile = async (req, res) => {
           description,
           phone,
           logoUrl,
+          chatbotName,
         },
       });
       console.log('New user profile created:', user);

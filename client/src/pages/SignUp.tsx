@@ -109,6 +109,20 @@ const SignUp = () => {
       return;
     }
 
+    // Check if logo is uploaded
+    if (!logoFile) {
+      setError("Please upload a company logo");
+      setLoading(false);
+      return;
+    }
+
+    // Check if province is selected
+    if (!formData.province) {
+      setError("Please select a province");
+      setLoading(false);
+      return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -275,6 +289,7 @@ const SignUp = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
+                  placeholder="Describe your company and services..."
                   required
                 />
               </div>
@@ -325,7 +340,6 @@ const SignUp = () => {
                       setLogoPreview(URL.createObjectURL(file));
                     }
                   }}
-                  required
                 />
               </div>
 

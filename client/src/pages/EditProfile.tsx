@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import { profileApi, UserProfile } from "@/services/api";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 const EditProfile = () => {
     const navigate = useNavigate();
@@ -36,6 +36,7 @@ const EditProfile = () => {
         website: "",
         description: "",
         phone: "",
+        chatbotName: "",
     });
 
     useEffect(() => {
@@ -68,6 +69,7 @@ const EditProfile = () => {
                 website: data.website || "",
                 description: data.description || "",
                 phone: data.phone || "",
+                chatbotName: data.chatbotName || "",
             });
             setLogoPreview(data.logoUrl || null);
         } catch (err: any) {
@@ -142,10 +144,16 @@ const EditProfile = () => {
                 description: formData.description,
                 phone: formData.phone,
                 logoUrl, // Will be implemented later for logo upload
+                chatbotName: formData.chatbotName,
             };
 
             await profileApi.createOrUpdateProfile(profileData);
             setSuccess("Profile updated successfully!");
+
+            // Dispatch custom event to notify chatbot to refresh
+            window.dispatchEvent(new CustomEvent('profileUpdated', {
+                detail: { chatbotName: formData.chatbotName }
+            }));
 
             // Navigate back to my account after a short delay
             setTimeout(() => {
@@ -181,11 +189,12 @@ const EditProfile = () => {
                             Edit Profile
                         </h1>
                         <Button
-                            variant="outline"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => navigate("/my-account")}
-                            className="text-gray-600 hover:text-gray-900"
+                            className="h-8 w-8 text-gray-600 hover:text-gray-900"
                         >
-                            Cancel
+                            <X className="h-4 w-4" />
                         </Button>
                     </div>
 
@@ -217,7 +226,7 @@ const EditProfile = () => {
                             />
                         </div>
 
-                         {/* Logo */}
+                        {/* Logo */}
                         <div className="space-y-4">
                             <label className="block text-xl font-semibold text-black font-inter">Company Logo</label>
                             <div
@@ -350,6 +359,23 @@ const EditProfile = () => {
                             />
                         </div>
 
+                        {/* Chatbot Name */}
+                        <div className="space-y-4">
+                            <label className="block text-xl font-semibold text-black font-inter">
+                                Your Chatbot Name
+                            </label>
+                            <Input
+                                name="chatbotName"
+                                value={formData.chatbotName}
+                                onChange={handleInputChange}
+                                className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
+                                placeholder="Give a personalized name for your chatbot assistant"
+                            />
+                            <p className="text-sm text-gray-600">
+                                By default it's "Marcy" and it's totally fine if you don't want to change it.
+                            </p>
+                        </div>
+
                         {/* Email (Read-only) */}
                         <div className="space-y-4">
                             <label className="block text-xl font-semibold text-black font-inter">
@@ -367,7 +393,15 @@ const EditProfile = () => {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="flex justify-end pt-6">
+                        <div className="flex gap-4 pt-6">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => navigate("/my-account")}
+                                className="px-8 py-3 text-lg font-semibold"
+                            >
+                                Cancel
+                            </Button>
                             <Button
                                 type="submit"
                                 disabled={saving}

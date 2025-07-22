@@ -5,6 +5,7 @@ import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import ListingForm from "@/components/ListingForm";
 import { Listing, listingApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 const CreateListing = () => {
     const navigate = useNavigate();
@@ -61,19 +62,23 @@ const CreateListing = () => {
                     </h1>
                     <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-8">
-                            <div></div>
+                            <h2 className="text-[36px] font-bold text-black font-inter">
+                                {editListing ? 'Edit Listing' : 'Create New Listing'}
+                            </h2>
                             <Button
-                                variant="outline"
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => navigate("/my-account")}
-                                className="text-gray-600 hover:text-gray-900"
+                                className="h-8 w-8 text-gray-600 hover:text-gray-900"
                             >
-                                Cancel
+                                <X className="h-4 w-4" />
                             </Button>
                         </div>
                         <ListingForm
                             initialData={editListing || undefined}
                             onSubmit={handleSubmit}
                             onSaveDraft={handleSaveDraft}
+                            onCancel={() => navigate("/my-account")}
                             draftCount={draftCount}
                         />
                     </div>
