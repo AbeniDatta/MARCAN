@@ -44,6 +44,7 @@ model Listing {
   tags        String[]
   categories  String[]
   city        String?
+  isDraft     Boolean  @default(false)
   userId      Int
   user        User     @relation("UserListings", fields: [userId], references: [id])
   createdAt   DateTime @default(now())

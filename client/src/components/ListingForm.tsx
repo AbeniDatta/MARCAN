@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const [isDragOver, setIsDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [manualCity, setManualCity] = useState("");
+    const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
     const [formData, setFormData] = useState<ListingFormData>({
         title: initialData?.title || '',
@@ -89,6 +90,24 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         categories: initialData?.categories || [],
         city: initialData?.city || ''
     });
+
+    // Close city dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Element;
+            if (!target.closest('[data-command-wrapper]')) {
+                setCityDropdownOpen(false);
+            }
+        };
+
+        if (cityDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [cityDropdownOpen]);
 
     const uploadImageToCloudinary = async (file: File): Promise<string> => {
         const formData = new FormData();
@@ -464,13 +483,17 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             <div className="space-y-2">
                 <label className="text-lg font-semibold">City</label>
                 {/* Autocomplete city input */}
-                <Command className="border border-input rounded-md bg-background">
+                <Command className="border border-input rounded-md bg-background" data-command-wrapper>
                     <CommandInput
                         placeholder="Start typing a city name..."
                         value={formData.city}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, city: value }))}
+                        onValueChange={(value) => {
+                            setFormData((prev) => ({ ...prev, city: value }));
+                            setCityDropdownOpen(true);
+                        }}
+                        onFocus={() => setCityDropdownOpen(true)}
                     />
-                    {formData.city && (
+                    {cityDropdownOpen && formData.city && (
                         <CommandList>
                             <CommandEmpty>No cities found.</CommandEmpty>
                             {CANADIAN_CITIES.filter(city =>
@@ -479,7 +502,10 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                                 <CommandItem
                                     key={city}
                                     value={city}
-                                    onSelect={() => setFormData((prev) => ({ ...prev, city }))}
+                                    onSelect={() => {
+                                        setFormData((prev) => ({ ...prev, city }));
+                                        setCityDropdownOpen(false);
+                                    }}
                                 >
                                     {city}
                                 </CommandItem>

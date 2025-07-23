@@ -58,6 +58,7 @@ const createListing = async (req, res) => {
 const getAllListings = async (req, res) => {
   try {
     const listings = await prisma.listing.findMany({
+      where: { isDraft: false }, // Only get published listings
       include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -109,7 +110,10 @@ const getListingsByCurrentUser = async (req, res) => {
 
     const user = await getOrCreateUserFromFirebase(firebaseUser);
     const listings = await prisma.listing.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+        isDraft: false // Only get published listings
+      },
       orderBy: { createdAt: 'desc' },
     });
     res.json(listings);
@@ -167,6 +171,97 @@ const deleteListing = async (req, res) => {
     res.json({ message: 'Listing deleted successfully' });
   } catch (err) {
     res.status(400).json({ error: 'Failed to delete listing' });
+  }
+};
+
+// Save listing as draft
+const saveDraft = async (req, res) => {
+  try {
+    console.log('Received draft request body:', req.body);
+    const { title, description, price, tags, categories, imageUrl, city } = req.body;
+
+    // Get the Firebase user from the request (set by auth middleware)
+    const firebaseUser = req.user;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Get or create the user in our database
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+    console.log('Found/created user for draft:', user);
+
+    // Determine company name with fallbacks
+    let companyName = user.companyName;
+    if (!companyName) {
+      // Try to extract company name from email domain
+      const emailDomain = user.email.split('@')[1];
+      if (emailDomain) {
+        companyName = emailDomain.split('.')[0].charAt(0).toUpperCase() + emailDomain.split('.')[0].slice(1);
+      } else {
+        companyName = user.name; // Fallback to user's name
+      }
+    }
+
+    const listingData = {
+      title,
+      description,
+      price: parseFloat(price),
+      companyName,
+      imageUrl,
+      tags,
+      categories,
+      city,
+      isDraft: true,
+      userId: user.id // Use the actual user ID from our database
+    };
+
+    console.log('Creating draft with data:', listingData);
+    const newDraft = await prisma.listing.create({
+      data: listingData
+    });
+    console.log('Successfully created draft:', newDraft);
+    res.json(newDraft);
+  } catch (error) {
+    console.error('Error creating draft:', error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Get current user's drafts
+const getMyDrafts = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+    const drafts = await prisma.listing.findMany({
+      where: {
+        userId: user.id,
+        isDraft: true
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(drafts);
+  } catch (err) {
+    console.error('Error fetching drafts:', err);
+    res.status(400).json({ error: 'Error fetching drafts' });
+  }
+};
+
+// Publish draft
+const publishDraft = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updated = await prisma.listing.update({
+      where: { id: parseInt(id) },
+      data: { isDraft: false },
+    });
+    res.json(updated);
+  } catch (err) {
+    console.error('Error publishing draft:', err);
+    res.status(400).json({ error: 'Failed to publish draft' });
   }
 };
 
@@ -332,4 +427,7 @@ module.exports = {
   searchListings,
   updateListing,
   deleteListing,
+  saveDraft,
+  getMyDrafts,
+  publishDraft,
 };
