@@ -19,6 +19,7 @@ const Listings = () => {
     location: "",
     tags: [] as string[],
     capacity: [] as string[],
+    categories: [] as string[],
   });
 
   useEffect(() => {
@@ -111,6 +112,13 @@ const Listings = () => {
       console.log(`Checking listing ${index + 1}/${listings.length}: "${listing.title}"`);
 
       // Apply filters
+      const matchCategories =
+        filters.categories.length === 0 ||
+        (listing.categories &&
+          filters.categories.every((cat) =>
+            listing.categories.includes(cat)
+        ));
+
       const matchLocation =
         !filters.location ||
         listing.city?.toLowerCase().includes(filters.location.toLowerCase());
@@ -166,7 +174,7 @@ const Listings = () => {
         matchSearch = matchTitle || matchDescription || matchCompanyName || matchCategories || matchTags;
       }
 
-      const finalMatch = matchLocation && matchTags && matchCapacity && matchSearch;
+      const finalMatch =   matchLocation && matchTags && matchCapacity && matchCategories && matchSearch;
       console.log('Final match for listing', listing.id, ':', finalMatch);
 
       return finalMatch;

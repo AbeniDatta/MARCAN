@@ -6,6 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 interface FiltersSidebarProps {
   filters: {
+    categories: string[];
     tags: string[];
     location: string;
     capacity: string[];
@@ -15,12 +16,24 @@ interface FiltersSidebarProps {
 
 const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange }) => {
   const [tagOptions, setTagOptions] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
         const { tags } = await listingApi.getFilterOptions();
         setTagOptions(tags);
+        const allCategories = [
+        "Metal Fabrication",
+        "Tool & Die",
+        "Injection Molding",
+        "Precision Machining",
+        "Industrial Casting",
+        "Consumer Products",
+        "Assemblies",
+        "Lighting & Fixtures",
+      ];
+      setCategoryOptions(allCategories);
       } catch (error) {
         console.error("Failed to fetch filter options", error);
       }
@@ -28,6 +41,14 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
 
     fetchFilterOptions();
   }, []);
+
+  const handleCategoryCheckboxChange = (value: string) => {
+    const current = filters.categories;
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    onFilterChange({ ...filters, categories: updated });
+  };
 
   const handleCheckboxChange = (type: "tags", value: string) => {
     const current = filters[type];
@@ -45,6 +66,24 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
     <aside className="bg-white border border-[#DB1233] p-6 w-full md:w-48 rounded-lg">
       <h3 className="text-3xl font-bold text-black font-inter mb-8">Filters</h3>
 
+      <div className="mb-8">
+        <h4 className="text-xl font-semibold text-black mb-4">Categories</h4>
+        <div className="space-y-3">
+          {categoryOptions.map((option, index) => (
+            <div key={index} className="flex items-center space-x-3">
+              <Checkbox
+                checked={filters.categories.includes(option)}
+                onCheckedChange={() => handleCategoryCheckboxChange(option)}
+                id={`category-${index}`}
+              />
+              <label htmlFor={`category-${index}`} className="text-base cursor-pointer">
+                {option}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      
       <div className="mb-8">
         <h4 className="text-xl font-semibold text-black mb-4">Location</h4>
         <Input

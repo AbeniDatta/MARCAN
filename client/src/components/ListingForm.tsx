@@ -51,7 +51,8 @@ const CATEGORIES = [
     "Consumer Products",
     "Assemblies",
     "Lighting & Fixtures",
-    "Automotive Services"
+    "Automotive Services",
+    "Defence"
 ];
 
 // Predefined tags

@@ -1,12 +1,5 @@
 import {
-  Wrench,
-  Hammer,
-  Factory,
-  Cog,
-  Layers,
-  Package,
-  Settings,
-  Lightbulb,
+  Shield,
   Car,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -15,15 +8,8 @@ const FeaturedCategories = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { name: "Metal Fabrication", icon: Wrench },
-    { name: "Tool & Die", icon: Hammer },
-    { name: "Injection Molding", icon: Factory },
-    { name: "Precision Machining", icon: Cog },
-    { name: "Industrial Casting", icon: Layers },
-    { name: "Consumer Products", icon: Package },
-    { name: "Assemblies", icon: Settings },
-    { name: "Lighting & Fixtures", icon: Lightbulb },
     { name: "Automotive Services", icon: Car },
+    { name: "Defence", icon: Shield }, // You may need to import a suitable icon from lucide-react
   ];
 
   const handleCategoryClick = (categoryName: string) => {
@@ -40,7 +26,7 @@ const FeaturedCategories = () => {
         <div className="flex flex-col gap-12 max-w-6xl">
           {/* First row - 5 categories */}
           <div className="grid grid-cols-5 gap-x-12">
-            {categories.slice(0, 5).map((category, index) => {
+            {categories.map((category, index) => {
               const IconComponent = category.icon;
               return (
                 <div
