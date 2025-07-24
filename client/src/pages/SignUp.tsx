@@ -55,7 +55,7 @@ const SignUp = () => {
   const handleProvinceChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      province: value,
+      province: value.toUpperCase(),
     }));
   };
 
