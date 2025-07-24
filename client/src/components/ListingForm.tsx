@@ -57,15 +57,17 @@ const CATEGORIES = [
 
 // Predefined tags
 const PREDEFINED_TAGS = [
-    "Export Ready",
-    "In Stock",
+    "ISO 9001",
+    "ISO 14001",
+    "AS9100",
+    "IATF 16949",
+    "CSA Certified",
+    "RoHS Compliant",
+    "CE Marking",
+    "UL Listed",
+    "ITAR Registered",
+    "NIST 800-171",
     "Custom Design",
-    "Bulk Orders",
-    "Fast Delivery",
-    "Quality Assured",
-    "Certified",
-    "Eco-Friendly",
-    "Made in Canada"
 ];
 
 const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, onCancel, draftCount = 0 }) => {

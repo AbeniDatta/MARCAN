@@ -29,11 +29,11 @@ const FeaturedCategories = () => {
               onClick={() => handleCategoryClick(category.name)}
             >
               {/* Image Container with enhanced styling */}
-              <div className="w-70 h-70 mb-3 flex items-center justify-center bg-white rounded-2xl shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300 p-6">
+              <div className="w-60 h-60 overflow-hidden rounded-2xl shadow-lg transform group-hover:scale-105 group-hover:shadow-xl transition-all duration-300">
                 <img
                   src={category.image}
                   alt={category.name}
-                  className="w-60 h-60 object-contain"
+                  className="w-full h-full object-cover"
                 />
               </div>
 
