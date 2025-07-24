@@ -51,27 +51,39 @@ const createOrUpdateProfile = async (req, res) => {
     console.log('Existing user found:', user);
 
     if (user) {
-      // Update existing user
-      console.log('Updating existing user profile');
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          companyName,
-          address1,
-          address2,
-          city,
-          province,
-          postalCode,
-          website,
-          description,
-          phone,
-          logoUrl,
-          chatbotName,
-          email: email || user.email, // Update email if provided, otherwise keep existing
-        },
-      });
-      console.log('User profile updated:', user);
-    } else {
+      // Check if this user has a valid Firebase Auth account
+      // If not, delete the orphaned record and create a new one
+      if (user.firebaseUid !== firebaseUid) {
+        console.log('Found orphaned user record, deleting and creating new one');
+        await prisma.user.delete({
+          where: { id: user.id }
+        });
+        user = null; // This will trigger the create new user flow
+      } else {
+        // Update existing user
+        console.log('Updating existing user profile');
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            companyName,
+            address1,
+            address2,
+            city,
+            province,
+            postalCode,
+            website,
+            description,
+            phone,
+            logoUrl,
+            chatbotName,
+            email: email || user.email, // Update email if provided, otherwise keep existing
+          },
+        });
+        console.log('User profile updated:', user);
+      }
+    }
+
+    if (!user) {
       // Create new user
       console.log('Creating new user profile');
       user = await prisma.user.create({
@@ -98,7 +110,19 @@ const createOrUpdateProfile = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error('Error creating/updating profile:', error);
-    res.status(500).send("Error creating/updating profile: " + error.message);
+
+    // Handle unique constraint violations
+    if (error.code === 'P2002') {
+      if (error.meta?.target?.includes('email')) {
+        return res.status(400).json({ error: 'A user with this email already exists.' });
+      }
+      if (error.meta?.target?.includes('firebaseUid')) {
+        return res.status(400).json({ error: 'A user with this Firebase UID already exists.' });
+      }
+      return res.status(400).json({ error: 'A user with these credentials already exists.' });
+    }
+
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -212,11 +236,49 @@ const updateUserCompanyName = async (req, res) => {
   }
 };
 
+// Delete user from database by firebaseUid
+const deleteUserFromDatabase = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    if (!firebaseUser) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    console.log('Attempting to delete user with Firebase UID:', firebaseUser.uid);
+
+    // First check if user exists
+    const existingUser = await prisma.user.findFirst({
+      where: { firebaseUid: firebaseUser.uid }
+    });
+
+    if (!existingUser) {
+      console.log('User not found in database, already deleted');
+      return res.json({ message: "User already deleted from database" });
+    }
+
+    console.log('Found user in database, deleting:', existingUser.email);
+
+    await prisma.user.delete({
+      where: { firebaseUid: firebaseUser.uid }
+    });
+
+    console.log('User successfully deleted from database');
+    res.json({ message: "User deleted from database" });
+  } catch (error) {
+    console.error('Error deleting user from database:', error);
+    if (error.code === "P2025") {
+      return res.json({ message: "User already deleted from database" });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   createUser,
   getOrCreateUserFromFirebase,
   updateUserCompanyName,
   createOrUpdateProfile,
   getUserProfile,
-  getUserProfileById
+  getUserProfileById,
+  deleteUserFromDatabase,
 };

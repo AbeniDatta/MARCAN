@@ -12,6 +12,7 @@ import { profileApi, UserProfile } from "@/services/api";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { signInWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import axios from 'axios';
 import { Eye, EyeOff } from "lucide-react";
 
 const MyAccount = () => {
@@ -161,13 +162,31 @@ const MyAccount = () => {
         setDeleteLoading(false);
         return;
       }
+
       // Re-authenticate
       await signInWithEmailAndPassword(auth, user.email, password);
-      // Delete user
+
+      // Get the user's ID token for backend authentication
+      const idToken = await user.getIdToken();
+
+      // Delete user from backend database FIRST (while token is still valid)
+      try {
+        await axios.delete('http://localhost:5050/api/users/delete', {
+          headers: { Authorization: `Bearer ${idToken}` }
+        });
+        console.log('User deleted from database successfully');
+      } catch (backendError: any) {
+        console.error('Backend deletion error:', backendError);
+        // Continue with Firebase deletion even if backend fails
+      }
+
+      // Delete user from Firebase Auth AFTER backend deletion
       await deleteUser(user);
+
       setDeleteLoading(false);
       setShowPasswordPrompt(false);
       setShowDeleteDialog(false);
+
       // Sign out and redirect
       await auth.signOut();
       navigate('/');

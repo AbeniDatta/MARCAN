@@ -24,16 +24,18 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
         const { tags } = await listingApi.getFilterOptions();
         setTagOptions(tags);
         const allCategories = [
-        "Metal Fabrication",
-        "Tool & Die",
-        "Injection Molding",
-        "Precision Machining",
-        "Industrial Casting",
-        "Consumer Products",
-        "Assemblies",
-        "Lighting & Fixtures",
-      ];
-      setCategoryOptions(allCategories);
+          "Metal Fabrication",
+          "Tool & Die",
+          "Injection Molding",
+          "Precision Machining",
+          "Industrial Casting",
+          "Consumer Products",
+          "Assemblies",
+          "Lighting & Fixtures",
+          "Automotive Services",
+          "Defence",
+        ];
+        setCategoryOptions(allCategories);
       } catch (error) {
         console.error("Failed to fetch filter options", error);
       }
@@ -83,7 +85,7 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
           ))}
         </div>
       </div>
-      
+
       <div className="mb-8">
         <h4 className="text-xl font-semibold text-black mb-4">Location</h4>
         <Input
