@@ -7,11 +7,27 @@ client/dist/
 server/dist/
 
 # Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
 server/.env
+server/.env.local
+server/.env.development.local
+server/.env.test.local
+server/.env.production.local
+server/.env.backup
 
-# Account keys
+# Account keys and secrets
 server/serviceAccountKey.json
+*.key
+*.pem
 
 # Logs
 npm-debug.log*
