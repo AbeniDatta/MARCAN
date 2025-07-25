@@ -55,7 +55,7 @@ const SignUp = () => {
   const handleProvinceChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      province: value.toUpperCase(),
+      province: value,
     }));
   };
 
@@ -240,7 +240,7 @@ const SignUp = () => {
                   />
                   <Select
                     onValueChange={handleProvinceChange}
-                    value={formData.province}
+                    value={formData.province || undefined}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Province" />

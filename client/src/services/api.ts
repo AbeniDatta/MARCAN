@@ -14,26 +14,17 @@ const api = axios.create({
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(async (config) => {
-    try {
-        const user = auth.currentUser;
-        console.log('Current user in interceptor:', user?.email);
-
-        if (!user) {
-            console.log('No user found in interceptor');
-            return config;
-        }
-
-        const token = await user.getIdToken(true); // Force token refresh
-        console.log('Token obtained:', token.substring(0, 20) + '...');
-
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log('Request headers:', config.headers);
-
-        return config;
-    } catch (error) {
-        console.error('Error in request interceptor:', error);
-        return config;
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken(true);
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  } catch (error) {
+    console.error('Token error:', error);
+    return config;
+  }
 });
 
 // Add response interceptor for better error handling
@@ -284,3 +275,9 @@ export const profileApi = {
         }
     },
 }; 
+
+export const getAllUsers = () => api.get<UserProfile[]>("/users");
+export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
+export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
+
+export { api };

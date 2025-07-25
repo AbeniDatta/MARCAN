@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { auth } from "@/firebase";
+import { UserProfile } from "@/services/api";
 
 const AuthenticatedHeader = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
+  const [isAdmin, setIsAdmin] = useState(false);
   const isActive = (path: string) => location.pathname === path;
 
   const toggleMobileMenu = () => {
@@ -27,6 +29,23 @@ const AuthenticatedHeader = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, []);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const tokenResult = await user.getIdTokenResult(true); // true = force refresh
+          const isAdmin = tokenResult.claims.admin === true;
+          setIsAdmin(isAdmin);
+          console.log("Admin status:", isAdmin);
+        } catch (err) {
+          console.error("Failed to fetch custom claims", err);
+        }
+      }
+    };
+    checkAdmin();
   }, []);
 
   // Close dropdown when route changes
@@ -60,6 +79,13 @@ const AuthenticatedHeader = () => {
               Listings
             </span>
           </Link>
+          {isAdmin && (
+          <Link to="/admin">
+            <span className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black">
+              Admin
+            </span>
+          </Link>
+          )}
           <Link to="/my-account">
             <Button
               className={`bg-[#DB1233] hover:bg-[#c10e2b] text-white text-base lg:text-[20px] font-semibold rounded-lg px-4 lg:px-[20px] py-2 lg:py-2.5 h-auto font-inter ${isActive("/my-account") ? "bg-[#c10e2b]" : ""
@@ -114,7 +140,13 @@ const AuthenticatedHeader = () => {
                 <span className="font-medium">Listings</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
-
+              {isAdmin && (
+              <Link to="/admin">
+                <span className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black">
+                  Admin
+                </span>
+              </Link>
+              )}
               <Link
                 to="/my-account"
                 className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"

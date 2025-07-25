@@ -15,6 +15,7 @@ const {
   publishDraft,
 } = require('../controllers/listingController');
 const { authenticateToken } = require('../middleware/auth');
+const { adminOnly } = require('../middleware/adminOnly');
 
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.get('/user/:userId', authenticateToken, getListingsByUserId);
 router.put('/:id', authenticateToken, updateListing);
 router.put('/:id/publish', authenticateToken, publishDraft);
 router.delete('/:id', authenticateToken, deleteListing);
+router.delete('/admin/:id', authenticateToken, adminOnly, deleteListing);
 
 // Public routes - order matters! More specific routes first
 router.get('/', getAllListings);

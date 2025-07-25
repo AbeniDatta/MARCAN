@@ -236,6 +236,19 @@ const updateUserCompanyName = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(users);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
+
+
 // Delete user from database by firebaseUid
 const deleteUserFromDatabase = async (req, res) => {
   try {
@@ -273,6 +286,21 @@ const deleteUserFromDatabase = async (req, res) => {
   }
 };
 
+const deleteUserById = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    await prisma.user.delete({
+      where: { id: parseInt(userId) },
+    });
+
+    res.json({ message: "User deleted by admin successfully" });
+  } catch (error) {
+    console.error("Admin error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
 module.exports = {
   createUser,
   getOrCreateUserFromFirebase,
@@ -280,5 +308,7 @@ module.exports = {
   createOrUpdateProfile,
   getUserProfile,
   getUserProfileById,
+  getAllUsers,
   deleteUserFromDatabase,
+  deleteUserById,
 };
