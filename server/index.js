@@ -5,6 +5,7 @@ require("dotenv").config();
 const userRoutes = require('./routes/userRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const prisma = require('./prismaClient');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -55,12 +56,73 @@ app.get("/", (req, res) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log('Environment variables loaded:', {
-    FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? 'Set' : 'Not set',
-    FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL ? 'Set' : 'Not set',
-    FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? 'Set' : 'Not set'
+// Test route for deployment verification
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "MARCAN API is running successfully",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
   });
 });
+
+// Health check endpoint for Render
+app.get("/health", async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'healthy', database: 'connected' });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
+  }
+});
+
+// Start server with database connection check
+async function startServer() {
+  try {
+    console.log('Starting server initialization...');
+    console.log('Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT,
+      DATABASE_URL: process.env.DATABASE_URL ? 'Set' : 'Not set',
+      FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? 'Set' : 'Not set'
+    });
+
+    // Test database connection before starting server
+    console.log('Testing database connection...');
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('Database connection successful');
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log('Server bound to 0.0.0.0 to accept external connections');
+      console.log('Environment variables loaded:', {
+        FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? 'Set' : 'Not set',
+        FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL ? 'Set' : 'Not set',
+        FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? 'Set' : 'Not set',
+        DATABASE_URL: process.env.DATABASE_URL ? 'Set' : 'Not set'
+      });
+    });
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    console.error('Please check your DATABASE_URL environment variable');
+    console.error('Full error details:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('Shutting down gracefully...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+// Start the server
+startServer();

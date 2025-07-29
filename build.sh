@@ -23,4 +23,8 @@ npm install --include=dev
 # Generate Prisma client
 prisma generate
 
+# Run database migrations
+echo "Running database migrations..."
+prisma db push
+
 echo "Build completed successfully!" 
