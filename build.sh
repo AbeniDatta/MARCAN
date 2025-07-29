@@ -23,8 +23,9 @@ npm install --include=dev
 # Generate Prisma client
 prisma generate
 
-# Run database migrations
-echo "Running database migrations..."
-prisma db push
+# Skip database migrations during build for session pooler URLs
+echo "Skipping database migrations during build"
+echo "Note: Session pooler URLs don't support schema migrations"
+echo "Schema changes should be applied to the direct database URL"
 
 echo "Build completed successfully!" 

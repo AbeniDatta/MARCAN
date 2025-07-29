@@ -93,6 +93,26 @@ async function startServer() {
     await prisma.$queryRaw`SELECT 1`;
     console.log('Database connection successful');
 
+    // Skip migrations for session pooler URLs (they don't support schema changes)
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL.includes('pooler')) {
+      console.log('Detected session pooler URL - skipping migrations');
+      console.log('Note: Schema changes should be applied to the direct database URL');
+    } else {
+      // Try to run migrations if needed (with timeout and error handling)
+      try {
+        console.log('Checking if database migrations are needed...');
+        const { execSync } = require('child_process');
+        execSync('npx prisma db push --accept-data-loss', {
+          timeout: 30000, // 30 second timeout
+          stdio: 'inherit'
+        });
+        console.log('Database migrations completed successfully');
+      } catch (migrationError) {
+        console.warn('Database migration failed or timed out:', migrationError.message);
+        console.warn('Continuing with server startup - migrations may be handled manually');
+      }
+    }
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server is running on port ${PORT}`);
       console.log('Server bound to 0.0.0.0 to accept external connections');
