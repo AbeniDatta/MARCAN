@@ -31,31 +31,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/chat', chatRoutes);
 
-// Serve static files from the React app
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  });
-}
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: err.message || 'Something broke!' });
-});
-
-// Sample route
-app.get("/", (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  } else {
-    res.send("MARCAN API is running.");
-  }
-});
-
 // Test route for deployment verification
 app.get("/api/test", (req, res) => {
   res.json({
@@ -75,6 +50,31 @@ app.get("/health", async (req, res) => {
     console.error('Health check failed:', error);
     res.status(500).json({ status: 'unhealthy', database: 'disconnected', error: error.message });
   }
+});
+
+// Sample route
+app.get("/", (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  } else {
+    res.send("MARCAN API is running.");
+  }
+});
+
+// Serve static files from the React app
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: err.message || 'Something broke!' });
 });
 
 // Start server with database connection check
