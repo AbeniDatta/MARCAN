@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { auth } from '@/firebase';
 
-const API_URL = 'http://localhost:5050/api';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
 
 // Create axios instance
 const api = axios.create({
@@ -14,17 +14,17 @@ const api = axios.create({
 
 // Add request interceptor to include auth token
 api.interceptors.request.use(async (config) => {
-  try {
-    const user = auth.currentUser;
-    if (user) {
-      const token = await user.getIdToken(true);
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+        const user = auth.currentUser;
+        if (user) {
+            const token = await user.getIdToken(true);
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    } catch (error) {
+        console.error('Token error:', error);
+        return config;
     }
-    return config;
-  } catch (error) {
-    console.error('Token error:', error);
-    return config;
-  }
 });
 
 // Add response interceptor for better error handling
@@ -274,7 +274,7 @@ export const profileApi = {
             throw error;
         }
     },
-}; 
+};
 
 export const getAllUsers = () => api.get<UserProfile[]>("/users");
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
