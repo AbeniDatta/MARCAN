@@ -1,11 +1,18 @@
 const prisma = require('../prismaClient');
 const { getOrCreateUserFromFirebase } = require('./userController');
 
+// Helper function to get EST timestamp
+const getESTTimestamp = () => {
+  const now = new Date();
+  const estOffset = -5 * 60 * 60 * 1000; // EST is UTC-5
+  return now.getTime() + estOffset;
+};
+
 // Create a new listing
 const createListing = async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { title, description, price, tags, categories, imageUrl, city } = req.body;
+    const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
 
     // Get the Firebase user from the request (set by auth middleware)
     const firebaseUser = req.user;
@@ -35,10 +42,12 @@ const createListing = async (req, res) => {
       price: parseFloat(price),
       companyName,
       imageUrl,
+      fileUrl,
       tags,
       categories,
       city,
-      userId: user.id // Use the actual user ID from our database
+      userId: user.id, // Use the actual user ID from our database
+      timestamp: getESTTimestamp() // EST timestamp for sorting
     };
 
     console.log('Creating listing with data:', listingData);
@@ -63,7 +72,14 @@ const getAllListings = async (req, res) => {
     });
     console.log('All listings count:', listings.length);
     console.log('Sample listing:', listings[0]);
-    res.json(listings);
+
+    // Convert BigInt timestamps to regular numbers for JSON serialization
+    const serializedListings = listings.map(listing => ({
+      ...listing,
+      timestamp: listing.timestamp ? Number(listing.timestamp) : null
+    }));
+
+    res.json(serializedListings);
   } catch (err) {
     console.error('Error fetching all listings:', err);
     res.status(500).json({ error: 'Failed to fetch listings' });
@@ -79,7 +95,14 @@ const getListingById = async (req, res) => {
       include: { user: true },
     });
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
-    res.json(listing);
+
+    // Convert BigInt timestamp to regular number for JSON serialization
+    const serializedListing = {
+      ...listing,
+      timestamp: listing.timestamp ? Number(listing.timestamp) : null
+    };
+
+    res.json(serializedListing);
   } catch (err) {
     res.status(400).json({ error: 'Error fetching listing' });
   }
@@ -150,15 +173,37 @@ const getListingsByFirebaseUid = async (req, res) => {
 // Update a listing
 const updateListing = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price, tags, categories, imageUrl, city } = req.body;
+  const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
+
+  console.log('=== UPDATE LISTING REQUEST ===');
+  console.log('Listing ID:', id);
+  console.log('Request body:', req.body);
+  console.log('Parsed fields:', { title, description, price, tags, categories, imageUrl, fileUrl, city });
+
   try {
+    const updateData = {
+      title,
+      description,
+      price: parseFloat(price),
+      tags,
+      categories,
+      imageUrl,
+      fileUrl,
+      city
+    };
+    console.log('Update data being sent to Prisma:', updateData);
+
     const updated = await prisma.listing.update({
       where: { id: parseInt(id) },
-      data: { title, description, price, tags, categories, imageUrl, city },
+      data: updateData,
     });
+    console.log('Successfully updated listing:', updated);
+    console.log('Sending response to frontend');
     res.json(updated);
   } catch (err) {
-    res.status(400).json({ error: 'Failed to update listing' });
+    console.error('Error updating listing:', err);
+    console.error('Error stack:', err.stack);
+    res.status(400).json({ error: 'Failed to update listing', details: err.message });
   }
 };
 
@@ -177,7 +222,7 @@ const deleteListing = async (req, res) => {
 const saveDraft = async (req, res) => {
   try {
     console.log('Received draft request body:', req.body);
-    const { title, description, price, tags, categories, imageUrl, city } = req.body;
+    const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
 
     // Get the Firebase user from the request (set by auth middleware)
     const firebaseUser = req.user;
@@ -207,11 +252,13 @@ const saveDraft = async (req, res) => {
       price: parseFloat(price),
       companyName,
       imageUrl,
+      fileUrl,
       tags,
       categories,
       city,
       isDraft: true,
-      userId: user.id // Use the actual user ID from our database
+      userId: user.id, // Use the actual user ID from our database
+      timestamp: getESTTimestamp() // EST timestamp for sorting
     };
 
     console.log('Creating draft with data:', listingData);
@@ -267,22 +314,27 @@ const publishDraft = async (req, res) => {
 const getFilterOptions = async (req, res) => {
   try {
     const listings = await prisma.listing.findMany({
-      select: { categories: true, tags: true }
+      select: { categories: true, tags: true, city: true }
     });
 
     // Flatten arrays and dedupe
     const categorySet = new Set();
     const tagSet = new Set();
+    const locationSet = new Set();
 
     listings.forEach(listing => {
       (listing.categories || []).forEach(cat => categorySet.add(cat));
       (listing.tags || []).forEach(tag => tagSet.add(tag));
+      if (listing.city) {
+        locationSet.add(listing.city);
+      }
     });
 
     const categories = Array.from(categorySet);
     const tags = Array.from(tagSet);
+    const locations = Array.from(locationSet).sort();
 
-    res.json({ categories, tags });
+    res.json({ categories, tags, locations });
   } catch (err) {
     console.error("Error in getFilterOptions:", err);
     res.status(400).json({ error: "Error fetching listing" });
@@ -408,7 +460,13 @@ const searchListings = async (req, res) => {
       tags: l.tags
     })));
 
-    res.json(listings);
+    // Convert BigInt timestamps to regular numbers for JSON serialization
+    const serializedListings = listings.map(listing => ({
+      ...listing,
+      timestamp: listing.timestamp ? Number(listing.timestamp) : null
+    }));
+
+    res.json(serializedListings);
   } catch (err) {
     console.error("Error in searchListings:", err);
     res.status(500).json({ error: "Error searching listings" });

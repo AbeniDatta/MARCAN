@@ -16,10 +16,11 @@ const Listings = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [activeFilters, setActiveFilters] = useState({
-    location: "",
+    location: [] as string[],
     tags: [] as string[],
     capacity: [] as string[],
     categories: [] as string[],
+    sortBy: "most-relevant",
   });
 
   useEffect(() => {
@@ -72,6 +73,11 @@ const Listings = () => {
     }
   }, [listings]);
 
+  // Debug: Monitor filteredListings changes
+  useEffect(() => {
+    console.log('filteredListings state changed:', filteredListings.map(l => ({ id: l.id, title: l.title, timestamp: l.timestamp })));
+  }, [filteredListings]);
+
   const fetchListings = async () => {
     try {
       setLoading(true);
@@ -99,13 +105,20 @@ const Listings = () => {
   };
 
   const handleFilterChange = (filters: typeof activeFilters) => {
+    console.log('=== FILTER CHANGE HANDLER ===');
+    console.log('Filter change detected:', filters);
+    console.log('Current searchQuery:', searchQuery);
+    console.log('Calling setActiveFilters and applyFiltersAndSearch');
     setActiveFilters(filters);
     applyFiltersAndSearch(filters, searchQuery);
+    console.log('=== FILTER CHANGE HANDLER COMPLETED ===');
   };
 
   const applyFiltersAndSearch = (filters: typeof activeFilters, searchQuery: string) => {
-    console.log('Applying filters and search:', { filters, searchQuery });
-    console.log('All listings:', listings);
+    console.log('=== APPLYING FILTERS AND SEARCH ===');
+    console.log('Filters:', filters);
+    console.log('Search query:', searchQuery);
+    console.log('All listings count:', listings.length);
 
     console.log('Starting to filter', listings.length, 'listings');
     const filtered = listings.filter((listing, index) => {
@@ -117,11 +130,19 @@ const Listings = () => {
         (listing.categories &&
           filters.categories.every((cat) =>
             listing.categories.includes(cat)
-        ));
+          ));
 
       const matchLocation =
-        !filters.location ||
-        listing.city?.toLowerCase().includes(filters.location.toLowerCase());
+        filters.location.length === 0 ||
+        (listing.city && filters.location.some(loc =>
+          listing.city?.toLowerCase() === loc.toLowerCase()
+        ));
+
+      console.log(`Listing ${listing.id} location check:`, {
+        listingCity: listing.city,
+        filterLocations: filters.location,
+        matchLocation
+      });
 
       const matchTags =
         filters.tags.length === 0 ||
@@ -174,14 +195,135 @@ const Listings = () => {
         matchSearch = matchTitle || matchDescription || matchCompanyName || matchCategories || matchTags;
       }
 
-      const finalMatch =   matchLocation && matchTags && matchCapacity && matchCategories && matchSearch;
+      const finalMatch = matchLocation && matchTags && matchCapacity && matchCategories && matchSearch;
       console.log('Final match for listing', listing.id, ':', finalMatch);
 
       return finalMatch;
     });
 
-    console.log('Filtered results:', filtered);
-    setFilteredListings(filtered);
+    console.log('Filtered results count:', filtered.length);
+
+    // Apply sorting
+    let sortedResults = [...filtered];
+    console.log('Sorting by:', filters.sortBy);
+    console.log('Sample dates:', sortedResults.slice(0, 3).map(l => ({ id: l.id, createdAt: l.createdAt, parsed: new Date(l.createdAt) })));
+
+    // Log the first few results before sorting
+    console.log('Before sorting:', sortedResults.slice(0, 3).map(l => ({
+      id: l.id,
+      title: l.title,
+      createdAt: l.createdAt,
+      timestamp: l.timestamp,
+      dateTime: new Date(l.createdAt).toISOString()
+    })));
+
+    // Debug: Log all timestamps
+    console.log('All timestamps:', sortedResults.map(l => ({
+      id: l.id,
+      title: l.title,
+      timestamp: l.timestamp,
+      createdAt: l.createdAt,
+      createdAtTime: new Date(l.createdAt).getTime()
+    })));
+
+    switch (filters.sortBy) {
+      case "new-to-old":
+        console.log('=== SORTING NEW TO OLD ===');
+        sortedResults.sort((a, b) => {
+          // Use timestamp if available, otherwise fall back to createdAt
+          const timeA = a.timestamp || new Date(a.createdAt).getTime();
+          const timeB = b.timestamp || new Date(b.createdAt).getTime();
+          console.log(`Comparing ${a.id} (timestamp: ${timeA}, type: ${typeof timeA}) vs ${b.id} (timestamp: ${timeB}, type: ${typeof timeB}): ${timeB - timeA}`);
+          return timeB - timeA;
+        });
+        break;
+      case "old-to-new":
+        console.log('=== SORTING OLD TO NEW ===');
+        sortedResults.sort((a, b) => {
+          // Use timestamp if available, otherwise fall back to createdAt
+          const timeA = a.timestamp || new Date(a.createdAt).getTime();
+          const timeB = b.timestamp || new Date(b.createdAt).getTime();
+          console.log(`Comparing ${a.id} (timestamp: ${timeA}, type: ${typeof timeA}) vs ${b.id} (timestamp: ${timeB}, type: ${typeof timeB}): ${timeA - timeB}`);
+          return timeA - timeB;
+        });
+        break;
+      case "most-relevant":
+      default:
+        // Sort by relevance: most filter matches first, then by date (new to old)
+        sortedResults.sort((a, b) => {
+          // Calculate relevance score for each listing
+          const getRelevanceScore = (listing: Listing) => {
+            let score = 0;
+
+            // Category matches
+            if (filters.categories.length > 0) {
+              const categoryMatches = filters.categories.filter(cat =>
+                listing.categories?.includes(cat)
+              ).length;
+              score += (categoryMatches / filters.categories.length) * 3; // Weight categories higher
+            }
+
+            // Tag matches
+            if (filters.tags.length > 0) {
+              const tagMatches = filters.tags.filter(tag =>
+                listing.tags?.includes(tag)
+              ).length;
+              score += (tagMatches / filters.tags.length) * 2; // Weight tags medium
+            }
+
+            // Location matches
+            if (filters.location.length > 0) {
+              const locationMatches = filters.location.filter(loc =>
+                listing.city?.toLowerCase() === loc.toLowerCase()
+              ).length;
+              score += (locationMatches / filters.location.length) * 1; // Weight location lower
+            }
+
+            // Search query relevance (if there's a search query)
+            if (searchQuery) {
+              const searchTerm = searchQuery.toLowerCase();
+              let searchScore = 0;
+
+              if (listing.title?.toLowerCase().includes(searchTerm)) searchScore += 3;
+              if (listing.description?.toLowerCase().includes(searchTerm)) searchScore += 2;
+              if (listing.companyName?.toLowerCase().includes(searchTerm)) searchScore += 2;
+              if (listing.categories?.some(cat => cat.toLowerCase().includes(searchTerm))) searchScore += 1;
+              if (listing.tags?.some(tag => tag.toLowerCase().includes(searchTerm))) searchScore += 1;
+
+              score += searchScore / 9; // Normalize search score
+            }
+
+            return score;
+          };
+
+          const scoreA = getRelevanceScore(a);
+          const scoreB = getRelevanceScore(b);
+
+          // If relevance scores are different, sort by relevance
+          if (Math.abs(scoreA - scoreB) > 0.01) {
+            return scoreB - scoreA; // Higher score first
+          }
+
+          // If relevance scores are the same, sort by date (new to old)
+          const timeA = a.timestamp || new Date(a.createdAt).getTime();
+          const timeB = b.timestamp || new Date(b.createdAt).getTime();
+          console.log(`Relevance scores equal (${scoreA}), sorting by timestamp: ${timeB - timeA}, types: ${typeof timeA} vs ${typeof timeB}`);
+          return timeB - timeA;
+        });
+        break;
+    }
+
+    // Log the first few results after sorting
+    console.log('After sorting:', sortedResults.slice(0, 3).map(l => ({
+      id: l.id,
+      title: l.title,
+      createdAt: l.createdAt,
+      timestamp: l.timestamp,
+      dateTime: new Date(l.createdAt).toISOString()
+    })));
+    console.log('Setting filtered listings with count:', sortedResults.length);
+    console.log('Final sorted order:', sortedResults.map(l => ({ id: l.id, title: l.title, timestamp: l.timestamp })));
+    setFilteredListings(sortedResults);
   };
 
   if (loading) {

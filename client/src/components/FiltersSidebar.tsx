@@ -14,8 +14,9 @@ interface FiltersSidebarProps {
   filters: {
     categories: string[];
     tags: string[];
-    location: string;
+    location: string[];
     capacity: string[];
+    sortBy: string;
   };
   onFilterChange: (updated: FiltersSidebarProps["filters"]) => void;
 }
@@ -23,14 +24,26 @@ interface FiltersSidebarProps {
 const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange }) => {
   const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [locationOptions, setLocationOptions] = useState<string[]>([]);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [tagOpen, setTagOpen] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  const sortOptions = [
+    { value: "most-relevant", label: "Most Relevant" },
+    { value: "new-to-old", label: "New to Old" },
+    { value: "old-to-new", label: "Old to New" }
+  ];
+
+  console.log('Sort options defined:', sortOptions);
+  console.log('Current filters.sortBy:', filters.sortBy);
 
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
-        const { tags } = await listingApi.getFilterOptions();
+        const { tags, locations } = await listingApi.getFilterOptions();
         setTagOptions(tags);
+        setLocationOptions(locations);
         const allCategories = [
           "Metal Fabrication",
           "Tool & Die",
@@ -52,6 +65,7 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
   }, []);
 
   const handleCategoryChange = (value: string) => {
+    console.log('Category change detected:', value);
     const current = filters.categories;
     const updated = current.includes(value)
       ? current.filter((v) => v !== value)
@@ -77,13 +91,58 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
     onFilterChange({ ...filters, tags: updated });
   };
 
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({ ...filters, location: e.target.value });
+  const handleLocationChange = (value: string) => {
+    console.log('Location change detected:', value);
+    const current = filters.location;
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    onFilterChange({ ...filters, location: updated });
+  };
+
+  const handleSortChange = (value: string) => {
+    console.log('=== SORT CHANGE TRIGGERED ===');
+    console.log('Sort change detected:', value);
+    console.log('Current filters:', filters);
+    console.log('Calling onFilterChange with:', { ...filters, sortBy: value });
+    onFilterChange({ ...filters, sortBy: value });
+    console.log('=== SORT CHANGE COMPLETED ===');
+  };
+
+  const removeLocation = (locationToRemove: string) => {
+    const updated = filters.location.filter((location) => location !== locationToRemove);
+    onFilterChange({ ...filters, location: updated });
   };
 
   return (
     <aside className="bg-white border border-[#DB1233] p-6 w-full md:w-48 rounded-lg">
-      <h3 className="text-3xl font-bold text-black font-inter mb-8">Filters</h3>
+      <h3 className="text-3xl font-bold text-black font-inter mb-8">Filters & Sort</h3>
+
+      <div className="mb-8">
+        <h4 className="text-xl font-semibold text-black mb-4">Sort By</h4>
+        <Select
+          value={filters.sortBy || "most-relevant"}
+          onValueChange={(value) => {
+            console.log('=== SELECT ONVALUECHANGE TRIGGERED ===');
+            console.log('Select value changed to:', value);
+            handleSortChange(value);
+          }}
+        >
+          <SelectTrigger className="w-full justify-between text-left border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+            <SelectValue
+              placeholder="Select sort order"
+              className="truncate text-gray-500"
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="mb-8">
         <h4 className="text-xl font-semibold text-black mb-4">Categories</h4>
@@ -150,12 +209,65 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
 
       <div className="mb-8">
         <h4 className="text-xl font-semibold text-black mb-4">Location</h4>
-        <Input
-          className="w-full"
-          value={filters.location}
-          onChange={handleLocationChange}
-          placeholder="Enter location"
-        />
+        <Popover open={locationOpen} onOpenChange={setLocationOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={locationOpen}
+              className="w-full justify-between text-left"
+            >
+              <span className={cn("truncate", filters.location.length === 0 ? "text-gray-500" : "")}>
+                {filters.location.length === 0
+                  ? "Select locations..."
+                  : `${filters.location.length} selected`}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0">
+            <Command>
+              <CommandInput placeholder="Search locations..." />
+              <CommandList>
+                <CommandEmpty>No location found.</CommandEmpty>
+                <CommandGroup>
+                  {locationOptions.map((option) => (
+                    <CommandItem
+                      key={option}
+                      onSelect={() => handleLocationChange(option)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        checked={filters.location.includes(option)}
+                        className="mr-2"
+                      />
+                      <span>{option}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+        {/* Selected Locations */}
+        {filters.location.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {filters.location.map((location) => (
+              <Badge
+                key={location}
+                variant="secondary"
+                className="flex items-center gap-1"
+              >
+                {location}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => removeLocation(location)}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mb-8">

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { auth } from '@/firebase';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
+//const API_URL = 'http://localhost:5050/api';
 
 // Create axios instance
 const api = axios.create({
@@ -16,9 +17,17 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
     try {
         const user = auth.currentUser;
+        console.log('=== API REQUEST DEBUG ===');
+        console.log('Current user:', user ? user.email : 'No user');
+        console.log('Request URL:', config.url);
+        console.log('Request method:', config.method);
+
         if (user) {
             const token = await user.getIdToken(true);
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('Token added to request');
+        } else {
+            console.log('No user found, no token added');
         }
         return config;
     } catch (error) {
@@ -48,12 +57,14 @@ export interface Listing {
     price: number;
     companyName: string;
     imageUrl?: string;
+    fileUrl?: string;
     tags: string[];
     categories: string[];
     city?: string;
     capacity?: string;
     userId: number;
     createdAt: string;
+    timestamp?: number;
     isDraft?: boolean;
     user?: {
         id: number;
@@ -173,7 +184,7 @@ export const listingApi = {
 
     getFilterOptions: async () => {
         try {
-            const response = await api.get<{ categories: string[]; tags: string[] }>('/listings/filters');
+            const response = await api.get<{ categories: string[]; tags: string[]; locations: string[] }>('/listings/filters');
             return response.data;
         } catch (error) {
             console.error('Error fetching filter options:', error);
@@ -184,10 +195,17 @@ export const listingApi = {
     // Update a listing
     updateListing: async (id: number, data: Partial<Listing>) => {
         try {
+            console.log('=== UPDATE LISTING API CALL ===');
+            console.log('Sending update request for ID:', id);
+            console.log('Data being sent:', data);
+
             const response = await api.put<Listing>(`/listings/${id}`, data);
+            console.log('Update response received:', response);
+            console.log('Response data:', response.data);
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating listing:', error);
+            console.error('Error details:', error.response?.data);
             throw error;
         }
     },

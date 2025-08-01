@@ -5,13 +5,13 @@ import ListingCard from './ListingCard';
 interface Filters {
   categories: string[];
   tags: string[];
-  location: string;
+  location: string[];
   capacity: string[]; // Optional if you don't use it in this component
 }
 
 interface LatestListingsProps {
   filters: Filters;
-}         
+}
 
 const LatestListings = ({ filters }: LatestListingsProps) => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -43,10 +43,10 @@ const LatestListings = ({ filters }: LatestListingsProps) => {
         filters.categories.some((cat) => listing.categories.includes(cat));
 
       const matchLocation =
-        !filters.location ||
-        listing.city
-          ?.toLowerCase()
-          .includes(filters.location.toLowerCase());
+        filters.location.length === 0 ||
+        (listing.city && filters.location.some(loc =>
+          listing.city?.toLowerCase() === loc.toLowerCase()
+        ));
 
       const matchTags =
         filters.tags.length === 0 ||

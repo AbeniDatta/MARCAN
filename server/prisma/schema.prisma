@@ -43,6 +43,7 @@ model Listing {
   price       Float
   companyName String?
   imageUrl    String?
+  fileUrl     String?
   tags        String[]
   categories  String[]
   city        String?
@@ -50,4 +51,5 @@ model Listing {
   userId      Int
   user        User     @relation("UserListings", fields: [userId], references: [id])
   createdAt   DateTime @default(now())
+  timestamp   BigInt?
 }

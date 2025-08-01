@@ -126,45 +126,56 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
               ))}
             </div>
 
-            <p className="text-[14px] font-semibold text-[#DB1233] mb-4 flex-shrink-0">
+            <p className="text-[14px] font-semibold text-[#DB1233] mb-2 flex-shrink-0">
               ${listing.price} CAD
             </p>
 
+            {listing.city && (
+              <div className="flex items-center gap-1 mb-4 flex-shrink-0">
+                <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-[12px] font-medium text-gray-600 font-inter">
+                  {listing.city}
+                </span>
+              </div>
+            )}
+
             <div className="flex gap-2 mt-auto flex-shrink-0">
-            {!readonly ? (
-              isOwner ? (
-                <>
-                  <button
-                    onClick={() => navigate(`/update-listing/${listing.id}`)}
-                    className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors flex-1"
-                  >
-                    Update Listing
-                  </button>
-                  <button
-                    onClick={handleDeleteListing}
-                    className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#DB1233] hover:bg-[#c10e2b] transition-colors flex-1"
-                  >
-                    Delete Listing
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleViewSupplier}
-                    className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors flex-1"
-                  >
-                    View Supplier
-                  </button>
-                  <button
-                    onClick={handleContactSupplier}
-                    className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#DB1233] hover:bg-[#c10e2b] transition-colors flex-1"
-                  >
-                    Contact Supplier
-                  </button>
-                </>
-              )
-            ) : null}
-          </div>
+              {!readonly ? (
+                isOwner ? (
+                  <>
+                    <button
+                      onClick={() => navigate(`/update-listing/${listing.id}`)}
+                      className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors flex-1"
+                    >
+                      Update Listing
+                    </button>
+                    <button
+                      onClick={handleDeleteListing}
+                      className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#DB1233] hover:bg-[#c10e2b] transition-colors flex-1"
+                    >
+                      Delete Listing
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleViewSupplier}
+                      className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors flex-1"
+                    >
+                      View Supplier
+                    </button>
+                    <button
+                      onClick={handleContactSupplier}
+                      className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#DB1233] hover:bg-[#c10e2b] transition-colors flex-1"
+                    >
+                      Contact Supplier
+                    </button>
+                  </>
+                )
+              ) : null}
+            </div>
           </div>
         </div>
 

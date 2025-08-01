@@ -28,6 +28,7 @@ interface ListingFormData {
     description: string;
     price: string;
     imageFile: File | null;
+    fileUpload: File | null;
     tags: string[];
     categories: string[];
     city: string;
@@ -79,7 +80,10 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const [otherTagInput, setOtherTagInput] = useState('');
     const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isFileDragOver, setIsFileDragOver] = useState(false);
+    const [fileUploadName, setFileUploadName] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileUploadRef = useRef<HTMLInputElement>(null);
     const [manualCity, setManualCity] = useState("");
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
@@ -88,6 +92,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         description: initialData?.description || '',
         price: initialData?.price?.toString() || '',
         imageFile: null,
+        fileUpload: null,
         tags: initialData?.tags || [],
         categories: initialData?.categories || [],
         city: initialData?.city || ''
@@ -120,6 +125,21 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
         const response = await axios.post(
             `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            formData
+        );
+
+        return response.data.secure_url;
+    };
+
+    const uploadFileToCloudinary = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+        const response = await axios.post(
+            `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
             formData
         );
 
@@ -170,14 +190,31 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             if (formData.imageFile) {
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
             }
+
+            let fileUrl = initialData?.fileUrl || '';
+            if (formData.fileUpload) {
+                fileUrl = await uploadFileToCloudinary(formData.fileUpload);
+            }
+
             const listingData: ListingInput = {
-                ...formData,
+                title: formData.title,
+                description: formData.description,
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
+                fileUrl,
+                tags: formData.tags,
+                categories: formData.categories,
                 city: manualCity.trim() ? manualCity : formData.city
             };
+
+            console.log('=== FRONTEND SUBMISSION ===');
+            console.log('Initial data:', initialData);
+            console.log('Form data:', formData);
+            console.log('Listing data being sent:', listingData);
+
             let result;
             if (initialData?.id) {
+                console.log('Updating listing with ID:', initialData.id);
                 result = await listingApi.updateListing(initialData.id, listingData);
             } else {
                 result = await listingApi.createListing(listingData);
@@ -241,10 +278,20 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             if (formData.imageFile) {
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
             }
+
+            let fileUrl = initialData?.fileUrl || '';
+            if (formData.fileUpload) {
+                fileUrl = await uploadFileToCloudinary(formData.fileUpload);
+            }
+
             const listingData: ListingInput = {
-                ...formData,
+                title: formData.title,
+                description: formData.description,
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
+                fileUrl,
+                tags: formData.tags,
+                categories: formData.categories,
                 city: manualCity.trim() ? manualCity : formData.city
             };
             let result;
@@ -317,6 +364,52 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         setImagePreview(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({ ...prev, fileUpload: file }));
+            setFileUploadName(file.name);
+        }
+    };
+
+    const removeFileUpload = () => {
+        setFormData(prev => ({ ...prev, fileUpload: null }));
+        setFileUploadName('');
+        if (fileUploadRef.current) {
+            fileUploadRef.current.value = '';
+        }
+    };
+
+    const handleFileDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsFileDragOver(true);
+    };
+
+    const handleFileDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsFileDragOver(false);
+    };
+
+    const handleFileDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsFileDragOver(false);
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            // Check if file type is allowed
+            const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+            const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+
+            if (allowedTypes.includes(fileExtension)) {
+                setFormData(prev => ({ ...prev, fileUpload: file }));
+                setFileUploadName(file.name);
+            } else {
+                setError('Please upload a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
+            }
         }
     };
 
@@ -453,6 +546,55 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                         onChange={handleImageChange}
                         className="hidden"
                         id="image-upload"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-lg font-semibold">Additional Files (Optional)</label>
+                <div className="space-y-4">
+                    {fileUploadName ? (
+                        <div className="relative">
+                            <div className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-between bg-gray-50">
+                                <div className="flex items-center space-x-3">
+                                    <Upload className="w-6 h-6 text-gray-400" />
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-700">{fileUploadName}</p>
+                                        <p className="text-xs text-gray-500">File uploaded successfully</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={removeFileUpload}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${isFileDragOver
+                                ? 'border-[#DB1233] bg-red-50'
+                                : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                            onDragOver={handleFileDragOver}
+                            onDragLeave={handleFileDragLeave}
+                            onDrop={handleFileDrop}
+                            onClick={() => fileUploadRef.current?.click()}
+                        >
+                            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-gray-600 mb-2">Drag and drop files here, or click to browse</p>
+                            <p className="text-sm text-gray-500">PDF, DOC, DOCX, XLS, XLSX up to 10MB</p>
+                        </div>
+                    )}
+                    <Input
+                        ref={fileUploadRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                        onChange={handleFileUploadChange}
+                        className="hidden"
+                        id="file-upload"
                     />
                 </div>
             </div>
