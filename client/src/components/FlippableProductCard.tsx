@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Listing } from '@/services/api';
-import { profileApi, UserProfile, listingApi } from '@/services/api';
+import { Listing, listingApi, profileApi, UserProfile } from '@/services/api';
 import { auth } from '@/firebase';
+import { HeartIcon as SolidHeart } from '@heroicons/react/24/solid';
+import { HeartIcon as OutlineHeart } from '@heroicons/react/24/outline';
 
 interface FlippableProductCardProps {
   listing: Listing;
@@ -17,6 +18,7 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   const [supplierData, setSupplierData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -32,6 +34,32 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
         .catch(console.error);
     }
   }, [selectMode, listing.user]);
+
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      try {
+        const saved = await listingApi.getSavedListings();
+        const found = saved.some((l) => l.id === listing.id);
+        setIsSaved(found);
+      } catch (err) {
+        console.error('Error fetching saved listings:', err);
+      }
+    };
+    fetchSavedStatus();
+  }, [listing.id]);
+
+  const handleToggleSave = async () => {
+    try {
+      if (isSaved) {
+        await listingApi.unsaveListing(listing.id);
+      } else {
+        await listingApi.saveListing(listing.id);
+      }
+      setIsSaved(!isSaved);
+    } catch (err) {
+      console.error('Error toggling save listing:', err);
+    }
+  };
 
   const handleViewSupplier = () => {
     if (listing.user?.id) {
@@ -83,10 +111,6 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
       console.error("Failed to delete listing:", err);
       alert("Error deleting listing.");
     }
-  };
-
-  const handleUpdateListing = () => {
-    navigate(`/update-listing?id=${listing.userId}`);
   };
 
   const isOwner = listing.user?.firebaseUid === currentUserUid;
@@ -189,6 +213,19 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                     >
                       Contact Supplier
                     </button>
+                    <div className="absolute top-3 right-3 z-10">
+                      <button
+                        onClick={handleToggleSave}
+                        className="focus:outline-none"
+                        aria-label={isSaved ? 'Unsave Listing' : 'Save Listing'}
+                      >
+                        {isSaved ? (
+                          <SolidHeart className="w-6 h-6 text-red-500 hover:text-red-600 transition" />
+                        ) : (
+                          <OutlineHeart className="w-6 h-6 text-gray-400 hover:text-red-500 transition" />
+                        )}
+                      </button>
+                    </div>
                   </>
                 )
               ) : null}
@@ -196,7 +233,7 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
           </div>
         </div>
 
-        {/* Back side - Contact Details */}
+        {/* Back side */}
         <div className="absolute w-full h-full backface-hidden rotate-y-180">
           <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">

@@ -481,6 +481,87 @@ const searchListings = async (req, res) => {
   }
 };
 
+// Save a listing
+const saveListing = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    const { listingId } = req.body;
+
+    if (!firebaseUser) return res.status(401).json({ error: 'User not authenticated' });
+    if (!listingId) return res.status(400).json({ error: 'Listing ID is required' });
+
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+
+    const saved = await prisma.savedListing.create({
+      data: {
+        userId: user.id,
+        listingId: parseInt(listingId)
+      }
+    });
+
+    res.json(saved);
+  } catch (error) {
+    console.error("Error saving listing:", error);
+    res.status(500).json({ error: "Failed to save listing" });
+  }
+};
+
+// Get saved listings for current user
+const getSavedListings = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    if (!firebaseUser) return res.status(401).json({ error: 'User not authenticated' });
+
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+
+    const saved = await prisma.savedListing.findMany({
+      where: { userId: user.id },
+      include: {
+        listing: {
+          include: { user: true }
+        }
+      }
+    });
+
+    const listings = saved.map(entry => ({
+      ...entry.listing,
+      timestamp: entry.listing.timestamp ? Number(entry.listing.timestamp) : null
+    }));
+
+    res.json(listings);
+  } catch (error) {
+    console.error("Error fetching saved listings:", error);
+    res.status(500).json({ error: "Failed to fetch saved listings" });
+  }
+};
+
+// Unsave a listing
+const unsaveListing = async (req, res) => {
+  try {
+    const firebaseUser = req.user;
+    const { listingId } = req.body;
+
+    if (!firebaseUser) return res.status(401).json({ error: 'User not authenticated' });
+    if (!listingId) return res.status(400).json({ error: 'Listing ID is required' });
+
+    const user = await getOrCreateUserFromFirebase(firebaseUser);
+
+    await prisma.savedListing.delete({
+      where: {
+        userId_listingId: {
+          userId: user.id,
+          listingId: parseInt(listingId)
+        }
+      }
+    });
+
+    res.json({ message: 'Listing unsaved successfully' });
+  } catch (error) {
+    console.error("Error unsaving listing:", error);
+    res.status(500).json({ error: "Failed to unsave listing" });
+  }
+};
+
 module.exports = {
   createListing,
   getAllListings,
@@ -495,4 +576,7 @@ module.exports = {
   saveDraft,
   getMyDrafts,
   publishDraft,
+  saveListing,
+  getSavedListings,
+  unsaveListing,
 };

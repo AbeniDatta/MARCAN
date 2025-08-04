@@ -254,6 +254,23 @@ export const listingApi = {
             throw error;
         }
     },
+
+        saveListing: async (listingId: number) => {
+        const response = await api.post('/listings/save', { listingId });
+        return response.data;
+    },
+
+    // ✅ NEW: Unsave listing
+    unsaveListing: async (listingId: number) => {
+        const response = await api.post('/listings/unsave', { listingId });
+        return response.data;
+    },
+
+    // ✅ NEW: Get saved listings
+    getSavedListings: async () => {
+        const response = await api.get<Listing[]>('/listings/saved');
+        return response.data;
+    },
 };
 
 export const profileApi = {
