@@ -5,6 +5,7 @@ import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import FiltersSidebar from "@/components/FiltersSidebar";
 import FlippableProductCard from "@/components/FlippableProductCard";
 import { listingApi, Listing } from "@/services/api";
+import Hero from "@/components/Hero";
 
 const Listings = () => {
   const navigate = useNavigate();
@@ -360,7 +361,13 @@ const Listings = () => {
     <div className="min-h-screen bg-[#F9F9F9]">
       {/* Authenticated Header */}
       <AuthenticatedHeader />
-
+      <Hero
+        onSearch={(query) => {
+          setSearchQuery(query);
+          setSearchParams({ search: query });
+          performSearch(query);
+        }}
+      />
       {/* Page Header */}
       <section className="bg-[#F9F9F9] px-4 lg:px-20 py-12">
         <div className="max-w-screen-xl mx-auto">
