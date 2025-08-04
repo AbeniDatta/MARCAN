@@ -141,9 +141,12 @@ const SupplierProfile = () => {
               </div>
             )}
             <div className="bg-white rounded-[20px] px-4 py-3">
-              <span className="text-[16px] md:text-[20px] font-semibold text-black font-inter">
-                {profileData.email}
-              </span>
+                <a
+                  href={`mailto:${profileData.email}`}
+                  className="text-[16px] md:text-[20px] font-semibold text-blue-600 underline hover:text-blue-800 font-inter"
+                >
+                  {profileData.email}
+                </a>
             </div>
           </div>
         </div>

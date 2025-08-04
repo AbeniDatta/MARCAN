@@ -7,9 +7,11 @@ import { auth } from '@/firebase';
 interface FlippableProductCardProps {
   listing: Listing;
   readonly?: boolean;
+  onSelect?: (email: string, selected: boolean) => void;
+  selectMode?: boolean;
 }
 
-const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly }) => {
+const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly, onSelect, selectMode }) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const [supplierData, setSupplierData] = useState<UserProfile | null>(null);
@@ -22,6 +24,14 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (selectMode && listing.user?.firebaseUid) {
+      profileApi.getUserProfile(listing.user.firebaseUid)
+        .then(setSupplierData)
+        .catch(console.error);
+    }
+  }, [selectMode, listing.user]);
 
   const handleViewSupplier = () => {
     if (listing.user?.id) {
@@ -104,6 +114,13 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                 <p className="text-[14px] font-medium text-black font-inter leading-tight">
                   {listing.companyName}
                 </p>
+                {selectMode && supplierData?.email && (
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    onChange={(e) => onSelect?.(supplierData.email, e.target.checked)}
+                  />
+                )}
               </div>
             </div>
 
@@ -212,9 +229,12 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                 <div className="space-y-3">
                   <div>
                     <p className="text-[12px] font-medium text-gray-600 font-inter">Email</p>
-                    <p className="text-[13px] font-medium text-black font-inter">
+                    <a
+                      href={`mailto:${supplierData.email}`}
+                      className="text-[13px] font-medium text-blue-600 underline hover:text-blue-800"
+                    >
                       {supplierData.email}
-                    </p>
+                    </a>
                   </div>
 
                   {supplierData.phone && (
@@ -239,9 +259,7 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                     <div>
                       <p className="text-[12px] font-medium text-gray-600 font-inter">Address</p>
                       <p className="text-[13px] font-medium text-black font-inter">
-                        {[supplierData.address1, supplierData.city, supplierData.province, supplierData.postalCode]
-                          .filter(Boolean)
-                          .join(', ')}
+                        {[supplierData.address1, supplierData.city, supplierData.province, supplierData.postalCode].filter(Boolean).join(', ')}
                       </p>
                     </div>
                   )}

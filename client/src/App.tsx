@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import MyAccount from "./pages/MyAccount";
 import CreateListing from "./pages/CreateListing";
 import UpdateListing from "./pages/UpdateListing";
+import ContactVendorsPage from "@/pages/ContactVendors";
 import EditProfile from "./pages/EditProfile";
 import ChangeEmail from "./pages/ChangeEmail";
 import ChangePassword from "./pages/ChangePassword";
@@ -122,6 +123,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/contact-vendors" 
+            element={
+              <ProtectedRoute>
+                <ContactVendorsPage />
               </ProtectedRoute>
             }
           />

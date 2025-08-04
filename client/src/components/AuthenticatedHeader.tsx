@@ -79,6 +79,13 @@ const AuthenticatedHeader = () => {
               Listings
             </span>
           </Link>
+          <Link to="/contact-vendors">
+            <span
+              className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black"
+            >
+              Contact Vendors
+            </span>
+          </Link>
           {isAdmin && (
           <Link to="/admin">
             <span className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black">
@@ -138,6 +145,13 @@ const AuthenticatedHeader = () => {
                 className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <span className="font-medium">Listings</span>
+                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
+              </Link>
+              <Link
+                to="/contact-vendors"
+                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-medium">Contact Vendors</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
               {isAdmin && (
