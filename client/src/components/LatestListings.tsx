@@ -6,7 +6,8 @@ interface Filters {
   categories: string[];
   tags: string[];
   location: string[];
-  capacity: string[]; // Optional if you don't use it in this component
+  capacity: string[];
+  sortBy: string;
 }
 
 interface LatestListingsProps {
@@ -54,8 +55,28 @@ const LatestListings = ({ filters }: LatestListingsProps) => {
 
       return matchCategory && matchLocation && matchTags;
     });
+      let sorted = [...filtered];
+        switch (filters.sortBy) {
+          case "new-to-old":
+            sorted.sort((a, b) => {
+              const timeA = a.timestamp || new Date(a.createdAt).getTime();
+              const timeB = b.timestamp || new Date(b.createdAt).getTime();
+              return timeB - timeA;
+            });
+            break;
+          case "old-to-new":
+            sorted.sort((a, b) => {
+              const timeA = a.timestamp || new Date(a.createdAt).getTime();
+              const timeB = b.timestamp || new Date(b.createdAt).getTime();
+              return timeA - timeB;
+            });
+            break;
+          default:
+            // Leave as-is for now; "most-relevant" is optional
+            break;
+        }
 
-    setFilteredListings(filtered);
+    setFilteredListings(sorted);
   }, [filters, listings]);
 
   return (

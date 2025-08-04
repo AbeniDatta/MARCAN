@@ -65,24 +65,32 @@ const createListing = async (req, res) => {
 // Get all listings
 const getAllListings = async (req, res) => {
   try {
-    const listings = await prisma.listing.findMany({
-      where: { isDraft: false }, // Only get published listings
-      include: { user: true },
-      orderBy: { createdAt: 'desc' },
-    });
-    console.log('All listings count:', listings.length);
-    console.log('Sample listing:', listings[0]);
+    const { sortBy = "most-relevant" } = req.query;
 
-    // Convert BigInt timestamps to regular numbers for JSON serialization
+    let orderBy;
+    if (sortBy === "new-to-old") {
+      orderBy = { createdAt: "desc" };
+    } else if (sortBy === "old-to-new") {
+      orderBy = { createdAt: "asc" };
+    } else {
+      orderBy = undefined; // We'll sort by relevance client-side
+    }
+
+    const listings = await prisma.listing.findMany({
+      where: { isDraft: false },
+      include: { user: true },
+      ...(orderBy ? { orderBy } : {}),
+    });
+
     const serializedListings = listings.map(listing => ({
       ...listing,
-      timestamp: listing.timestamp ? Number(listing.timestamp) : null
+      timestamp: listing.timestamp ? Number(listing.timestamp) : null,
     }));
 
     res.json(serializedListings);
   } catch (err) {
-    console.error('Error fetching all listings:', err);
-    res.status(500).json({ error: 'Failed to fetch listings' });
+    console.error("Error fetching all listings:", err);
+    res.status(500).json({ error: "Failed to fetch listings" });
   }
 };
 

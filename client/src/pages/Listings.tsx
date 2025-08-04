@@ -82,7 +82,7 @@ const Listings = () => {
     try {
       setLoading(true);
       console.log('Fetching listings from API...');
-      const data = await listingApi.getAllListings();
+      const data = await listingApi.getAllListings(activeFilters.sortBy);
       console.log('API returned listings:', data);
       console.log('Listings count:', data.length);
       setListings(data);

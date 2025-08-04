@@ -114,14 +114,16 @@ export const listingApi = {
     },
 
     // Get all listings
-    getAllListings: async () => {
-        try {
-            const response = await api.get<Listing[]>('/listings');
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching listings:', error);
-            throw error;
-        }
+    getAllListings: async (sortBy: string = "most-relevant") => {
+    try {
+        const response = await api.get<Listing[]>('/listings', {
+        params: { sortBy },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching listings:', error);
+        throw error;
+    }
     },
 
     // Search listings
