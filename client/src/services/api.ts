@@ -1,8 +1,11 @@
 import axios from 'axios';
 import { auth } from '@/firebase';
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
-//const API_URL = 'http://localhost:5050/api';
+// Uncomment this for production:
+//const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
+// Uncomment this for local development:
+const API_URL = 'http://localhost:5050/api';
+
 
 // Create axios instance
 const api = axios.create({
@@ -255,7 +258,7 @@ export const listingApi = {
         }
     },
 
-        saveListing: async (listingId: number) => {
+    saveListing: async (listingId: number) => {
         const response = await api.post('/listings/save', { listingId });
         return response.data;
     },

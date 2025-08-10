@@ -10,9 +10,10 @@ interface FlippableProductCardProps {
   readonly?: boolean;
   onSelect?: (email: string, selected: boolean) => void;
   selectMode?: boolean;
+  showHeart?: boolean; // New prop to control heart visibility
 }
 
-const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly, onSelect, selectMode }) => {
+const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly, onSelect, selectMode, showHeart = true }) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const [supplierData, setSupplierData] = useState<UserProfile | null>(null);
@@ -37,9 +38,12 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
 
   useEffect(() => {
     const fetchSavedStatus = async () => {
+      console.log('Fetching saved status for listing:', listing.id);
       try {
         const saved = await listingApi.getSavedListings();
+        console.log('All saved listings:', saved);
         const found = saved.some((l) => l.id === listing.id);
+        console.log('Is this listing saved?', found);
         setIsSaved(found);
       } catch (err) {
         console.error('Error fetching saved listings:', err);
@@ -49,13 +53,22 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   }, [listing.id]);
 
   const handleToggleSave = async () => {
+    console.log('Heart clicked! Current saved status:', isSaved);
+    console.log('Listing ID:', listing.id);
+    console.log('Current user UID:', currentUserUid);
+
     try {
       if (isSaved) {
+        console.log('Unsaving listing...');
         await listingApi.unsaveListing(listing.id);
+        console.log('Listing unsaved successfully');
       } else {
+        console.log('Saving listing...');
         await listingApi.saveListing(listing.id);
+        console.log('Listing saved successfully');
       }
       setIsSaved(!isSaved);
+      console.log('Updated saved status to:', !isSaved);
     } catch (err) {
       console.error('Error toggling save listing:', err);
     }
@@ -213,23 +226,32 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                     >
                       Contact Supplier
                     </button>
-                    <div className="absolute top-3 right-3 z-10">
-                      <button
-                        onClick={handleToggleSave}
-                        className="focus:outline-none"
-                        aria-label={isSaved ? 'Unsave Listing' : 'Save Listing'}
-                      >
-                        {isSaved ? (
-                          <SolidHeart className="w-6 h-6 text-red-500 hover:text-red-600 transition" />
-                        ) : (
-                          <OutlineHeart className="w-6 h-6 text-gray-400 hover:text-red-500 transition" />
-                        )}
-                      </button>
-                    </div>
                   </>
                 )
               ) : null}
             </div>
+
+            {/* Heart Icon - Show on all cards (unless showHeart is false) */}
+            {showHeart && (
+              <div className="absolute top-3 right-3 z-10">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Heart button clicked!');
+                    handleToggleSave();
+                  }}
+                  className="focus:outline-none"
+                  aria-label={isSaved ? 'Unsave Listing' : 'Save Listing'}
+                >
+                  {isSaved ? (
+                    <SolidHeart className="w-6 h-6 text-red-500 hover:text-red-600 transition" />
+                  ) : (
+                    <OutlineHeart className="w-6 h-6 text-gray-400 hover:text-red-500 transition" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

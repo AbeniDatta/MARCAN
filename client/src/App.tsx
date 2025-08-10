@@ -127,21 +127,21 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route 
-            path="/contact-vendors" 
+          <Route
+            path="/contact-vendors"
             element={
               <ProtectedRoute>
                 <ContactVendorsPage />
               </ProtectedRoute>
             }
           />
-          <Route 
+          <Route
             path="/saved-listings"
             element={
               <ProtectedRoute>
                 <SavedListings />
               </ProtectedRoute>
-                
+
             }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

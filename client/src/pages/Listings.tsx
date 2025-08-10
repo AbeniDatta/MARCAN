@@ -6,6 +6,9 @@ import FiltersSidebar from "@/components/FiltersSidebar";
 import FlippableProductCard from "@/components/FlippableProductCard";
 import { listingApi, Listing } from "@/services/api";
 import Hero from "@/components/Hero";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 
 const Listings = () => {
   const navigate = useNavigate();
@@ -15,13 +18,14 @@ const Listings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
 
   const [activeFilters, setActiveFilters] = useState({
     location: [] as string[],
     tags: [] as string[],
     capacity: [] as string[],
     categories: [] as string[],
-    sortBy: "most-relevant",
+    sortBy: "new-to-old",
   });
 
   useEffect(() => {
@@ -103,6 +107,18 @@ const Listings = () => {
     console.log('Active filters:', activeFilters);
     setSearchQuery(query);
     applyFiltersAndSearch(activeFilters, query);
+  };
+
+  const handleLocalSearch = () => {
+    if (localSearchQuery.trim()) {
+      performSearch(localSearchQuery.trim());
+    }
+  };
+
+  const handleLocalSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLocalSearch();
+    }
   };
 
   const handleFilterChange = (filters: typeof activeFilters) => {
@@ -248,67 +264,11 @@ const Listings = () => {
           return timeA - timeB;
         });
         break;
-      case "most-relevant":
       default:
-        // Sort by relevance: most filter matches first, then by date (new to old)
+        // Default to new-to-old sorting
         sortedResults.sort((a, b) => {
-          // Calculate relevance score for each listing
-          const getRelevanceScore = (listing: Listing) => {
-            let score = 0;
-
-            // Category matches
-            if (filters.categories.length > 0) {
-              const categoryMatches = filters.categories.filter(cat =>
-                listing.categories?.includes(cat)
-              ).length;
-              score += (categoryMatches / filters.categories.length) * 3; // Weight categories higher
-            }
-
-            // Tag matches
-            if (filters.tags.length > 0) {
-              const tagMatches = filters.tags.filter(tag =>
-                listing.tags?.includes(tag)
-              ).length;
-              score += (tagMatches / filters.tags.length) * 2; // Weight tags medium
-            }
-
-            // Location matches
-            if (filters.location.length > 0) {
-              const locationMatches = filters.location.filter(loc =>
-                listing.city?.toLowerCase() === loc.toLowerCase()
-              ).length;
-              score += (locationMatches / filters.location.length) * 1; // Weight location lower
-            }
-
-            // Search query relevance (if there's a search query)
-            if (searchQuery) {
-              const searchTerm = searchQuery.toLowerCase();
-              let searchScore = 0;
-
-              if (listing.title?.toLowerCase().includes(searchTerm)) searchScore += 3;
-              if (listing.description?.toLowerCase().includes(searchTerm)) searchScore += 2;
-              if (listing.companyName?.toLowerCase().includes(searchTerm)) searchScore += 2;
-              if (listing.categories?.some(cat => cat.toLowerCase().includes(searchTerm))) searchScore += 1;
-              if (listing.tags?.some(tag => tag.toLowerCase().includes(searchTerm))) searchScore += 1;
-
-              score += searchScore / 9; // Normalize search score
-            }
-
-            return score;
-          };
-
-          const scoreA = getRelevanceScore(a);
-          const scoreB = getRelevanceScore(b);
-
-          // If relevance scores are different, sort by relevance
-          if (Math.abs(scoreA - scoreB) > 0.01) {
-            return scoreB - scoreA; // Higher score first
-          }
-
-          // If relevance scores are the same, sort by date (new to old)
           const timeA = a.timestamp || new Date(a.createdAt).getTime();
           const timeB = b.timestamp || new Date(b.createdAt).getTime();
-          console.log(`Relevance scores equal (${scoreA}), sorting by timestamp: ${timeB - timeA}, types: ${typeof timeA} vs ${typeof timeB}`);
           return timeB - timeA;
         });
         break;
@@ -361,13 +321,6 @@ const Listings = () => {
     <div className="min-h-screen bg-[#F9F9F9]">
       {/* Authenticated Header */}
       <AuthenticatedHeader />
-      <Hero
-        onSearch={(query) => {
-          setSearchQuery(query);
-          setSearchParams({ search: query });
-          performSearch(query);
-        }}
-      />
       {/* Page Header */}
       <section className="bg-[#F9F9F9] px-4 lg:px-20 py-12">
         <div className="max-w-screen-xl mx-auto">
@@ -384,6 +337,7 @@ const Listings = () => {
             <button
               onClick={() => {
                 setSearchQuery("");
+                setLocalSearchQuery("");
                 setSearchParams({});
                 applyFiltersAndSearch(activeFilters, "");
               }}
@@ -393,6 +347,25 @@ const Listings = () => {
             </button>
           )}
 
+          {/* Search Bar */}
+          <div className="flex items-center gap-0 max-w-2xl mt-8">
+            <div className="flex-1 relative">
+              <Input
+                value={localSearchQuery}
+                onChange={(e) => setLocalSearchQuery(e.target.value)}
+                onKeyPress={handleLocalSearchKeyPress}
+                placeholder="Search listings..."
+                className="h-[60px] !text-[16px] font-medium text-[#7A7777] border border-black rounded-lg rounded-r-none border-r-0 px-6 font-inter placeholder:text-[#7A7777] focus:outline-none focus:ring-0 focus:border-black"
+              />
+            </div>
+            <Button
+              onClick={handleLocalSearch}
+              className="bg-[#DB1233] hover:bg-[#c10e2b] text-white h-[60px] px-8 rounded-lg rounded-l-none text-lg font-semibold font-inter"
+            >
+              <Search className="h-5 w-5" />
+              Search
+            </Button>
+          </div>
 
         </div>
       </section>
@@ -428,35 +401,3 @@ const Listings = () => {
 };
 
 export default Listings;
-
-{/* Listings with Sidebar */ }
-{/* <section className="bg-[#F9F9F9] px-4 lg:px-20 pb-16">
-        <div className="max-w-screen-xl mx-auto flex gap-8"> */}
-{/* Main Content - Listings Grid */ }
-{/* <div className="flex-1">
-            {listings.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600">No listings available.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((listing) => (
-                  <div key={listing.id} className="h-[400px]">
-                    <FlippableProductCard listing={listing} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div> */}
-
-{/* Filters Sidebar */ }
-{/* <div className="flex-shrink-0">
-            <FiltersSidebar />
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}; */}
-
-// export default Listings;

@@ -1,5 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from 'react';
+import { auth } from '@/firebase';
+import { listingApi, Listing } from '@/services/api';
+import { HeartIcon as SolidHeart } from '@heroicons/react/24/solid';
+import { HeartIcon as OutlineHeart } from '@heroicons/react/24/outline';
 
 interface ProductCardProps {
   title: string;
@@ -8,6 +13,7 @@ interface ProductCardProps {
   image: string;
   inStock?: boolean;
   exportReady?: boolean;
+  listing?: Listing; // Add listing prop for heart functionality
 }
 
 const ProductCard = ({
@@ -17,12 +23,70 @@ const ProductCard = ({
   image,
   inStock = false,
   exportReady = false,
+  listing,
 }: ProductCardProps) => {
+  const [isSaved, setIsSaved] = useState(false);
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+
   // Fallback image if no image is provided
   const imageUrl = image || "https://via.placeholder.com/69x49?text=No+Image";
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUserUid(user?.uid || null);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchSavedStatus = async () => {
+      if (!listing) return;
+      try {
+        const saved = await listingApi.getSavedListings();
+        const found = saved.some((l) => l.id === listing.id);
+        setIsSaved(found);
+      } catch (err) {
+        console.error('Error fetching saved listings:', err);
+      }
+    };
+    fetchSavedStatus();
+  }, [listing?.id]);
+
+  const handleToggleSave = async () => {
+    if (!listing) return;
+    try {
+      if (isSaved) {
+        await listingApi.unsaveListing(listing.id);
+      } else {
+        await listingApi.saveListing(listing.id);
+      }
+      setIsSaved(!isSaved);
+    } catch (err) {
+      console.error('Error toggling save listing:', err);
+    }
+  };
+
+  const isOwner = listing?.user?.firebaseUid === currentUserUid;
+
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 w-[242px] h-[225px] flex flex-col">
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 w-[242px] h-[225px] flex flex-col relative">
+      {/* Heart Icon - Only show if listing is provided and user is not the owner */}
+      {listing && !isOwner && (
+        <div className="absolute top-2 right-2 z-10">
+          <button
+            onClick={handleToggleSave}
+            className="focus:outline-none"
+            aria-label={isSaved ? 'Unsave Listing' : 'Save Listing'}
+          >
+            {isSaved ? (
+              <SolidHeart className="w-5 h-5 text-red-500 hover:text-red-600 transition" />
+            ) : (
+              <OutlineHeart className="w-5 h-5 text-gray-400 hover:text-red-500 transition" />
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Product Image */}
       <div className="w-[69px] h-[49px] mb-4">
         <img

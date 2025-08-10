@@ -9,7 +9,9 @@ import { UserProfile } from "@/services/api";
 const AuthenticatedHeader = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isDesktopDropdownOpen, setIsDesktopDropdownOpen] = useState(false);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const isActive = (path: string) => location.pathname === path;
 
@@ -17,11 +19,18 @@ const AuthenticatedHeader = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Close dropdown when clicking outside
+  const toggleDesktopDropdown = () => {
+    setIsDesktopDropdownOpen(!isDesktopDropdownOpen);
+  };
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
+      }
+      if (desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target as Node)) {
+        setIsDesktopDropdownOpen(false);
       }
     };
 
@@ -48,10 +57,21 @@ const AuthenticatedHeader = () => {
     checkAdmin();
   }, []);
 
-  // Close dropdown when route changes
+  // Close dropdowns when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsDesktopDropdownOpen(false);
   }, [location.pathname]);
+
+  // Get the current active menu item text
+  const getActiveMenuText = () => {
+    if (isActive("/")) return "Home";
+    if (isActive("/listings")) return "All Listings";
+    if (isActive("/saved-listings")) return "Saved Listings";
+    if (isActive("/contact-vendors")) return "Contact Vendors";
+    if (isActive("/admin")) return "Admin";
+    return "Navigate";
+  };
 
   return (
     <header className="bg-[#F9F9F9] px-3 sm:px-4 lg:px-20 py-3 sm:py-4 relative">
@@ -72,34 +92,83 @@ const AuthenticatedHeader = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
-          <Link to="/listings">
-            <span
-              className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black"
+          {/* Desktop Dropdown Menu */}
+          <div className="relative" ref={desktopDropdownRef}>
+            <Button
+              variant="ghost"
+              onClick={toggleDesktopDropdown}
+              className="flex items-center gap-2 text-base lg:text-[20px] font-semibold font-inter hover:opacity-80 transition-opacity text-black p-2"
             >
-              Listings
-            </span>
-          </Link>
-          <Link to="/saved-listings">
-            <span
-              className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black"
+              <span className={isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/contact-vendors") || isActive("/admin") ? "text-[#DB1233]" : ""}>
+                {getActiveMenuText()}
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isDesktopDropdownOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            {/* Desktop Dropdown Content */}
+            <div
+              className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ease-in-out transform origin-top-left z-50 ${isDesktopDropdownOpen
+                ? 'opacity-100 scale-100 translate-y-0'
+                : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+                }`}
             >
-              Saved Listings
-            </span>
-          </Link>
-          <Link to="/contact-vendors">
-            <span
-              className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black"
-            >
-              Contact Vendors
-            </span>
-          </Link>
-          {isAdmin && (
-          <Link to="/admin">
-            <span className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black">
-              Admin
-            </span>
-          </Link>
-          )}
+              <div className="py-2">
+                <Link
+                  to="/"
+                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">Home</span>
+                </Link>
+                <Link
+                  to="/listings"
+                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/listings")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">All Listings</span>
+                </Link>
+                <Link
+                  to="/saved-listings"
+                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/saved-listings")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">Saved Listings</span>
+                </Link>
+                <Link
+                  to="/contact-vendors"
+                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/contact-vendors")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">Contact Vendors</span>
+                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center px-4 py-3 transition-colors ${isActive("/admin")
+                      ? "text-[#DB1233] bg-red-50"
+                      : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    onClick={() => setIsDesktopDropdownOpen(false)}
+                  >
+                    <span className="font-medium">Admin</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+
           <Link to="/my-account">
             <Button
               className={`bg-[#DB1233] hover:bg-[#c10e2b] text-white text-base lg:text-[20px] font-semibold rounded-lg px-4 lg:px-[20px] py-2 lg:py-2.5 h-auto font-inter ${isActive("/my-account") ? "bg-[#c10e2b]" : ""
@@ -111,7 +180,7 @@ const AuthenticatedHeader = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden relative" ref={dropdownRef}>
+        <div className="md:hidden relative" ref={mobileDropdownRef}>
           <Button
             variant="ghost"
             size="sm"
@@ -133,51 +202,66 @@ const AuthenticatedHeader = () => {
               : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
               }`}
           >
-            {/* Dropdown Header */}
-            {/*<div className="bg-gradient-to-r from-[#DB1233] to-[#c10e2b] px-4 py-3">
-              <div className="flex items-center gap-2">
-                <img
-                  src={canadianMapleLeaf}
-                  alt="Canadian maple leaf"
-                  className="w-6 h-6"
-                />
-                <span className="text-white font-semibold text-sm">Navigation</span>
-              </div>
-            </div>*/}
-
             {/* Navigation Links */}
             <div className="py-2">
               <Link
-                to="/listings"
-                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                to="/"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
-                <span className="font-medium">Listings</span>
+                <span className="font-medium">Home</span>
+                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
+              </Link>
+              <Link
+                to="/listings"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/listings")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                <span className="font-medium">All Listings</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
               <Link
                 to="/saved-listings"
-                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/saved-listings")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <span className="font-medium">Saved Listings</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
               <Link
                 to="/contact-vendors"
-                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/contact-vendors")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <span className="font-medium">Contact Vendors</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
               {isAdmin && (
-              <Link to="/admin">
-                <span className="text-base lg:text-[20px] font-semibold font-inter cursor-pointer hover:opacity-80 transition-opacity text-black">
-                  Admin
-                </span>
-              </Link>
+                <Link
+                  to="/admin"
+                  className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/admin")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <span className="font-medium">Admin</span>
+                  <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
+                </Link>
               )}
               <Link
                 to="/my-account"
-                className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/my-account")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
               >
                 <span className="font-medium">My Account</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />

@@ -30,7 +30,6 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
   const [locationOpen, setLocationOpen] = useState(false);
 
   const sortOptions = [
-    { value: "most-relevant", label: "Most Relevant" },
     { value: "new-to-old", label: "New to Old" },
     { value: "old-to-new", label: "Old to New" }
   ];
@@ -121,7 +120,7 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
       <div className="mb-8">
         <h4 className="text-xl font-semibold text-black mb-4">Sort By</h4>
         <Select
-          value={filters.sortBy || "most-relevant"}
+          value={filters.sortBy || "new-to-old"}
           onValueChange={(value) => {
             console.log('=== SELECT ONVALUECHANGE TRIGGERED ===');
             console.log('Select value changed to:', value);
