@@ -30,7 +30,11 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onDelete, isDraf
     };
 
     const handleUpdateListing = () => {
-        navigate(`/update-listing/${listing.id}`);
+        if (isDraft) {
+            navigate(`/update-draft/${listing.id}`);
+        } else {
+            navigate(`/update-listing/${listing.id}`);
+        }
     };
 
     const handlePublishDraft = async () => {
@@ -101,12 +105,6 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onDelete, isDraf
                             className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-[#2545AB] hover:bg-[#1e3a8a] transition-colors flex-1"
                         >
                             Edit Draft
-                        </Button>
-                        <Button
-                            onClick={handlePublishDraft}
-                            className="px-3 py-2 rounded text-[13px] font-medium text-white font-inter bg-green-600 hover:bg-green-700 transition-colors flex-1"
-                        >
-                            Publish
                         </Button>
                         <Button
                             onClick={handleDeleteListing}

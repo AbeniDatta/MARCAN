@@ -15,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import MyAccount from "./pages/MyAccount";
 import CreateListing from "./pages/CreateListing";
 import UpdateListing from "./pages/UpdateListing";
+import UpdateDraft from "./pages/UpdateDraft";
 
 import SavedListings from '@/pages/SavedListings';
 import EditProfile from "./pages/EditProfile";
@@ -91,6 +92,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <UpdateListing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/update-draft/:draftId"
+            element={
+              <ProtectedRoute>
+                <UpdateDraft />
               </ProtectedRoute>
             }
           />

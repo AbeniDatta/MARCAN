@@ -297,7 +297,7 @@ const saveDraft = async (req, res) => {
       data: listingData
     });
     console.log('Successfully created draft:', newDraft);
-    res.json(newDraft);
+    res.json(serializeBigInts(newDraft));
   } catch (error) {
     console.error('Error creating draft:', error);
     res.status(400).json({ error: error.message });
@@ -320,7 +320,7 @@ const getMyDrafts = async (req, res) => {
       },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(drafts);
+    res.json(serializeBigInts(drafts));
   } catch (err) {
     console.error('Error fetching drafts:', err);
     res.status(400).json({ error: 'Error fetching drafts' });
@@ -335,7 +335,7 @@ const publishDraft = async (req, res) => {
       where: { id: parseInt(id) },
       data: { isDraft: false },
     });
-    res.json(updated);
+    res.json(serializeBigInts(updated));
   } catch (err) {
     console.error('Error publishing draft:', err);
     res.status(400).json({ error: 'Failed to publish draft' });

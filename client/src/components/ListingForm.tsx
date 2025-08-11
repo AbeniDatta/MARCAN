@@ -163,34 +163,52 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         e.preventDefault();
         setError('');
 
-        // Validation for all required fields
+        // Check if this is a draft being published
+        const isPublishingDraft = initialData?.id && initialData?.isDraft;
+
+        // Validation - different requirements for new listings vs publishing drafts
         if (!formData.title.trim()) {
             setError('Product title is required.');
             return;
         }
-        if (!imagePreview && !formData.imageFile) {
-            setError('Product image is required.');
-            return;
-        }
-        if (!formData.description.trim()) {
-            setError('Description is required.');
-            return;
-        }
-        if (!formData.price.trim() || isNaN(Number(formData.price))) {
-            setError('A valid price is required.');
-            return;
-        }
-        if (!manualCity.trim() && !formData.city.trim()) {
-            setError('Please select a city or enter one manually.');
-            return;
-        }
-        if (formData.categories.length === 0) {
-            setError('Please select at least one category.');
-            return;
-        }
-        if (formData.tags.length === 0) {
-            setError('Please select at least one tag.');
-            return;
+
+        // For new listings, require all fields
+        if (!isPublishingDraft) {
+            if (!imagePreview && !formData.imageFile) {
+                setError('Product image is required.');
+                return;
+            }
+            if (!formData.description.trim()) {
+                setError('Description is required.');
+                return;
+            }
+            if (!formData.price.trim() || isNaN(Number(formData.price))) {
+                setError('A valid price is required.');
+                return;
+            }
+            if (!manualCity.trim() && !formData.city.trim()) {
+                setError('Please select a city or enter one manually.');
+                return;
+            }
+            if (formData.categories.length === 0) {
+                setError('Please select at least one category.');
+                return;
+            }
+            if (formData.tags.length === 0) {
+                setError('Please select at least one tag.');
+                return;
+            }
+        } else {
+            // For publishing drafts, only require essential fields
+            if (!formData.description.trim()) {
+                setError('Description is required to publish.');
+                return;
+            }
+            if (!formData.price.trim() || isNaN(Number(formData.price))) {
+                setError('A valid price is required to publish.');
+                return;
+            }
+            // Image, city, categories, and tags are optional when publishing drafts
         }
 
         setLoading(true);
@@ -229,7 +247,11 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             let result;
             if (initialData?.id) {
                 console.log('Updating listing with ID:', initialData.id);
-                result = await listingApi.updateListing(initialData.id, listingData);
+                // If this is a draft being published, set isDraft to false
+                const updateData = isPublishingDraft
+                    ? { ...listingData, isDraft: false }
+                    : listingData;
+                result = await listingApi.updateListing(initialData.id, updateData);
             } else {
                 result = await listingApi.createListing(listingData);
             }
@@ -244,42 +266,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const handleSaveDraft = async () => {
         setLoading(true);
         setError('');
-        // Validation for all required fields (except draft count logic)
-        if (!formData.title.trim()) {
-            setError('Product title is required.');
-            setLoading(false);
-            return;
-        }
-        if (!imagePreview && !formData.imageFile) {
-            setError('Product image is required.');
-            setLoading(false);
-            return;
-        }
-        if (!formData.description.trim()) {
-            setError('Description is required.');
-            setLoading(false);
-            return;
-        }
-        if (!formData.price.trim() || isNaN(Number(formData.price))) {
-            setError('A valid price is required.');
-            setLoading(false);
-            return;
-        }
-        if (!manualCity.trim() && !formData.city.trim()) {
-            setError('Please select a city or enter one manually.');
-            setLoading(false);
-            return;
-        }
-        if (formData.categories.length === 0) {
-            setError('Please select at least one category.');
-            setLoading(false);
-            return;
-        }
-        if (formData.tags.length === 0) {
-            setError('Please select at least one tag.');
-            setLoading(false);
-            return;
-        }
+        // No validation required for drafts - all fields are optional
         try {
             const user = auth.currentUser;
             if (!user) {
@@ -299,14 +286,14 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             }
 
             const listingData: ListingInput = {
-                title: formData.title,
-                description: formData.description,
+                title: formData.title || '',
+                description: formData.description || '',
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
                 fileUrl,
                 tags: formData.tags,
                 categories: formData.categories,
-                city: manualCity.trim() ? manualCity : formData.city
+                city: manualCity.trim() ? manualCity : formData.city || ''
             };
             let result;
             if (initialData?.id) {
@@ -619,10 +606,14 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Enter a brief description of your product"
+                    placeholder="Enter a brief description of your product (max 221 characters)"
                     required
+                    maxLength={221}
                     className="w-full min-h-[100px]"
                 />
+                <div className="text-sm text-gray-500 text-right">
+                    {formData.description.length}/221 characters
+                </div>
             </div>
 
             <div className="space-y-2">
@@ -804,6 +795,17 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             </div>
 
             <div className="flex gap-4">
+                {initialData?.id && initialData?.isDraft && onSaveDraft && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSaveDraft}
+                        disabled={loading}
+                        className="flex-1 border border-blue-300 text-blue-600 hover:bg-blue-50"
+                    >
+                        {loading ? 'Saving...' : 'Update Draft'}
+                    </Button>
+                )}
                 {!initialData?.id && (
                     <Button
                         type="button"
@@ -820,7 +822,10 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                     className="flex-1 bg-[#DB1233] hover:bg-[#c10e2b] text-white"
                     disabled={loading}
                 >
-                    {loading ? 'Saving...' : initialData?.id ? 'Update Listing' : 'Create Listing'}
+                    {loading ? 'Saving...' :
+                        initialData?.id && initialData?.isDraft ? 'Publish' :
+                            initialData?.id ? 'Update Listing' : 'Create Listing'
+                    }
                 </Button>
                 {onCancel && (
                     <Button
