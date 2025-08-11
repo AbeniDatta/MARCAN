@@ -179,7 +179,7 @@ const SupplierProfile = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter">
-              Products & Services:
+              All Listings From This Supplier:
             </h3>
           </div>
 
