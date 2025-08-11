@@ -8,6 +8,7 @@ import { listingApi, Listing } from "@/services/api";
 import Hero from "@/components/Hero";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search } from "lucide-react";
 
 const Listings = () => {
@@ -19,6 +20,8 @@ const Listings = () => {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const [activeFilters, setActiveFilters] = useState({
     location: [] as string[],
@@ -130,6 +133,55 @@ const Listings = () => {
     applyFiltersAndSearch(filters, searchQuery);
     console.log('=== FILTER CHANGE HANDLER COMPLETED ===');
   };
+
+  const handleToggleSelectionMode = () => {
+    const newMode = !isSelectionMode;
+    setIsSelectionMode(newMode);
+    if (!newMode) {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredListings.length) {
+      // Deselect all
+      setSelectedIds(new Set());
+    } else {
+      // Select all
+      const allIds = new Set(filteredListings.map(listing => listing.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  const handleSelectListing = (listingId: number, selected: boolean) => {
+    const newSelectedIds = new Set(selectedIds);
+    if (selected) {
+      newSelectedIds.add(listingId);
+    } else {
+      newSelectedIds.delete(listingId);
+    }
+    setSelectedIds(newSelectedIds);
+  };
+
+  const handleContactAll = () => {
+    // Get selected listings and their email addresses
+    const selectedListings = filteredListings.filter(listing => selectedIds.has(listing.id));
+    const emails = selectedListings
+      .map(listing => listing.user?.email)
+      .filter(email => email) // Remove undefined emails
+      .filter((email, index, arr) => arr.indexOf(email) === index); // Remove duplicates
+
+    if (emails.length > 0) {
+      // Create mailto link with selected email addresses
+      const mailtoLink = `mailto:${emails.join(",")}`;
+      window.location.href = mailtoLink;
+    } else {
+      alert("No valid email addresses found for selected listings.");
+    }
+  };
+
+  const isAllSelected = filteredListings.length > 0 && selectedIds.size === filteredListings.length;
+  const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredListings.length;
 
   const applyFiltersAndSearch = (filters: typeof activeFilters, searchQuery: string) => {
     console.log('=== APPLYING FILTERS AND SEARCH ===');
@@ -380,6 +432,51 @@ const Listings = () => {
           </div>
 
           <div className="flex-1">
+            {/* Selection Controls */}
+            {filteredListings.length > 0 && (
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  {isSelectionMode && (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="select-all"
+                          checked={isAllSelected}
+                          onCheckedChange={handleSelectAll}
+                          className="data-[state=checked]:bg-[#DB1233] data-[state=checked]:border-[#DB1233]"
+                        />
+                        <label
+                          htmlFor="select-all"
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          Select All
+                        </label>
+                      </div>
+
+                      {selectedIds.size > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={handleContactAll}
+                          className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-sm font-medium"
+                        >
+                          Contact All ({selectedIds.size})
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  <Button
+                    variant={isSelectionMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleToggleSelectionMode}
+                    className={isSelectionMode ? "bg-[#DB1233] hover:bg-[#c10e2b]" : ""}
+                  >
+                    {isSelectionMode ? 'Cancel Selection' : 'Select Listings'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {filteredListings.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">No listings available.</p>
@@ -388,7 +485,12 @@ const Listings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredListings.map((listing) => (
                   <div key={listing.id} className="h-[400px]">
-                    <FlippableProductCard listing={listing} />
+                    <FlippableProductCard
+                      listing={listing}
+                      selectMode={isSelectionMode}
+                      isSelected={selectedIds.has(listing.id)}
+                      onSelect={(id, selected) => handleSelectListing(listing.id, selected)}
+                    />
                   </div>
                 ))}
               </div>

@@ -132,18 +132,32 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     };
 
     const uploadFileToCloudinary = async (file: File): Promise<string> => {
+        console.log('Uploading file to Cloudinary:', file.name, file.type, file.size);
+        console.log('Cloudinary config:', {
+            cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
+            uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+        });
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
 
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
-        const response = await axios.post(
-            `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
-            formData
-        );
+        try {
+            const response = await axios.post(
+                `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+                formData
+            );
 
-        return response.data.secure_url;
+            console.log('Cloudinary upload response:', response.data);
+            console.log('File URL returned:', response.data.secure_url);
+
+            return response.data.secure_url;
+        } catch (error) {
+            console.error('Cloudinary upload error:', error);
+            throw new Error(`Failed to upload file: ${error}`);
+        }
     };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

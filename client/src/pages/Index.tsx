@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
+import { Listing } from "@/services/api";
 import Header from "@/components/Header";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import Hero from "@/components/Hero";
@@ -12,12 +13,15 @@ const Index = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedListings, setSelectedListings] = useState<Listing[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const [filters, setFilters] = useState({
     categories: [] as string[],
     tags: [] as string[],
-    location: "",
+    location: [] as string[],
     capacity: [] as string[],
+    sortBy: "new-to-old",
   });
 
   useEffect(() => {
@@ -28,6 +32,17 @@ const Index = () => {
 
     return () => unsubscribe();
   }, []);
+
+  const handleSelectionChange = (listings: Listing[]) => {
+    setSelectedListings(listings);
+  };
+
+  const handleSelectionModeChange = (mode: boolean) => {
+    setIsSelectionMode(mode);
+    if (!mode) {
+      setSelectedListings([]);
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -56,7 +71,12 @@ const Index = () => {
           </div>
           {/* Main Content */}
           <div className="flex-1">
-            <LatestListings filters={filters} />
+            <LatestListings
+              filters={filters}
+              onSelectionChange={handleSelectionChange}
+              selectedListings={selectedListings}
+              onSelectionModeChange={handleSelectionModeChange}
+            />
           </div>
         </div>
       </section>

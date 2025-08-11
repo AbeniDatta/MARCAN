@@ -16,6 +16,8 @@ const SupplierProfile = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    console.log('=== SUPPLIER PROFILE MOUNTED ===');
+    console.log('Supplier ID from URL:', supplierId);
     if (supplierId) {
       fetchSupplierData(supplierId);
       fetchSupplierListings(supplierId);
@@ -39,14 +41,24 @@ const SupplierProfile = () => {
   };
 
   const fetchSupplierListings = async (supplierId: string) => {
+    console.log('=== FETCHING SUPPLIER LISTINGS ===');
+    console.log('Supplier ID:', supplierId);
+
     try {
       const userId = parseInt(supplierId);
+      console.log('Parsed User ID:', userId);
+      console.log('Is NaN:', isNaN(userId));
+
       const data = isNaN(userId)
         ? await listingApi.getListingsByFirebaseUid(supplierId)
         : await listingApi.getListingsByUser(userId);
+
+      console.log('Fetched listings:', data);
+      console.log('Listings count:', data.length);
       setListings(data);
     } catch (err: any) {
       console.error("Failed to fetch supplier listings", err);
+      console.error("Error details:", err.response?.data);
     }
   };
 
@@ -103,15 +115,15 @@ const SupplierProfile = () => {
 
         <div className="flex flex-col lg:flex-row gap-6 mb-8">
           {profileData.logoUrl ? (
-          <img
-          src={profileData.logoUrl}
-          alt={`${profileData.companyName} Logo`}
-          className="w-[235px] h-[163px] object-cover bg-white rounded-md border border-gray-200"
-          />
+            <img
+              src={profileData.logoUrl}
+              alt={`${profileData.companyName} Logo`}
+              className="w-[235px] h-[163px] object-cover bg-white rounded-md border border-gray-200"
+            />
           ) : (
-          <div className="w-[235px] h-[163px] bg-[#D9D9D9] rounded-md flex items-center justify-center text-gray-500 text-sm">
-          No Logo
-          </div>
+            <div className="w-[235px] h-[163px] bg-[#D9D9D9] rounded-md flex items-center justify-center text-gray-500 text-sm">
+              No Logo
+            </div>
           )}
           <div className="flex-1 space-y-4">
             <h2 className="text-[22px] md:text-[26px] font-bold text-black font-inter">
@@ -141,12 +153,12 @@ const SupplierProfile = () => {
               </div>
             )}
             <div className="bg-white rounded-[20px] px-4 py-3">
-                <a
-                  href={`mailto:${profileData.email}`}
-                  className="text-[16px] md:text-[20px] font-semibold text-blue-600 underline hover:text-blue-800 font-inter"
-                >
-                  {profileData.email}
-                </a>
+              <a
+                href={`mailto:${profileData.email}`}
+                className="text-[16px] md:text-[20px] font-semibold text-blue-600 underline hover:text-blue-800 font-inter"
+              >
+                {profileData.email}
+              </a>
             </div>
           </div>
         </div>
@@ -180,10 +192,10 @@ const SupplierProfile = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((listing) => (
-               <div key={listing.id} className="h-[400px]">
-               <FlippableProductCard listing={listing} readonly />
-               </div>
-             ))}
+                <div key={listing.id} className="h-[400px]">
+                  <FlippableProductCard listing={listing} readonly />
+                </div>
+              ))}
             </div>
           )}
         </div>

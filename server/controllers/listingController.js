@@ -119,14 +119,34 @@ const getListingById = async (req, res) => {
 // Get listings by user ID
 const getListingsByUserId = async (req, res) => {
   const { userId } = req.params;
+  console.log('=== GET LISTINGS BY USER ID ===');
+  console.log('User ID:', userId);
+  console.log('Parsed User ID:', parseInt(userId));
+
   try {
+    // First check if the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+    console.log('User found:', user);
+
+    if (!user) {
+      console.log('User not found with ID:', parseInt(userId));
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const listings = await prisma.listing.findMany({
       where: { userId: parseInt(userId) },
+      include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
+    console.log('Found listings:', listings.length);
+    console.log('Listings:', listings.map(l => ({ id: l.id, title: l.title, userId: l.userId })));
     res.json(listings);
   } catch (err) {
-    res.status(400).json({ error: 'Error fetching user listings' });
+    console.error('Error fetching user listings:', err);
+    console.error('Error stack:', err.stack);
+    res.status(400).json({ error: 'Error fetching user listings', details: err.message });
   }
 };
 
@@ -144,6 +164,7 @@ const getListingsByCurrentUser = async (req, res) => {
         userId: user.id,
         isDraft: false // Only get published listings
       },
+      include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
     res.json(listings);

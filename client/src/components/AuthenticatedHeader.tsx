@@ -68,10 +68,11 @@ const AuthenticatedHeader = () => {
     if (isActive("/")) return "Home";
     if (isActive("/listings")) return "All Listings";
     if (isActive("/saved-listings")) return "Saved Listings";
-    if (isActive("/contact-vendors")) return "Contact Vendors";
     if (isActive("/admin")) return "Admin";
     return "Navigate";
   };
+
+
 
   return (
     <header className="bg-[#F9F9F9] px-3 sm:px-4 lg:px-20 py-3 sm:py-4 relative">
@@ -92,6 +93,7 @@ const AuthenticatedHeader = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4 lg:gap-6">
+
           {/* Desktop Dropdown Menu */}
           <div className="relative" ref={desktopDropdownRef}>
             <Button
@@ -99,7 +101,7 @@ const AuthenticatedHeader = () => {
               onClick={toggleDesktopDropdown}
               className="flex items-center gap-2 text-base lg:text-[20px] font-semibold font-inter hover:opacity-80 transition-opacity text-black p-2"
             >
-              <span className={isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/contact-vendors") || isActive("/admin") ? "text-[#DB1233]" : ""}>
+              <span className={isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/admin") ? "text-[#DB1233]" : ""}>
                 {getActiveMenuText()}
               </span>
               <ChevronDown className={`h-4 w-4 transition-transform ${isDesktopDropdownOpen ? 'rotate-180' : ''}`} />
@@ -143,16 +145,7 @@ const AuthenticatedHeader = () => {
                 >
                   <span className="font-medium">Saved Listings</span>
                 </Link>
-                <Link
-                  to="/contact-vendors"
-                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/contact-vendors")
-                    ? "text-[#DB1233] bg-red-50"
-                    : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  onClick={() => setIsDesktopDropdownOpen(false)}
-                >
-                  <span className="font-medium">Contact Vendors</span>
-                </Link>
+
                 {isAdmin && (
                   <Link
                     to="/admin"
@@ -202,6 +195,8 @@ const AuthenticatedHeader = () => {
               : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
               }`}
           >
+
+
             {/* Navigation Links */}
             <div className="py-2">
               <Link
@@ -234,16 +229,7 @@ const AuthenticatedHeader = () => {
                 <span className="font-medium">Saved Listings</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
-              <Link
-                to="/contact-vendors"
-                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/contact-vendors")
-                  ? "text-[#DB1233] bg-red-50"
-                  : "text-gray-700 hover:bg-gray-50"
-                  }`}
-              >
-                <span className="font-medium">Contact Vendors</span>
-                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
-              </Link>
+
               {isAdmin && (
                 <Link
                   to="/admin"

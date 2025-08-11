@@ -27,7 +27,6 @@ router.post('/', authenticateToken, createListing);
 router.post('/draft', authenticateToken, saveDraft);
 router.get('/my-listings', authenticateToken, getListingsByCurrentUser);
 router.get('/my-drafts', authenticateToken, getMyDrafts);
-router.get('/user/:userId', authenticateToken, getListingsByUserId);
 router.get('/saved', authenticateToken, getSavedListings);
 router.put('/:id', authenticateToken, updateListing);
 router.put('/:id/publish', authenticateToken, publishDraft);
@@ -40,6 +39,7 @@ router.delete('/admin/:id', authenticateToken, adminOnly, deleteListing);
 router.get('/', getAllListings);
 router.get('/search', searchListings);
 router.get('/filters', getFilterOptions);
+router.get('/user/:userId', getListingsByUserId);
 router.get('/firebase-uid/:firebaseUid', getListingsByFirebaseUid);
 router.get('/:id', getListingById);
 

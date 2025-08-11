@@ -11,15 +11,25 @@ interface FlippableProductCardProps {
   onSelect?: (email: string, selected: boolean) => void;
   selectMode?: boolean;
   showHeart?: boolean; // New prop to control heart visibility
+  isSelected?: boolean;
 }
 
-const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly, onSelect, selectMode, showHeart = true }) => {
+const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, readonly, onSelect, selectMode, showHeart = true, isSelected = false }) => {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
   const [supplierData, setSupplierData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Debug: Log file URL when component mounts
+  useEffect(() => {
+    if (listing.fileUrl) {
+      console.log('Listing has file URL:', listing.fileUrl);
+      console.log('Listing ID:', listing.id);
+      console.log('Listing title:', listing.title);
+    }
+  }, [listing.fileUrl, listing.id, listing.title]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -75,9 +85,16 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   };
 
   const handleViewSupplier = () => {
+    console.log('=== VIEW SUPPLIER CLICKED ===');
+    console.log('Listing data:', listing);
+    console.log('Listing user:', listing.user);
+    console.log('Listing userId:', listing.userId);
+
     if (listing.user?.id) {
+      console.log('Navigating to supplier with user.id:', listing.user.id);
       navigate(`/supplier/${listing.user.id}`);
     } else if (listing.userId) {
+      console.log('Navigating to supplier with listing.userId:', listing.userId);
       navigate(`/supplier/${listing.userId}`);
     } else {
       console.error('No user information available for this listing');
@@ -148,41 +165,66 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
               </div>
 
               <div className="flex-1">
-                <p className="text-[14px] font-medium text-black font-inter leading-tight">
+                <h3 className="text-[18px] font-semibold text-black font-inter leading-tight mb-1">
+                  {listing.title}
+                </h3>
+                <p className="text-[14px] font-medium text-black font-inter leading-tight mb-1">
                   {listing.companyName}
                 </p>
-                {selectMode && supplierData?.email && (
+                <p className="text-[14px] font-semibold text-[#DB1233] mb-1">
+                  ${listing.price} CAD
+                </p>
+                {selectMode && (
                   <input
                     type="checkbox"
                     className="mt-1"
-                    onChange={(e) => onSelect?.(supplierData.email, e.target.checked)}
+                    checked={isSelected}
+                    onChange={(e) => onSelect?.(listing.id.toString(), e.target.checked)}
                   />
                 )}
               </div>
             </div>
 
-            <h3 className="text-[16px] font-semibold text-black font-inter mb-3 leading-tight flex-shrink-0">
-              {listing.title}
-            </h3>
-
-            <p className="text-[12px] font-medium text-black font-inter mb-4 leading-tight flex-1 min-h-[60px]">
+            <p className="text-[14px] font-medium text-black font-inter mb-3 leading-tight flex-1 min-h-[60px]">
               {listing.description}
             </p>
+
+            {listing.fileUrl && (
+              <div className="mb-3 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    console.log('Attempting to open file URL:', listing.fileUrl);
+                    try {
+                      const newWindow = window.open(listing.fileUrl, '_blank');
+                      if (!newWindow) {
+                        console.error('Failed to open window - popup blocked?');
+                        alert('Popup blocked. Please allow popups for this site to view files.');
+                      }
+                    } catch (error) {
+                      console.error('Error opening file:', error);
+                      alert('Error opening file. Please try again.');
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-[11px] font-medium text-blue-700 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  View File
+                </button>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0">
               {listing.tags?.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-[#E0F2FF] rounded-[10px] text-[11px] font-medium text-black font-inter"
+                  className="px-2 py-1 bg-[#E0F2FF] rounded-[10px] text-[13px] font-medium text-black font-inter"
                 >
                   {tag}
                 </span>
               ))}
             </div>
-
-            <p className="text-[14px] font-semibold text-[#DB1233] mb-2 flex-shrink-0">
-              ${listing.price} CAD
-            </p>
 
             {listing.city && (
               <div className="flex items-center gap-1 mb-4 flex-shrink-0">
@@ -231,8 +273,8 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
               ) : null}
             </div>
 
-            {/* Heart Icon - Show on all cards (unless showHeart is false) */}
-            {showHeart && (
+            {/* Heart Icon - Show on all cards (unless showHeart is false or user owns the listing) */}
+            {showHeart && !isOwner && (
               <div className="absolute top-3 right-3 z-10">
                 <button
                   onClick={(e) => {
