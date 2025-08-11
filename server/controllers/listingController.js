@@ -1,5 +1,7 @@
 const prisma = require('../prismaClient');
 const { getOrCreateUserFromFirebase } = require('./userController');
+const serializeBigInts = (data) =>
+  JSON.parse(JSON.stringify(data, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
 
 // Helper function to get EST timestamp
 const getESTTimestamp = () => {
@@ -177,22 +179,22 @@ const getListingsByCurrentUser = async (req, res) => {
 const getListingsByFirebaseUid = async (req, res) => {
   const { firebaseUid } = req.params;
   try {
-    // First find the user by Firebase UID
     const user = await prisma.user.findFirst({
-      where: { firebaseUid: firebaseUid }
+      where: { firebaseUid }
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Then get all listings for that user
     const listings = await prisma.listing.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, isDraft: false }, // hide drafts if desired
       include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(listings);
+
+    // Ensure no BigInt sneaks into res.json
+    res.json(serializeBigInts(listings));
   } catch (err) {
     console.error('Error fetching listings by Firebase UID:', err);
     res.status(400).json({ error: 'Error fetching user listings' });

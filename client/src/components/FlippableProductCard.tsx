@@ -85,20 +85,17 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   };
 
   const handleViewSupplier = () => {
-    console.log('=== VIEW SUPPLIER CLICKED ===');
-    console.log('Listing data:', listing);
-    console.log('Listing user:', listing.user);
-    console.log('Listing userId:', listing.userId);
+    // Prefer firebaseUid; fall back to id/userId as string
+    const supplierKey =
+      listing.user?.firebaseUid ??
+      (listing.user?.id?.toString() || listing.userId?.toString());
 
-    if (listing.user?.id) {
-      console.log('Navigating to supplier with user.id:', listing.user.id);
-      navigate(`/supplier/${listing.user.id}`);
-    } else if (listing.userId) {
-      console.log('Navigating to supplier with listing.userId:', listing.userId);
-      navigate(`/supplier/${listing.userId}`);
-    } else {
+    if (!supplierKey) {
       console.error('No user information available for this listing');
+      return;
     }
+
+    navigate(`/supplier/${supplierKey}`);
   };
 
   const handleContactSupplier = async () => {

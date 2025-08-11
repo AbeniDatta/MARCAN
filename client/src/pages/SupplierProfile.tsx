@@ -41,24 +41,26 @@ const SupplierProfile = () => {
   };
 
   const fetchSupplierListings = async (supplierId: string) => {
-    console.log('=== FETCHING SUPPLIER LISTINGS ===');
-    console.log('Supplier ID:', supplierId);
-
     try {
-      const userId = parseInt(supplierId);
-      console.log('Parsed User ID:', userId);
-      console.log('Is NaN:', isNaN(userId));
+      const asNumber = parseInt(supplierId, 10);
 
-      const data = isNaN(userId)
-        ? await listingApi.getListingsByFirebaseUid(supplierId)
-        : await listingApi.getListingsByUser(userId);
-
-      console.log('Fetched listings:', data);
-      console.log('Listings count:', data.length);
-      setListings(data);
-    } catch (err: any) {
+      if (Number.isNaN(asNumber)) {
+        // supplierId is a firebaseUid → public route
+        const data = await listingApi.getListingsByFirebaseUid(supplierId);
+        setListings(data);
+      } else {
+        // supplierId is numeric → fetch profile to get firebaseUid, then public route
+        const profile = await profileApi.getUserProfileById(asNumber);
+        if (profile?.firebaseUid) {
+          const data = await listingApi.getListingsByFirebaseUid(profile.firebaseUid);
+          setListings(data);
+        } else {
+          setListings([]);
+        }
+      }
+    } catch (err) {
       console.error("Failed to fetch supplier listings", err);
-      console.error("Error details:", err.response?.data);
+      setListings([]);
     }
   };
 
