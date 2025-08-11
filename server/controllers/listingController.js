@@ -164,13 +164,15 @@ const getListingsByCurrentUser = async (req, res) => {
     const listings = await prisma.listing.findMany({
       where: {
         userId: user.id,
-        isDraft: false // Only get published listings
+        isDraft: false
       },
-      include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
-    res.json(listings);
+
+    // Ensure BigInt (e.g., timestamp) is JSON-safe
+    res.json(serializeBigInts(listings));
   } catch (err) {
+    console.error('Error fetching user listings', err);
     res.status(400).json({ error: 'Error fetching user listings' });
   }
 };
@@ -320,6 +322,8 @@ const getMyDrafts = async (req, res) => {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Ensure BigInt is JSON-safe
     res.json(serializeBigInts(drafts));
   } catch (err) {
     console.error('Error fetching drafts:', err);
