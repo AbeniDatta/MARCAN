@@ -230,7 +230,7 @@ const updateListing = async (req, res) => {
     });
     console.log('Successfully updated listing:', updated);
     console.log('Sending response to frontend');
-    res.json(updated);
+    res.json(serializeBigInts(updated));
   } catch (err) {
     console.error('Error updating listing:', err);
     console.error('Error stack:', err.stack);
