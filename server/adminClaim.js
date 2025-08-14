@@ -12,5 +12,5 @@ const setAdminClaim = async (email) => {
 };
 
 // 👇 Change to the email of the user you want to promote to admin
-const emailToPromote = "admin@marcan.ca";
+const emailToPromote = "marcan.initiative@gmail.com";
 setAdminClaim(emailToPromote);

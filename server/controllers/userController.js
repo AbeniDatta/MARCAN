@@ -42,54 +42,19 @@ const createOrUpdateProfile = async (req, res) => {
   } = req.body;
 
   try {
-    // Check if user exists
+    // Check if user exists by firebaseUid first
     let user = await prisma.user.findFirst({
       where: { firebaseUid }
     });
 
-    console.log('Existing user found:', user);
+    console.log('Existing user found by firebaseUid:', user);
 
     if (user) {
-      // Check if this user has a valid Firebase Auth account
-      // If not, delete the orphaned record and create a new one
-      if (user.firebaseUid !== firebaseUid) {
-        console.log('Found orphaned user record, deleting and creating new one');
-        await prisma.user.delete({
-          where: { id: user.id }
-        });
-        user = null; // This will trigger the create new user flow
-      } else {
-        // Update existing user
-        console.log('Updating existing user profile');
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            companyName,
-            address1,
-            address2,
-            city,
-            province,
-            postalCode,
-            website,
-            description,
-            phone,
-            logoUrl,
-            chatbotName,
-            email: email || user.email, // Update email if provided, otherwise keep existing
-          },
-        });
-        console.log('User profile updated:', user);
-      }
-    }
-
-    if (!user) {
-      // Create new user
-      console.log('Creating new user profile');
-      user = await prisma.user.create({
+      // Update existing user
+      console.log('Updating existing user profile');
+      user = await prisma.user.update({
+        where: { id: user.id },
         data: {
-          name: companyName || firebaseUid, // Use company name as display name
-          email: email || '', // Use provided email
-          firebaseUid,
           companyName,
           address1,
           address2,
@@ -101,9 +66,60 @@ const createOrUpdateProfile = async (req, res) => {
           phone,
           logoUrl,
           chatbotName,
+          email: email || user.email, // Update email if provided, otherwise keep existing
         },
       });
-      console.log('New user profile created:', user);
+      console.log('User profile updated:', user);
+    } else {
+      // Check if user exists by email (in case of previous failed signup)
+      const existingUserByEmail = await prisma.user.findFirst({
+        where: { email }
+      });
+
+      if (existingUserByEmail) {
+        console.log('Found existing user by email, updating firebaseUid');
+        // Update the existing user with the new firebaseUid
+        user = await prisma.user.update({
+          where: { id: existingUserByEmail.id },
+          data: {
+            firebaseUid,
+            companyName,
+            address1,
+            address2,
+            city,
+            province,
+            postalCode,
+            website,
+            description,
+            phone,
+            logoUrl,
+            chatbotName,
+          },
+        });
+        console.log('User profile updated with new firebaseUid:', user);
+      } else {
+        // Create new user
+        console.log('Creating new user profile');
+        user = await prisma.user.create({
+          data: {
+            name: companyName || firebaseUid, // Use company name as display name
+            email: email || '', // Use provided email
+            firebaseUid,
+            companyName,
+            address1,
+            address2,
+            city,
+            province,
+            postalCode,
+            website,
+            description,
+            phone,
+            logoUrl,
+            chatbotName,
+          },
+        });
+        console.log('New user profile created:', user);
+      }
     }
 
     res.json(user);

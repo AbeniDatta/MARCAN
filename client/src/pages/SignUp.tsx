@@ -353,7 +353,7 @@ const SignUp = () => {
                   onChange={handleInputChange}
                   placeholder="Give a personalized name for your chatbot assistant"
                 />
-                <p className="text-sm text-gray-600">By default it's "Marcy" and it's totally fine if you don't want tochange it.</p>
+                <p className="text-sm text-gray-600">By default it's "Marcy" and it's totally fine if you don't want to change it.</p>
               </div>
 
               <div className="space-y-4">
