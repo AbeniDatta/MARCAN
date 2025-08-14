@@ -234,17 +234,17 @@ const MyAccount = () => {
             {/* Profile Section */}
             <div className="flex flex-col lg:flex-row gap-6">
               {/* Profile Image Placeholder */}
-              <div className="w-[130px] h-[163px] bg-gray-100 rounded-none flex items-center justify-center overflow-hidden">
-                {profileData?.logoUrl ? (
-                  <img
-                    src={profileData.logoUrl}
-                    alt="Company Logo"
-                    className="max-w-full max-h-full object-contain"
-                  />
-                ) : (
-                  <span className="text-gray-400 text-sm">No Logo</span>
-                )}
-              </div>
+            <div className="w-[130px] h-[130px] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+              {profileData?.logoUrl ? (
+                <img
+                  src={profileData.logoUrl}
+                  alt="Company Logo"
+                  className="w-full h-full object-contain" // 👈 keeps aspect ratio
+                />
+              ) : (
+                <span className="text-gray-400 text-sm">No Logo</span>
+              )}
+            </div>
 
               {/* Profile Info */}
               <div className="flex-1 space-y-4">
