@@ -5,6 +5,7 @@ require("dotenv").config();
 const userRoutes = require('./routes/userRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 const prisma = require('./prismaClient');
 
 const app = express();
@@ -30,6 +31,7 @@ app.use((req, res, next) => {
 app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/files', fileRoutes);
 
 // Test route for deployment verification
 app.get("/api/test", (req, res) => {

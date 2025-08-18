@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import axios from 'axios';
+import { api } from "@/services/api";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,33 +132,17 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         return response.data.secure_url;
     };
 
-    const uploadFileToCloudinary = async (file: File): Promise<string> => {
-        console.log('Uploading file to Cloudinary:', file.name, file.type, file.size);
-        console.log('Cloudinary config:', {
-            cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
-            uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+    const uploadPdfToServer = async (file: File, listingId: string): Promise<string> => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("listingId", listingId);
+
+        // use the shared axios instance so baseURL + auth token apply
+        const { data } = await api.post("/files/upload", form, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-
-        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-
-        try {
-            const response = await axios.post(
-                `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
-                formData
-            );
-
-            console.log('Cloudinary upload response:', response.data);
-            console.log('File URL returned:', response.data.secure_url);
-
-            return response.data.secure_url;
-        } catch (error) {
-            console.error('Cloudinary upload error:', error);
-            throw new Error(`Failed to upload file: ${error}`);
-        }
+        return data.fileUrl; // server returns public URL
     };
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -223,11 +208,11 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
             }
 
-            let fileUrl = initialData?.fileUrl || '';
+            let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
-                fileUrl = await uploadFileToCloudinary(formData.fileUpload);
+            const idForUpload = String(initialData?.id ?? "new");
+            fileUrl = await uploadPdfToServer(formData.fileUpload, idForUpload);
             }
-
             const listingData: ListingInput = {
                 title: formData.title,
                 description: formData.description,
@@ -280,9 +265,10 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 imageUrl = await uploadImageToCloudinary(formData.imageFile);
             }
 
-            let fileUrl = initialData?.fileUrl || '';
+            let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
-                fileUrl = await uploadFileToCloudinary(formData.fileUpload);
+            const idForUpload = String(initialData?.id ?? "new");
+            fileUrl = await uploadPdfToServer(formData.fileUpload, idForUpload);
             }
 
             const listingData: ListingInput = {
