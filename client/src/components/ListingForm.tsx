@@ -72,6 +72,15 @@ const PREDEFINED_TAGS = [
     "Custom Design",
 ];
 
+const MAX_FILE_MB = 20;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+const ALLOWED_EXT = new Set(["pdf","doc","docx","xls","xlsx"]);
+
+const isAllowed = (file: File) => {
+  const ext = file.name.split(".").pop()?.toLowerCase() || "";
+  return ALLOWED_EXT.has(ext);
+};
+
 const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, onCancel, draftCount = 0 }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -132,7 +141,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         return response.data.secure_url;
     };
 
-    const uploadPdfToServer = async (file: File, listingId: string): Promise<string> => {
+    const uploadFileToServer = async (file: File, listingId: string): Promise<string> => {
         const form = new FormData();
         form.append("file", file);
         form.append("listingId", listingId);
@@ -211,7 +220,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
             const idForUpload = String(initialData?.id ?? "new");
-            fileUrl = await uploadPdfToServer(formData.fileUpload, idForUpload);
+            fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
             }
             const listingData: ListingInput = {
                 title: formData.title,
@@ -268,7 +277,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
             const idForUpload = String(initialData?.id ?? "new");
-            fileUrl = await uploadPdfToServer(formData.fileUpload, idForUpload);
+            fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
             }
 
             const listingData: ListingInput = {
@@ -356,12 +365,12 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
     const handleFileUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            setFormData(prev => ({ ...prev, fileUpload: file }));
-            setFileUploadName(file.name);
-        }
+        if (!file) return;
+        if (!isAllowed(file)) return setError("Please upload PDF, DOC, DOCX, XLS, or XLSX");
+        if (file.size > MAX_FILE_BYTES) return setError(`File is too large. Max ${MAX_FILE_MB}MB`);
+        setFormData(prev => ({ ...prev, fileUpload: file }));
+        setFileUploadName(file.name);
     };
-
     const removeFileUpload = () => {
         setFormData(prev => ({ ...prev, fileUpload: null }));
         setFileUploadName('');
@@ -383,21 +392,12 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const handleFileDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsFileDragOver(false);
-
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            const file = files[0];
-            // Check if file type is allowed
-            const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
-            const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-
-            if (allowedTypes.includes(fileExtension)) {
-                setFormData(prev => ({ ...prev, fileUpload: file }));
-                setFileUploadName(file.name);
-            } else {
-                setError('Please upload a valid file type (PDF, DOC, DOCX, XLS, XLSX)');
-            }
-        }
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+        if (!isAllowed(file)) return setError("Please upload PDF, DOC, DOCX, XLS, or XLSX");
+        if (file.size > MAX_FILE_BYTES) return setError(`File is too large. Max ${MAX_FILE_MB}MB`);
+        setFormData(prev => ({ ...prev, fileUpload: file }));
+        setFileUploadName(file.name);
     };
 
     const handleCategoryChange = (value: string) => {
