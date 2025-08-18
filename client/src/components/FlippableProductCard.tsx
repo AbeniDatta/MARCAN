@@ -218,10 +218,52 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
               {listing.description}
             </p>
 
-            {listing.fileUrl && (
-              <div className="mb-3 flex-shrink-0">
+
+
+            <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0">
+              {listing.tags?.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 bg-[#E0F2FF] rounded-[10px] text-[13px] font-medium text-black font-inter"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              {listing.city && (
+                <div className="flex items-center gap-1">
+                  <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-[12px] font-medium text-gray-600 font-inter">
+                    {listing.city}
+                  </span>
+                </div>
+              )}
+
+              {listing.fileUrl && (
                 <button
                   onClick={() => {
+                    // Check if user is logged in
+                    if (!currentUserUid) {
+                      // Show a temporary message bubble
+                      const messageBubble = document.createElement('div');
+                      messageBubble.textContent = 'Please login first';
+                      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+                      document.body.appendChild(messageBubble);
+
+                      // Remove the message after 3 seconds
+                      setTimeout(() => {
+                        if (document.body.contains(messageBubble)) {
+                          document.body.removeChild(messageBubble);
+                        }
+                      }, 3000);
+
+                      return;
+                    }
+
                     console.log('Attempting to open file URL:', listing.fileUrl);
                     try {
                       const newWindow = window.open(listing.fileUrl, '_blank');
@@ -239,32 +281,10 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  View File
+                  View File for More Details
                 </button>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 mb-4 flex-shrink-0">
-              {listing.tags?.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-[#E0F2FF] rounded-[10px] text-[13px] font-medium text-black font-inter"
-                >
-                  {tag}
-                </span>
-              ))}
+              )}
             </div>
-
-            {listing.city && (
-              <div className="flex items-center gap-1 mb-4 flex-shrink-0">
-                <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-[12px] font-medium text-gray-600 font-inter">
-                  {listing.city}
-                </span>
-              </div>
-            )}
 
             <div className="flex gap-2 mt-auto flex-shrink-0">
               {!readonly ? (
