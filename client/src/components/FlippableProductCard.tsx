@@ -85,6 +85,13 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   };
 
   const handleViewSupplier = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // User is not logged in, redirect to login page
+      navigate('/login');
+      return;
+    }
+
     // Prefer firebaseUid; fall back to id/userId as string
     const supplierKey =
       listing.user?.firebaseUid ??
@@ -99,6 +106,13 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
   };
 
   const handleContactSupplier = async () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // User is not logged in, redirect to login page
+      navigate('/login');
+      return;
+    }
+
     if (!supplierData && !loading) {
       setLoading(true);
       try {
@@ -312,6 +326,21 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <p className="text-gray-500">Loading contact information...</p>
+              </div>
+            ) : !currentUserUid ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <div className="mb-4">
+                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <p className="text-gray-600 font-medium mb-2">Please log in to view supplier contact information</p>
+                </div>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-4 py-2 bg-[#DB1233] hover:bg-[#c10e2b] text-white rounded text-sm font-medium transition-colors"
+                >
+                  Log In
+                </button>
               </div>
             ) : supplierData ? (
               <div className="flex-1 space-y-4">
