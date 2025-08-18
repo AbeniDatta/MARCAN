@@ -67,6 +67,24 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
     console.log('Listing ID:', listing.id);
     console.log('Current user UID:', currentUserUid);
 
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login to save listings';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     try {
       if (isSaved) {
         console.log('Unsaving listing...');

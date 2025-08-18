@@ -4,11 +4,13 @@ import ListingCard from '@/components/ListingCard';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { auth } from '@/firebase';
 
 const SavedListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -23,7 +25,33 @@ const SavedListings = () => {
     fetchSaved();
   }, []);
 
+  // Authentication listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUserUid(user?.uid || null);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleToggleSelectionMode = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login first';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     const newMode = !isSelectionMode;
     setIsSelectionMode(newMode);
     if (!newMode) {
@@ -32,6 +60,24 @@ const SavedListings = () => {
   };
 
   const handleSelectAll = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login first';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     if (selectedIds.size === listings.length) {
       // Deselect all
       setSelectedIds(new Set());
@@ -43,6 +89,24 @@ const SavedListings = () => {
   };
 
   const handleSelectListing = (listingId: number, selected: boolean) => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login first';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     const newSelectedIds = new Set(selectedIds);
     if (selected) {
       newSelectedIds.add(listingId);
@@ -53,6 +117,24 @@ const SavedListings = () => {
   };
 
   const handleContactAll = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login first';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     // Get selected listings and their email addresses
     const selectedListings = listings.filter(listing => selectedIds.has(listing.id));
     const emails = selectedListings

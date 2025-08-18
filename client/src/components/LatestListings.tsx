@@ -3,6 +3,7 @@ import { listingApi, Listing } from '@/services/api';
 import ListingCard from './ListingCard';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { auth } from '@/firebase';
 
 interface Filters {
   categories: string[];
@@ -25,12 +26,21 @@ const LatestListings = ({ filters, onSelectionChange, selectedListings = [], onS
   const [loading, setLoading] = useState(true);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
 
   // Sync with parent component's selected listings
   useEffect(() => {
     const parentSelectedIds = new Set(selectedListings.map(listing => listing.id));
     setSelectedIds(parentSelectedIds);
   }, [selectedListings]);
+
+  // Authentication listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUserUid(user?.uid || null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -97,6 +107,24 @@ const LatestListings = ({ filters, onSelectionChange, selectedListings = [], onS
   }, [filters, listings]);
 
   const handleToggleSelectionMode = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login to select listings';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     const newMode = !isSelectionMode;
     setIsSelectionMode(newMode);
     onSelectionModeChange?.(newMode);
@@ -107,6 +135,24 @@ const LatestListings = ({ filters, onSelectionChange, selectedListings = [], onS
   };
 
   const handleSelectAll = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login to select listings';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     if (selectedIds.size === filteredListings.length) {
       // Deselect all
       setSelectedIds(new Set());
@@ -120,6 +166,24 @@ const LatestListings = ({ filters, onSelectionChange, selectedListings = [], onS
   };
 
   const handleSelectListing = (listingId: number, selected: boolean) => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login to select listings';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     const newSelectedIds = new Set(selectedIds);
     if (selected) {
       newSelectedIds.add(listingId);
@@ -136,6 +200,24 @@ const LatestListings = ({ filters, onSelectionChange, selectedListings = [], onS
   const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredListings.length;
 
   const handleContactAll = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login to select listings';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
     // Get selected listings and their email addresses
     const selectedListings = filteredListings.filter(listing => selectedIds.has(listing.id));
     const emails = selectedListings
