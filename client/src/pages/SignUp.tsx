@@ -13,7 +13,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Upload, Eye, EyeOff } from "lucide-react";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/firebase";
 import { profileApi } from "@/services/api";
 
@@ -154,7 +154,12 @@ const SignUp = () => {
       };
 
       await profileApi.createOrUpdateProfile(profileData);
-      navigate("/listings");
+
+      // Send verification email
+      await sendEmailVerification(userCredential.user);
+
+      // Redirect to email verification page
+      navigate("/email-verification");
     } catch (err: any) {
       console.error("Error during signup:", err);
       setError(err.message || "Failed to create account");

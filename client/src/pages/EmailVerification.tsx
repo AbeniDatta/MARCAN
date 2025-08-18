@@ -1,47 +1,37 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, CheckCircle, AlertCircle, RefreshCw, Edit } from "lucide-react";
 import { auth } from "@/firebase";
-import { sendEmailVerification, onAuthStateChanged } from "firebase/auth";
-import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
-import { Mail, CheckCircle, RefreshCw } from "lucide-react";
+import { sendEmailVerification, onAuthStateChanged, updateEmail } from "firebase/auth";
 
 const EmailVerification = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [verificationSent, setVerificationSent] = useState(false);
     const [error, setError] = useState("");
+    const [showChangeEmail, setShowChangeEmail] = useState(false);
+    const [newEmail, setNewEmail] = useState("");
+    const [changeEmailLoading, setChangeEmailLoading] = useState(false);
 
     useEffect(() => {
-        // Get email from URL params if available
-        const emailFromParams = searchParams.get('email');
-        if (emailFromParams) {
-            setEmail(emailFromParams);
-        }
-
-        // Listen for auth state changes to check if user is verified
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
+                setEmail(user.email || "");
                 if (user.emailVerified) {
-                    // User is verified, redirect to login
-                    navigate('/login?verified=true');
-                } else {
-                    // User is not verified, set email if not already set
-                    if (!email && user.email) {
-                        setEmail(user.email);
-                    }
+                    // If email is already verified, redirect to listings
+                    navigate("/listings");
                 }
             } else {
-                // No user logged in, redirect to signup
-                navigate('/signup');
+                // If no user is signed in, redirect to login
+                navigate("/login");
             }
         });
 
         return () => unsubscribe();
-    }, [navigate, searchParams, email]);
+    }, [navigate]);
 
     const handleResendVerification = async () => {
         setResendLoading(true);
@@ -52,152 +42,183 @@ const EmailVerification = () => {
             if (user) {
                 await sendEmailVerification(user);
                 setVerificationSent(true);
-                setTimeout(() => setVerificationSent(false), 5000); // Hide success message after 5 seconds
+                // Auto-hide success message after 5 seconds
+                setTimeout(() => setVerificationSent(false), 5000);
             }
         } catch (err: any) {
             console.error("Error sending verification email:", err);
-            setError("Failed to send verification email. Please try again.");
+            setError(err.message || "Failed to send verification email");
         } finally {
             setResendLoading(false);
         }
     };
 
-    const handleCheckVerification = async () => {
-        setLoading(true);
+
+
+    const handleChangeEmail = async () => {
+        if (!newEmail || !newEmail.includes('@')) {
+            setError("Please enter a valid email address");
+            return;
+        }
+
+        setChangeEmailLoading(true);
         setError("");
 
         try {
             const user = auth.currentUser;
             if (user) {
-                // Reload user to get latest verification status
-                await user.reload();
-
-                if (user.emailVerified) {
-                    navigate('/login?verified=true');
-                } else {
-                    setError("Email not verified yet. Please check your inbox and click the verification link.");
-                }
+                await updateEmail(user, newEmail);
+                setEmail(newEmail);
+                setNewEmail("");
+                setShowChangeEmail(false);
+                // Send verification email to new address
+                await sendEmailVerification(user);
+                setVerificationSent(true);
+                setTimeout(() => setVerificationSent(false), 5000);
             }
         } catch (err: any) {
-            console.error("Error checking verification:", err);
-            setError("Failed to check verification status. Please try again.");
+            console.error("Error changing email:", err);
+            if (err.code === "auth/requires-recent-login") {
+                setError("For security reasons, you need to sign out and sign in again before changing your email.");
+            } else {
+                setError(err.message || "Failed to change email address");
+            }
         } finally {
-            setLoading(false);
+            setChangeEmailLoading(false);
         }
     };
 
-    const handleSignOut = async () => {
-        try {
-            await auth.signOut();
-            navigate('/signup');
-        } catch (err) {
-            console.error("Error signing out:", err);
-        }
-    };
+
 
     return (
-        <div className="min-h-screen bg-[#F9F9F9]">
-            <header className="bg-[#F9F9F9] px-4 lg:px-20 py-4">
-                <div className="flex items-center justify-between max-w-screen-xl mx-auto">
-                    <Link to="/" className="flex items-center gap-3">
-                        <img
-                            src={canadianMapleLeaf}
-                            alt="Canadian maple leaf"
-                            className="w-[38px] h-[38px]"
-                        />
-                        <h1 className="text-[32px] font-bold text-black font-inter">
-                            MARCAN
-                        </h1>
-                    </Link>
-                </div>
-            </header>
-
-            <main className="px-4 lg:px-20">
-                <div className="max-w-screen-xl mx-auto">
-                    <div className="bg-white mx-auto max-w-2xl px-12 py-16 relative">
-                        <div className="text-center mb-8">
-                            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                                <Mail className="w-8 h-8 text-blue-600" />
-                            </div>
-                            <h1 className="text-[32px] font-bold text-black font-inter mb-4">
-                                Verify your email
-                            </h1>
-                            <p className="text-[18px] text-[#4A3F3F] font-inria-sans mb-2">
-                                We've sent a verification link to
-                            </p>
-                            <p className="text-[18px] font-semibold text-black font-inter mb-6">
-                                {email}
-                            </p>
-                            <p className="text-[16px] text-gray-600 font-inter">
-                                Please check your email and click the verification link to continue.
-                            </p>
+        <div className="min-h-screen bg-[#F9F9F9] flex flex-col">
+            <main className="flex-1 flex items-center justify-center px-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Mail className="w-8 h-8 text-blue-600" />
                         </div>
+                        <CardTitle className="text-2xl font-bold">Verify your email</CardTitle>
+                        <CardDescription className="text-gray-600">
+                            We've sent a verification link to
+                        </CardDescription>
+                        <div className="font-semibold text-gray-800 mt-2">{email}</div>
+                    </CardHeader>
 
+                    <CardContent className="space-y-6">
                         {error && (
-                            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-sm">
-                                {error}
+                            <div className="p-3 bg-red-100 border border-red-300 rounded-lg flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-600" />
+                                <span className="text-red-700 text-sm">{error}</span>
                             </div>
                         )}
 
                         {verificationSent && (
-                            <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg text-sm flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4" />
-                                Verification email sent successfully!
+                            <div className="p-3 bg-green-100 border border-green-300 rounded-lg flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                <span className="text-green-700 text-sm">
+                                    Verification email sent successfully!
+                                </span>
                             </div>
                         )}
 
                         <div className="space-y-4">
                             <Button
-                                onClick={handleCheckVerification}
-                                disabled={loading}
-                                className="w-full bg-[#DB1233] hover:bg-[#c10e2b] text-white text-[18px] font-semibold rounded-[10px] py-4 h-auto font-inter"
-                            >
-                                {loading ? (
-                                    <div className="flex items-center gap-2">
-                                        <RefreshCw className="w-5 h-5 animate-spin" />
-                                        Checking...
-                                    </div>
-                                ) : (
-                                    "I've verified my email"
-                                )}
-                            </Button>
-
-                            <Button
                                 onClick={handleResendVerification}
                                 disabled={resendLoading}
                                 variant="outline"
-                                className="w-full border-[#DB1233] text-[#DB1233] hover:bg-[#DB1233] hover:text-white text-[16px] font-medium rounded-[10px] py-3 h-auto font-inter"
+                                className="w-full"
                             >
                                 {resendLoading ? (
-                                    <div className="flex items-center gap-2">
-                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    <>
+                                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                                         Sending...
-                                    </div>
+                                    </>
                                 ) : (
                                     "Resend verification email"
                                 )}
                             </Button>
 
-                            <div className="text-center pt-4">
-                                <button
-                                    onClick={handleSignOut}
-                                    className="text-[#DB1233] hover:underline font-medium text-[16px]"
+                            {!showChangeEmail ? (
+                                <Button
+                                    onClick={() => setShowChangeEmail(true)}
+                                    variant="outline"
+                                    className="w-full"
                                 >
-                                    Use a different email
-                                </button>
-                            </div>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Change email address
+                                </Button>
+                            ) : (
+                                <div className="space-y-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                    <div className="flex items-center gap-2">
+                                        <Edit className="w-4 h-4 text-gray-600" />
+                                        <span className="font-medium text-sm">Change email address</span>
+                                    </div>
+                                    <input
+                                        type="email"
+                                        placeholder="Enter new email address"
+                                        value={newEmail}
+                                        onChange={(e) => setNewEmail(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#DB1233] focus:border-transparent"
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button
+                                            onClick={handleChangeEmail}
+                                            disabled={changeEmailLoading}
+                                            size="sm"
+                                            className="flex-1 bg-[#DB1233] hover:bg-[#c10e2b] text-white"
+                                        >
+                                            {changeEmailLoading ? (
+                                                <>
+                                                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                                                    Updating...
+                                                </>
+                                            ) : (
+                                                "Update Email"
+                                            )}
+                                        </Button>
+                                        <Button
+                                            onClick={() => {
+                                                setShowChangeEmail(false);
+                                                setNewEmail("");
+                                                setError("");
+                                            }}
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <Button
+                                onClick={() => navigate("/login")}
+                                className="w-full bg-[#DB1233] hover:bg-[#c10e2b] text-white"
+                            >
+                                Go to Login
+                            </Button>
+
                         </div>
 
-                        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-                            <h3 className="font-semibold text-black mb-2">Didn't receive the email?</h3>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                                <li>• Check your spam or junk folder</li>
-                                <li>• Make sure you entered the correct email address</li>
-                                <li>• Wait a few minutes before requesting a new email</li>
-                            </ul>
+                        <div className="text-center text-sm text-gray-500 space-y-3">
+                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                <p className="font-medium text-blue-800 mb-2">Important:</p>
+                                <ul className="text-blue-700 text-xs space-y-1">
+                                    <li>• Verification links expire after 1 hour</li>
+                                    <li>• Each link can only be used once</li>
+                                    <li>• If you see "link has expired" error, click "Resend verification email"</li>
+                                    <li>• Check your email immediately after clicking resend</li>
+                                </ul>
+                            </div>
+                            <p>Didn't receive the email? Check your spam folder.</p>
+                            <p className="text-[#DB1233] font-medium">
+                                Once you've verified your email, you can log in to your account.
+                            </p>
                         </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </main>
         </div>
     );

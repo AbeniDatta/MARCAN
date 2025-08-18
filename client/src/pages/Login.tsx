@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/firebase";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -14,6 +14,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +23,16 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Check if email is verified
+      if (!userCredential.user.emailVerified) {
+        // Sign out the user and show error with option to resend verification
+        await auth.signOut();
+        setError("Please verify your email before logging in. Check your inbox for a verification link.");
+        return;
+      }
+
       navigate("/listings"); // Redirect to listings after successful login
     } catch (err: any) {
       let message = "An error occurred. Please try again.";
@@ -35,6 +46,32 @@ const Login = () => {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError("Please enter your email address first.");
+      return;
+    }
+
+    setResendLoading(true);
+    setError("");
+
+    try {
+      // Try to sign in to get the user object
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      if (!userCredential.user.emailVerified) {
+        await sendEmailVerification(userCredential.user);
+        setVerificationSent(true);
+        // Sign out after sending verification
+        await auth.signOut();
+      }
+    } catch (err: any) {
+      setError("Failed to send verification email. Please check your credentials.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -66,6 +103,23 @@ const Login = () => {
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
               {error}
+              {error.includes("verify your email") && (
+                <div className="mt-2">
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resendLoading}
+                    className="text-[#DB1233] hover:underline font-semibold text-sm"
+                  >
+                    {resendLoading ? "Sending..." : "Resend verification email"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {verificationSent && (
+            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
+              Verification email sent successfully! Please check your inbox.
             </div>
           )}
 

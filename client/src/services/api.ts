@@ -2,9 +2,9 @@ import axios from 'axios';
 import { auth } from '@/firebase';
 
 // Uncomment this for production:
-//const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
 // Uncomment this for local development:
-const API_URL = 'http://localhost:5050/api';
+//const API_URL = 'http://localhost:5050/api';
 
 
 // Create axios instance

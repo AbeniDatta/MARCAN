@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import Listings from "./pages/Listings";
 import ForgotPassword from "./pages/ForgotPassword";
+import EmailVerification from "./pages/EmailVerification";
 import MyAccount from "./pages/MyAccount";
 import CreateListing from "./pages/CreateListing";
 import UpdateListing from "./pages/UpdateListing";
@@ -30,10 +31,17 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      setAuthenticated(!!user);
+      if (user) {
+        setAuthenticated(true);
+        setEmailVerified(user.emailVerified);
+      } else {
+        setAuthenticated(false);
+        setEmailVerified(false);
+      }
       setLoading(false);
     });
 
@@ -46,6 +54,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!authenticated) {
     return <Navigate to="/login" />;
+  }
+
+  if (!emailVerified) {
+    return <Navigate to="/email-verification" />;
   }
 
   return <>{children}</>;
@@ -62,6 +74,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/email-verification" element={<EmailVerification />} />
 
           <Route
             path="/listings"
