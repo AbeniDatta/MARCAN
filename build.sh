@@ -18,10 +18,15 @@ npm run build
 
 # Go back to root and install server dependencies including dev dependencies
 cd ../server
-npm install --include=dev
+rm -rf node_modules
+npm install --include=dev --no-optional
 
 # Generate Prisma client
 prisma generate
+
+# Verify Express installation
+echo "Verifying Express installation..."
+node -e "console.log('Express version:', require('express/package.json').version)"
 
 # Skip database migrations during build for session pooler URLs
 echo "Skipping database migrations during build"

@@ -5,7 +5,7 @@ services:
     env: node
     plan: free
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: cd server && npm start
+    startCommand: cd server && npx prisma generate && npm start
     envVars:
       - key: NODE_ENV
         value: production
