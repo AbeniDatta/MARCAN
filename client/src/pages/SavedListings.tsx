@@ -5,12 +5,14 @@ import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { auth } from '@/firebase';
+import { AlertTriangle } from 'lucide-react';
 
 const SavedListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+  const [showUnlikeConfirm, setShowUnlikeConfirm] = useState(false);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -151,6 +153,71 @@ const SavedListings = () => {
     }
   };
 
+  const handleUnlikeSelected = () => {
+    // Check if user is logged in
+    if (!currentUserUid) {
+      // Show a temporary message bubble
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = 'Please login first';
+      messageBubble.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+      return;
+    }
+
+    if (selectedIds.size === 0) {
+      alert("Please select listings to unlike.");
+      return;
+    }
+
+    // Show confirmation modal instead of browser confirm
+    setShowUnlikeConfirm(true);
+  };
+
+  const confirmUnlike = async () => {
+    try {
+      // Unlike all selected listings
+      const unlikePromises = Array.from(selectedIds).map(listingId =>
+        listingApi.unsaveListing(listingId)
+      );
+
+      await Promise.all(unlikePromises);
+
+      // Remove the unliked listings from the local state
+      setListings(prevListings => prevListings.filter(listing => !selectedIds.has(listing.id)));
+
+      // Clear selection
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+
+      // Show success message
+      const messageBubble = document.createElement('div');
+      messageBubble.textContent = `Successfully unliked ${selectedIds.size} listing(s)`;
+      messageBubble.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+      document.body.appendChild(messageBubble);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(messageBubble)) {
+          document.body.removeChild(messageBubble);
+        }
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error unliking listings:', error);
+      alert('Failed to unlike listings. Please try again.');
+    } finally {
+      setShowUnlikeConfirm(false);
+    }
+  };
+
   const isAllSelected = listings.length > 0 && selectedIds.size === listings.length;
   const isIndeterminate = selectedIds.size > 0 && selectedIds.size < listings.length;
 
@@ -192,13 +259,23 @@ const SavedListings = () => {
                     </div>
 
                     {selectedIds.size > 0 && (
-                      <Button
-                        size="sm"
-                        onClick={handleContactAll}
-                        className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-sm font-medium"
-                      >
-                        Contact All ({selectedIds.size})
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={handleContactAll}
+                          className="bg-[#DB1233] hover:bg-[#c10e2b] text-white text-sm font-medium"
+                        >
+                          Contact All ({selectedIds.size})
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={handleUnlikeSelected}
+                          variant="outline"
+                          className="border-red-500 text-red-600 hover:bg-red-50 text-sm font-medium"
+                        >
+                          Unlike ({selectedIds.size})
+                        </Button>
+                      </>
                     )}
                   </div>
                 )}
@@ -235,6 +312,44 @@ const SavedListings = () => {
           )}
         </div>
       </section>
+
+      {/* Unlike Confirmation Modal */}
+      {showUnlikeConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Unlike Listings</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to unlike {selectedIds.size} listing{selectedIds.size !== 1 ? 's' : ''}?
+              These listings will be removed from your saved items.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowUnlikeConfirm(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmUnlike}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Unlike {selectedIds.size} Listing{selectedIds.size !== 1 ? 's' : ''}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
