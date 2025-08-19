@@ -87,6 +87,7 @@ const SupplierProfile = () => {
     );
   }
 
+
   if (error || !profileData) {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
