@@ -295,8 +295,13 @@ const SignUp = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   placeholder="Describe your company and services..."
+                  maxLength={164}
                   required
                 />
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Maximum 164 characters</span>
+                  <span>{formData.description.length}/164</span>
+                </div>
               </div>
 
               <div className="space-y-4">

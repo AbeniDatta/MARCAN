@@ -1,4 +1,6 @@
 const prisma = require('../prismaClient');
+const serializeBigInts = (data) =>
+  JSON.parse(JSON.stringify(data, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
 
 const createUser = async (req, res) => {
   const { firstName, lastName, email, firebaseUid, companyName } = req.body;
@@ -12,7 +14,7 @@ const createUser = async (req, res) => {
         companyName,
       },
     });
-    res.json(newUser);
+    res.json(serializeBigInts(newUser));
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).send("Error creating user: " + error.message);
@@ -122,7 +124,7 @@ const createOrUpdateProfile = async (req, res) => {
       }
     }
 
-    res.json(user);
+    res.json(serializeBigInts(user));
   } catch (error) {
     console.error('Error creating/updating profile:', error);
 
@@ -162,7 +164,7 @@ const getUserProfile = async (req, res) => {
     }
 
     console.log('Returning user profile:', user);
-    res.json(user);
+    res.json(serializeBigInts(user));
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).send("Error fetching user profile: " + error.message);
@@ -189,7 +191,7 @@ const getUserProfileById = async (req, res) => {
     }
 
     console.log('Returning user profile:', user);
-    res.json(user);
+    res.json(serializeBigInts(user));
   } catch (error) {
     console.error('Error fetching user profile by ID:', error);
     res.status(500).send("Error fetching user profile: " + error.message);
@@ -244,7 +246,7 @@ const updateUserCompanyName = async (req, res) => {
       where: { firebaseUid },
       data: { companyName },
     });
-    res.json(updatedUser);
+    res.json(serializeBigInts(updatedUser));
   } catch (error) {
     console.error('Error updating user company name:', error);
     res.status(500).send("Error updating user: " + error.message);
@@ -256,7 +258,7 @@ const getAllUsers = async (req, res) => {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    res.json(users);
+    res.json(serializeBigInts(users));
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" });

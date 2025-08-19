@@ -356,7 +356,12 @@ const EditProfile = () => {
                                 onChange={handleInputChange}
                                 className="min-h-[120px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
                                 placeholder="Tell us about your company..."
+                                maxLength={164}
                             />
+                            <div className="flex justify-between items-center text-sm text-gray-500">
+                                <span>Maximum 164 characters</span>
+                                <span>{formData.description.length}/164</span>
+                            </div>
                         </div>
 
                         {/* Chatbot Name */}

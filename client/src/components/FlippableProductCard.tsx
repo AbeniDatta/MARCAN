@@ -420,11 +420,17 @@ const FlippableProductCard: React.FC<FlippableProductCardProps> = ({ listing, re
                     </div>
                   )}
 
-                  {(supplierData.address1 || supplierData.city || supplierData.province) && (
+                  {(supplierData.address1 || supplierData.address2 || supplierData.city || supplierData.province) && (
                     <div>
                       <p className="text-[12px] font-medium text-gray-600 font-inter">Address</p>
                       <p className="text-[13px] font-medium text-black font-inter">
-                        {[supplierData.address1, supplierData.city, supplierData.province, supplierData.postalCode].filter(Boolean).join(', ')}
+                        {[
+                          supplierData.address1,
+                          supplierData.address2,
+                          supplierData.city,
+                          supplierData.province?.toUpperCase(),
+                          supplierData.postalCode
+                        ].filter(Boolean).join(', ')}
                       </p>
                     </div>
                   )}

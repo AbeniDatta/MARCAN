@@ -70,7 +70,7 @@ const SupplierProfile = () => {
       profileData.address1,
       profileData.address2,
       profileData.city,
-      profileData.province,
+      profileData.province?.toUpperCase(),
       profileData.postalCode,
     ].filter(Boolean);
     return parts.join(", ");

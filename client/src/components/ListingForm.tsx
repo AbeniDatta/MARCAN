@@ -74,11 +74,11 @@ const PREDEFINED_TAGS = [
 
 const MAX_FILE_MB = 20;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
-const ALLOWED_EXT = new Set(["pdf","doc","docx","xls","xlsx"]);
+const ALLOWED_EXT = new Set(["pdf", "doc", "docx", "xls", "xlsx"]);
 
 const isAllowed = (file: File) => {
-  const ext = file.name.split(".").pop()?.toLowerCase() || "";
-  return ALLOWED_EXT.has(ext);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    return ALLOWED_EXT.has(ext);
 };
 
 const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSaveDraft, onCancel, draftCount = 0 }) => {
@@ -188,7 +188,9 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 setError('Please select at least one category.');
                 return;
             }
-            if (formData.tags.length === 0) {
+            // Check if tags are selected OR if "Other" is selected with custom tag filled
+            const hasValidTags = formData.tags.length > 0 || (showOtherTagInput && otherTagInput.trim());
+            if (!hasValidTags) {
                 setError('Please select at least one tag.');
                 return;
             }
@@ -219,16 +221,21 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
-            const idForUpload = String(initialData?.id ?? "new");
-            fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
+                const idForUpload = String(initialData?.id ?? "new");
+                fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
             }
+            // Include custom tag if "Other" is selected and filled
+            const finalTags = showOtherTagInput && otherTagInput.trim()
+                ? [...formData.tags, otherTagInput.trim()]
+                : formData.tags;
+
             const listingData: ListingInput = {
                 title: formData.title,
                 description: formData.description,
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
                 fileUrl,
-                tags: formData.tags,
+                tags: finalTags,
                 categories: formData.categories,
                 city: manualCity.trim() ? manualCity : formData.city
             };
@@ -276,9 +283,14 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             let fileUrl = initialData?.fileUrl || "";
             if (formData.fileUpload) {
-            const idForUpload = String(initialData?.id ?? "new");
-            fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
+                const idForUpload = String(initialData?.id ?? "new");
+                fileUrl = await uploadFileToServer(formData.fileUpload, idForUpload);
             }
+
+            // Include custom tag if "Other" is selected and filled
+            const finalTags = showOtherTagInput && otherTagInput.trim()
+                ? [...formData.tags, otherTagInput.trim()]
+                : formData.tags;
 
             const listingData: ListingInput = {
                 title: formData.title || '',
@@ -286,7 +298,7 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 price: parseFloat(formData.price) || 0,
                 imageUrl,
                 fileUrl,
-                tags: formData.tags,
+                tags: finalTags,
                 categories: formData.categories,
                 city: manualCity.trim() ? manualCity : formData.city || ''
             };

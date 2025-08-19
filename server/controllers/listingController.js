@@ -57,7 +57,7 @@ const createListing = async (req, res) => {
       data: listingData
     });
     console.log('Successfully created listing:', newListing);
-    res.json(newListing);
+    res.json(serializeBigInts(newListing));
   } catch (error) {
     console.error('Error creating listing:', error);
     res.status(400).json({ error: error.message });
@@ -144,7 +144,7 @@ const getListingsByUserId = async (req, res) => {
     });
     console.log('Found listings:', listings.length);
     console.log('Listings:', listings.map(l => ({ id: l.id, title: l.title, userId: l.userId })));
-    res.json(listings);
+    res.json(serializeBigInts(listings));
   } catch (err) {
     console.error('Error fetching user listings:', err);
     console.error('Error stack:', err.stack);
@@ -526,7 +526,7 @@ const saveListing = async (req, res) => {
       }
     });
 
-    res.json(saved);
+    res.json(serializeBigInts(saved));
   } catch (error) {
     console.error("Error saving listing:", error);
     res.status(500).json({ error: "Failed to save listing" });
