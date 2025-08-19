@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { Listing, UserProfile, api } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
+import { Input } from "@/components/ui/input";
 
 const AdminDashboard = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [listingSearch, setListingSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const navigate = useNavigate();
 
   const fetchAdminData = async () => {
@@ -53,6 +56,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const filteredListings = listings.filter(
+    (l) =>
+      l.title.toLowerCase().includes(listingSearch.toLowerCase()) ||
+      l.description.toLowerCase().includes(listingSearch.toLowerCase())
+  );
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
@@ -86,9 +101,17 @@ const AdminDashboard = () => {
 
           {/* Listings Table */}
           <div className="mb-16">
-            <h2 className="text-[25px] font-semibold text-[#4A3F3F] mb-4">
-              All Listings ({listings.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[25px] font-semibold text-[#4A3F3F]">
+                All Listings ({filteredListings.length})
+              </h2>
+              <Input
+                value={listingSearch}
+                onChange={(e) => setListingSearch(e.target.value)}
+                placeholder="Search listings..."
+                className="max-w-sm"
+              />
+            </div>
             <div className="overflow-x-auto bg-white rounded-lg shadow">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 text-gray-700">
@@ -104,13 +127,12 @@ const AdminDashboard = () => {
                     <th className="p-3">Capacity</th>
                     <th className="p-3">Image URL</th>
                     <th className="p-3">User ID</th>
-                    <th className="p-3">Draft</th>
                     <th className="p-3">Created At</th>
                     <th className="p-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {listings.map((listing) => (
+                  {filteredListings.map((listing) => (
                     <tr key={listing.id} className="border-t">
                       <td className="p-3">{listing.id}</td>
                       <td className="p-3">{listing.title}</td>
@@ -123,7 +145,6 @@ const AdminDashboard = () => {
                       <td className="p-3">{listing.capacity}</td>
                       <td className="p-3 truncate max-w-[200px]">{listing.imageUrl}</td>
                       <td className="p-3">{listing.userId}</td>
-                      <td className="p-3">{listing.isDraft ? "Yes" : "No"}</td>
                       <td className="p-3">{new Date(listing.createdAt).toLocaleString()}</td>
                       <td className="p-3">
                         <button
@@ -142,9 +163,17 @@ const AdminDashboard = () => {
 
           {/* Users Table */}
           <div>
-            <h2 className="text-[25px] font-semibold text-[#4A3F3F] mb-4">
-              All Users ({users.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[25px] font-semibold text-[#4A3F3F]">
+                All Users ({filteredUsers.length})
+              </h2>
+              <Input
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search users..."
+                className="max-w-sm"
+              />
+            </div>
             <div className="overflow-x-auto bg-white rounded-lg shadow">
               <table className="w-full text-sm">
                 <thead className="bg-gray-100 text-gray-700">
@@ -161,14 +190,13 @@ const AdminDashboard = () => {
                     <th className="p-3">Address 1</th>
                     <th className="p-3">Address 2</th>
                     <th className="p-3">Logo URL</th>
-                    <th className="p-3">Chatbot Name</th>
                     <th className="p-3">Created At</th>
                     <th className="p-3">Updated At</th>
                     <th className="p-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => (
+                  {filteredUsers.map((user) => (
                     <tr key={user.id} className="border-t">
                       <td className="p-3">{user.id}</td>
                       <td className="p-3">{user.name}</td>
@@ -182,7 +210,6 @@ const AdminDashboard = () => {
                       <td className="p-3">{user.address1 || "—"}</td>
                       <td className="p-3">{user.address2 || "—"}</td>
                       <td className="p-3 truncate max-w-[200px]">{user.logoUrl || "—"}</td>
-                      <td className="p-3">{user.chatbotName || "—"}</td>
                       <td className="p-3">{new Date(user.createdAt).toLocaleString()}</td>
                       <td className="p-3">{new Date(user.updatedAt).toLocaleString()}</td>
                       <td className="p-3">
