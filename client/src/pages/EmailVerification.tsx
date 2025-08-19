@@ -206,10 +206,8 @@ const EmailVerification = () => {
                             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                                 <p className="font-medium text-blue-800 mb-2">Important:</p>
                                 <ul className="text-blue-700 text-xs space-y-1">
-                                    <li>• Verification links expire after 1 hour</li>
-                                    <li>• Each link can only be used once</li>
-                                    <li>• If you see "link has expired" error, click "Resend verification email"</li>
-                                    <li>• Check your email immediately after clicking resend</li>
+                                    <li>• You should receive the verification email within 10 minutes</li>
+                                    <li>• If you see a "Your request to verify your email has expired or the link has already been used" error, first try logging in to your account, and if that fails then click "Resend verification email"</li>
                                 </ul>
                             </div>
                             <p>Didn't receive the email? Check your spam folder.</p>
