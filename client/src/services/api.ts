@@ -316,7 +316,8 @@ export const profileApi = {
     },
 };
 
-export const getAllUsers = () => api.get<UserProfile[]>("/users");
+export const getAllUsers = () =>
+  api.get<UserProfile[]>("/users", { params: { activeOnly: true } });
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
 export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
 

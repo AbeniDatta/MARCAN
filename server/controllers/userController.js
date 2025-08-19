@@ -1,4 +1,5 @@
 const prisma = require('../prismaClient');
+const admin = require('firebase-admin');
 const serializeBigInts = (data) =>
   JSON.parse(JSON.stringify(data, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
 
@@ -254,7 +255,27 @@ const updateUserCompanyName = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
+  const { activeOnly } = req.query; // "true" | undefined
   try {
+    if (activeOnly === 'true') {
+      // Build a set of active Firebase UIDs
+      const activeUids = new Set();
+      let nextPageToken = undefined;
+      do {
+        const result = await admin.auth().listUsers(1000, nextPageToken);
+        result.users.forEach(u => activeUids.add(u.uid));
+        nextPageToken = result.pageToken;
+      } while (nextPageToken);
+
+      // Return only DB users whose firebaseUid is still active in Firebase
+      const users = await prisma.user.findMany({
+        where: { firebaseUid: { in: Array.from(activeUids) } },
+        orderBy: { createdAt: 'desc' },
+      });
+      return res.json(serializeBigInts(users));
+    }
+
+    // default: return all DB users
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
     });
@@ -305,16 +326,29 @@ const deleteUserFromDatabase = async (req, res) => {
 
 const deleteUserById = async (req, res) => {
   const { userId } = req.params;
+  const id = parseInt(userId);
 
   try {
-    await prisma.user.delete({
-      where: { id: parseInt(userId) },
+    await prisma.$transaction(async (tx) => {
+      // delete saved listings referencing the user's listings
+      await tx.savedListing.deleteMany({
+        where: { listing: { userId: id } }, // requires Prisma relation named `listing`
+      });
+
+      // delete the user's own saved listings (if model has userId on savedListing)
+      await tx.savedListing.deleteMany({ where: { userId: id } });
+
+      // delete listings
+      await tx.listing.deleteMany({ where: { userId: id } });
+
+      // finally delete the user
+      await tx.user.delete({ where: { id } });
     });
 
     res.json({ message: "User deleted by admin successfully" });
   } catch (error) {
     console.error("Admin error deleting user:", error);
-    res.status(500).json({ error: "Failed to delete user" });
+    res.status(500).json({ error: "Failed to delete user", details: error.message });
   }
 };
 

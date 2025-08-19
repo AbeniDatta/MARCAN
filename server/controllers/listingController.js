@@ -244,10 +244,19 @@ const updateListing = async (req, res) => {
 const deleteListing = async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.listing.delete({ where: { id: parseInt(id) } });
+    const listingId = parseInt(id);
+
+    await prisma.$transaction([
+      // remove dependents that reference listingId
+      prisma.savedListing.deleteMany({ where: { listingId } }),
+      // add other dependent deletions here if you have them (e.g., messages, views)
+      prisma.listing.delete({ where: { id: listingId } }),
+    ]);
+
     res.json({ message: 'Listing deleted successfully' });
   } catch (err) {
-    res.status(400).json({ error: 'Failed to delete listing' });
+    console.error("Error deleting listing:", err);
+    res.status(400).json({ error: 'Failed to delete listing', details: err.message });
   }
 };
 

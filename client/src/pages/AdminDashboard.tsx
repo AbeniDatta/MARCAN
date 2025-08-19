@@ -17,13 +17,13 @@ const AdminDashboard = () => {
     try {
       const [listingsRes, usersRes] = await Promise.all([
         api.get<Listing[]>("/listings"),
-        api.get<UserProfile[]>("/users"),
+        api.get<UserProfile[]>("/users", { params: { activeOnly: true } }), // 👈
       ]);
       setListings(listingsRes.data);
       setUsers(usersRes.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load admin data", err);
-      setError("Failed to load admin data");
+      setError(err?.response?.data?.error || "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -37,10 +37,10 @@ const AdminDashboard = () => {
     if (!confirm("Are you sure you want to delete this listing?")) return;
     try {
       await api.delete(`/listings/admin/${id}`);
-      setListings((prev) => prev.filter((listing) => listing.id !== id));
-    } catch (err) {
+      await fetchAdminData(); // <-- refetch instead of local filter only
+    } catch (err: any) {
       console.error("Failed to delete listing", err);
-      alert("Failed to delete listing");
+      alert(err?.response?.data?.details || "Failed to delete listing");
     }
   };
 
@@ -48,11 +48,10 @@ const AdminDashboard = () => {
     if (!confirm("Are you sure you want to delete this user and all their listings?")) return;
     try {
       await api.delete(`/users/admin/${id}`);
-      setUsers((prev) => prev.filter((user) => user.id !== id));
-      setListings((prev) => prev.filter((listing) => listing.userId !== id));
-    } catch (err) {
+      await fetchAdminData(); // <-- refetch
+    } catch (err: any) {
       console.error("Failed to delete user", err);
-      alert("Failed to delete user");
+      alert(err?.response?.data?.error || "Failed to delete user");
     }
   };
 
