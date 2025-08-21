@@ -6,14 +6,15 @@ import ProductCard from "@/components/ProductCard";
 import AddListingCard from "@/components/AddListingCard";
 import ListingCard from "@/components/ListingCard";
 import MyListingCard from "@/components/MyListingCard";
+import AddCategory from "@/components/AddCategory";
 import { Button } from "@/components/ui/button";
 import { listingApi, Listing } from "@/services/api";
-import { profileApi, UserProfile } from "@/services/api";
+import { profileApi, UserProfile, categoryApi, Category } from "@/services/api";
 import { api } from "@/services/api";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { signInWithEmailAndPassword, deleteUser } from 'firebase/auth';
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Trash2, Star, StarOff, X, Upload } from "lucide-react";
 
 const MyAccount = () => {
   const navigate = useNavigate();
@@ -23,6 +24,16 @@ const MyAccount = () => {
   const [draftsLoading, setDraftsLoading] = useState(true);
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showImageOptionsModal, setShowImageOptionsModal] = useState(false);
+  const [selectedCategoryForImage, setSelectedCategoryForImage] = useState<Category | null>(null);
   // Restore two-dialog logic: showDeleteDialog for confirmation, showPasswordPrompt for password entry
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
@@ -39,6 +50,8 @@ const MyAccount = () => {
       } else {
         // Fetch profile data when user is authenticated
         fetchProfileData(user.uid);
+        // Check admin status
+        checkAdminStatus(user);
       }
     });
 
@@ -49,6 +62,243 @@ const MyAccount = () => {
     fetchMyListings();
     fetchMyDrafts();
   }, []);
+
+  const checkAdminStatus = async (user: any) => {
+    try {
+      console.log("🔍 Checking admin status for user:", user.email);
+      const tokenResult = await user.getIdTokenResult(true);
+      const adminStatus = tokenResult.claims.admin === true;
+      console.log("👤 Admin status:", adminStatus, "Claims:", tokenResult.claims);
+      setIsAdmin(adminStatus);
+
+      if (adminStatus) {
+        console.log("✅ User is admin, fetching categories...");
+        fetchCategories();
+      } else {
+        console.log("❌ User is not admin, skipping category fetch");
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch custom claims", err);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      console.log("🔄 Starting to fetch categories...");
+      setCategoriesLoading(true);
+      const data = await categoryApi.getAllCategories();
+      console.log("✅ Categories fetched successfully:", data);
+      setCategories(data);
+    } catch (err: any) {
+      console.error("❌ Failed to fetch categories", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: number, categoryName: string) => {
+    if (!confirm(`Are you sure you want to delete the category "${categoryName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await categoryApi.deleteCategory(categoryId);
+      console.log("✅ Category deleted successfully");
+      // Refresh the categories list
+      fetchCategories();
+    } catch (err: any) {
+      console.error("❌ Failed to delete category", err);
+      alert(`Failed to delete category: ${err.message}`);
+    }
+  };
+
+  const uploadImageToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to upload image');
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleToggleFeatured = async (categoryId: number, categoryName: string, currentFeatured: boolean) => {
+    const action = currentFeatured ? "remove from featured" : "make featured";
+
+    // If making featured and no image exists, prompt for image
+    if (!currentFeatured) {
+      const currentCategory = categories.find(cat => cat.id === categoryId);
+      if (!currentCategory?.imageUrl) {
+        const shouldContinue = confirm(
+          `To make "${categoryName}" a featured category, an image is required. Would you like to add an image now?`
+        );
+        if (shouldContinue && currentCategory) {
+          // Open image upload modal
+          setSelectedCategory(currentCategory);
+          setShowImageModal(true);
+          return;
+        } else {
+          return;
+        }
+      }
+    }
+
+    if (!confirm(`Are you sure you want to ${action} the category "${categoryName}"?`)) {
+      return;
+    }
+
+    try {
+      // Find the current category data
+      const currentCategory = categories.find(cat => cat.id === categoryId);
+      if (!currentCategory) {
+        alert("Category not found");
+        return;
+      }
+
+      // Update the category with the new featured status
+      await categoryApi.updateCategory(categoryId, {
+        name: currentCategory.name,
+        imageUrl: currentCategory.imageUrl,
+        isFeatured: !currentFeatured
+      });
+
+      console.log(`✅ Category ${action} successfully`);
+      // Refresh the categories list
+      fetchCategories();
+    } catch (err: any) {
+      console.error(`❌ Failed to ${action} category`, err);
+      alert(`Failed to ${action} category: ${err.message}`);
+    }
+  };
+
+  const handleImageUploadAndMakeFeatured = async () => {
+    if (!selectedCategory || !imageFile) {
+      alert("Please select an image first");
+      return;
+    }
+
+    try {
+      // Upload image to Cloudinary
+      const imageUrl = await uploadImageToCloudinary(imageFile);
+
+      // Update category with image and make it featured
+      await categoryApi.updateCategory(selectedCategory.id, {
+        name: selectedCategory.name,
+        imageUrl: imageUrl,
+        isFeatured: true
+      });
+
+      console.log("✅ Category updated with image and made featured successfully");
+
+      // Close modal and refresh categories
+      setShowImageModal(false);
+      setSelectedCategory(null);
+      setImageFile(null);
+      setImagePreview(null);
+      setIsDragOver(false);
+      fetchCategories();
+    } catch (err: any) {
+      console.error("❌ Failed to upload image and update category", err);
+      alert(`Failed to upload image and update category: ${err.message}`);
+    }
+  };
+
+  const handleCloseImageModal = () => {
+    setShowImageModal(false);
+    setSelectedCategory(null);
+    setImageFile(null);
+    setImagePreview(null);
+    setIsDragOver(false);
+  };
+
+  const handleImageOptions = (category: Category) => {
+    setSelectedCategoryForImage(category);
+    setShowImageOptionsModal(true);
+  };
+
+  const handleRemoveImage = async () => {
+    if (!selectedCategoryForImage) return;
+
+    if (!confirm(`Are you sure you want to remove the image from "${selectedCategoryForImage.name}"?`)) {
+      return;
+    }
+
+    try {
+      await categoryApi.updateCategory(selectedCategoryForImage.id, {
+        name: selectedCategoryForImage.name,
+        imageUrl: null,
+        isFeatured: selectedCategoryForImage.isFeatured
+      });
+
+      console.log("✅ Image removed successfully");
+      setShowImageOptionsModal(false);
+      setSelectedCategoryForImage(null);
+      fetchCategories();
+    } catch (err: any) {
+      console.error("❌ Failed to remove image", err);
+      alert(`Failed to remove image: ${err.message}`);
+    }
+  };
+
+  const handleChangeImage = () => {
+    if (!selectedCategoryForImage) return;
+
+    // Close the options modal and open the image upload modal
+    setShowImageOptionsModal(false);
+    setSelectedCategory(selectedCategoryForImage);
+    setShowImageModal(true);
+  };
+
+  const handleCloseImageOptionsModal = () => {
+    setShowImageOptionsModal(false);
+    setSelectedCategoryForImage(null);
+  };
 
   const fetchProfileData = async (firebaseUid: string) => {
     try {
@@ -291,6 +541,145 @@ const MyAccount = () => {
               </div>
             </div>
 
+            {/* Category Management (Admin Only) */}
+            {isAdmin && (
+              <div>
+                <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
+                  Category Management:
+                </h3>
+
+                {/* Add Category Form */}
+                <div className="mb-6">
+                  <AddCategory onCategoryAdded={fetchCategories} />
+                </div>
+
+                {/* Categories List */}
+                <div>
+                  <h4 className="text-[20px] font-semibold text-black font-inter mb-4">
+                    All Available Categories ({categories.length}):
+                  </h4>
+
+                  {categoriesLoading ? (
+                    <p className="text-gray-500">Loading categories...</p>
+                  ) : categories.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No categories found.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Featured Categories */}
+                      {categories.filter(cat => cat.isFeatured).length > 0 && (
+                        <div>
+                          <h5 className="text-lg font-semibold text-black mb-3 flex items-center">
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2">
+                              Featured
+                            </span>
+                            Featured Categories ({categories.filter(cat => cat.isFeatured).length})
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {categories
+                              .filter(category => category.isFeatured)
+                              .map((category) => (
+                                <div key={category.id} className="bg-white border border-blue-200 rounded-lg p-4 shadow-sm relative">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h6 className="font-semibold text-black">{category.name}</h6>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        Featured
+                                      </span>
+                                      <button
+                                        onClick={() => handleToggleFeatured(category.id, category.name, true)}
+                                        className="text-yellow-600 hover:text-yellow-700 p-1 rounded-full hover:bg-yellow-50 transition-colors"
+                                        title={`Remove ${category.name} from featured`}
+                                      >
+                                        <StarOff className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteCategory(category.id, category.name)}
+                                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                        title={`Delete ${category.name}`}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  {category.imageUrl && (
+                                    <div className="relative group cursor-pointer" onClick={() => handleImageOptions(category)}>
+                                      <img
+                                        src={category.imageUrl}
+                                        alt={category.name}
+                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                      />
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md mb-2">
+                                        <span className="text-white font-semibold text-sm">Image Options</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-gray-500">
+                                    Created: {new Date(category.createdAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Regular Categories */}
+                      {categories.filter(cat => !cat.isFeatured).length > 0 && (
+                        <div>
+                          <h5 className="text-lg font-semibold text-black mb-3">
+                            Regular Categories ({categories.filter(cat => !cat.isFeatured).length})
+                          </h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {categories
+                              .filter(category => !category.isFeatured)
+                              .map((category) => (
+                                <div key={category.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h6 className="font-semibold text-black">{category.name}</h6>
+                                    <div className="flex items-center space-x-2">
+                                      <button
+                                        onClick={() => handleToggleFeatured(category.id, category.name, false)}
+                                        className="text-yellow-600 hover:text-yellow-700 p-1 rounded-full hover:bg-yellow-50 transition-colors"
+                                        title={`Make ${category.name} featured`}
+                                      >
+                                        <Star className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteCategory(category.id, category.name)}
+                                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                        title={`Delete ${category.name}`}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  {category.imageUrl && (
+                                    <div className="relative group cursor-pointer" onClick={() => handleImageOptions(category)}>
+                                      <img
+                                        src={category.imageUrl}
+                                        alt={category.name}
+                                        className="w-full h-32 object-cover rounded-md mb-2"
+                                      />
+                                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md mb-2">
+                                        <span className="text-white font-semibold text-sm">Image Options</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-gray-500">
+                                    Created: {new Date(category.createdAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* My Listings Section */}
             <div>
               <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
@@ -470,6 +859,142 @@ const MyAccount = () => {
           </div>
         </div>
       </main>
+
+      {/* Image Upload Modal */}
+      {showImageModal && selectedCategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">
+                Add Image for "{selectedCategory.name}"
+              </h3>
+              <button
+                onClick={handleCloseImageModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Featured categories require an image. Please upload an image for this category.
+            </p>
+
+            <div className="space-y-4">
+              {imagePreview ? (
+                <div className="relative">
+                  <div className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#DB1233] transition-colors overflow-hidden relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <span className="text-white font-semibold text-sm">Change image</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }}
+                    className="mt-2 text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Remove image
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${isDragOver
+                    ? 'border-[#DB1233] bg-red-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById('category-image-upload')?.click()}
+                >
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600 mb-2">Drag and drop an image here, or click to browse</p>
+                  <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                </div>
+              )}
+
+              <Input
+                id="category-image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  onClick={handleImageUploadAndMakeFeatured}
+                  disabled={!imageFile}
+                  className="flex-1"
+                >
+                  Upload & Make Featured
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCloseImageModal}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Options Modal */}
+      {showImageOptionsModal && selectedCategoryForImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">
+                Image Options for "{selectedCategoryForImage.name}"
+              </h3>
+              <button
+                onClick={handleCloseImageOptionsModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleChangeImage}
+                className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              >
+                <Upload className="w-5 h-5 text-blue-600" />
+                <span className="font-medium">Change Image</span>
+              </button>
+
+              {!selectedCategoryForImage.isFeatured && (
+                <button
+                  onClick={handleRemoveImage}
+                  className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-3 text-red-600"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="font-medium">Remove Image</span>
+                </button>
+              )}
+
+              {selectedCategoryForImage.isFeatured && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> Featured categories require an image. You can only change the image, not remove it.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

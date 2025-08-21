@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const fileRoutes = require('./routes/fileRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 const prisma = require('./prismaClient');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Test route for deployment verification
 app.get("/api/test", (req, res) => {

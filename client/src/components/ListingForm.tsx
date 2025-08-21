@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { auth } from '@/firebase';
-import { listingApi, Listing, ListingInput } from '@/services/api';
+import { listingApi, Listing, ListingInput, categoryApi } from '@/services/api';
 import {
     Select,
     SelectContent,
@@ -43,19 +43,8 @@ interface ListingFormProps {
     draftCount?: number;
 }
 
-// Categories from the main search page
-const CATEGORIES = [
-    "Metal Fabrication",
-    "Tool & Die",
-    "Injection Molding",
-    "Precision Machining",
-    "Industrial Casting",
-    "Consumer Products",
-    "Assemblies",
-    "Lighting & Fixtures",
-    "Automotive Services",
-    "Defence"
-];
+// Categories will be fetched from the database
+const CATEGORIES: string[] = [];
 
 // Predefined tags
 const PREDEFINED_TAGS = [
@@ -96,6 +85,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
     const fileUploadRef = useRef<HTMLInputElement>(null);
     const [manualCity, setManualCity] = useState("");
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(true);
 
     const [formData, setFormData] = useState<ListingFormData>({
         title: initialData?.title || '',
@@ -125,6 +116,35 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [cityDropdownOpen]);
+
+    // Fetch categories from database
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const data = await categoryApi.getAllCategories();
+                setCategories(data.map(cat => cat.name));
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                // Fallback to hardcoded categories if API fails
+                setCategories([
+                    "Metal Fabrication",
+                    "Tool & Die",
+                    "Injection Molding",
+                    "Precision Machining",
+                    "Industrial Casting",
+                    "Consumer Products",
+                    "Assemblies",
+                    "Lighting & Fixtures",
+                    "Automotive Services",
+                    "Defence"
+                ]);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
 
     const uploadImageToCloudinary = async (file: File): Promise<string> => {
         const formData = new FormData();
@@ -673,18 +693,22 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
 
             <div className="space-y-2">
                 <label className="text-lg font-semibold">Categories</label>
-                <Select onValueChange={handleCategoryChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {CATEGORIES.map((category) => (
-                            <SelectItem key={category} value={category}>
-                                {category}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                {categoriesLoading ? (
+                    <p className="text-gray-500">Loading categories...</p>
+                ) : (
+                    <Select onValueChange={handleCategoryChange}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                    {category}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
                 <div className="flex flex-wrap gap-2 mt-2">
                     {formData.categories.map((category) => (
                         <div

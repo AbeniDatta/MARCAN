@@ -61,3 +61,12 @@ model SavedListing {
   @@unique([userId, listingId])
 }
 
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  imageUrl    String?
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

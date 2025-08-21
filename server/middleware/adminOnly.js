@@ -8,18 +8,20 @@ const adminOnly = async (req, res, next) => {
   }
 
   try {
+    // Check Firebase custom claims for admin status
+    if (!firebaseUser.admin) {
+      console.warn(`User ${firebaseUser.email} tried to access admin route - no admin claim`);
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Also check if user exists in database (optional, for logging)
     const user = await prisma.user.findFirst({
       where: { firebaseUid: firebaseUser.uid },
     });
 
     if (!user) {
       console.warn(`User not found in DB: ${firebaseUser.uid}`);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (!user.isAdmin) {
-      console.warn(`User ${user.email} tried to access admin route`);
-      return res.status(403).json({ error: 'Admin access required' });
+      // Don't block access if user exists in Firebase but not in DB
     }
 
     req.adminUser = user; // Optional for logging/debug

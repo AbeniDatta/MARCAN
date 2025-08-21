@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { listingApi } from "@/services/api";
+import { listingApi, categoryApi } from "@/services/api";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,18 +43,27 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ filters, onFilterChange
         const { tags, locations } = await listingApi.getFilterOptions();
         setTagOptions(tags);
         setLocationOptions(locations);
-        const allCategories = [
-          "Metal Fabrication",
-          "Tool & Die",
-          "Injection Molding",
-          "Precision Machining",
-          "Industrial Casting",
-          "Consumer Products",
-          "Assemblies",
-          "Automotive Services",
-          "Defence",
-        ];
-        setCategoryOptions(allCategories);
+
+        // Fetch categories from database
+        try {
+          const categories = await categoryApi.getAllCategories();
+          setCategoryOptions(categories.map(cat => cat.name));
+        } catch (categoryError) {
+          console.error("Failed to fetch categories, using fallback", categoryError);
+          // Fallback to hardcoded categories
+          const allCategories = [
+            "Metal Fabrication",
+            "Tool & Die",
+            "Injection Molding",
+            "Precision Machining",
+            "Industrial Casting",
+            "Consumer Products",
+            "Assemblies",
+            "Automotive Services",
+            "Defence",
+          ];
+          setCategoryOptions(allCategories);
+        }
       } catch (error) {
         console.error("Failed to fetch filter options", error);
       }

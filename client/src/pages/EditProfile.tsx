@@ -53,6 +53,8 @@ const EditProfile = () => {
         return () => unsubscribe();
     }, [navigate]);
 
+
+
     const fetchProfileData = async (firebaseUid: string) => {
         try {
             setLoading(true);
@@ -90,10 +92,33 @@ const EditProfile = () => {
         }));
     };
 
+    // Province mapping for short forms
+    const provinceMapping = {
+        "Alberta": "AB",
+        "British Columbia": "BC",
+        "Manitoba": "MB",
+        "New Brunswick": "NB",
+        "Newfoundland and Labrador": "NL",
+        "Northwest Territories": "NT",
+        "Nova Scotia": "NS",
+        "Nunavut": "NU",
+        "Ontario": "ON",
+        "Prince Edward Island": "PE",
+        "Quebec": "QC",
+        "Saskatchewan": "SK",
+        "Yukon": "YT"
+    };
+
+    // Reverse mapping to get full name from short form
+    const reverseProvinceMapping = Object.fromEntries(
+        Object.entries(provinceMapping).map(([full, short]) => [short, full])
+    );
+
     const handleProvinceChange = (value: string) => {
+        const shortForm = provinceMapping[value as keyof typeof provinceMapping] || value;
         setFormData((prev) => ({
             ...prev,
-            province: value.toUpperCase(),
+            province: shortForm,
         }));
     };
 
@@ -289,8 +314,9 @@ const EditProfile = () => {
                                     required
                                 />
                                 <Select
+                                    key={formData.province || "empty"}
                                     onValueChange={handleProvinceChange}
-                                    value={formData.province}
+                                    value={reverseProvinceMapping[formData.province as keyof typeof reverseProvinceMapping] || formData.province || ""}
                                 >
                                     <SelectTrigger className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white">
                                         <SelectValue placeholder="Province" />

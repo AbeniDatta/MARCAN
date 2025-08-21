@@ -2,29 +2,75 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.create({
-    data: {
-      name: 'Admin',
-      email: 'admin@example.com',
-      password: 'hashedpasswordhere', // use bcrypt if needed
-    },
-  });
+  console.log('Starting database seeding...');
 
-  await prisma.listing.create({
-    data: {
-      title: 'B2B Equipment',
-      description: 'High-quality equipment for sale.',
-      price: 1200.00,
-      userId: user.id,
+  // Create initial categories
+  const categories = [
+    {
+      name: 'Metal Fabrication',
+      isFeatured: false
     },
-  });
+    {
+      name: 'Tool & Die',
+      isFeatured: false
+    },
+    {
+      name: 'Injection Molding',
+      isFeatured: false
+    },
+    {
+      name: 'Precision Machining',
+      isFeatured: false
+    },
+    {
+      name: 'Industrial Casting',
+      isFeatured: false
+    },
+    {
+      name: 'Consumer Products',
+      isFeatured: false
+    },
+    {
+      name: 'Assemblies',
+      isFeatured: false
+    },
+    {
+      name: 'Lighting & Fixtures',
+      isFeatured: false
+    },
+    {
+      name: 'Automotive Services',
+      isFeatured: true,
+      imageUrl: '/src/assets/Automotive_Services.png'
+    },
+    {
+      name: 'Defence',
+      isFeatured: true,
+      imageUrl: '/src/assets/Defence.png'
+    }
+  ];
 
-  console.log('Seed data created successfully');
+  for (const category of categories) {
+    try {
+      await prisma.category.upsert({
+        where: { name: category.name },
+        update: category,
+        create: category
+      });
+      console.log(`✅ Category "${category.name}" created/updated`);
+    } catch (error) {
+      console.error(`❌ Error creating category "${category.name}":`, error);
+    }
+  }
+
+  console.log('Database seeding completed!');
 }
 
 main()
   .catch((e) => {
-    console.error('Seed failed:', e);
+    console.error('Error during seeding:', e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

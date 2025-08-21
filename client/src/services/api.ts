@@ -97,6 +97,15 @@ export interface UserProfile {
     updatedAt: string;
 }
 
+export interface Category {
+    id: number;
+    name: string;
+    imageUrl?: string;
+    isFeatured: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 // Type for creating/updating listings (companyName is set automatically by server)
 export type ListingInput = Omit<Listing, 'id' | 'createdAt' | 'userId' | 'companyName'>;
 
@@ -320,5 +329,73 @@ export const getAllUsers = () =>
   api.get<UserProfile[]>("/users", { params: { activeOnly: true } });
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
 export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
+
+export const categoryApi = {
+    // Get all categories
+    getAllCategories: async () => {
+        try {
+            const response = await api.get<Category[]>('/categories');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            throw error;
+        }
+    },
+
+    // Get featured categories only
+    getFeaturedCategories: async () => {
+        try {
+            const response = await api.get<Category[]>('/categories/featured');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching featured categories:', error);
+            throw error;
+        }
+    },
+
+    // Create new category (admin only)
+    createCategory: async (data: { name: string; imageUrl?: string; isFeatured?: boolean }) => {
+        try {
+            const response = await api.post<Category>('/categories', data);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating category:', error);
+            throw error;
+        }
+    },
+
+    // Update category (admin only)
+    updateCategory: async (id: number, data: { name: string; imageUrl?: string | null; isFeatured?: boolean }) => {
+        try {
+            const response = await api.put<Category>(`/categories/${id}`, data);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating category:', error);
+            throw error;
+        }
+    },
+
+    // Delete category (admin only)
+    deleteCategory: async (id: number) => {
+        try {
+            const response = await api.delete(`/categories/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error deleting category:', error);
+            throw error;
+        }
+    },
+
+    // Get category by ID
+    getCategoryById: async (id: number) => {
+        try {
+            const response = await api.get<Category>(`/categories/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching category:', error);
+            throw error;
+        }
+    },
+};
 
 export { api };
