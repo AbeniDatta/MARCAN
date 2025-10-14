@@ -7,7 +7,10 @@ import { useEffect, useState } from "react";
 import { auth } from "@/firebase";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
+import SignUpSelection from "./pages/SignUpSelection";
+import BuyerSignUp from "./pages/BuyerSignUp";
 import Login from "./pages/Login";
+import LoginSelection from "./pages/LoginSelection";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/AdminDashboard";
 import Listings from "./pages/Listings";
@@ -31,16 +34,17 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
+  // Email verification disabled - keep state for potential future use
+  // Email verification disabled
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         setAuthenticated(true);
-        setEmailVerified(user.emailVerified);
+        // emailVerified no longer used
       } else {
         setAuthenticated(false);
-        setEmailVerified(false);
+        // emailVerified no longer used
       }
       setLoading(false);
     });
@@ -56,9 +60,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
 
-  if (!emailVerified) {
-    return <Navigate to="/email-verification" />;
-  }
+  // Email verification disabled
 
   return <>{children}</>;
 };
@@ -71,8 +73,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUpSelection />} />
+          <Route path="/signup/buyer" element={<BuyerSignUp />} />
+          <Route path="/signup/seller" element={<SignUp />} />
+          <Route path="/login" element={<LoginSelection />} />
+          <Route path="/login/buyer" element={<Login />} />
+          <Route path="/login/seller" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/email-verification" element={<EmailVerification />} />
 

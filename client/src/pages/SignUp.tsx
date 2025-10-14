@@ -13,10 +13,11 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { Upload, Eye, EyeOff } from "lucide-react";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
 import { profileApi } from "@/services/api";
 
+// This page will become SellerSignUp
 const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,7 @@ const SignUp = () => {
     city: "",
     province: "",
     postalCode: "",
+    country: "Canada",
     website: "",
     description: "",
     phone: "",
@@ -124,6 +126,14 @@ const SignUp = () => {
     }
 
     try {
+      // Validate Canadian postal code for sellers (A1A 1A1)
+      const postal = formData.postalCode.replace(/\s/g, "");
+      const caPostal = /^[A-Za-z]\d[A-Za-z]\d[A-Za-z]\d$/;
+      if (!caPostal.test(postal)) {
+        setError("Please enter a valid Canadian postal code (e.g., A1A 1A1)");
+        setLoading(false);
+        return;
+      }
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -146,20 +156,20 @@ const SignUp = () => {
         city: formData.city,
         province: formData.province,
         postalCode: formData.postalCode,
+        country: formData.country,
         website: formData.website,
         description: formData.description,
         phone: formData.phone,
         logoUrl,
         chatbotName: formData.chatbotName,
+        accountType: 'seller' as const,
+        isVerified: false,
       };
 
       await profileApi.createOrUpdateProfile(profileData);
 
-      // Send verification email
-      await sendEmailVerification(userCredential.user);
-
-      // Redirect to email verification page
-      navigate("/email-verification");
+      // Redirect to account page directly (email verification disabled)
+      navigate("/my-account");
     } catch (err: any) {
       console.error("Error during signup:", err);
       setError(err.message || "Failed to create account");
@@ -190,7 +200,7 @@ const SignUp = () => {
           <div className="bg-white mx-auto max-w-5xl px-12 py-16 relative">
             <div className="mb-16">
               <h1 className="text-[50px] font-bold text-black font-inter mb-6">
-                Set up your profile
+                Set up your seller account
               </h1>
               <p className="text-[25px] text-[#4A3F3F] font-inria-sans">
                 Set the tone with a strong company profile.

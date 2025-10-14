@@ -1,21 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { useState } from "react";
-import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase";
+import { profileApi } from "@/services/api";
 import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
+  // Email verification disabled
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +26,16 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-      // Check if email is verified
-      if (!userCredential.user.emailVerified) {
-        // Sign out the user and show error with option to resend verification
+      // Enforce buyer/seller portal separation
+      const firebaseUid = userCredential.user.uid;
+      const profile = await profileApi.getUserProfile(firebaseUid);
+      const isBuyerPortal = location.pathname.includes('/login/buyer');
+      const isSellerPortal = location.pathname.includes('/login/seller');
+      const accountType = profile.accountType;
+
+      if ((isBuyerPortal && accountType !== 'buyer') || (isSellerPortal && accountType !== 'seller')) {
         await auth.signOut();
-        setError("Please verify your email before logging in. Check your inbox for a verification link.");
+        setError("This email belongs to a different account type. Please use the correct login option.");
         return;
       }
 
@@ -49,31 +55,7 @@ const Login = () => {
     }
   };
 
-  const handleResendVerification = async () => {
-    if (!email) {
-      setError("Please enter your email address first.");
-      return;
-    }
-
-    setResendLoading(true);
-    setError("");
-
-    try {
-      // Try to sign in to get the user object
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      if (!userCredential.user.emailVerified) {
-        await sendEmailVerification(userCredential.user);
-        setVerificationSent(true);
-        // Sign out after sending verification
-        await auth.signOut();
-      }
-    } catch (err: any) {
-      setError("Failed to send verification email. Please check your credentials.");
-    } finally {
-      setResendLoading(false);
-    }
-  };
+  // Email verification disabled
 
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
@@ -103,25 +85,9 @@ const Login = () => {
           {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
               {error}
-              {error.includes("verify your email") && (
-                <div className="mt-2">
-                  <button
-                    onClick={handleResendVerification}
-                    disabled={resendLoading}
-                    className="text-[#DB1233] hover:underline font-semibold text-sm"
-                  >
-                    {resendLoading ? "Sending..." : "Resend verification email"}
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
-          {verificationSent && (
-            <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
-              Verification email sent successfully! Please check your inbox.
-            </div>
-          )}
 
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>

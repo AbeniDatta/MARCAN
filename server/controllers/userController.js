@@ -29,20 +29,37 @@ const createOrUpdateProfile = async (req, res) => {
   console.log('Firebase user:', req.user);
 
   const {
+    name,
     companyName,
     address1,
     address2,
     city,
     province,
     postalCode,
+    country,
     website,
     description,
     phone,
     logoUrl,
     chatbotName,
+    accountType, // 'buyer' | 'seller'
+    isVerified,
     firebaseUid,
     email
   } = req.body;
+
+  // Normalize and validate inputs for sellers
+  const normalizedAccountType = (accountType || 'buyer').toLowerCase();
+  const normalizedCountry = country || 'Canada';
+  const canadianPostalRegex = /^(?:(?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|X|Y)[0-9](?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|W|X|Y)[\s-]?[0-9](?:A|B|C|E|G|H|J|K|L|M|N|P|R|S|T|V|W|X|Y)[0-9])$/i;
+  if (normalizedAccountType === 'seller') {
+    if (!postalCode || !canadianPostalRegex.test(postalCode.replace(/\s/g, ''))) {
+      return res.status(400).json({ error: 'A valid Canadian postal code is required for seller accounts.' });
+    }
+    if (!normalizedCountry || normalizedCountry.toLowerCase() !== 'canada') {
+      return res.status(400).json({ error: 'Seller accounts must be registered in Canada.' });
+    }
+  }
 
   try {
     // Check if user exists by firebaseUid first
@@ -58,17 +75,22 @@ const createOrUpdateProfile = async (req, res) => {
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
+          name: name || user.name,
           companyName,
           address1,
           address2,
           city,
           province,
           postalCode,
+          country: normalizedCountry,
           website,
           description,
           phone,
           logoUrl,
           chatbotName,
+          accountType: normalizedAccountType,
+          // Buyers are auto-verified, sellers default false unless explicitly set by admin
+          isVerified: typeof isVerified === 'boolean' ? isVerified : (normalizedAccountType === 'buyer' ? true : user.isVerified),
           email: email || user.email, // Update email if provided, otherwise keep existing
         },
       });
@@ -86,17 +108,21 @@ const createOrUpdateProfile = async (req, res) => {
           where: { id: existingUserByEmail.id },
           data: {
             firebaseUid,
+            name: name || existingUserByEmail.name,
             companyName,
             address1,
             address2,
             city,
             province,
             postalCode,
+            country: normalizedCountry,
             website,
             description,
             phone,
             logoUrl,
             chatbotName,
+            accountType: normalizedAccountType,
+            isVerified: typeof isVerified === 'boolean' ? isVerified : (normalizedAccountType === 'buyer'),
           },
         });
         console.log('User profile updated with new firebaseUid:', user);
@@ -105,7 +131,7 @@ const createOrUpdateProfile = async (req, res) => {
         console.log('Creating new user profile');
         user = await prisma.user.create({
           data: {
-            name: companyName || firebaseUid, // Use company name as display name
+            name: name || companyName || firebaseUid, // Prefer provided name
             email: email || '', // Use provided email
             firebaseUid,
             companyName,
@@ -114,11 +140,14 @@ const createOrUpdateProfile = async (req, res) => {
             city,
             province,
             postalCode,
+            country: normalizedCountry,
             website,
             description,
             phone,
             logoUrl,
             chatbotName,
+            accountType: normalizedAccountType,
+            isVerified: typeof isVerified === 'boolean' ? isVerified : (normalizedAccountType === 'buyer'),
           },
         });
         console.log('New user profile created:', user);

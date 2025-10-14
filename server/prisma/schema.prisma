@@ -19,6 +19,9 @@ model User {
   city        String?
   province    String?
   postalCode  String?
+  country     String?   @default("Canada")
+  accountType String    @default("buyer") // buyer | seller
+  isVerified  Boolean   @default(false)
   website     String?
   description String?
   phone       String?

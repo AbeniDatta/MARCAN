@@ -483,30 +483,34 @@ const MyAccount = () => {
           <div className="space-y-8">
             {/* Profile Section */}
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Profile Image Placeholder */}
-              <div className="w-[130px] h-[130px] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
-                {profileData?.logoUrl ? (
-                  <img
-                    src={profileData.logoUrl}
-                    alt="Company Logo"
-                    className="w-full h-full object-contain" // 👈 keeps aspect ratio
-                  />
-                ) : (
-                  <span className="text-gray-400 text-sm">No Logo</span>
-                )}
-              </div>
+              {/* Profile Image Placeholder (sellers only) */}
+              {profileData?.accountType !== 'buyer' && (
+                <div className="w-[130px] h-[130px] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                  {profileData?.logoUrl ? (
+                    <img
+                      src={profileData.logoUrl}
+                      alt="Company Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-gray-400 text-sm">No Logo</span>
+                  )}
+                </div>
+              )}
 
               {/* Profile Info */}
               <div className="flex-1 space-y-4">
                 <h2 className="text-[22px] md:text-[26px] font-bold text-black font-inter">
-                  {profileData?.companyName || 'Company Name Not Set'}
+                  {profileData?.accountType === 'buyer' ? (profileData?.name || 'Name Not Set') : (profileData?.companyName || 'Company Name Not Set')}
                 </h2>
                 <p className="text-[18px] md:text-[22px]] font-semibold text-black font-inter">
                   {formatAddress()}
                 </p>
-                <p className="text-[16px] md:text-[20px] font-semibold text-black font-inter">
-                  {profileData?.website || ''}
-                </p>
+                {profileData?.accountType !== 'buyer' && (
+                  <p className="text-[16px] md:text-[20px] font-semibold text-black font-inter">
+                    {profileData?.website || ''}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -529,10 +533,10 @@ const MyAccount = () => {
               </div>
             </div>
 
-            {/* Description */}
+            {/* Description / Interests */}
             <div>
               <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
-                Description:
+                {profileData?.accountType === 'buyer' ? 'Interests:' : 'Description:'}
               </h3>
               <div className="bg-gray-50 rounded-[10px] px-6 py-4">
                 <p className="text-[16px] md:text-[20px] font-semibold text-black font-inter leading-relaxed">
@@ -680,69 +684,71 @@ const MyAccount = () => {
               </div>
             )}
 
-            {/* My Listings Section */}
-            <div>
-              <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
-                My Listings:
-              </h3>
-
-              {/* Published Listings */}
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[20px] font-semibold text-black font-inter">
-                    Published Listings:
-                  </h4>
-                </div>
-
-                {loading ? (
-                  <p className="text-gray-500">Loading listings...</p>
-                ) : listings.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 mb-4">No published listings yet.</p>
-                    <AddListingCard />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {listings.map((listing) => (
-                      <div key={listing.id} className="h-[350px]">
-                        <MyListingCard listing={listing} onDelete={fetchMyListings} />
-                      </div>
-                    ))}
-                    <AddListingCard />
-                  </div>
-                )}
-              </div>
-
-              {/* Drafts */}
+            {/* My Listings Section (sellers only) */}
+            {profileData?.accountType !== 'buyer' && (
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[20px] font-semibold text-black font-inter">
-                    Drafts:
-                  </h4>
-                  {drafts.length > 0 && (
-                    <span className="text-sm text-gray-500">
-                      {drafts.length}/10 drafts
-                    </span>
+                <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
+                  My Listings:
+                </h3>
+
+                {/* Published Listings */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-[20px] font-semibold text-black font-inter">
+                      Published Listings:
+                    </h4>
+                  </div>
+
+                  {loading ? (
+                    <p className="text-gray-500">Loading listings...</p>
+                  ) : listings.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 mb-4">No published listings yet.</p>
+                      <AddListingCard />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {listings.map((listing) => (
+                        <div key={listing.id} className="h-[350px]">
+                          <MyListingCard listing={listing} onDelete={fetchMyListings} />
+                        </div>
+                      ))}
+                      <AddListingCard />
+                    </div>
                   )}
                 </div>
 
-                {draftsLoading ? (
-                  <p className="text-gray-500">Loading drafts...</p>
-                ) : drafts.length === 0 ? (
-                  <div className="text-center py-6 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600">No drafts yet.</p>
+                {/* Drafts */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-[20px] font-semibold text-black font-inter">
+                      Drafts:
+                    </h4>
+                    {drafts.length > 0 && (
+                      <span className="text-sm text-gray-500">
+                        {drafts.length}/10 drafts
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {drafts.map((draft) => (
-                      <div key={draft.id} className="h-[350px]">
-                        <MyListingCard listing={draft} onDelete={fetchMyDrafts} isDraft={true} />
-                      </div>
-                    ))}
-                  </div>
-                )}
+
+                  {draftsLoading ? (
+                    <p className="text-gray-500">Loading drafts...</p>
+                  ) : drafts.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600">No drafts yet.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {drafts.map((draft) => (
+                        <div key={draft.id} className="h-[350px]">
+                          <MyListingCard listing={draft} onDelete={fetchMyDrafts} isDraft={true} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Account Actions */}
             <div className="space-y-4 pt-6 border-t border-gray-200">
@@ -771,13 +777,15 @@ const MyAccount = () => {
                 >
                   Change Email
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
-                  onClick={() => navigate('/create-listing')}
-                >
-                  Create New Listing
-                </Button>
+                {profileData?.accountType !== 'buyer' && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"
+                    onClick={() => navigate('/create-listing')}
+                  >
+                    Create New Listing
+                  </Button>
+                )}
               </div>
             </div>
 

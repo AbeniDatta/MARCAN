@@ -88,11 +88,14 @@ export interface UserProfile {
     city?: string;
     province?: string;
     postalCode?: string;
+    country?: string;
     website?: string;
     description?: string;
     phone?: string;
     logoUrl?: string;
     chatbotName?: string;
+    accountType?: 'buyer' | 'seller';
+    isVerified?: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -326,7 +329,7 @@ export const profileApi = {
 };
 
 export const getAllUsers = () =>
-  api.get<UserProfile[]>("/users", { params: { activeOnly: true } });
+    api.get<UserProfile[]>("/users", { params: { activeOnly: true } });
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
 export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
 

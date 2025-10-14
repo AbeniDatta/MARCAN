@@ -27,16 +27,19 @@ const EditProfile = () => {
 
     // Form state
     const [formData, setFormData] = useState({
+        name: "",
         companyName: "",
         address1: "",
         address2: "",
         city: "",
+        country: "",
         province: "",
         postalCode: "",
         website: "",
         description: "",
         phone: "",
         chatbotName: "",
+        accountType: "seller" as 'seller' | 'buyer',
     });
 
     useEffect(() => {
@@ -62,16 +65,19 @@ const EditProfile = () => {
 
             // Populate form with existing data
             setFormData({
+                name: data.name || "",
                 companyName: data.companyName || "",
                 address1: data.address1 || "",
                 address2: data.address2 || "",
                 city: data.city || "",
+                country: data.country || "",
                 province: data.province || "",
                 postalCode: data.postalCode || "",
                 website: data.website || "",
                 description: data.description || "",
                 phone: data.phone || "",
                 chatbotName: data.chatbotName || "",
+                accountType: (data.accountType as 'seller' | 'buyer') || 'seller',
             });
             setLogoPreview(data.logoUrl || null);
         } catch (err: any) {
@@ -158,18 +164,20 @@ const EditProfile = () => {
             const profileData = {
                 firebaseUid: user.uid,
                 email: user.email || "",
-                name: formData.companyName, // Use company name as the display name
-                companyName: formData.companyName,
+                name: formData.accountType === 'buyer' ? formData.name : formData.companyName,
+                companyName: formData.accountType === 'buyer' ? undefined : formData.companyName,
                 address1: formData.address1,
                 address2: formData.address2,
                 city: formData.city,
+                country: formData.country,
                 province: formData.province,
                 postalCode: formData.postalCode,
-                website: formData.website,
+                website: formData.accountType === 'buyer' ? undefined : formData.website,
                 description: formData.description,
                 phone: formData.phone,
                 logoUrl, // Will be implemented later for logo upload
                 chatbotName: formData.chatbotName,
+                accountType: formData.accountType,
             };
 
             await profileApi.createOrUpdateProfile(profileData);
@@ -236,20 +244,36 @@ const EditProfile = () => {
                     )}
 
                     <form className="space-y-8" onSubmit={handleSubmit}>
-                        {/* Company Name */}
-                        <div className="space-y-4">
-                            <label className="block text-xl font-semibold text-black font-inter">
-                                Company Name <span className="text-[#DB1233]">*</span>
-                            </label>
-                            <Input
-                                name="companyName"
-                                value={formData.companyName}
-                                onChange={handleInputChange}
-                                className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
-                                placeholder="Enter company name"
-                                required
-                            />
-                        </div>
+                        {/* Buyer Name or Company Name */}
+                        {formData.accountType === 'buyer' ? (
+                            <div className="space-y-4">
+                                <label className="block text-xl font-semibold text-black font-inter">
+                                    Your Name <span className="text-[#DB1233]">*</span>
+                                </label>
+                                <Input
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
+                                    placeholder="Enter your full name"
+                                    required
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <label className="block text-xl font-semibold text-black font-inter">
+                                    Company Name <span className="text-[#DB1233]">*</span>
+                                </label>
+                                <Input
+                                    name="companyName"
+                                    value={formData.companyName}
+                                    onChange={handleInputChange}
+                                    className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
+                                    placeholder="Enter company name"
+                                    required
+                                />
+                            </div>
+                        )}
 
                         {/* Logo */}
                         <div className="space-y-4">
@@ -313,6 +337,16 @@ const EditProfile = () => {
                                     placeholder="City"
                                     required
                                 />
+                                {formData.accountType === 'buyer' && (
+                                    <Input
+                                        name="country"
+                                        value={formData.country}
+                                        onChange={handleInputChange}
+                                        className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
+                                        placeholder="Country"
+                                        required
+                                    />
+                                )}
                                 <Select
                                     key={formData.province || "empty"}
                                     onValueChange={handleProvinceChange}
@@ -361,27 +395,29 @@ const EditProfile = () => {
                                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                                     placeholder="Phone Number"
                                 />
-                                <Input
-                                    name="website"
-                                    value={formData.website}
-                                    onChange={handleInputChange}
-                                    className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
-                                    placeholder="Website (optional)"
-                                />
+                                {formData.accountType !== 'buyer' && (
+                                    <Input
+                                        name="website"
+                                        value={formData.website}
+                                        onChange={handleInputChange}
+                                        className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
+                                        placeholder="Website (optional)"
+                                    />
+                                )}
                             </div>
                         </div>
 
-                        {/* Description */}
+                        {/* Description / Interests */}
                         <div className="space-y-4">
                             <label className="block text-xl font-semibold text-black font-inter">
-                                Company Description
+                                {formData.accountType === 'buyer' ? 'Interests' : 'Company Description'}
                             </label>
                             <Textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleInputChange}
                                 className="min-h-[120px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
-                                placeholder="Tell us about your company..."
+                                placeholder={formData.accountType === 'buyer' ? 'What are you looking for?' : 'Tell us about your company...'}
                                 maxLength={164}
                             />
                             <div className="flex justify-between items-center text-sm text-gray-500">

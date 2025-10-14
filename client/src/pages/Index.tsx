@@ -12,6 +12,7 @@ import FiltersSidebar from "@/components/FiltersSidebar";
 const Index = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Email verification disabled
   const [emailVerified, setEmailVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedListings, setSelectedListings] = useState<Listing[]>([]);
@@ -58,7 +59,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#F9F9F9]">
       {/* Header */}
-      {isAuthenticated && emailVerified ? <AuthenticatedHeader /> : <Header />}
+      {isAuthenticated ? <AuthenticatedHeader /> : <Header />}
 
       {/* Hero Section */}
       <Hero onSearch={(query) => navigate(`/listings?search=${encodeURIComponent(query)}`)} />

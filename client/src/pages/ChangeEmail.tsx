@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
-import { updateEmail, EmailAuthProvider, reauthenticateWithCredential, sendEmailVerification } from "firebase/auth";
+import { updateEmail, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
 import { Eye, EyeOff, X } from "lucide-react";
 
@@ -64,23 +64,10 @@ const ChangeEmail = () => {
 
             await reauthenticateWithCredential(user, credential);
 
-            // Check if current email is verified
-            if (!user.emailVerified) {
-                setError("Please verify your current email address before changing it. Check your inbox for a verification email.");
-                // Send verification email if not already sent
-                try {
-                    await sendEmailVerification(user);
-                    setError("Please verify your current email address before changing it. A verification email has been sent to your inbox.");
-                } catch (verifyErr) {
-                    console.error('Error sending verification email:', verifyErr);
-                }
-                return;
-            }
-
             // Update email in Firebase
             await updateEmail(user, formData.newEmail);
 
-            setSuccess("Email updated successfully! Please check your new email for verification.");
+            setSuccess("Email updated successfully!");
 
             // Navigate back to my account after a short delay
             setTimeout(() => {
@@ -88,9 +75,7 @@ const ChangeEmail = () => {
             }, 3000);
         } catch (err: any) {
             console.error('Error updating email:', err);
-            if (err.code === 'auth/operation-not-allowed') {
-                setError("Please verify your current email address before changing it. Check your inbox for a verification email.");
-            } else if (err.code === 'auth/wrong-password') {
+            if (err.code === 'auth/wrong-password') {
                 setError("Current password is incorrect");
             } else if (err.code === 'auth/email-already-in-use') {
                 setError("This email address is already in use by another account");
