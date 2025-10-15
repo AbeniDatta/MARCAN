@@ -8,7 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "npm install",
-    "postinstall": "npx prisma generate"
+    "postinstall": "PRISMA_CLIENT_ENGINE_TYPE=library PRISMA_CLI_QUERY_ENGINE_TYPE=binary npx prisma generate"
   },
   "keywords": [],
   "author": "",
