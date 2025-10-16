@@ -3,9 +3,6 @@
 # Exit on any error
 set -e
 
-# Install global dependencies
-npm install -g prisma
-
 # Install root dependencies
 npm install
 
@@ -21,8 +18,8 @@ cd ../server
 rm -rf node_modules
 npm install --include=dev --no-optional
 
-# Generate Prisma client
-prisma generate
+# Generate Prisma client (force library engine for CLI and client)
+PRISMA_CLIENT_ENGINE_TYPE=library PRISMA_CLI_QUERY_ENGINE_TYPE=library npx prisma generate
 
 # Verify Express installation
 echo "Verifying Express installation..."
