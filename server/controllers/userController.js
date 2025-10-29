@@ -315,6 +315,22 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getAllSellers = async (req, res) => {
+  try {
+    const sellers = await prisma.user.findMany({
+      where: {
+        accountType: 'seller',
+        companyName: { not: null } // Only include sellers with company names
+      },
+      orderBy: { companyName: 'asc' },
+    });
+    res.json(serializeBigInts(sellers));
+  } catch (err) {
+    console.error("Error fetching sellers:", err);
+    res.status(500).json({ error: "Failed to fetch sellers" });
+  }
+};
+
 
 // Delete user from database by firebaseUid
 const deleteUserFromDatabase = async (req, res) => {
@@ -389,6 +405,7 @@ module.exports = {
   getUserProfile,
   getUserProfileById,
   getAllUsers,
+  getAllSellers,
   deleteUserFromDatabase,
   deleteUserById,
 };

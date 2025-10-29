@@ -6,7 +6,8 @@ const {
   getUserProfileById,
   deleteUserFromDatabase,
   deleteUserById,
-  getAllUsers
+  getAllUsers,
+  getAllSellers
 } = require('../controllers/userController');
 const prisma = require('../prismaClient');
 
@@ -20,6 +21,7 @@ router.post('/', createUser);
 router.post('/profile', authenticateToken, createOrUpdateProfile);
 router.get('/profile/:firebaseUid', authenticateToken, getUserProfile);
 router.get('/profile/id/:userId', getUserProfileById);
+router.get('/sellers', authenticateToken, getAllSellers);
 router.delete('/delete', authenticateToken, deleteUserFromDatabase);
 
 // Admin-only Routes

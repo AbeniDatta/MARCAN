@@ -330,6 +330,7 @@ export const profileApi = {
 
 export const getAllUsers = () =>
     api.get<UserProfile[]>("/users", { params: { activeOnly: true } });
+export const getAllSellers = () => api.get<UserProfile[]>("/users/sellers");
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
 export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
 

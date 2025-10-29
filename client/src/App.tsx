@@ -26,6 +26,7 @@ import EditProfile from "./pages/EditProfile";
 import ChangeEmail from "./pages/ChangeEmail";
 import ChangePassword from "./pages/ChangePassword";
 import SupplierProfile from "./pages/SupplierProfile";
+import CompanyDirectory from "./pages/CompanyDirectory";
 import Chatbot from "./components/Chatbot";
 
 const queryClient = new QueryClient();
@@ -147,6 +148,14 @@ const App = () => (
             }
           />
           <Route path="/supplier/:supplierId" element={<SupplierProfile />} />
+          <Route
+            path="/company-directory"
+            element={
+              <ProtectedRoute>
+                <CompanyDirectory />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin"
             element={

@@ -69,6 +69,7 @@ const AuthenticatedHeader = () => {
     if (isActive("/listings")) return "All Listings";
     if (isActive("/saved-listings")) return "Saved Listings";
     if (isActive("/admin")) return "Admin";
+    if (isActive("/company-directory")) return "Company Directory";
     return "Navigate";
   };
 
@@ -101,7 +102,7 @@ const AuthenticatedHeader = () => {
               onClick={toggleDesktopDropdown}
               className="flex items-center gap-2 text-base lg:text-[20px] font-semibold font-inter hover:opacity-80 transition-opacity text-black p-2"
             >
-              <span className={isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/admin") ? "text-[#DB1233]" : ""}>
+              <span className={isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/admin") || isActive("/company-directory") ? "text-[#DB1233]" : ""}>
                 {getActiveMenuText()}
               </span>
               <ChevronDown className={`h-4 w-4 transition-transform ${isDesktopDropdownOpen ? 'rotate-180' : ''}`} />
@@ -158,6 +159,16 @@ const AuthenticatedHeader = () => {
                     <span className="font-medium">Admin</span>
                   </Link>
                 )}
+                <Link
+                  to="/company-directory"
+                  className={`flex items-center px-4 py-3 transition-colors ${isActive("/company-directory")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">Company Directory</span>
+                </Link>
               </div>
             </div>
           </div>
@@ -242,6 +253,16 @@ const AuthenticatedHeader = () => {
                   <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
                 </Link>
               )}
+              <Link
+                to="/company-directory"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/company-directory")
+                  ? "text-[#DB1233] bg-red-50"
+                  : "text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                <span className="font-medium">Company Directory</span>
+                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
+              </Link>
               <Link
                 to="/my-account"
                 className={`flex items-center justify-between px-4 py-3 transition-colors ${isActive("/my-account")
