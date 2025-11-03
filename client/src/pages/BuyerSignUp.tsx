@@ -55,7 +55,7 @@ const BuyerSignUp = () => {
                 description: formData.interests,
                 phone: formData.phone,
                 chatbotName: formData.chatbotName,
-                accountType: 'buyer' as const,
+                accountType: 'individual' as const,
                 isVerified: true,
             };
 
@@ -85,10 +85,10 @@ const BuyerSignUp = () => {
                     <div className="bg-white mx-auto max-w-5xl px-12 py-16 relative">
                         <div className="mb-16">
                             <h1 className="text-[50px] font-bold text-black font-inter mb-6">
-                                Set up your buyer account
+                                Set up your individual account
                             </h1>
                             <p className="text-[25px] text-[#4A3F3F] font-inria-sans">
-                                Create your buyer account to explore and connect with sellers.
+                                Create your individual account to browse the marketplace and save listings.
                             </p>
                         </div>
 

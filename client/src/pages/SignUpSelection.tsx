@@ -20,13 +20,13 @@ const SignUpSelection = () => {
                         <p className="text-lg text-[#4A3F3F] mb-10">Choose the account type that fits you best.</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Link to="/signup/buyer" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
-                                <h2 className="text-2xl font-semibold mb-2">Create a buyer account</h2>
-                                <p className="text-sm text-gray-600">For individuals exploring and contacting sellers. No verification needed.</p>
+                            <Link to="/signup/individual" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
+                                <h2 className="text-2xl font-semibold mb-2">Create an individual account</h2>
+                                <p className="text-sm text-gray-600">For individuals browsing and saving listings.</p>
                             </Link>
-                            <Link to="/signup/seller" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
-                                <h2 className="text-2xl font-semibold mb-2">Create a seller account</h2>
-                                <p className="text-sm text-gray-600">For company representatives. Canadian postal code required. Verified to appear.</p>
+                            <Link to="/signup/corporate" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
+                                <h2 className="text-2xl font-semibold mb-2">Create a corporate account</h2>
+                                <p className="text-sm text-gray-600">For companies managing a public profile and listings. Canadian postal code required.</p>
                             </Link>
                         </div>
 

@@ -21,7 +21,7 @@ model User {
   province    String?
   postalCode  String?
   country     String?   @default("Canada")
-  accountType String    @default("buyer") // buyer | seller
+  accountType String    @default("individual") // individual | corporate
   isVerified  Boolean   @default(false)
   website     String?
   description String?

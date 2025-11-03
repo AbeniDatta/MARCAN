@@ -26,14 +26,14 @@ const Login = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-      // Enforce buyer/seller portal separation
+      // Enforce individual/corporate portal separation
       const firebaseUid = userCredential.user.uid;
       const profile = await profileApi.getUserProfile(firebaseUid);
-      const isBuyerPortal = location.pathname.includes('/login/buyer');
-      const isSellerPortal = location.pathname.includes('/login/seller');
+      const isBuyerPortal = location.pathname.includes('/login/individual');
+      const isSellerPortal = location.pathname.includes('/login/corporate');
       const accountType = profile.accountType;
 
-      if ((isBuyerPortal && accountType !== 'buyer') || (isSellerPortal && accountType !== 'seller')) {
+      if ((isBuyerPortal && accountType !== 'individual') || (isSellerPortal && accountType !== 'corporate')) {
         await auth.signOut();
         setError("This email belongs to a different account type. Please use the correct login option.");
         return;

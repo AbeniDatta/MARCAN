@@ -75,11 +75,11 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/signup" element={<SignUpSelection />} />
-          <Route path="/signup/buyer" element={<BuyerSignUp />} />
-          <Route path="/signup/seller" element={<SignUp />} />
+          <Route path="/signup/individual" element={<BuyerSignUp />} />
+          <Route path="/signup/corporate" element={<SignUp />} />
           <Route path="/login" element={<LoginSelection />} />
-          <Route path="/login/buyer" element={<Login />} />
-          <Route path="/login/seller" element={<Login />} />
+          <Route path="/login/individual" element={<Login />} />
+          <Route path="/login/corporate" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/email-verification" element={<EmailVerification />} />
 

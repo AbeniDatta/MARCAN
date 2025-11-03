@@ -483,8 +483,8 @@ const MyAccount = () => {
           <div className="space-y-8">
             {/* Profile Section */}
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Profile Image Placeholder (sellers only) */}
-              {profileData?.accountType !== 'buyer' && (
+              {/* Profile Image Placeholder (corporate only) */}
+              {profileData?.accountType !== 'individual' && (
                 <div className="w-[130px] h-[130px] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
                   {profileData?.logoUrl ? (
                     <img
@@ -501,12 +501,12 @@ const MyAccount = () => {
               {/* Profile Info */}
               <div className="flex-1 space-y-4">
                 <h2 className="text-[22px] md:text-[26px] font-bold text-black font-inter">
-                  {profileData?.accountType === 'buyer' ? (profileData?.name || 'Name Not Set') : (profileData?.companyName || 'Company Name Not Set')}
+                  {profileData?.accountType === 'individual' ? (profileData?.name || 'Name Not Set') : (profileData?.companyName || 'Company Name Not Set')}
                 </h2>
                 <p className="text-[18px] md:text-[22px]] font-semibold text-black font-inter">
                   {formatAddress()}
                 </p>
-                {profileData?.accountType !== 'buyer' && (
+                {profileData?.accountType !== 'individual' && (
                   <p className="text-[16px] md:text-[20px] font-semibold text-black font-inter">
                     {profileData?.website || ''}
                   </p>
@@ -536,7 +536,7 @@ const MyAccount = () => {
             {/* Description / Interests */}
             <div>
               <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
-                {profileData?.accountType === 'buyer' ? 'Interests:' : 'Description:'}
+                {profileData?.accountType === 'individual' ? 'Interests:' : 'Description:'}
               </h3>
               <div className="bg-gray-50 rounded-[10px] px-6 py-4">
                 <p className="text-[16px] md:text-[20px] font-semibold text-black font-inter leading-relaxed">
@@ -684,8 +684,8 @@ const MyAccount = () => {
               </div>
             )}
 
-            {/* My Listings Section (sellers only) */}
-            {profileData?.accountType !== 'buyer' && (
+            {/* My Listings Section (corporate only) */}
+            {profileData?.accountType !== 'individual' && (
               <div>
                 <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
                   My Listings:
@@ -777,7 +777,7 @@ const MyAccount = () => {
                 >
                   Change Email
                 </Button>
-                {profileData?.accountType !== 'buyer' && (
+                {profileData?.accountType !== 'individual' && (
                   <Button
                     variant="outline"
                     className="w-full justify-start text-left h-12 text-base border border-gray-300 hover:bg-gray-50"

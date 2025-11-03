@@ -39,7 +39,7 @@ const EditProfile = () => {
         description: "",
         phone: "",
         chatbotName: "",
-        accountType: "seller" as 'seller' | 'buyer',
+        accountType: "corporate" as 'corporate' | 'individual',
     });
 
     useEffect(() => {
@@ -77,7 +77,7 @@ const EditProfile = () => {
                 description: data.description || "",
                 phone: data.phone || "",
                 chatbotName: data.chatbotName || "",
-                accountType: (data.accountType as 'seller' | 'buyer') || 'seller',
+                accountType: (data.accountType as 'corporate' | 'individual') || 'corporate',
             });
             setLogoPreview(data.logoUrl || null);
         } catch (err: any) {
@@ -164,15 +164,15 @@ const EditProfile = () => {
             const profileData = {
                 firebaseUid: user.uid,
                 email: user.email || "",
-                name: formData.accountType === 'buyer' ? formData.name : formData.companyName,
-                companyName: formData.accountType === 'buyer' ? undefined : formData.companyName,
+                name: formData.accountType === 'individual' ? formData.name : formData.companyName,
+                companyName: formData.accountType === 'individual' ? undefined : formData.companyName,
                 address1: formData.address1,
                 address2: formData.address2,
                 city: formData.city,
                 country: formData.country,
                 province: formData.province,
                 postalCode: formData.postalCode,
-                website: formData.accountType === 'buyer' ? undefined : formData.website,
+                website: formData.accountType === 'individual' ? undefined : formData.website,
                 description: formData.description,
                 phone: formData.phone,
                 logoUrl, // Will be implemented later for logo upload
@@ -244,8 +244,8 @@ const EditProfile = () => {
                     )}
 
                     <form className="space-y-8" onSubmit={handleSubmit}>
-                        {/* Buyer Name or Company Name */}
-                        {formData.accountType === 'buyer' ? (
+                        {/* Individual Name or Company Name */}
+                        {formData.accountType === 'individual' ? (
                             <div className="space-y-4">
                                 <label className="block text-xl font-semibold text-black font-inter">
                                     Your Name <span className="text-[#DB1233]">*</span>
@@ -337,7 +337,7 @@ const EditProfile = () => {
                                     placeholder="City"
                                     required
                                 />
-                                {formData.accountType === 'buyer' && (
+                                {formData.accountType === 'individual' && (
                                     <Input
                                         name="country"
                                         value={formData.country}
@@ -395,7 +395,7 @@ const EditProfile = () => {
                                     className="h-[55px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 font-inter bg-white"
                                     placeholder="Phone Number"
                                 />
-                                {formData.accountType !== 'buyer' && (
+                                {formData.accountType !== 'individual' && (
                                     <Input
                                         name="website"
                                         value={formData.website}
@@ -410,14 +410,14 @@ const EditProfile = () => {
                         {/* Description / Interests */}
                         <div className="space-y-4">
                             <label className="block text-xl font-semibold text-black font-inter">
-                                {formData.accountType === 'buyer' ? 'Interests' : 'Company Description'}
+                                {formData.accountType === 'individual' ? 'Interests' : 'Company Description'}
                             </label>
                             <Textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleInputChange}
                                 className="min-h-[120px] text-[20px] font-semibold text-[#7A7777] border border-black rounded-lg px-6 py-4 font-inter bg-white resize-none"
-                                placeholder={formData.accountType === 'buyer' ? 'What are you looking for?' : 'Tell us about your company...'}
+                                placeholder={formData.accountType === 'individual' ? 'What are you looking for?' : 'Tell us about your company...'}
                                 maxLength={164}
                             />
                             <div className="flex justify-between items-center text-sm text-gray-500">

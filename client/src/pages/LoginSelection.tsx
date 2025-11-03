@@ -20,12 +20,12 @@ const LoginSelection = () => {
                         <p className="text-lg text-[#4A3F3F] mb-10">Choose your account type to continue.</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Link to="/login/buyer" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
-                                <h2 className="text-2xl font-semibold mb-2">Buyer login</h2>
-                                <p className="text-sm text-gray-600">Access your saved listings and messages.</p>
+                            <Link to="/login/individual" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
+                                <h2 className="text-2xl font-semibold mb-2">Individual login</h2>
+                                <p className="text-sm text-gray-600">Access your individual account.</p>
                             </Link>
-                            <Link to="/login/seller" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
-                                <h2 className="text-2xl font-semibold mb-2">Seller login</h2>
+                            <Link to="/login/corporate" className="border rounded-xl p-8 hover:shadow-md transition bg-[#F9F9F9]">
+                                <h2 className="text-2xl font-semibold mb-2">Corporate login</h2>
                                 <p className="text-sm text-gray-600">Manage your company profile and listings.</p>
                             </Link>
                         </div>

@@ -126,7 +126,7 @@ const SignUp = () => {
     }
 
     try {
-      // Validate Canadian postal code for sellers (A1A 1A1)
+      // Validate Canadian postal code for corporate accounts (A1A 1A1)
       const postal = formData.postalCode.replace(/\s/g, "");
       const caPostal = /^[A-Za-z]\d[A-Za-z]\d[A-Za-z]\d$/;
       if (!caPostal.test(postal)) {
@@ -162,7 +162,7 @@ const SignUp = () => {
         phone: formData.phone,
         logoUrl,
         chatbotName: formData.chatbotName,
-        accountType: 'seller' as const,
+        accountType: 'corporate' as const,
         isVerified: false,
       };
 
@@ -200,10 +200,10 @@ const SignUp = () => {
           <div className="bg-white mx-auto max-w-5xl px-12 py-16 relative">
             <div className="mb-16">
               <h1 className="text-[50px] font-bold text-black font-inter mb-6">
-                Set up your seller account
+                Set up your corporate account
               </h1>
               <p className="text-[25px] text-[#4A3F3F] font-inria-sans">
-                Set the tone with a strong company profile.
+                Create your corporate account to build your company profile and publish listings.
               </p>
             </div>
 

@@ -96,7 +96,7 @@ const CompanyDirectory = () => {
                         Company Directory
                     </h1>
                     <p className="text-[18px] text-gray-600 font-inter mb-6">
-                        Browse all seller companies on our platform
+                        Browse all corporate companies on our platform
                     </p>
 
                     {/* Search Bar */}
