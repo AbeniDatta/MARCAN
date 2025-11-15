@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "verifiedBy" TEXT,
+ADD COLUMN IF NOT EXISTS "verifiedAt" TIMESTAMP(3);
+

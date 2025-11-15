@@ -2,9 +2,9 @@ import axios from 'axios';
 import { auth } from '@/firebase';
 
 // Uncomment this for production:
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
+//const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
 // Uncomment this for local development:
-//const API_URL = 'http://localhost:5050/api';
+const API_URL = 'http://localhost:5050/api';
 
 
 // Create axios instance
@@ -96,6 +96,8 @@ export interface UserProfile {
     chatbotName?: string;
     accountType?: 'individual' | 'corporate';
     isVerified?: boolean;
+    verifiedBy?: string;
+    verifiedAt?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -323,6 +325,17 @@ export const profileApi = {
             return response.data;
         } catch (error) {
             console.error('Error fetching user profile by ID:', error);
+            throw error;
+        }
+    },
+
+    // Verify account (for corporate accounts)
+    verifyAccount: async (name: string) => {
+        try {
+            const response = await api.post<UserProfile>('/users/verify', { name });
+            return response.data;
+        } catch (error) {
+            console.error('Error verifying account:', error);
             throw error;
         }
     },

@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/firebase";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
-import ProductCard from "@/components/ProductCard";
 import AddListingCard from "@/components/AddListingCard";
-import ListingCard from "@/components/ListingCard";
 import MyListingCard from "@/components/MyListingCard";
 import AddCategory from "@/components/AddCategory";
 import { Button } from "@/components/ui/button";
@@ -41,6 +39,10 @@ const MyAccount = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
+  const [verifyName, setVerifyName] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
 
   useEffect(() => {
     // Check if user is logged in
@@ -400,6 +402,48 @@ const MyAccount = () => {
     return parts.join(', ');
   };
 
+  // Handle account verification
+  const handleVerifyAccount = async () => {
+    if (!verifyName.trim()) {
+      setVerifyError('Please enter your name');
+      return;
+    }
+
+    setVerifyError('');
+    setVerifyLoading(true);
+
+    try {
+      const updatedProfile = await profileApi.verifyAccount(verifyName.trim());
+      setProfileData(updatedProfile);
+      setShowVerifyDialog(false);
+      setVerifyName('');
+    } catch (err: any) {
+      console.error('Error verifying account:', err);
+      setVerifyError(err.message || 'Failed to verify account. Please try again.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  // Format verification date and time
+  const formatVerificationInfo = () => {
+    if (!profileData?.verifiedAt || !profileData?.verifiedBy) return null;
+
+    const date = new Date(profileData.verifiedAt);
+    const formattedDate = date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const formattedTime = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    return `Verified by ${profileData.verifiedBy} on ${formattedDate} at ${formattedTime}`;
+  };
+
   // Add this function to handle account deletion
   const handleDeleteAccount = async () => {
     setDeleteError('');
@@ -414,9 +458,6 @@ const MyAccount = () => {
 
       // Re-authenticate
       await signInWithEmailAndPassword(auth, user.email, password);
-
-      // Get the user's ID token for backend authentication
-      const idToken = await user.getIdToken();
 
       // Delete user from backend database FIRST (while token is still valid)
       try {
@@ -532,6 +573,81 @@ const MyAccount = () => {
                 </div>
               </div>
             </div>
+
+            {/* Verification Status (Corporate Accounts Only) */}
+            {profileData?.accountType === 'corporate' && (
+              <div>
+                <h3 className="text-[28px] md:text-[32px] font-bold text-black font-inter mb-4">
+                  Verification Status:
+                </h3>
+                {profileData?.isVerified ? (
+                  <div className="bg-green-50 border border-green-200 rounded-[10px] px-6 py-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="text-green-600 font-semibold text-[16px] md:text-[20px]">
+                        ✓ Verified
+                      </span>
+                    </div>
+                    <p className="text-[14px] md:text-[16px] text-gray-700 font-inter">
+                      {formatVerificationInfo()}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-[10px] px-6 py-4">
+                    <p className="text-[16px] md:text-[20px] font-semibold text-yellow-800 font-inter mb-4">
+                      Your account is not verified. Verify your account to make it visible to the public.
+                    </p>
+                    <AlertDialog open={showVerifyDialog} onOpenChange={setShowVerifyDialog}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Verify Account
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Verify Your Account</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Please enter your name to verify your corporate account. Once verified, your account will be visible to the public.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="mt-4">
+                          <Input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={verifyName}
+                            onChange={(e) => {
+                              setVerifyName(e.target.value);
+                              setVerifyError('');
+                            }}
+                            className="w-full"
+                          />
+                          {verifyError && (
+                            <p className="text-red-600 text-sm mt-2">{verifyError}</p>
+                          )}
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => {
+                            setShowVerifyDialog(false);
+                            setVerifyName('');
+                            setVerifyError('');
+                          }}>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleVerifyAccount}
+                            disabled={verifyLoading}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {verifyLoading ? 'Verifying...' : 'Verify'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Description / Interests */}
             <div>

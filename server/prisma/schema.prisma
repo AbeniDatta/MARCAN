@@ -23,6 +23,8 @@ model User {
   country     String?   @default("Canada")
   accountType String    @default("individual") // individual | corporate
   isVerified  Boolean   @default(false)
+  verifiedBy  String?
+  verifiedAt  DateTime?
   website     String?
   description String?
   phone       String?

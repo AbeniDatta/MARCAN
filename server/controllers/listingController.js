@@ -69,6 +69,21 @@ const getAllListings = async (req, res) => {
   try {
     const { sortBy = "most-relevant" } = req.query;
 
+    // Check if user is admin
+    const firebaseUser = req.user;
+    let isAdmin = false;
+
+    if (firebaseUser) {
+      try {
+        const user = await prisma.user.findFirst({
+          where: { firebaseUid: firebaseUser.uid }
+        });
+        isAdmin = user?.isAdmin || false;
+      } catch (err) {
+        console.error("Error checking admin status:", err);
+      }
+    }
+
     let orderBy;
     if (sortBy === "new-to-old") {
       orderBy = { createdAt: "desc" };
@@ -78,13 +93,32 @@ const getAllListings = async (req, res) => {
       orderBy = undefined; // We'll sort by relevance client-side
     }
 
+    // Build where clause
+    const whereClause = { isDraft: false };
+
+    // If not admin, only show listings from verified users or individual accounts
+    if (!isAdmin) {
+      whereClause.user = {
+        OR: [
+          { isVerified: true },
+          { accountType: 'individual' }
+        ]
+      };
+    }
+
     const listings = await prisma.listing.findMany({
-      where: { isDraft: false },
+      where: whereClause,
       include: { user: true },
       ...(orderBy ? { orderBy } : {}),
     });
 
-    const serializedListings = listings.map(listing => ({
+    // Filter out listings from unverified corporate accounts for non-admins (client-side fallback)
+    const filteredListings = isAdmin ? listings : listings.filter(listing => {
+      if (listing.user.accountType === 'individual') return true;
+      return listing.user.isVerified === true;
+    });
+
+    const serializedListings = filteredListings.map(listing => ({
       ...listing,
       timestamp: listing.timestamp ? Number(listing.timestamp) : null,
     }));
@@ -395,6 +429,21 @@ const searchListings = async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
 
+    // Check if user is admin
+    const firebaseUser = req.user;
+    let isAdmin = false;
+
+    if (firebaseUser) {
+      try {
+        const user = await prisma.user.findFirst({
+          where: { firebaseUid: firebaseUser.uid }
+        });
+        isAdmin = user?.isAdmin || false;
+      } catch (err) {
+        console.error("Error checking admin status:", err);
+      }
+    }
+
     const searchTerm = query.trim().toLowerCase();
     console.log('Search term:', searchTerm);
 
@@ -495,8 +544,16 @@ const searchListings = async (req, res) => {
       listings = partialListings;
     }
 
-    console.log('Search results:', listings.length, 'listings found');
-    console.log('Search results details:', listings.map(l => ({
+    // Filter out listings from unverified corporate accounts for non-admins
+    const filteredListings = isAdmin ? listings : listings.filter(listing => {
+      // Always show individual accounts
+      if (listing.user?.accountType === 'individual') return true;
+      // Only show verified corporate accounts
+      return listing.user?.isVerified === true;
+    });
+
+    console.log('Search results:', filteredListings.length, 'listings found');
+    console.log('Search results details:', filteredListings.map(l => ({
       id: l.id,
       title: l.title,
       description: l.description,
@@ -505,7 +562,7 @@ const searchListings = async (req, res) => {
     })));
 
     // Convert BigInt timestamps to regular numbers for JSON serialization
-    const serializedListings = listings.map(listing => ({
+    const serializedListings = filteredListings.map(listing => ({
       ...listing,
       timestamp: listing.timestamp ? Number(listing.timestamp) : null
     }));

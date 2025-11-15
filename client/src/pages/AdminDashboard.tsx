@@ -181,6 +181,8 @@ const AdminDashboard = () => {
                     <th className="p-3">Name</th>
                     <th className="p-3">Email</th>
                     <th className="p-3">Company</th>
+                    <th className="p-3">Account Type</th>
+                    <th className="p-3">Verification</th>
                     <th className="p-3">Phone</th>
                     <th className="p-3">Website</th>
                     <th className="p-3">City</th>
@@ -201,6 +203,26 @@ const AdminDashboard = () => {
                       <td className="p-3">{user.name}</td>
                       <td className="p-3">{user.email}</td>
                       <td className="p-3">{user.companyName || "—"}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.accountType === 'corporate'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {user.accountType || 'individual'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        {user.accountType === 'corporate' ? (
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${user.isVerified
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                            }`}>
+                            {user.isVerified ? 'Verified' : 'Not Verified'}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">N/A</span>
+                        )}
+                      </td>
                       <td className="p-3">{user.phone || "—"}</td>
                       <td className="p-3 truncate max-w-[200px]">{user.website || "—"}</td>
                       <td className="p-3">{user.city || "—"}</td>

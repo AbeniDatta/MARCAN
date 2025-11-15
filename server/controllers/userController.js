@@ -317,11 +317,34 @@ const getAllUsers = async (req, res) => {
 
 const getAllSellers = async (req, res) => {
   try {
+    // Check if user is admin
+    const firebaseUser = req.user;
+    let isAdmin = false;
+
+    if (firebaseUser) {
+      try {
+        const user = await prisma.user.findFirst({
+          where: { firebaseUid: firebaseUser.uid }
+        });
+        isAdmin = user?.isAdmin || false;
+      } catch (err) {
+        console.error("Error checking admin status:", err);
+      }
+    }
+
+    // Build where clause
+    const whereClause = {
+      accountType: 'corporate',
+      companyName: { not: null }
+    };
+
+    // If not admin, only show verified companies
+    if (!isAdmin) {
+      whereClause.isVerified = true;
+    }
+
     const sellers = await prisma.user.findMany({
-      where: {
-        accountType: 'corporate',
-        companyName: { not: null } // Only include sellers with company names
-      },
+      where: whereClause,
       orderBy: { companyName: 'asc' },
     });
     res.json(serializeBigInts(sellers));

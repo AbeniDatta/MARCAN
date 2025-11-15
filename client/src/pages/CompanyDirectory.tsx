@@ -32,8 +32,13 @@ const CompanyDirectory = () => {
         try {
             setLoading(true);
             const response = await getAllSellers();
-            setSellers(response.data);
-            setFilteredSellers(response.data);
+            const verifiedCorporate = response.data.filter(
+                (seller: UserProfile) =>
+                    seller.isVerified && seller.accountType === "corporate"
+            );
+
+            setSellers(verifiedCorporate);
+            setFilteredSellers(verifiedCorporate);
         } catch (err: any) {
             console.error("Failed to fetch sellers", err);
             setError("Failed to load company directory");
