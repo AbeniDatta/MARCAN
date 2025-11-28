@@ -14,7 +14,7 @@ const getESTTimestamp = () => {
 const createListing = async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
+    const { title, description, price, tags, categories, imageUrl, fileUrl, city, isHidden } = req.body;
 
     // Get the Firebase user from the request (set by auth middleware)
     const firebaseUser = req.user;
@@ -49,7 +49,8 @@ const createListing = async (req, res) => {
       categories,
       city,
       userId: user.id, // Use the actual user ID from our database
-      timestamp: getESTTimestamp() // EST timestamp for sorting
+      timestamp: getESTTimestamp(), // EST timestamp for sorting
+      isHidden: isHidden || false
     };
 
     console.log('Creating listing with data:', listingData);
@@ -75,10 +76,16 @@ const getAllListings = async (req, res) => {
 
     if (firebaseUser) {
       try {
-        const user = await prisma.user.findFirst({
-          where: { firebaseUid: firebaseUser.uid }
-        });
-        isAdmin = user?.isAdmin || false;
+        // Check Firebase custom claims first (more reliable for admin status)
+        isAdmin = firebaseUser.admin === true;
+
+        // Also check database as fallback
+        if (!isAdmin) {
+          const user = await prisma.user.findFirst({
+            where: { firebaseUid: firebaseUser.uid }
+          });
+          isAdmin = user?.isAdmin || false;
+        }
       } catch (err) {
         console.error("Error checking admin status:", err);
       }
@@ -94,17 +101,26 @@ const getAllListings = async (req, res) => {
     }
 
     // Build where clause
-    const whereClause = { isDraft: false };
+    const whereClause = {
+      isDraft: false
+    };
 
-    // If not admin, only show listings from verified users or individual accounts
+    // If not admin, filter out hidden listings and listings from hidden accounts
     if (!isAdmin) {
+      whereClause.isHidden = false;
       whereClause.user = {
-        OR: [
-          { isVerified: true },
-          { accountType: 'individual' }
+        AND: [
+          {
+            OR: [
+              { isVerified: true },
+              { accountType: 'individual' }
+            ]
+          },
+          { isHidden: false }  // Don't show listings from hidden accounts
         ]
       };
     }
+    // Admin can see all listings including hidden ones (no isHidden filter)
 
     const listings = await prisma.listing.findMany({
       where: whereClause,
@@ -140,15 +156,16 @@ const getListingById = async (req, res) => {
     });
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-    // Convert BigInt timestamp to regular number for JSON serialization
-    const serializedListing = {
+    // Serialize BigInt values for JSON response (including nested user object)
+    const serializedListing = serializeBigInts({
       ...listing,
       timestamp: listing.timestamp ? Number(listing.timestamp) : null
-    };
+    });
 
     res.json(serializedListing);
   } catch (err) {
-    res.status(400).json({ error: 'Error fetching listing' });
+    console.error('Error fetching listing by ID:', err);
+    res.status(400).json({ error: 'Error fetching listing', details: err.message });
   }
 };
 
@@ -199,6 +216,7 @@ const getListingsByCurrentUser = async (req, res) => {
       where: {
         userId: user.id,
         isDraft: false
+        // Include hidden listings for My Account page
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -240,12 +258,12 @@ const getListingsByFirebaseUid = async (req, res) => {
 // Update a listing
 const updateListing = async (req, res) => {
   const { id } = req.params;
-  const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
+  const { title, description, price, tags, categories, imageUrl, fileUrl, city, isDraft, isHidden } = req.body;
 
   console.log('=== UPDATE LISTING REQUEST ===');
   console.log('Listing ID:', id);
   console.log('Request body:', req.body);
-  console.log('Parsed fields:', { title, description, price, tags, categories, imageUrl, fileUrl, city });
+  console.log('Parsed fields:', { title, description, price, tags, categories, imageUrl, fileUrl, city, isDraft, isHidden });
 
   try {
     const updateData = {
@@ -258,6 +276,15 @@ const updateListing = async (req, res) => {
       fileUrl,
       city
     };
+
+    // Add optional fields if provided
+    if (typeof isDraft === 'boolean') {
+      updateData.isDraft = isDraft;
+    }
+    if (typeof isHidden === 'boolean') {
+      updateData.isHidden = isHidden;
+    }
+
     console.log('Update data being sent to Prisma:', updateData);
 
     const updated = await prisma.listing.update({
@@ -298,7 +325,7 @@ const deleteListing = async (req, res) => {
 const saveDraft = async (req, res) => {
   try {
     console.log('Received draft request body:', req.body);
-    const { title, description, price, tags, categories, imageUrl, fileUrl, city } = req.body;
+    const { title, description, price, tags, categories, imageUrl, fileUrl, city, isHidden } = req.body;
 
     // Get the Firebase user from the request (set by auth middleware)
     const firebaseUser = req.user;
@@ -334,7 +361,8 @@ const saveDraft = async (req, res) => {
       city,
       isDraft: true,
       userId: user.id, // Use the actual user ID from our database
-      timestamp: getESTTimestamp() // EST timestamp for sorting
+      timestamp: getESTTimestamp(), // EST timestamp for sorting
+      isHidden: isHidden || false
     };
 
     console.log('Creating draft with data:', listingData);
@@ -544,8 +572,12 @@ const searchListings = async (req, res) => {
       listings = partialListings;
     }
 
-    // Filter out listings from unverified corporate accounts for non-admins
+    // Filter out listings from unverified corporate accounts and hidden listings/accounts for non-admins
     const filteredListings = isAdmin ? listings : listings.filter(listing => {
+      // Don't show hidden listings
+      if (listing.isHidden) return false;
+      // Don't show listings from hidden accounts
+      if (listing.user?.isHidden) return false;
       // Always show individual accounts
       if (listing.user?.accountType === 'individual') return true;
       // Only show verified corporate accounts

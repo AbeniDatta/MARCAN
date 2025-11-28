@@ -2,9 +2,9 @@ import axios from 'axios';
 import { auth } from '@/firebase';
 
 // Uncomment this for production:
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
+//const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5050/api');
 // Uncomment this for local development:
-//const API_URL = 'http://localhost:5050/api';
+const API_URL = 'http://localhost:5050/api';
 
 
 // Create axios instance
@@ -26,9 +26,31 @@ api.interceptors.request.use(async (config) => {
         console.log('Request method:', config.method);
 
         if (user) {
-            const token = await user.getIdToken(true);
-            config.headers.Authorization = `Bearer ${token}`;
-            console.log('Token added to request');
+            // Try to get token without forcing refresh first
+            // Only force refresh if token is expired or missing
+            try {
+                const token = await user.getIdToken(false);
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                    console.log('Token added to request (cached)');
+                } else {
+                    // If no cached token, force refresh
+                    const refreshedToken = await user.getIdToken(true);
+                    config.headers.Authorization = `Bearer ${refreshedToken}`;
+                    console.log('Token added to request (refreshed)');
+                }
+            } catch (tokenError) {
+                console.error('Error getting token, trying refresh:', tokenError);
+                // If getting cached token fails, try forcing refresh
+                try {
+                    const refreshedToken = await user.getIdToken(true);
+                    config.headers.Authorization = `Bearer ${refreshedToken}`;
+                    console.log('Token added to request (forced refresh)');
+                } catch (refreshError) {
+                    console.error('Failed to refresh token:', refreshError);
+                    // Don't throw - let the request proceed and backend will handle auth error
+                }
+            }
         } else {
             console.log('No user found, no token added');
         }
@@ -42,12 +64,33 @@ api.interceptors.request.use(async (config) => {
 // Add response interceptor for better error handling
 api.interceptors.response.use(
     response => response,
-    error => {
+    async error => {
         console.error('API Error:', {
             status: error.response?.status,
             data: error.response?.data,
             message: error.message
         });
+
+        // If we get a 401 (unauthorized), try to refresh the token and retry once
+        if (error.response?.status === 401 && error.config && !error.config._retry) {
+            const originalRequest = error.config;
+            originalRequest._retry = true;
+
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    console.log('Token expired, refreshing and retrying request...');
+                    const newToken = await user.getIdToken(true);
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    return api(originalRequest);
+                }
+            } catch (refreshError) {
+                console.error('Failed to refresh token:', refreshError);
+                // If refresh fails, redirect to login or throw error
+                throw new Error('Session expired. Please log in again.');
+            }
+        }
+
         throw new Error(error.response?.data?.error || error.message || 'Network error occurred');
     }
 );
@@ -69,6 +112,7 @@ export interface Listing {
     createdAt: string;
     timestamp?: number;
     isDraft?: boolean;
+    isHidden?: boolean;
     user?: {
         id: number;
         name: string;
@@ -98,8 +142,18 @@ export interface UserProfile {
     isVerified?: boolean;
     verifiedBy?: string;
     verifiedAt?: string;
+    isHidden?: boolean;
+    isAdmin?: boolean;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface VerificationHistory {
+    id: number;
+    userId: number;
+    action: 'verified' | 'unverified';
+    performedBy: string;
+    performedAt: string;
 }
 
 export interface Category {
@@ -112,7 +166,7 @@ export interface Category {
 }
 
 // Type for creating/updating listings (companyName is set automatically by server)
-export type ListingInput = Omit<Listing, 'id' | 'createdAt' | 'userId' | 'companyName'>;
+export type ListingInput = Omit<Listing, 'id' | 'createdAt' | 'userId' | 'companyName' | 'user'>;
 
 // Type for profile data
 export type ProfileInput = Omit<UserProfile, 'id' | 'createdAt' | 'updatedAt'>;
@@ -339,6 +393,17 @@ export const profileApi = {
             throw error;
         }
     },
+
+    // Get verification history
+    getVerificationHistory: async () => {
+        try {
+            const response = await api.get<VerificationHistory[]>('/users/verification-history');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching verification history:', error);
+            throw error;
+        }
+    },
 };
 
 export const getAllUsers = () =>
@@ -346,6 +411,14 @@ export const getAllUsers = () =>
 export const getAllSellers = () => api.get<UserProfile[]>("/users/sellers");
 export const deleteUserById = (userId: number) => api.delete(`/users/admin/${userId}`);
 export const deleteListingById = (listingId: number) => api.delete(`/listings/admin/${listingId}`);
+export const toggleUserVerification = (userId: number, isVerified: boolean) =>
+    api.put<UserProfile>(`/users/admin/${userId}/verification`, { isVerified });
+export const toggleUserVisibility = (userId: number, isHidden: boolean) =>
+    api.put<UserProfile>(`/users/admin/${userId}/visibility`, { isHidden });
+export const toggleListingVisibility = (listingId: number, isHidden: boolean) =>
+    api.put<Listing>(`/listings/admin/${listingId}/visibility`, { isHidden });
+export const toggleMyListingVisibility = (listingId: number, isHidden: boolean) =>
+    api.put<Listing>(`/listings/${listingId}/visibility`, { isHidden });
 
 export const categoryApi = {
     // Get all categories

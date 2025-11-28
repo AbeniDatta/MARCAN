@@ -66,11 +66,18 @@ const MyListingCard: React.FC<MyListingCardProps> = ({ listing, onDelete, isDraf
                     <p className="text-[14px] font-medium text-black font-inter leading-tight">
                         {listing.companyName}
                     </p>
-                    {isDraft && (
-                        <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full mt-1">
-                            Draft
-                        </span>
-                    )}
+                    <div className="flex gap-2 mt-1">
+                        {isDraft && (
+                            <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                Draft
+                            </span>
+                        )}
+                        {listing.isHidden && (
+                            <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                                Hidden
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 

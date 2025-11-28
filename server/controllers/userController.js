@@ -335,7 +335,8 @@ const getAllSellers = async (req, res) => {
     // Build where clause
     const whereClause = {
       accountType: 'corporate',
-      companyName: { not: null }
+      companyName: { not: null },
+      isHidden: false  // Don't show hidden accounts
     };
 
     // If not admin, only show verified companies
@@ -397,6 +398,20 @@ const deleteUserById = async (req, res) => {
   const id = parseInt(userId);
 
   try {
+    // Check if user exists and is admin
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent deleting admin accounts
+    if (existingUser.isAdmin) {
+      return res.status(403).json({ error: 'Cannot delete admin account' });
+    }
+
     await prisma.$transaction(async (tx) => {
       // delete saved listings referencing the user's listings
       await tx.savedListing.deleteMany({

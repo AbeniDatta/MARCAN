@@ -33,8 +33,10 @@ model User {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   isAdmin     Boolean   @default(false)
+  isHidden    Boolean   @default(false)
   listings    Listing[] @relation("UserListings")
   savedListings SavedListing[] @relation("UserSavedListings")
+  verificationHistory VerificationHistory[] @relation("UserVerificationHistory")
 }
 
 model Listing {
@@ -48,6 +50,7 @@ model Listing {
   categories  String[]
   city        String?
   isDraft     Boolean  @default(false)
+  isHidden    Boolean  @default(false)
   userId      Int
   createdAt   DateTime @default(now())
   timestamp   BigInt?
@@ -74,5 +77,16 @@ model Category {
   isFeatured  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model VerificationHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String   // "verified" or "unverified"
+  performedBy String   // Who performed the action (e.g., "Marcan Admin" or user name)
+  performedAt DateTime @default(now())
+  user        User     @relation("UserVerificationHistory", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 

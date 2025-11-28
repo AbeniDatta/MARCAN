@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Upload, X, Plus } from 'lucide-react';
 import { CANADIAN_CITIES } from "@/lib/canadianCities";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Command,
     CommandInput,
@@ -98,6 +99,28 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         categories: initialData?.categories || [],
         city: initialData?.city || ''
     });
+
+    const [isHidden, setIsHidden] = useState<boolean>(initialData?.isHidden || false);
+
+    // Update formData when initialData changes (for async loading)
+    useEffect(() => {
+        if (initialData) {
+            console.log('ListingForm: Updating formData with initialData:', initialData);
+            setFormData({
+                title: initialData.title || '',
+                description: initialData.description || '',
+                price: initialData.price?.toString() || '',
+                imageFile: null,
+                fileUpload: null,
+                tags: initialData.tags || [],
+                categories: initialData.categories || [],
+                city: initialData.city || ''
+            });
+            setIsHidden(initialData.isHidden || false);
+            setImagePreview(initialData.imageUrl || null);
+            setFileUploadName(initialData.fileUrl ? 'File uploaded' : '');
+        }
+    }, [initialData]);
 
     // Close city dropdown when clicking outside
     useEffect(() => {
@@ -187,8 +210,12 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
         }
 
         // For new listings, require all fields
+        // For updates, only require essential fields (image can be existing)
+        const isUpdate = !!initialData?.id && !isPublishingDraft;
+        
         if (!isPublishingDraft) {
-            if (!imagePreview && !formData.imageFile) {
+            // Image is only required for new listings, not updates
+            if (!isUpdate && !imagePreview && !formData.imageFile) {
                 setError('Product image is required.');
                 return;
             }
@@ -257,7 +284,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 fileUrl,
                 tags: finalTags,
                 categories: formData.categories,
-                city: manualCity.trim() ? manualCity : formData.city
+                city: manualCity.trim() ? manualCity : formData.city,
+                isHidden: isHidden
             };
 
             console.log('=== FRONTEND SUBMISSION ===');
@@ -270,8 +298,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 console.log('Updating listing with ID:', initialData.id);
                 // If this is a draft being published, set isDraft to false
                 const updateData = isPublishingDraft
-                    ? { ...listingData, isDraft: false }
-                    : listingData;
+                    ? { ...listingData, isDraft: false, isHidden: isHidden }
+                    : { ...listingData, isHidden: isHidden };
                 result = await listingApi.updateListing(initialData.id, updateData);
             } else {
                 result = await listingApi.createListing(listingData);
@@ -320,7 +348,8 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                 fileUrl,
                 tags: finalTags,
                 categories: formData.categories,
-                city: manualCity.trim() ? manualCity : formData.city || ''
+                city: manualCity.trim() ? manualCity : formData.city || '',
+                isHidden: isHidden
             };
             let result;
             if (initialData?.id) {
@@ -814,6 +843,29 @@ const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, onSave
                         ))}
                     </div>
                 </div>
+            </div>
+
+            {/* Visibility Toggle */}
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                    Visibility
+                </label>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="isHidden"
+                        checked={isHidden}
+                        onCheckedChange={(checked) => setIsHidden(checked === true)}
+                    />
+                    <label
+                        htmlFor="isHidden"
+                        className="text-sm text-gray-600 cursor-pointer"
+                    >
+                        Hide this listing from public view
+                    </label>
+                </div>
+                <p className="text-xs text-gray-500">
+                    Hidden listings will only be visible to you in your account and will not appear in public listings or search results.
+                </p>
             </div>
 
             <div className="flex gap-4">
