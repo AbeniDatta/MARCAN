@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import canadianMapleLeaf from "@/assets/canadian-maple-leaf-red.png";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { auth } from "@/firebase";
-import { UserProfile } from "@/services/api";
+import { profileApi } from "@/services/api";
 
 const AuthenticatedHeader = () => {
   const location = useLocation();
@@ -13,6 +13,7 @@ const AuthenticatedHeader = () => {
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [displayName, setDisplayName] = useState("");
   const isActive = (path: string) => location.pathname === path;
 
   const toggleMobileMenu = () => {
@@ -41,21 +42,44 @@ const AuthenticatedHeader = () => {
   }, []);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          const tokenResult = await user.getIdTokenResult(true); // true = force refresh
-          const isAdmin = tokenResult.claims.admin === true;
-          setIsAdmin(isAdmin);
-          console.log("Admin status:", isAdmin);
-        } catch (err) {
-          console.error("Failed to fetch custom claims", err);
-        }
-      }
-    };
-    checkAdmin();
-  }, []);
+  const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      setIsAdmin(false);
+      setDisplayName("");
+      return;
+    }
+
+    // 1) Admin claim
+    try {
+      const tokenResult = await user.getIdTokenResult(true);
+      const adminClaim = tokenResult.claims.admin === true;
+      setIsAdmin(adminClaim);
+      console.log("Admin status:", adminClaim);
+    } catch (err) {
+      console.error("Failed to fetch custom claims", err);
+      setIsAdmin(false);
+    }
+
+    // 2) Display name (profile -> firebase -> email)
+    try {
+      const profile = await profileApi.getUserProfile(user.uid);
+
+      const name =
+        profile.companyName ||
+        profile.name ||
+        user.displayName ||
+        user.email ||
+        "User";
+
+      setDisplayName(name);
+    } catch (err) {
+      console.error("Failed to fetch profile for display name", err);
+      setDisplayName(user.displayName || user.email || "User");
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
 
   // Close dropdowns when route changes
   useEffect(() => {
@@ -70,6 +94,7 @@ const AuthenticatedHeader = () => {
     if (isActive("/listings")) return "All Listings";
     if (isActive("/saved-listings")) return "Saved Listings";
     if (isActive("/company-directory")) return "Company Directory";
+    if (isActive("/about")) return "About";
     return "Navigate";
   };
 
@@ -86,23 +111,38 @@ const AuthenticatedHeader = () => {
               alt="Canadian maple leaf"
               className="w-8 h-8 sm:w-[38px] sm:h-[38px]"
             />
-            <h1 className="text-2xl sm:text-[36px] font-bold text-black font-inter">
-              MARCAN
-            </h1>
+            <div className="flex flex-col leading-tight">
+              <span className="text-2xl sm:text-[36px] font-bold text-black font-inter">
+                MARCAN
+              </span>
+              <span className="text-xs sm:text-sm text-gray-600 font-inter max-w-[280px] sm:max-w-none">
+                Manufacturing and Resources Canada – An online marketplace for Canadian manufacturing
+              </span>
+            </div>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-4 lg:gap-6">
+        <div className="hidden md:flex items-center gap-4 lg:gap-8">
+          <div className="hidden lg:flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 py-1">
+            <span className="text-sm text-gray-600 font-inter">
+              Hi, <span className="font-semibold text-black">{displayName || "User"}</span>
+            </span>
 
+            {isAdmin ? (
+              <span className="text-xs font-semibold text-[#DB1233] bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">
+                Admin
+              </span>
+            ) : null}
+          </div>
           {/* Desktop Dropdown Menu */}
           <div className="relative" ref={desktopDropdownRef}>
             <Button
               variant="ghost"
               onClick={toggleDesktopDropdown}
-              className="flex items-center gap-2 text-base lg:text-[20px] font-semibold font-inter hover:opacity-80 transition-opacity text-black p-2"
+              className="flex items-center gap-2 whitespace-nowrap text-base lg:text-[20px] font-semibold font-inter hover:opacity-80 transition-opacity text-black p-2"
             >
-              <span className={isActive("/admin") || isActive("/") || isActive("/listings") || isActive("/saved-listings") || isActive("/company-directory") ? "text-[#DB1233]" : ""}>
+              <span className={isActive("/admin") || isActive("/") || isActive("/about") || isActive("/listings") || isActive("/saved-listings") || isActive("/company-directory") ? "text-[#DB1233]" : ""}>
                 {getActiveMenuText()}
               </span>
               <ChevronDown className={`h-4 w-4 transition-transform ${isDesktopDropdownOpen ? 'rotate-180' : ''}`} />
@@ -137,6 +177,17 @@ const AuthenticatedHeader = () => {
                   onClick={() => setIsDesktopDropdownOpen(false)}
                 >
                   <span className="font-medium">Home</span>
+                </Link>
+                <Link
+                  to="/about"
+                  className={`flex items-center px-4 py-3 transition-colors ${
+                    isActive("/about")
+                      ? "text-[#DB1233] bg-red-50"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setIsDesktopDropdownOpen(false)}
+                >
+                  <span className="font-medium">About</span>
                 </Link>
                 <Link
                   to="/listings"
@@ -206,6 +257,22 @@ const AuthenticatedHeader = () => {
               }`}
           >
 
+          <div className="px-4 py-3 bg-white border-b border-gray-100">
+          <div className="text-xs text-gray-500 font-inter">
+            Signed in as
+          </div>
+          <div className="text-sm font-semibold text-black font-inter">
+            {displayName || "User"}{isAdmin ? " (Admin)" : ""}
+          </div>
+        </div><div className="px-4 py-3 bg-white border-b border-gray-100">
+          <div className="text-xs text-gray-500 font-inter">
+            Signed in as
+          </div>
+          <div className="text-sm font-semibold text-black font-inter">
+            {displayName || "User"}{isAdmin ? " (Admin)" : ""}
+          </div>
+        </div>
+
 
             {/* Navigation Links */}
             <div className="py-2">
@@ -229,6 +296,17 @@ const AuthenticatedHeader = () => {
                   }`}
               >
                 <span className="font-medium">Home</span>
+                <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
+              </Link>
+              <Link
+                to="/about"
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${
+                  isActive("/about")
+                    ? "text-[#DB1233] bg-red-50"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span className="font-medium">About</span>
                 <ChevronDown className="h-4 w-4 transform rotate-[-90deg] opacity-60" />
               </Link>
               <Link

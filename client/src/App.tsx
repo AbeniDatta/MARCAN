@@ -20,7 +20,7 @@ import MyAccount from "./pages/MyAccount";
 import CreateListing from "./pages/CreateListing";
 import UpdateListing from "./pages/UpdateListing";
 import UpdateDraft from "./pages/UpdateDraft";
-
+import About from "./pages/About";
 import SavedListings from '@/pages/SavedListings';
 import EditProfile from "./pages/EditProfile";
 import ChangeEmail from "./pages/ChangeEmail";
@@ -172,6 +172,15 @@ const App = () => (
                 <SavedListings />
               </ProtectedRoute>
 
+            }
+          />
+          
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute>
+                <About />
+              </ProtectedRoute>
             }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
