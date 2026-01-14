@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcan - Manufacturing Canada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        marcan: {
+                            red: '#ef4444',     /* Bright Plasma Red */
+                            glow: '#b91c1c',     /* Deep Red Glow */
+                            dark: '#020617',     /* Deep Space Black */
+                            panel: '#0f172a',    /* Slate Panel */
+                            glass: 'rgba(15, 23, 42, 0.85)' /* Slightly more opaque for sidebar */
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Grid Background Pattern */
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-marcan-dark text-slate-300 font-sans h-screen overflow-hidden flex selection:bg-marcan-red selection:text-white">
+
+    <!-- ==================== AMBIENT BACKGROUND ==================== -->
+    <div class="fixed inset-0 z-0 pointer-events-none bg-grid">
+        <div
+            class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-marcan-glow/20 rounded-full blur-[150px] animate-pulse-slow">
+        </div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-900/10 rounded-full blur-[150px] animate-pulse-slow"
+            style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- ==================== SIDEBAR (Fixed, Full Height) ==================== -->
+    <aside
+        class="relative z-20 w-20 lg:w-72 glass-panel flex flex-col justify-between py-8 px-4 transition-all duration-300">
+
+        <!-- Brand -->
+        <div class="flex items-center gap-4 px-2 mb-10 cursor-pointer group" onclick="switchView('home')">
+            <div
+                class="w-12 h-12 rounded-xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300">
+                <span class="font-heading font-black text-2xl text-white">M</span>
+            </div>
+            <div class="hidden lg:block">
+                <h1 class="font-heading font-bold text-xl text-white tracking-widest uppercase">Marcan</h1>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-marcan-red shadow-neon"></span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">MFG Canada</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nav Links -->
+        <nav class="flex-grow space-y-2">
+            <!-- 1. Home -->
+            <button onclick="switchView('home')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group active relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-house text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Home</span>
+            </button>
+
+            <!-- 2. About Us -->
+            <button onclick="switchView('about')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-shield-halved text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">About Us</span>
+            </button>
+
+            <!-- 3. Company Directory -->
+            <button onclick="switchView('directory')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-address-book text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Directory</span>
+            </button>
+
+            <!-- 4. Buyer's Wishlist -->
+            <button onclick="switchView('wishlist')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-bullhorn text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Buyer Wishlist</span>
+                <span
+                    class="hidden lg:flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">New</span>
+            </button>
+
+            <!-- 5. Supplier Marketplace -->
+            <button onclick="switchView('marketplace')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-shop text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Supplier Listings</span>
+            </button>
+
+            <!-- 6. Contact Us (New) -->
+            <button onclick="switchView('contact')"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-envelope text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Contact Us</span>
+            </button>
+        </nav>
+
+        <!-- User Panel (Sign Up) -->
+        <div class="mt-auto pt-6 border-t border-white/5">
+            <button onclick="switchView('signup')"
+                class="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300">
+                <div
+                    class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-marcan-red border border-marcan-red/30 shadow-neon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="hidden lg:block text-left">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Join Marcan</div>
+                    <div class="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">Sign Up
+                    </div>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN VIEWPORT ==================== -->
+    <main class="flex-1 relative z-10 overflow-hidden flex flex-col">
+
+        <!-- Top Bar HUD (Improved & Relevant) -->
+        <header
+            class="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
+            <!-- Left: Context -->
+            <div class="flex items-center gap-3">
+                <h2 class="font-heading font-bold text-white text-lg tracking-tight">Marcan Platform</h2>
+                <span class="text-slate-600 text-lg">/</span>
+                <span class="text-slate-400 text-sm font-medium">Overview</span>
+            </div>
+
+            <!-- Right: Relevance & Actions -->
+            <div class="flex items-center gap-6">
+                <!-- Location Selector (Relevant for local sourcing) -->
+                <div
+                    class="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white cursor-pointer transition group">
+                    <i class="fa-solid fa-location-dot text-marcan-red group-hover:shadow-neon transition-shadow"></i>
+                    <span>Ontario, CA</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] ml-1 opacity-50"></i>
+                </div>
+
+                <!-- Language Toggle (Canadian Context) -->
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                    <span class="text-white cursor-pointer hover:text-marcan-red transition">EN</span>
+                    <span class="opacity-30">|</span>
+                    <span class="cursor-pointer hover:text-white transition">FR</span>
+                </div>
+
+                <div class="h-4 w-[1px] bg-white/10"></div>
+
+                <!-- Actions -->
+                <div class="flex gap-3 items-center">
+                    <button onclick="switchView('help')"
+                        class="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-white/5 transition text-slate-400 hover:text-white"
+                        title="Support Center / Help">
+                        <i class="fa-regular fa-circle-question"></i>
+                    </button>
+                    <!-- Login Button -->
+                    <button onclick="switchView('login')"
+                        class="px-5 py-2 rounded-lg bg-white/10 hover:bg-marcan-red border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-neon transition-all">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Scroll Area -->
+        <div class="flex-1 overflow-y-auto p-8 relative">
+
+            <!-- 1. HOME VIEW (REVAMPED) -->
+            <div id="home" class="view-section active">
+                <!-- Search Bar Container -->
+                <div class="mb-8 w-full">
+                    <div class="relative group w-full">
+                        <div
+                            class="absolute -inset-1 bg-gradient-to-r from-marcan-red to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-200">
+                        </div>
+                        <label
+                            class="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 py-3 px-6 shadow-lg w-full cursor-text">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-lg mr-4"></i>
+                            <input type="text" placeholder="Find local partners, capabilities, or materials..."
+                                class="bg-transparent text-white py-1 focus:outline-none placeholder:text-slate-500 font-medium text-lg text-left w-full md:w-[500px]">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- Main Hero Card -->
+                    <div
+                        class="lg:col-span-8 glass-card rounded-3xl p-10 relative overflow-hidden group border border-white/5">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-r from-marcan-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        </div>
+                        <div class="relative z-10">
+                            <h1
+                                class="font-heading text-5xl font-black text-white mb-4 tracking-tight leading-none uppercase">
+                                Welcome to <br>
+                                <span
+                                    class="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">Marcan</span>
+                            </h1>
+                            <p class="text-slate-400 text-lg mb-8 max-w-lg font-light leading-relaxed">
+                                A verified network of Canadian Micro & Small Enterprises. Sourcing local just got
+                                smarter.
+                            </p>
+                            <div class="flex gap-4">
+                                <button onclick="switchView('directory')"
+                                    class="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-neon hover:scale-105 transition-all duration-300">
+                                    Find Partners
+                                </button>
+                                <button onclick="switchView('signup')"
+                                    class="border border-white/20 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-white/5 hover:border-white/50 transition-all duration-300">
+                                    Join Network
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Background graphic -->
+                        <i
+                            class="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[200px] text-white/5 rotate-[-20deg]"></i>
+                    </div>
+
+                    <!-- NEW WIDGET: Live Network Pulse (Replaces Stats) -->
+                    <div
+                        class="lg:col-span-4 glass-card rounded-3xl p-6 flex flex-col relative overflow-hidden border border-white/5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                Live Network Pulse
+                            </h3>
+                            <span class="text-[10px] text-slate-500 font-mono">REAL-TIME</span>
+                        </div>
+
+                        <div class="space-y-4 overflow-hidden relative">
+                            <!-- Pulse Item 1 -->
+                            <div class="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                                <div
+                                    class="w-8 h-8 rounded bg-marcan-red/20 flex items-center justify-center text-marcan-red text-xs">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-white">New RFQ: 5-Axis CNC</div>
+                                    <div class="text-[10px] text-slate-500">Posted in Toronto, ON • 2m ago</div>
+                                </div>
+                            </div>
+                            <!-- Pulse Item 2 -->
+                            <div class="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                                <div
+                                    class="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs">
+                                    <i class="fa-solid fa-check"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Supplier Verified</div>
+                                    <div class="text-[10px] text-slate-500">MetalCo joined from Hamilton • 15m ago</div>
+                                </div>
+                            </div>
+                            <!-- Pulse Item 3 -->
+                            <div class="flex items-start gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                                <div
+                                    class="w-8 h-8 rounded bg-green-500/20 flex items-center justify-center text-green-400 text-xs">
+                                    <i class="fa-solid fa-handshake"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xs font-bold text-white">Connection Made</div>
+                                    <div class="text-[10px] text-slate-500">Foundry Request Closed • 1h ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW SECTION: Industry Hubs (Replaces Old Grid) -->
+                    <div class="lg:col-span-12">
+                        <div class="flex items-center gap-2 mb-4">
+                            <h3 class="text-slate-400 text-xs font-bold uppercase tracking-widest">Available Industries
+                            </h3>
+                            <div class="h-[1px] bg-white/10 flex-grow"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Industry Card 1 -->
+                            <div class="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer"
+                                onclick="switchView('directory')">
+                                <div
+                                    class="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-microchip text-2xl"></i>
+                                </div>
+                                <h4 class="font-heading font-bold text-lg text-white mb-2">Precision Machining</h4>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">CNC milling, turning, and EDM.
+                                    High tolerance capabilities for aerospace & medical.</p>
+                                <div
+                                    class="flex items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                                    Explore Hub <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+
+                            <!-- Industry Card 2 -->
+                            <div class="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer"
+                                onclick="switchView('directory')">
+                                <div
+                                    class="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-fire text-2xl"></i>
+                                </div>
+                                <h4 class="font-heading font-bold text-lg text-white mb-2">Foundries & Casting</h4>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">Sand casting, die casting, and
+                                    investment casting. Iron, steel, and aluminum alloys.</p>
+                                <div
+                                    class="flex items-center text-[10px] font-bold text-orange-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                                    Explore Hub <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+
+                            <!-- Industry Card 3 -->
+                            <div class="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer"
+                                onclick="switchView('directory')">
+                                <div
+                                    class="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-spray-can-sparkles text-2xl"></i>
+                                </div>
+                                <h4 class="font-heading font-bold text-lg text-white mb-2">Surface Finishing</h4>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">Anodizing, powder coating,
+                                    plating, and heat treatment services.</p>
+                                <div
+                                    class="flex items-center text-[10px] font-bold text-purple-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                                    Explore Hub <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+
+                            <!-- Industry Card 4 -->
+                            <div class="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer"
+                                onclick="switchView('directory')">
+                                <div
+                                    class="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-screwdriver-wrench text-2xl"></i>
+                                </div>
+                                <h4 class="font-heading font-bold text-lg text-white mb-2">Tooling & Molds</h4>
+                                <p class="text-xs text-slate-400 leading-relaxed mb-4">Injection molds, dies, and custom
+                                    tooling solutions for mass production.</p>
+                                <div
+                                    class="flex items-center text-[10px] font-bold text-green-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                                    Explore Hub <i class="fa-solid fa-arrow-right ml-2"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW WIDGETS: Trust & Impact -->
+                    <div class="lg:col-span-8 glass-card p-8 rounded-3xl border border-white/5">
+                        <div class="flex items-center gap-3 mb-6">
+                            <i class="fa-solid fa-shield-halved text-marcan-red text-xl"></i>
+                            <h3 class="font-heading font-bold text-white uppercase text-lg">The Marcan Standard</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="flex flex-col gap-2">
+                                <div class="text-white font-bold text-sm">1. Verification</div>
+                                <p class="text-xs text-slate-500 leading-relaxed">Every MSE on Marcan is manually
+                                    verified to ensure they are a legitimate Canadian business.</p>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="text-white font-bold text-sm">2. Local First</div>
+                                <p class="text-xs text-slate-500 leading-relaxed">Our search algorithm prioritizes
+                                    geographic proximity to reduce shipping costs.</p>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="text-white font-bold text-sm">3. Direct Contact</div>
+                                <p class="text-xs text-slate-500 leading-relaxed">No middlemen fees. Connect directly
+                                    with the shop floor for quotes.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="lg:col-span-4 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+                        <h3 class="font-heading font-bold text-white uppercase text-sm mb-1">Local Impact Tracker</h3>
+                        <p class="text-xs text-slate-500 mb-6">Estimated value kept in Canada this month.</p>
+
+                        <div class="flex items-end gap-2 mb-2">
+                            <span class="text-4xl font-black text-white tracking-tight">$420,000</span>
+                            <span class="text-xs text-green-500 font-bold mb-1.5"><i class="fa-solid fa-arrow-up"></i>
+                                5%</span>
+                        </div>
+                        <div class="w-full bg-black/50 h-2 rounded-full overflow-hidden">
+                            <div class="h-full bg-marcan-red w-[70%] shadow-neon"></div>
+                        </div>
+                    </div>
+
+                    <!-- Trusted Partners Section (Retained) -->
+                    <div class="lg:col-span-12">
+                        <div class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Trusted
+                            Partners</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <!-- Partner 1 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">TechFab</span>
+                            </div>
+                            <!-- Partner 2 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">MapleCNC</span>
+                            </div>
+                            <!-- Partner 3 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">IronWorks</span>
+                            </div>
+                            <!-- Partner 4 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">CanCast</span>
+                            </div>
+                            <!-- Partner 5 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">PrecisionQC</span>
+                            </div>
+                            <!-- Partner 6 -->
+                            <div
+                                class="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default">
+                                <span class="font-heading font-bold text-white text-sm tracking-wide">AutoParts
+                                    CA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ABOUT US VIEW -->
+            <div id="about" class="view-section">
+                <div class="max-w-4xl mx-auto text-center py-12">
+                    <i
+                        class="fa-solid fa-shield-halved text-6xl text-marcan-red mb-6 shadow-neon rounded-full p-4 bg-white/5"></i>
+                    <h2 class="font-heading text-4xl font-black text-white uppercase tracking-tight mb-6">Trust &
+                        Authority</h2>
+                    <p class="text-xl text-slate-400 leading-relaxed mb-12">
+                        Marcan is a project dedicated to revitalizing the Canadian industrial sector. We bridge the gap
+                        between small shops and large contracts through verification and transparency.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-8 text-left">
+                        <div class="glass-card p-8 rounded-2xl border-t-4 border-marcan-red">
+                            <h3 class="font-bold text-xl text-white mb-3 uppercase">Who We Are</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed">We are a collective of engineers and
+                                supply chain experts. Marcan was built to solve the fragmentation in local
+                                manufacturing, making it easier to source "Made in Canada."</p>
+                        </div>
+                        <div class="glass-card p-8 rounded-2xl border-t-4 border-blue-500">
+                            <h3 class="font-bold text-xl text-white mb-3 uppercase">Our Sponsors</h3>
+                            <p class="text-slate-400 text-sm leading-relaxed">Supported by leading industry bodies and
+                                government grants focused on digital transformation in the MSE sector.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. COMPANY DIRECTORY VIEW -->
+            <div id="directory" class="view-section">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <div class="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Explore</div>
+                        <h2 class="font-heading text-3xl font-bold text-white uppercase">Company Directory</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="Filter by industry..."
+                            class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-marcan-red outline-none w-64">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Card 1 -->
+                    <div
+                        class="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                                <i class="fa-solid fa-industry"></i>
+                            </div>
+                        </div>
+                        <h3 class="font-heading font-bold text-lg text-white mb-1">NorthYork Precision</h3>
+                        <p class="text-xs text-slate-500 uppercase mb-4"><i class="fa-solid fa-location-dot"></i>
+                            Toronto, ON</p>
+                        <p class="text-slate-400 text-xs mb-6 leading-relaxed">Aerospace grade CNC machining. 5-Axis
+                            capabilities with ISO 9001 certification.</p>
+
+                        <!-- INDUSTRY TAGS: Shows Capability (NEW) -->
+                        <div class="mt-auto flex flex-wrap gap-2 mb-4">
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Aerospace</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">5-Axis</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">CNC</span>
+                        </div>
+
+                        <button
+                            class="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all">
+                            View Profile
+                        </button>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div
+                        class="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                                <i class="fa-solid fa-fire-burner"></i>
+                            </div>
+                        </div>
+                        <h3 class="font-heading font-bold text-lg text-white mb-1">Hamilton Castings</h3>
+                        <p class="text-xs text-slate-500 uppercase mb-4"><i class="fa-solid fa-location-dot"></i>
+                            Hamilton, ON</p>
+                        <p class="text-slate-400 text-xs mb-6 leading-relaxed">Heavy industrial iron and steel casting.
+                            Custom sand molds and rapid prototyping.</p>
+
+                        <!-- INDUSTRY TAGS (NEW) -->
+                        <div class="mt-auto flex flex-wrap gap-2 mb-4">
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Foundry</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Iron/Steel</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Molds</span>
+                        </div>
+
+                        <button
+                            class="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all">
+                            View Profile
+                        </button>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div
+                        class="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col">
+                        <div class="flex justify-between items-start mb-4">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                                <i class="fa-solid fa-flask"></i>
+                            </div>
+                        </div>
+                        <h3 class="font-heading font-bold text-lg text-white mb-1">WestCoast Finishers</h3>
+                        <p class="text-xs text-slate-500 uppercase mb-4"><i class="fa-solid fa-location-dot"></i>
+                            Richmond, BC</p>
+                        <p class="text-slate-400 text-xs mb-6 leading-relaxed">Seeking anodizing chemicals and powder
+                            coating partners for marine applications.</p>
+
+                        <!-- INDUSTRY TAGS (NEW) -->
+                        <div class="mt-auto flex flex-wrap gap-2 mb-4">
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Finishing</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Anodizing</span>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase">Chemicals</span>
+                        </div>
+
+                        <button
+                            class="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all">
+                            View Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. BUYER WISHLIST VIEW -->
+            <div id="wishlist" class="view-section">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <div class="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Recent Requests
+                        </div>
+                        <h2 class="font-heading text-3xl font-bold text-white uppercase">Buyer Wishlist</h2>
+                    </div>
+                    <button
+                        class="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all">
+                        <i class="fa-solid fa-plus mr-2"></i> Post Request
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Feed Item -->
+                    <div
+                        class="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all">
+                        <div
+                            class="absolute left-0 top-0 bottom-0 w-1 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity">
+                        </div>
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
+                                AC</div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="text-white font-bold text-sm uppercase tracking-wide">AerospaceComposites
+                                    </h4>
+                                    <div class="text-xs text-slate-500">2 mins ago</div>
+                                </div>
+                                <span
+                                    class="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">Machining</span>
+                            </div>
+                            <p class="text-slate-400 text-sm leading-relaxed">
+                                Requesting 5-Axis machining for Titanium Grade 5 brackets. Quantity: 50 units. Tolerance
+                                requirement: ±0.002mm. Keywords: Titanium, 5-Axis.
+                            </p>
+                        </div>
+                        <div class="flex items-center">
+                            <button
+                                class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                                <i class="fa-solid fa-envelope"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feed Item -->
+                    <div
+                        class="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all">
+                        <div
+                            class="absolute left-0 top-0 bottom-0 w-1 bg-slate-600 opacity-50 group-hover:bg-marcan-red group-hover:opacity-100 transition-all">
+                        </div>
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
+                                MW</div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h4 class="text-white font-bold text-sm uppercase tracking-wide">MetalWorks Co.</h4>
+                                    <div class="text-xs text-slate-500">5 hours ago</div>
+                                </div>
+                                <span
+                                    class="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">Finishing</span>
+                            </div>
+                            <p class="text-slate-400 text-sm leading-relaxed">
+                                Batch Anodizing required. Type II Black. 200 Aluminum casings. Looking for
+                                Kitchener/Waterloo local partner.
+                            </p>
+                        </div>
+                        <div class="flex items-center">
+                            <button
+                                class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                                <i class="fa-solid fa-envelope"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. SUPPLIER MARKETPLACE VIEW -->
+            <div id="marketplace" class="view-section">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <div class="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Supplier Listings
+                        </div>
+                        <h2 class="font-heading text-3xl font-bold text-white uppercase">Supplier Listings</h2>
+                    </div>
+                    <button
+                        class="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all">
+                        Create Listing
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    <!-- Product -->
+                    <div class="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all">
+                        <div class="h-40 bg-black/40 flex items-center justify-center text-slate-600 relative">
+                            <i
+                                class="fa-solid fa-dolly text-4xl group-hover:text-white transition-colors group-hover:scale-110 duration-500"></i>
+                            <div
+                                class="absolute top-2 left-2 px-2 py-0.5 bg-red-500/20 text-red-400 border border-red-500/30 text-[9px] font-bold uppercase">
+                                Liquidation</div>
+                        </div>
+                        <div class="p-4 border-t border-white/5">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-white text-sm uppercase truncate">Steel Injection Molds</h3>
+                                <span class="font-bold text-marcan-red text-sm">$1,200</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mb-4">Seller: Ontario Plastics</div>
+                            <button
+                                class="w-full py-2 bg-white/5 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                                View Listing
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product -->
+                    <div class="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all">
+                        <div class="h-40 bg-black/40 flex items-center justify-center text-slate-600 relative">
+                            <i
+                                class="fa-solid fa-shapes text-4xl group-hover:text-white transition-colors group-hover:scale-110 duration-500"></i>
+                            <div
+                                class="absolute top-2 left-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-bold uppercase">
+                                Surplus</div>
+                        </div>
+                        <div class="p-4 border-t border-white/5">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-white text-sm uppercase truncate">Carbide End Mills</h3>
+                                <span class="font-bold text-marcan-red text-sm">$450</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 mb-4">Seller: ToolSupply CA</div>
+                            <button
+                                class="w-full py-2 bg-white/5 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                                View Listing
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. CONTACT US VIEW (New) -->
+            <div id="contact" class="view-section">
+                <div class="max-w-4xl mx-auto py-12">
+                    <div class="text-center mb-12">
+                        <i
+                            class="fa-solid fa-paper-plane text-6xl text-marcan-red mb-6 shadow-neon rounded-full p-4 bg-white/5"></i>
+                        <h2 class="font-heading text-4xl font-black text-white uppercase tracking-tight mb-6">Get in
+                            Touch</h2>
+                        <p class="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto">
+                            Have questions about joining the network? Need support with a trade? Our team is ready to
+                            help Canadian manufacturers succeed.
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-12">
+                        <!-- Contact Form -->
+                        <div class="glass-card p-8 rounded-2xl">
+                            <h3 class="font-bold text-xl text-white mb-6 uppercase">Send us a message</h3>
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" placeholder="Name"
+                                        class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                    <input type="email" placeholder="Email"
+                                        class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                </div>
+                                <input type="text" placeholder="Subject"
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                <textarea placeholder="How can we help?" rows="4"
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"></textarea>
+                                <button
+                                    class="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="space-y-6">
+                            <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-marcan-red/20 flex items-center justify-center text-marcan-red shrink-0">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-bold uppercase mb-1">Headquarters</h4>
+                                    <p class="text-slate-400 text-sm">123 Innovation Drive<br>Waterloo, ON N2L
+                                        3G1<br>Canada</p>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-marcan-red/20 flex items-center justify-center text-marcan-red shrink-0">
+                                    <i class="fa-solid fa-envelope"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-bold uppercase mb-1">Email Us</h4>
+                                    <p class="text-slate-400 text-sm">support@marcan.ca<br>partnerships@marcan.ca</p>
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-6 rounded-2xl flex items-start gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-marcan-red/20 flex items-center justify-center text-marcan-red shrink-0">
+                                    <i class="fa-solid fa-phone"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-bold uppercase mb-1">Call Us</h4>
+                                    <p class="text-slate-400 text-sm">+1 (519) 555-0123<br>Mon-Fri, 9am - 5pm EST</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. LOGIN VIEW (New) -->
+            <div id="login" class="view-section">
+                <div class="flex items-center justify-center h-full min-h-[500px]">
+                    <div class="glass-card p-10 rounded-3xl w-full max-w-md relative overflow-hidden">
+                        <!-- Decor -->
+                        <div
+                            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon">
+                        </div>
+
+                        <div class="text-center mb-8">
+                            <h2 class="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
+                                Welcome Back</h2>
+                            <p class="text-xs text-slate-500">Access your Marcan Dashboard</p>
+                        </div>
+
+                        <form class="space-y-5">
+                            <div class="space-y-1">
+                                <label
+                                    class="text-[10px] font-bold text-marcan-red uppercase tracking-widest ml-1">Credentials</label>
+                                <input type="email" placeholder="WORK EMAIL"
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500 mb-4">
+                                <input type="password" placeholder="PASSWORD"
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                            </div>
+
+                            <div class="flex justify-between items-center text-xs text-slate-400">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox"
+                                        class="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0">
+                                    Remember me
+                                </label>
+                                <button type="button" class="hover:text-white transition-colors">Forgot
+                                    Password?</button>
+                            </div>
+
+                            <button type="button"
+                                class="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6">
+                                Login
+                            </button>
+                        </form>
+
+                        <div class="mt-6 text-center">
+                            <p class="text-xs text-slate-500">Don't have an account? <button
+                                    onclick="switchView('signup')"
+                                    class="text-marcan-red font-bold hover:text-white transition-colors ml-1">Sign
+                                    Up</button></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. SIGN UP VIEW -->
+            <div id="signup" class="view-section">
+                <div class="flex items-center justify-center h-full min-h-[500px]">
+                    <div class="glass-card p-10 rounded-3xl w-full max-w-md relative overflow-hidden">
+                        <!-- Decor -->
+                        <div
+                            class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon">
+                        </div>
+
+                        <div class="text-center mb-8">
+                            <h2 class="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
+                                Create Account</h2>
+                            <p class="text-xs text-slate-500">Join the Canadian Manufacturing Network</p>
+                        </div>
+
+                        <form class="space-y-5">
+                            <div class="space-y-1">
+                                <label
+                                    class="text-[10px] font-bold text-marcan-red uppercase tracking-widest ml-1">Personal
+                                    Details</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="text" placeholder="First Name"
+                                        class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                    <input type="text" placeholder="Last Name"
+                                        class="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label
+                                    class="text-[10px] font-bold text-marcan-red uppercase tracking-widest ml-1">Contact
+                                    Information</label>
+                                <input type="email" placeholder="Work Email"
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-marcan-red uppercase tracking-widest ml-1">I
+                                    want to...</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="role" class="peer hidden" checked>
+                                        <div
+                                            class="py-3 text-center border border-white/10 rounded-lg bg-black/20 text-slate-400 text-xs font-bold uppercase peer-checked:bg-marcan-red/20 peer-checked:border-marcan-red peer-checked:text-white peer-checked:shadow-neon transition-all">
+                                            Buy</div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="role" class="peer hidden">
+                                        <div
+                                            class="py-3 text-center border border-white/10 rounded-lg bg-black/20 text-slate-400 text-xs font-bold uppercase peer-checked:bg-marcan-red/20 peer-checked:border-marcan-red peer-checked:text-white peer-checked:shadow-neon transition-all">
+                                            Sell</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                class="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6">
+                                Sign Up
+                            </button>
+                        </form>
+
+                        <div class="mt-6 text-center">
+                            <p class="text-xs text-slate-500">Already a member? <button onclick="switchView('login')"
+                                    class="text-marcan-red font-bold hover:text-white transition-colors ml-1">Login</button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. HELP & SUPPORT VIEW (New) -->
+            <div id="help" class="view-section">
+                <div class="max-w-5xl mx-auto">
+                    <div class="text-center mb-12">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-marcan-red/10 border border-marcan-red/30 mb-6 shadow-neon">
+                            <i class="fa-solid fa-life-ring text-2xl text-marcan-red"></i>
+                        </div>
+                        <h2 class="font-heading text-4xl font-black text-white uppercase tracking-tight mb-4">Help
+                            Center</h2>
+                        <p class="text-slate-400 text-lg">Guides, tutorials, and answers to your questions.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Quick Start Guide -->
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="glass-card p-8 rounded-2xl border border-white/5">
+                                <h3 class="font-bold text-xl text-white mb-6 flex items-center gap-3">
+                                    <i class="fa-solid fa-rocket text-marcan-red"></i> Getting Started
+                                </h3>
+
+                                <div class="relative pl-8 space-y-8">
+                                    <!-- Vertical Line -->
+                                    <div class="absolute left-3 top-2 bottom-2 w-0.5 bg-white/10"></div>
+
+                                    <!-- Step 1 -->
+                                    <div class="relative">
+                                        <div
+                                            class="absolute -left-8 w-6 h-6 rounded-full bg-marcan-red flex items-center justify-center text-[10px] font-bold text-white shadow-neon">
+                                            1</div>
+                                        <h4 class="text-white font-bold mb-2">Create Your Unified Account</h4>
+                                        <p class="text-sm text-slate-400 leading-relaxed">Sign up with your business
+                                            email. Select your primary role (Buyer or Supplier), but remember—one
+                                            account gives you access to both features.</p>
+                                    </div>
+
+                                    <!-- Step 2 -->
+                                    <div class="relative">
+                                        <div
+                                            class="absolute -left-8 w-6 h-6 rounded-full bg-slate-700 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white">
+                                            2</div>
+                                        <h4 class="text-white font-bold mb-2">Complete Your Profile</h4>
+                                        <p class="text-sm text-slate-400 leading-relaxed">Suppliers: List your
+                                            capabilities (CNC, Foundry, etc.) and certifications. Buyers: Add your
+                                            location to find local partners faster.</p>
+                                    </div>
+
+                                    <!-- Step 3 -->
+                                    <div class="relative">
+                                        <div
+                                            class="absolute -left-8 w-6 h-6 rounded-full bg-slate-700 border border-white/10 flex items-center justify-center text-[10px] font-bold text-white">
+                                            3</div>
+                                        <h4 class="text-white font-bold mb-2">Start Connecting</h4>
+                                        <p class="text-sm text-slate-400 leading-relaxed">Use the
+                                            <strong>Directory</strong> to find shops, browse the
+                                            <strong>Supplier Listings</strong> for equipment, or check the
+                                            <strong>Wishlist</strong> for active contracts.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ Section -->
+                            <div class="glass-card p-8 rounded-2xl border border-white/5">
+                                <h3 class="font-bold text-xl text-white mb-6 flex items-center gap-3">
+                                    <i class="fa-solid fa-clipboard-question text-marcan-red"></i> FAQ
+                                </h3>
+
+                                <div class="space-y-4">
+                                    <details class="group bg-black/20 rounded-lg p-4 cursor-pointer">
+                                        <summary
+                                            class="flex justify-between items-center font-bold text-white text-sm list-none">
+                                            Is Marcan free to use?
+                                            <span class="transition group-open:rotate-180"><i
+                                                    class="fa-solid fa-chevron-down text-xs text-slate-500"></i></span>
+                                        </summary>
+                                        <p class="text-slate-400 text-sm mt-3 leading-relaxed">Yes, basic membership is
+                                            free for all Canadian MSEs. We offer premium tiers for advanced analytics
+                                            and priority listing placement.</p>
+                                    </details>
+
+                                    <details class="group bg-black/20 rounded-lg p-4 cursor-pointer">
+                                        <summary
+                                            class="flex justify-between items-center font-bold text-white text-sm list-none">
+                                            How does verification work?
+                                            <span class="transition group-open:rotate-180"><i
+                                                    class="fa-solid fa-chevron-down text-xs text-slate-500"></i></span>
+                                        </summary>
+                                        <p class="text-slate-400 text-sm mt-3 leading-relaxed">To maintain trust, we
+                                            manually verify business registration numbers (BN) and certifications (ISO,
+                                            etc.) before a supplier profile goes live.</p>
+                                    </details>
+
+                                    <details class="group bg-black/20 rounded-lg p-4 cursor-pointer">
+                                        <summary
+                                            class="flex justify-between items-center font-bold text-white text-sm list-none">
+                                            Can I be both a buyer and a supplier?
+                                            <span class="transition group-open:rotate-180"><i
+                                                    class="fa-solid fa-chevron-down text-xs text-slate-500"></i></span>
+                                        </summary>
+                                        <p class="text-slate-400 text-sm mt-3 leading-relaxed">Absolutely. Marcan uses a
+                                            Unified Account system. You can list surplus equipment in the Supplier
+                                            Listings
+                                            while simultaneously posting RFQs for raw materials.</p>
+                                    </details>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side Widgets -->
+                        <div class="space-y-6">
+                            <div class="glass-card p-6 rounded-2xl text-center">
+                                <i class="fa-solid fa-headset text-3xl text-marcan-red mb-4"></i>
+                                <h4 class="font-bold text-white mb-2">Need Live Support?</h4>
+                                <p class="text-sm text-slate-400 mb-4">Our Canadian support team is available Mon-Fri,
+                                    9am-5pm EST.</p>
+                                <button onclick="switchView('contact')"
+                                    class="w-full bg-white/5 border border-white/10 text-white py-2 rounded-lg font-bold text-xs uppercase hover:bg-marcan-red hover:border-marcan-red transition-all">
+                                    Contact Us
+                                </button>
+                            </div>
+
+                            <div class="glass-card p-6 rounded-2xl">
+                                <h4 class="font-bold text-white mb-4 text-sm uppercase">Resources</h4>
+                                <ul class="space-y-3">
+                                    <li><a href="#"
+                                            class="text-slate-400 text-sm hover:text-marcan-red flex items-center gap-2"><i
+                                                class="fa-regular fa-file-pdf"></i> User Manual (PDF)</a></li>
+                                    <li><a href="#"
+                                            class="text-slate-400 text-sm hover:text-marcan-red flex items-center gap-2"><i
+                                                class="fa-solid fa-video"></i> Video Tutorials</a></li>
+                                    <li><a href="#"
+                                            class="text-slate-400 text-sm hover:text-marcan-red flex items-center gap-2"><i
+                                                class="fa-solid fa-gavel"></i> Terms of Service</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        function switchView(viewId) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Show selected view
+            const activeEl = document.getElementById(viewId);
+            if (activeEl) {
+                activeEl.classList.add('active');
+            }
+
+            // Update Active Nav State
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                el.classList.remove('text-white');
+                el.classList.add('text-slate-400');
+            });
+
+            // Find current nav button
+            const clickedBtn = Array.from(document.querySelectorAll('.nav-item')).find(btn => btn.getAttribute('onclick').includes(viewId));
+            if (clickedBtn) {
+                clickedBtn.classList.add('active');
+                clickedBtn.classList.remove('text-slate-400');
+                clickedBtn.classList.add('text-white');
+            }
+        }
+    </script>
+</body>
+
+</html>
