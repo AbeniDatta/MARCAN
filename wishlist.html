@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyer Wishlist - Marcan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        marcan: {
+                            red: '#ef4444',
+                            glow: '#b91c1c',
+                            dark: '#020617',
+                            panel: '#0f172a',
+                            glass: 'rgba(15, 23, 42, 0.85)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)',
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-marcan-dark text-slate-300 font-sans h-screen overflow-hidden flex selection:bg-marcan-red selection:text-white">
+
+    <div class="fixed inset-0 z-0 pointer-events-none bg-grid">
+        <div
+            class="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-marcan-glow/20 rounded-full blur-[150px] animate-pulse-slow">
+        </div>
+        <div class="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-900/10 rounded-full blur-[150px] animate-pulse-slow"
+            style="animation-delay: 2s;"></div>
+    </div>
+
+    <aside
+        class="relative z-20 w-20 lg:w-72 glass-panel flex flex-col justify-between py-8 px-4 transition-all duration-300">
+
+        <a href="index.html" class="flex items-center gap-4 px-2 mb-10 cursor-pointer group">
+            <div
+                class="w-12 h-12 rounded-xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300">
+                <span class="font-heading font-black text-2xl text-white">M</span>
+            </div>
+            <div class="hidden lg:block">
+                <h1 class="font-heading font-bold text-xl text-white tracking-widest uppercase">Marcan</h1>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-marcan-red shadow-neon"></span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">MFG Canada</span>
+                </div>
+            </div>
+        </a>
+
+        <nav class="flex-grow space-y-2">
+            <a href="index.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-house text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Home</span>
+            </a>
+
+            <a href="about.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-shield-halved text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">About Us</span>
+            </a>
+
+            <a href="directory.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-address-book text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Directory</span>
+            </a>
+
+            <a href="wishlist.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-white hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden active">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-bullhorn text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Buyer Wishlist</span>
+                <span
+                    class="hidden lg:flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">New</span>
+            </a>
+
+            <a href="marketplace.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-shop text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Supplier Listings</span>
+            </a>
+
+            <a href="contact.html"
+                class="nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden">
+                <div
+                    class="absolute inset-0 bg-marcan-red/10 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300">
+                </div>
+                <i class="fa-solid fa-envelope text-xl w-6 text-center"></i>
+                <span class="hidden lg:block font-semibold text-sm tracking-wide">Contact Us</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-white/5">
+            <a href="signup.html"
+                class="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300">
+                <div
+                    class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-marcan-red border border-marcan-red/30 shadow-neon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="hidden lg:block text-left">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Join Marcan</div>
+                    <div class="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">Sign Up
+                    </div>
+                </div>
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 relative z-10 overflow-hidden flex flex-col">
+
+        <header
+            class="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
+            <div class="flex items-center gap-3">
+                <h2 class="font-heading font-bold text-white text-lg tracking-tight">Marcan Platform</h2>
+                <span class="text-slate-600 text-lg">/</span>
+                <span class="text-slate-400 text-sm font-medium">Buyer Wishlist</span>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div
+                    class="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white cursor-pointer transition group">
+                    <i class="fa-solid fa-location-dot text-marcan-red group-hover:shadow-neon transition-shadow"></i>
+                    <span>Ontario, CA</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] ml-1 opacity-50"></i>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                    <span class="text-white cursor-pointer hover:text-marcan-red transition">EN</span>
+                    <span class="opacity-30">|</span>
+                    <span class="cursor-pointer hover:text-white transition">FR</span>
+                </div>
+
+                <div class="h-4 w-[1px] bg-white/10"></div>
+
+                <div class="flex gap-3 items-center">
+                    <a href="help.html"
+                        class="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-white/5 transition text-slate-400 hover:text-white"
+                        title="Support Center / Help">
+                        <i class="fa-regular fa-circle-question"></i>
+                    </a>
+                    <a href="login.html"
+                        class="px-5 py-2 rounded-lg bg-white/10 hover:bg-marcan-red border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-neon transition-all">
+                        Login
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 relative">
+
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <div class="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Recent Requests
+                    </div>
+                    <h2 class="font-heading text-3xl font-bold text-white uppercase">Buyer Wishlist</h2>
+                </div>
+                <button
+                    class="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all">
+                    <i class="fa-solid fa-plus mr-2"></i> Post Request
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Feed Item -->
+                <div
+                    class="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all">
+                    <div
+                        class="absolute left-0 top-0 bottom-0 w-1 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity">
+                    </div>
+
+                    <div class="flex-shrink-0">
+                        <div
+                            class="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
+                            AC</div>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="text-white font-bold text-sm uppercase tracking-wide">AerospaceComposites
+                                </h4>
+                                <div class="text-xs text-slate-500">2 mins ago</div>
+                            </div>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">Machining</span>
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Requesting 5-Axis machining for Titanium Grade 5 brackets. Quantity: 50 units. Tolerance
+                            requirement: ±0.002mm. Keywords: Titanium, 5-Axis.
+                        </p>
+                    </div>
+                    <div class="flex items-center">
+                        <button
+                            class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feed Item -->
+                <div
+                    class="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all">
+                    <div
+                        class="absolute left-0 top-0 bottom-0 w-1 bg-slate-600 opacity-50 group-hover:bg-marcan-red group-hover:opacity-100 transition-all">
+                    </div>
+
+                    <div class="flex-shrink-0">
+                        <div
+                            class="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
+                            MW</div>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="text-white font-bold text-sm uppercase tracking-wide">MetalWorks Co.</h4>
+                                <div class="text-xs text-slate-500">5 hours ago</div>
+                            </div>
+                            <span
+                                class="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">Finishing</span>
+                        </div>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Batch Anodizing required. Type II Black. 200 Aluminum casings. Looking for
+                            Kitchener/Waterloo local partner.
+                        </p>
+                    </div>
+                    <div class="flex items-center">
+                        <button
+                            class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+
+</html>
