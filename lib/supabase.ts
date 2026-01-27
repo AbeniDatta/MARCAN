@@ -1,3 +1,13 @@
+/**
+ * Client-side Supabase client using anon key
+ * 
+ * This client respects Row Level Security (RLS) policies.
+ * Safe to use in client components and browser.
+ * 
+ * For server-side admin operations that bypass RLS, use:
+ * @see lib/supabase-server.ts
+ */
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

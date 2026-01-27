@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @unique @map("user_id") @db.Text
+  companyName   String    @map("company_name") @db.Text
+  businessNumber String?  @map("business_number") @db.Text
+  website       String?   @db.Text
+  phone         String?   @db.Text
+  streetAddress String?   @map("street_address") @db.Text
+  city          String?   @db.Text
+  province      String?   @db.Text
+  aboutUs       String?   @map("about_us") @db.Text
+  logoUrl       String?   @map("logo_url") @db.Text
+  capabilities  String[]  @db.Text
+  materials     String[]  @db.Text
+  certifications String[] @db.Text
+  primaryIntent String?   @map("primary_intent") @db.Text // 'buy' | 'sell'
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listings      Listing[]
+  wishlistRequests WishlistRequest[]
+
+  @@map("profiles")
+}
+
+model Listing {
+  id          String    @id @default(uuid()) @db.Uuid
+  profileId   String    @map("profile_id") @db.Uuid
+  title       String    @db.Text
+  description String?   @db.Text
+  price       String?   @db.Text
+  category    String?   @db.Text
+  badge       String?   @db.Text
+  imageUrl    String?   @map("image_url") @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([createdAt(sort: Desc)])
+  @@map("listings")
+}
+
+model WishlistRequest {
+  id          String    @id @default(uuid()) @db.Uuid
+  profileId   String    @map("profile_id") @db.Uuid
+  companyName String    @map("company_name") @db.Text
+  category    String?   @db.Text
+  description String    @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@index([createdAt(sort: Desc)])
+  @@map("wishlist_requests")
+}

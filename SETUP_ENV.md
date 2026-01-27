@@ -24,32 +24,45 @@ Required variables:
 - `NEXT_PUBLIC_FIREBASE_APP_ID` - Your Firebase app ID
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` - Your Google Analytics measurement ID (optional)
 
-## Supabase Configuration
+## Database Configuration (Prisma + PostgreSQL)
 
-Get your Supabase credentials from:
+**Using Prisma ORM with PostgreSQL database**
+
+Get your database connection string from:
+- **Supabase:** Dashboard → Settings → Database → Connection string
+- **Other PostgreSQL:** Standard PostgreSQL connection string format
+
+**Required variable:**
+- `DATABASE_URL` - PostgreSQL connection string
+  - Supabase format: `postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres?sslmode=require`
+  - Or: `postgresql://postgres.xxxxx:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:6543/postgres`
+  - Standard format: `postgresql://[USER]:[PASSWORD]@[HOST]:[PORT]/[DATABASE]?sslmode=require`
+
+**Prisma Commands:**
+- `npm run db:generate` - Generate Prisma Client
+- `npm run db:push` - Push schema changes to database (development)
+- `npm run db:migrate` - Create and apply migrations (production)
+- `npm run db:studio` - Open Prisma Studio (database GUI)
+
+## Supabase Configuration (Optional - for Supabase client SDK)
+
+If you're using Supabase client SDK alongside Prisma, get credentials from:
 - Supabase Dashboard: https://app.supabase.com/
 - Project Settings → API
 
-Required variables:
+**Optional variables:**
 - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL (e.g., `https://xxxxx.supabase.co`)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous/public key
-
-Optional:
-- `SUPABASE_SERVICE_ROLE_KEY` - Service role key (server-side only, never expose to client)
-
-## Cloudinary Configuration
-
-Get your Cloudinary credentials from:
-- Cloudinary Dashboard: https://cloudinary.com/console
-
-Required variables:
-- `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` - Your Cloudinary cloud name
-- `NEXT_PUBLIC_CLOUDINARY_API_KEY` - Your Cloudinary API key
-- `CLOUDINARY_API_SECRET` - Your Cloudinary API secret (server-side only)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous/public key (safe for client-side use)
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role key (server-side only, NEVER expose to client)
+  - This key bypasses Row Level Security (RLS) policies
+  - Use only in API routes or server components for admin operations
+  - Get from: Supabase Dashboard → Settings → API → service_role key
 
 ## Security Notes
 
 - Never commit `.env.local` to git (it's already in `.gitignore`)
 - Use `NEXT_PUBLIC_` prefix for variables that need to be accessible in the browser
 - Variables without `NEXT_PUBLIC_` are server-side only
-- Keep sensitive keys (like service role keys and API secrets) server-side only
+- **CRITICAL:** `SUPABASE_SERVICE_ROLE_KEY` bypasses all security policies - only use server-side
+- Keep sensitive keys (like service role keys) server-side only
+- The anon key is safe for client-side use as it respects RLS policies

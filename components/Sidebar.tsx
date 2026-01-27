@@ -3,10 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+interface NavItem {
+    href: string;
+    label: string;
+    icon: string;
+    badge?: string;
+}
+
 export default function Sidebar() {
     const pathname = usePathname();
 
-    const navItems = [
+    const navItems: NavItem[] = [
         { href: '/', label: 'Home', icon: 'fa-house' },
         { href: '/about', label: 'About Us', icon: 'fa-shield-halved' },
         { href: '/directory', label: 'Directory', icon: 'fa-address-book' },
