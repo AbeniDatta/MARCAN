@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavItem {
     href: string;
@@ -12,6 +13,7 @@ interface NavItem {
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const { isAuthenticated, user, logout } = useAuth();
 
     const navItems: NavItem[] = [
         { href: '/', label: 'Home', icon: 'fa-house' },
@@ -68,22 +70,56 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* User Panel (Sign Up) */}
-            <div className="mt-auto pt-6 border-t border-white/5">
-                <Link
-                    href="/signup"
-                    className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
-                >
-                    <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-marcan-red border border-marcan-red/30 shadow-neon">
-                        <i className="fa-solid fa-user-plus"></i>
-                    </div>
-                    <div className="hidden lg:block text-left">
-                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Join Marcan</div>
-                        <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
-                            Sign Up
+            {/* User Panel */}
+            <div className="mt-auto pt-6 border-t border-white/5 space-y-2">
+                {isAuthenticated && user ? (
+                    <>
+                        <Link
+                            href="/my-account"
+                            className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon border border-white/10">
+                                {user.firstName.charAt(0).toUpperCase()}
+                                {user.lastName?.charAt(0).toUpperCase() || ''}
+                            </div>
+                            <div className="hidden lg:block text-left">
+                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Welcome</div>
+                                <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
+                                    {user.firstName}
+                                </div>
+                            </div>
+                        </Link>
+                        <button
+                            onClick={logout}
+                            className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-red-500/50 transition-colors duration-300 text-left"
+                        >
+                            <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-red-400 border border-red-500/30">
+                                <i className="fa-solid fa-right-from-bracket"></i>
+                            </div>
+                            <div className="hidden lg:block text-left">
+                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sign Out</div>
+                                <div className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">
+                                    Logout
+                                </div>
+                            </div>
+                        </button>
+                    </>
+                ) : (
+                    <Link
+                        href="/signup"
+                        className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
+                    >
+                        <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-marcan-red border border-marcan-red/30 shadow-neon">
+                            <i className="fa-solid fa-user-plus"></i>
                         </div>
-                    </div>
-                </Link>
+                        <div className="hidden lg:block text-left">
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Join Marcan</div>
+                            <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
+                                Sign Up
+                            </div>
+                        </div>
+                    </Link>
+                )}
             </div>
         </aside>
     );

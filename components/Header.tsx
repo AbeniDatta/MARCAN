@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     return (
         <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
             {/* Left: Context */}
@@ -46,25 +46,14 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                         <i className="fa-regular fa-circle-question"></i>
                     </Link>
                     {isAuthenticated && user ? (
-                        <div className="flex items-center gap-3">
-                            <span className="text-slate-400 text-xs font-medium">
-                                Welcome <span className="text-white font-bold">{user.firstName}</span>
-                            </span>
-                            <Link
-                                href="/my-account"
-                                className="w-9 h-9 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon hover:scale-105 transition-transform border border-white/10"
-                                title="My Account"
-                            >
-                                {user.firstName.charAt(0).toUpperCase()}
-                                {user.email.split('@')[0].split('.')[0].charAt(1)?.toUpperCase() || user.firstName.charAt(1)?.toUpperCase() || 'S'}
-                            </Link>
-                            <button
-                                onClick={logout}
-                                className="px-5 py-2 rounded-lg bg-white/10 hover:bg-marcan-red border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-neon transition-all"
-                            >
-                                Logout
-                            </button>
-                        </div>
+                        <Link
+                            href="/my-account"
+                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon hover:scale-105 transition-transform border border-white/10"
+                            title="My Account"
+                        >
+                            {user.firstName.charAt(0).toUpperCase()}
+                            {user.lastName?.charAt(0).toUpperCase() || ''}
+                        </Link>
                     ) : (
                         <Link
                             href="/login"

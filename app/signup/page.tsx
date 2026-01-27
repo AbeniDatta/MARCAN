@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -39,9 +43,38 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual signup logic
+
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+      alert('Please fill in all required fields (First Name, Last Name, Email, Password)');
+      return;
+    }
+
+    // TODO: Implement actual signup logic with backend/database
+    // For now, we'll just log the user in with the provided information
     console.log('Signup attempt:', { ...formData, capabilities, certifications });
-    alert('Signup not yet implemented. This is a placeholder.');
+
+    // Log the user in with all their information
+    login({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      companyName: formData.companyName,
+      businessNumber: formData.businessNumber,
+      website: formData.website,
+      phone: formData.phone,
+      streetAddress: formData.streetAddress,
+      city: formData.city,
+      province: formData.province,
+      aboutUs: formData.aboutUs,
+      materials: formData.materials,
+      capabilities: capabilities,
+      certifications: certifications,
+      role: formData.role,
+    });
+
+    // Redirect to home page
+    router.push('/');
   };
 
   return (
@@ -55,7 +88,7 @@ export default function SignupPage() {
 
             <div className="text-center mb-8">
               <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
-                Create Account
+                Create Your Account
               </h2>
               <p className="text-xs text-slate-500">Join the Canadian Manufacturing Network</p>
             </div>

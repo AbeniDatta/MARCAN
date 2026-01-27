@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MyAccountPage() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
@@ -20,40 +20,134 @@ export default function MyAccountPage() {
     website: '',
     aboutUs: '',
   });
+  const [capabilities, setCapabilities] = useState<string[]>([]);
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [accountRole, setAccountRole] = useState<string>('both');
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
+    // Check authentication status - only redirect if we're sure user is not authenticated
+    if (!isLoading) {
+      // Double-check localStorage directly to avoid race conditions
+      const authStatus = typeof window !== 'undefined' ? localStorage.getItem('marcan_auth') : null;
+      
+      if (authStatus !== 'true' && !isAuthenticated) {
+        router.replace('/login');
+        return;
+      }
     }
 
-    // Load user data (in a real app, this would come from the database)
-    if (user) {
+    // Load user data from localStorage (saved during signup)
+    if (user && isAuthenticated) {
       setFormData({
-        firstName: user.firstName,
-        lastName: user.firstName, // Default, would come from DB
-        jobTitle: 'Procurement Manager',
-        email: user.email,
-        companyName: 'NorthYork Precision Ltd.',
-        businessNumber: '12345 6789 RT0001',
-        website: 'www.nyp-mfg.ca',
-        aboutUs:
-          'NorthYork Precision has been a leader in high-tolerance CNC machining for over 25 years. We specialize in complex components for the aerospace, medical, and defense sectors.',
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        jobTitle: user.jobTitle || '',
+        email: user.email || '',
+        companyName: user.companyName || '',
+        businessNumber: user.businessNumber || '',
+        website: user.website || '',
+        aboutUs: user.aboutUs || '',
       });
+      // Load capabilities and certifications
+      if (user.capabilities) {
+        setCapabilities(user.capabilities);
+      }
+      if (user.certifications) {
+        setCertifications(user.certifications);
+      }
+      // Load account role
+      if (user.role) {
+        setAccountRole(user.role);
+      }
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, isLoading]);
 
   const getInitials = () => {
     if (user) {
-      return user.firstName.charAt(0).toUpperCase() + (formData.lastName ? formData.lastName.charAt(0).toUpperCase() : 'S');
+      const firstInitial = user.firstName.charAt(0).toUpperCase();
+      const lastInitial = user.lastName?.charAt(0).toUpperCase() || '';
+      return firstInitial + lastInitial;
     }
     return 'JS';
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleSaveProfile = () => {
+    if (!user) return;
+
+    // Update user data in localStorage
+    const updatedUser = {
+      ...user,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      jobTitle: formData.jobTitle,
+    };
+
+    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event('marcan-auth-change'));
+    
+    setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
+    setTimeout(() => setSaveMessage(null), 3000);
   };
+
+  const handleUpdateCompany = () => {
+    if (!user) return;
+
+    // Update user data in localStorage
+    const updatedUser = {
+      ...user,
+      companyName: formData.companyName,
+      businessNumber: formData.businessNumber,
+      website: formData.website,
+      aboutUs: formData.aboutUs,
+      capabilities: capabilities,
+      certifications: certifications,
+      role: accountRole,
+    };
+
+    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event('marcan-auth-change'));
+    
+    setSaveMessage({ type: 'success', text: 'Company profile updated successfully!' });
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleUpdatePassword = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setSaveMessage({ type: 'error', text: 'Passwords do not match!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setSaveMessage({ type: 'error', text: 'Password must be at least 6 characters!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+      return;
+    }
+
+    // TODO: Implement actual password update logic with backend
+    // For now, just show success message
+    setSaveMessage({ type: 'success', text: 'Password updated successfully!' });
+    setPasswordData({ newPassword: '', confirmPassword: '' });
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+
+  if (isLoading) {
+    return (
+      <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
+        <Header breadcrumb="My Account" />
+        <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+          <div className="text-slate-400">Loading...</div>
+        </div>
+      </main>
+    );
+  }
 
   if (!isAuthenticated) {
     return null;
@@ -65,13 +159,26 @@ export default function MyAccountPage() {
 
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="max-w-5xl mx-auto py-6">
+          {/* Save Message */}
+          {saveMessage && (
+            <div
+              className={`mb-6 p-4 rounded-lg border ${
+                saveMessage.type === 'success'
+                  ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                  : 'bg-red-500/10 border-red-500/30 text-red-400'
+              } text-sm font-bold uppercase tracking-wider`}
+            >
+              {saveMessage.text}
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mb-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-2xl font-bold text-white shadow-neon">
               {getInitials()}
             </div>
             <div>
               <h2 className="font-heading text-3xl font-bold text-white">
-                {formData.firstName} {formData.lastName}
+                {user?.firstName || formData.firstName} {user?.lastName || formData.lastName}
               </h2>
               <p className="text-slate-400 text-sm">
                 {formData.jobTitle} at <span className="text-white font-bold">{formData.companyName}</span>
@@ -111,22 +218,6 @@ export default function MyAccountPage() {
                 }`}
               >
                 Security
-              </button>
-              <button
-                onClick={() => setActiveTab('billing')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === 'billing'
-                    ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                    : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                }`}
-              >
-                Billing
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-red-400 hover:text-red-300 transition text-xs font-bold uppercase tracking-wider mt-4"
-              >
-                Sign Out
               </button>
             </div>
 
@@ -182,7 +273,10 @@ export default function MyAccountPage() {
                   </div>
 
                   <div className="flex justify-end">
-                    <button className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all">
+                    <button
+                      onClick={handleSaveProfile}
+                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                    >
                       Save Changes
                     </button>
                   </div>
@@ -261,7 +355,7 @@ export default function MyAccountPage() {
                       Capabilities & Certs
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {['Precision CNC', '5-Axis', 'ISO 9001'].map((item) => (
+                      {capabilities.map((item) => (
                         <span
                           key={item}
                           className="px-3 py-1 rounded bg-marcan-red text-white text-[10px] font-bold uppercase cursor-pointer hover:bg-red-600 transition"
@@ -269,6 +363,17 @@ export default function MyAccountPage() {
                           {item} <i className="fa-solid fa-xmark ml-1"></i>
                         </span>
                       ))}
+                      {certifications.map((item) => (
+                        <span
+                          key={item}
+                          className="px-3 py-1 rounded bg-marcan-red text-white text-[10px] font-bold uppercase cursor-pointer hover:bg-red-600 transition"
+                        >
+                          {item} <i className="fa-solid fa-xmark ml-1"></i>
+                        </span>
+                      ))}
+                      {capabilities.length === 0 && certifications.length === 0 && (
+                        <span className="text-slate-500 text-xs">No capabilities or certifications added yet</span>
+                      )}
                       <button className="px-3 py-1 rounded border border-white/20 text-slate-400 text-[10px] font-bold uppercase hover:text-white hover:border-white transition">
                         + Add
                       </button>
@@ -279,18 +384,34 @@ export default function MyAccountPage() {
                     <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Account Role</label>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2 cursor-pointer group">
-                        <input type="radio" name="account_role" className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0" />
+                        <input
+                          type="radio"
+                          name="account_role"
+                          value="buy"
+                          checked={accountRole === 'buy'}
+                          onChange={(e) => setAccountRole(e.target.value)}
+                          className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
+                        />
                         <span className="text-sm text-slate-300 group-hover:text-white transition">Buyer Only</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer group">
-                        <input type="radio" name="account_role" className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0" />
+                        <input
+                          type="radio"
+                          name="account_role"
+                          value="sell"
+                          checked={accountRole === 'sell'}
+                          onChange={(e) => setAccountRole(e.target.value)}
+                          className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
+                        />
                         <span className="text-sm text-slate-300 group-hover:text-white transition">Supplier Only</span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer group">
                         <input
                           type="radio"
                           name="account_role"
-                          defaultChecked
+                          value="both"
+                          checked={accountRole === 'both'}
+                          onChange={(e) => setAccountRole(e.target.value)}
                           className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
                         />
                         <span className="text-sm text-slate-300 group-hover:text-white transition">Both (Unified)</span>
@@ -299,7 +420,10 @@ export default function MyAccountPage() {
                   </div>
 
                   <div className="flex justify-end mt-6">
-                    <button className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all">
+                    <button
+                      onClick={handleUpdateCompany}
+                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                    >
                       Update Company
                     </button>
                   </div>
@@ -318,6 +442,8 @@ export default function MyAccountPage() {
                       <input
                         type="password"
                         placeholder="••••••••"
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
                       />
                     </div>
@@ -326,30 +452,23 @@ export default function MyAccountPage() {
                       <input
                         type="password"
                         placeholder="••••••••"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
                       />
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <button className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all">
+                    <button
+                      onClick={handleUpdatePassword}
+                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                    >
                       Update Password
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Billing Tab */}
-              {activeTab === 'billing' && (
-                <div className="glass-card p-8 rounded-2xl border border-white/5">
-                  <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-4">
-                    Billing
-                  </h3>
-                  <div className="text-center py-12">
-                    <i className="fa-solid fa-credit-card text-4xl text-slate-600 mb-4"></i>
-                    <p className="text-slate-400 text-sm">Billing information will be available soon.</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

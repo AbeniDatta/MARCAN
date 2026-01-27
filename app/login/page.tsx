@@ -31,11 +31,15 @@ export default function LoginPage() {
       // For demo purposes: accept any email/password to simulate login
       if (email && password) {
         // Extract first name from email (before @) or use a default
-        const firstName = email.split('@')[0].split('.')[0] || 'User';
+        const emailParts = email.split('@')[0].split('.');
+        const firstName = emailParts[0] || 'User';
+        const lastName = emailParts[1] || 'User';
         const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        const capitalizedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1);
 
         login({
           firstName: capitalizedFirstName,
+          lastName: capitalizedLastName,
           email: email,
         });
         router.push('/');
