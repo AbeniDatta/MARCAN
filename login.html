@@ -11,6 +11,103 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Initialize Firebase
+        // Firebase config should be loaded from environment variables
+        // For static HTML, you can create a config.js file or use data attributes
+        const firebaseConfig = {
+            apiKey: window.env?.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+            authDomain: window.env?.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+            projectId: window.env?.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+            storageBucket: window.env?.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+            messagingSenderId: window.env?.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+            appId: window.env?.NEXT_PUBLIC_FIREBASE_APP_ID || ''
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Make auth available globally
+        window.firebaseAuth = auth;
+
+        // Login function
+        window.loginUser = async (email, password) => {
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Show success message
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.className = 'text-green-500 text-xs font-semibold mb-4 text-center';
+                    errorDiv.textContent = 'Login successful! Redirecting...';
+                }
+
+                // Redirect to home page or dashboard after successful login
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+
+                return user;
+            } catch (error) {
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.className = 'text-marcan-red text-xs font-semibold mb-4 text-center';
+
+                    // Handle different error types
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorDiv.textContent = 'No account found with this email.';
+                            break;
+                        case 'auth/wrong-password':
+                            errorDiv.textContent = 'Incorrect password. Please try again.';
+                            break;
+                        case 'auth/invalid-email':
+                            errorDiv.textContent = 'Invalid email address.';
+                            break;
+                        case 'auth/user-disabled':
+                            errorDiv.textContent = 'This account has been disabled.';
+                            break;
+                        case 'auth/too-many-requests':
+                            errorDiv.textContent = 'Too many failed attempts. Please try again later.';
+                            break;
+                        case 'auth/network-request-failed':
+                            errorDiv.textContent = 'Network error. Please check your connection.';
+                            break;
+                        default:
+                            errorDiv.textContent = error.message || 'An error occurred. Please try again.';
+                    }
+                }
+                throw error;
+            }
+        };
+
+        // Password reset function
+        window.resetPassword = async (email) => {
+            try {
+                await sendPasswordResetEmail(auth, email);
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.className = 'text-green-500 text-xs font-semibold mb-4 text-center';
+                    errorDiv.textContent = 'Password reset email sent! Check your inbox.';
+                }
+            } catch (error) {
+                const errorDiv = document.getElementById('error-message');
+                if (errorDiv) {
+                    errorDiv.className = 'text-marcan-red text-xs font-semibold mb-4 text-center';
+                    errorDiv.textContent = error.message || 'Failed to send password reset email.';
+                }
+            }
+        };
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -239,31 +336,60 @@
                         <p class="text-xs text-slate-500">Access your Marcan Dashboard</p>
                     </div>
 
-                    <form class="space-y-5">
+                    <!-- Error/Success Message -->
+                    <div id="error-message" class="text-xs font-semibold mb-4 text-center hidden"></div>
+
+                    <form id="login-form" class="space-y-5">
                         <div class="space-y-1">
                             <label
                                 class="text-[10px] font-bold text-marcan-red uppercase tracking-widest ml-1">Credentials</label>
-                            <input type="email" placeholder="WORK EMAIL"
+                            <input type="email" id="email" name="email" placeholder="WORK EMAIL" required
                                 class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500 mb-4">
-                            <input type="password" placeholder="PASSWORD"
+                            <input type="password" id="password" name="password" placeholder="PASSWORD" required
                                 class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
                         </div>
 
                         <div class="flex justify-between items-center text-xs text-slate-400">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox"
+                                <input type="checkbox" id="remember-me"
                                     class="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0">
                                 Remember me
                             </label>
-                            <button type="button" class="hover:text-white transition-colors">Forgot
+                            <button type="button" id="forgot-password-btn"
+                                class="hover:text-white transition-colors">Forgot
                                 Password?</button>
                         </div>
 
-                        <button type="button"
-                            class="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6">
-                            Login
+                        <button type="submit" id="login-btn"
+                            class="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span id="login-btn-text">Login</span>
+                            <span id="login-btn-loading" class="hidden">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Logging in...
+                            </span>
                         </button>
                     </form>
+
+                    <!-- Forgot Password Modal -->
+                    <div id="forgot-password-modal"
+                        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div class="glass-card p-8 rounded-2xl w-full max-w-md relative">
+                            <button id="close-forgot-modal"
+                                class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                                <i class="fa-solid fa-times text-xl"></i>
+                            </button>
+                            <h3 class="font-heading text-xl font-bold text-white mb-4">Reset Password</h3>
+                            <p class="text-sm text-slate-400 mb-6">Enter your email address and we'll send you a link to
+                                reset your password.</p>
+                            <form id="forgot-password-form" class="space-y-4">
+                                <input type="email" id="reset-email" placeholder="Email Address" required
+                                    class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500">
+                                <button type="submit"
+                                    class="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon transition-all">
+                                    Send Reset Link
+                                </button>
+                            </form>
+                        </div>
+                    </div>
 
                     <div class="mt-6 text-center">
                         <p class="text-xs text-slate-500">Don't have an account? <a href="signup.html"
@@ -274,6 +400,111 @@
             </div>
         </div>
     </main>
+
+    <script>
+        // Form submission handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const loginBtnText = document.getElementById('login-btn-text');
+            const loginBtnLoading = document.getElementById('login-btn-loading');
+            const errorDiv = document.getElementById('error-message');
+            const forgotPasswordBtn = document.getElementById('forgot-password-btn');
+            const forgotPasswordModal = document.getElementById('forgot-password-modal');
+            const closeForgotModal = document.getElementById('close-forgot-modal');
+            const forgotPasswordForm = document.getElementById('forgot-password-form');
+
+            // Handle login form submission
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                // Get form values
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('remember-me').checked;
+
+                // Hide previous error messages
+                if (errorDiv) {
+                    errorDiv.classList.add('hidden');
+                }
+
+                // Show loading state
+                loginBtn.disabled = true;
+                loginBtnText.classList.add('hidden');
+                loginBtnLoading.classList.remove('hidden');
+
+                try {
+                    // Call Firebase login function
+                    if (window.loginUser) {
+                        await window.loginUser(email, password);
+
+                        // Store remember me preference
+                        if (rememberMe) {
+                            localStorage.setItem('rememberMe', 'true');
+                        }
+                    } else {
+                        throw new Error('Firebase not initialized. Please check your configuration.');
+                    }
+                } catch (error) {
+                    // Error handling is done in the loginUser function
+                    console.error('Login error:', error);
+                } finally {
+                    // Reset loading state
+                    loginBtn.disabled = false;
+                    loginBtnText.classList.remove('hidden');
+                    loginBtnLoading.classList.add('hidden');
+
+                    // Show error message if it exists
+                    if (errorDiv && errorDiv.textContent) {
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            });
+
+            // Forgot password button handler
+            if (forgotPasswordBtn) {
+                forgotPasswordBtn.addEventListener('click', () => {
+                    if (forgotPasswordModal) {
+                        forgotPasswordModal.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // Close forgot password modal
+            if (closeForgotModal) {
+                closeForgotModal.addEventListener('click', () => {
+                    if (forgotPasswordModal) {
+                        forgotPasswordModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Handle forgot password form submission
+            if (forgotPasswordForm) {
+                forgotPasswordForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('reset-email').value;
+
+                    if (window.resetPassword) {
+                        await window.resetPassword(email);
+                        setTimeout(() => {
+                            forgotPasswordModal.classList.add('hidden');
+                        }, 2000);
+                    }
+                });
+            }
+
+            // Check if user is already logged in
+            if (window.firebaseAuth) {
+                window.firebaseAuth.onAuthStateChanged((user) => {
+                    if (user) {
+                        // User is already logged in, redirect to home
+                        window.location.href = 'index.html';
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 
