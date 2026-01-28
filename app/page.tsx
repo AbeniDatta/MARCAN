@@ -35,20 +35,22 @@ export default function HomePage() {
                 </span>
               </h1>
               <p className="text-slate-400 text-lg mb-8 max-w-lg font-light leading-relaxed">
-                A verified network of Canadian Micro & Small Enterprises. Sourcing local just got smarter.
+                Sourcing local just got smarter.
+                <br>
+                </br>The ultimate ecosystem for Canadian Manufacturing Micro & Small Enterprises.
               </p>
               <div className="flex gap-4">
                 <Link
                   href="/directory"
                   className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-neon hover:scale-105 transition-all duration-300 inline-block"
                 >
-                  Find Partners
+                  Find Manufacturers
                 </Link>
                 <Link
                   href="/signup"
                   className="border border-white/20 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
                 >
-                  Join Network
+                  Join Our Network
                 </Link>
               </div>
             </div>
@@ -92,7 +94,7 @@ export default function HomePage() {
           {/* Industry Hubs */}
           <div className="lg:col-span-12">
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Available Industries</h3>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Our Industries</h3>
               <div className="h-[1px] bg-white/10 flex-grow"></div>
             </div>
 
@@ -224,7 +226,8 @@ export default function HomePage() {
 
           {/* Trusted Partners Section */}
           <div className="lg:col-span-12">
-            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Trusted Partners</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Our
+              Manufacturers</div>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {['TechFab', 'MapleCNC', 'IronWorks', 'CanCast', 'PrecisionQC', 'AutoParts CA'].map((partner) => (
                 <div
