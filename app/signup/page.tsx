@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -41,40 +43,101 @@ export default function SignupPage() {
     );
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate required fields
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      alert('Please fill in all required fields (First Name, Last Name, Email, Password)');
+      setError('Please fill in all required fields (First Name, Last Name, Email, Password)');
       return;
     }
 
-    // TODO: Implement actual signup logic with backend/database
-    // For now, we'll just log the user in with the provided information
-    console.log('Signup attempt:', { ...formData, capabilities, certifications });
+    // Validate password strength
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
 
-    // Log the user in with all their information
-    login({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      companyName: formData.companyName,
-      businessNumber: formData.businessNumber,
-      website: formData.website,
-      phone: formData.phone,
-      streetAddress: formData.streetAddress,
-      city: formData.city,
-      province: formData.province,
-      aboutUs: formData.aboutUs,
-      materials: formData.materials,
-      capabilities: capabilities,
-      certifications: certifications,
-      role: formData.role,
-    });
+    setIsLoading(true);
+    setError('');
 
-    // Redirect to home page
-    router.push('/');
+    try {
+      // Create user account with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const firebaseUser = userCredential.user;
+
+      // Update Firebase user's display name
+      await updateProfile(firebaseUser, {
+        displayName: `${formData.firstName} ${formData.lastName}`,
+      });
+
+      // Prepare user data for local storage
+      const userData: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        companyName: string;
+        businessNumber: string;
+        website: string;
+        phone: string;
+        streetAddress: string;
+        city: string;
+        province: string;
+        aboutUs: string;
+        materials: string[];
+        capabilities: string[];
+        certifications: string[];
+        role: string;
+      } = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        companyName: formData.companyName,
+        businessNumber: formData.businessNumber,
+        website: formData.website,
+        phone: formData.phone,
+        streetAddress: formData.streetAddress,
+        city: formData.city,
+        province: formData.province,
+        aboutUs: formData.aboutUs,
+        materials: formData.materials.split(',').map(s => s.trim()).filter(Boolean),
+        capabilities: capabilities,
+        certifications: certifications,
+        role: formData.role,
+      };
+
+      // Log the user in with all their information
+      login(userData);
+
+      // Redirect to home page
+      router.push('/');
+    } catch (err: any) {
+      // Handle Firebase Auth errors
+      let errorMessage = 'An error occurred during signup.';
+
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please login instead.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Email/password accounts are not enabled. Please contact support.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,6 +155,13 @@ export default function SignupPage() {
               </h2>
               <p className="text-xs text-slate-500">Join the Canadian Manufacturing Network</p>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Section 1: Account Credentials */}
@@ -341,9 +411,16 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6"
+                disabled={isLoading}
+                className="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Complete Registration
+                {isLoading ? (
+                  <span>
+                    <i className="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...
+                  </span>
+                ) : (
+                  'Complete Registration'
+                )}
               </button>
             </form>
 

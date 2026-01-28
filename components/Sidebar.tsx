@@ -13,7 +13,7 @@ interface NavItem {
 
 export default function Sidebar() {
     const pathname = usePathname();
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user, logout, isMounted } = useAuth();
 
     const navItems: NavItem[] = [
         { href: '/', label: 'Home', icon: 'fa-house' },
@@ -72,21 +72,16 @@ export default function Sidebar() {
 
             {/* User Panel */}
             <div className="mt-auto pt-6 border-t border-white/5 space-y-2">
-                {isAuthenticated && user ? (
+                {isMounted && isAuthenticated && user ? (
                     <>
                         <Link
                             href="/my-account"
                             className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon border border-white/10">
-                                {user.firstName.charAt(0).toUpperCase()}
-                                {user.lastName?.charAt(0).toUpperCase() || ''}
-                            </div>
-                            <div className="hidden lg:block text-left">
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Welcome</div>
-                                <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
-                                    {user.firstName}
-                                </div>
+                            <div className="hidden lg:block text-center whitespace-nowrap">
+                                <span className="text-medium font-bold text-white group-hover:text-marcan-red transition-colors text-center">
+                                    Welcome {user.firstName}!
+                                </span>
                             </div>
                         </Link>
                         <button
@@ -104,7 +99,7 @@ export default function Sidebar() {
                             </div>
                         </button>
                     </>
-                ) : (
+                ) : isMounted ? (
                     <Link
                         href="/signup"
                         className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
@@ -119,7 +114,7 @@ export default function Sidebar() {
                             </div>
                         </div>
                     </Link>
-                )}
+                ) : null}
             </div>
         </aside>
     );

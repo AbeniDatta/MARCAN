@@ -8,12 +8,14 @@ interface HeaderProps {
 }
 
 export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, isMounted } = useAuth();
     return (
         <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
             {/* Left: Context */}
             <div className="flex items-center gap-3">
-                <h2 className="font-heading font-bold text-white text-lg tracking-tight">Marcan Platform</h2>
+                <Link href="/" className="font-heading font-bold text-white text-lg tracking-tight hover:text-marcan-red transition-colors cursor-pointer">
+                    Marcan Platform
+                </Link>
                 <span className="text-slate-600 text-lg">/</span>
                 <span className="text-slate-400 text-sm font-medium">{breadcrumb}</span>
             </div>
@@ -45,7 +47,7 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                     >
                         <i className="fa-regular fa-circle-question"></i>
                     </Link>
-                    {isAuthenticated && user ? (
+                    {isMounted && isAuthenticated && user ? (
                         <Link
                             href="/my-account"
                             className="w-9 h-9 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon hover:scale-105 transition-transform border border-white/10"
@@ -54,13 +56,15 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                             {user.firstName.charAt(0).toUpperCase()}
                             {user.lastName?.charAt(0).toUpperCase() || ''}
                         </Link>
-                    ) : (
+                    ) : isMounted ? (
                         <Link
                             href="/login"
                             className="px-5 py-2 rounded-lg bg-white/10 hover:bg-marcan-red border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-neon transition-all"
                         >
                             Login
                         </Link>
+                    ) : (
+                        <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/10"></div>
                     )}
                 </div>
             </div>

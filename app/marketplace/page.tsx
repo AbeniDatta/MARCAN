@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MarketplacePage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isMounted } = useAuth();
   const listings = [
     {
       title: 'Steel Injection Molds',
@@ -37,17 +37,21 @@ export default function MarketplacePage() {
             </div>
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Supplier Listings</h2>
           </div>
-          {isAuthenticated ? (
+          {isMounted && isAuthenticated ? (
             <button className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all">
               Create Listing
             </button>
-          ) : (
+          ) : isMounted ? (
             <Link
               href="/login"
               className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-block"
             >
               Login to Create Listing
             </Link>
+          ) : (
+            <div className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs inline-block opacity-50">
+              Create Listing
+            </div>
           )}
         </div>
 

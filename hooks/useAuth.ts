@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { onAuthStateChanged, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface UserInfo {
     firstName: string;
@@ -16,7 +18,7 @@ interface UserInfo {
     city?: string;
     province?: string;
     aboutUs?: string;
-    materials?: string;
+    materials?: string | string[]; // Can be string (comma-separated) or array
     capabilities?: string[];
     certifications?: string[];
     role?: string;
@@ -47,21 +49,68 @@ const getAuthState = () => {
 };
 
 export function useAuth() {
-    // Initialize state from localStorage immediately (synchronously)
-    const initialState = getAuthState();
-    const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
-    const [user, setUser] = useState<UserInfo | null>(initialState.user);
-    const [isLoading, setIsLoading] = useState(false);
+    // Always start with false/null to match server-side rendering (prevent hydration errors)
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState<UserInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        // Mark as mounted (client-side only)
+        setIsMounted(true);
+        
         // Check auth state on mount and listen for changes
         const checkAuth = () => {
             const state = getAuthState();
             setIsAuthenticated(state.isAuthenticated);
             setUser(state.user);
+            setIsLoading(false);
         };
 
-        // Re-check on mount (in case localStorage was updated)
+        // Listen to Firebase Auth state changes
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+            if (firebaseUser) {
+                // User is signed in via Firebase
+                setIsAuthenticated(true);
+                
+                // Get user data from localStorage (contains extended profile data)
+                const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('marcan_user') : null;
+                if (storedUserData) {
+                    try {
+                        const parsed = JSON.parse(storedUserData);
+                        setUser(parsed);
+                    } catch (e) {
+                        // If parsing fails, create basic user info from Firebase
+                        const nameParts = firebaseUser.displayName?.split(' ') || [];
+                        setUser({
+                            firstName: nameParts[0] || 'User',
+                            lastName: nameParts.slice(1).join(' ') || 'User',
+                            email: firebaseUser.email || '',
+                        });
+                    }
+                } else {
+                    // No stored data, create basic user info from Firebase
+                    const nameParts = firebaseUser.displayName?.split(' ') || [];
+                    setUser({
+                        firstName: nameParts[0] || 'User',
+                        lastName: nameParts.slice(1).join(' ') || 'User',
+                        email: firebaseUser.email || '',
+                    });
+                }
+                
+                // Ensure localStorage is in sync
+                localStorage.setItem('marcan_auth', 'true');
+            } else {
+                // User is signed out
+                setIsAuthenticated(false);
+                setUser(null);
+                localStorage.removeItem('marcan_auth');
+                localStorage.removeItem('marcan_user');
+            }
+            setIsLoading(false);
+        });
+
+        // Also check localStorage state (for backward compatibility)
         checkAuth();
 
         // Listen for storage changes (for cross-tab sync)
@@ -80,6 +129,7 @@ export function useAuth() {
         window.addEventListener('marcan-auth-change', handleCustomStorageChange);
         
         return () => {
+            unsubscribe(); // Unsubscribe from Firebase Auth listener
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('marcan-auth-change', handleCustomStorageChange);
         };
@@ -102,14 +152,23 @@ export function useAuth() {
         window.dispatchEvent(new Event('marcan-auth-change'));
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Sign out from Firebase
+        try {
+            await firebaseSignOut(auth);
+        } catch (error) {
+            console.error('Error signing out from Firebase:', error);
+        }
+        
+        // Clear localStorage
         localStorage.removeItem('marcan_auth');
         localStorage.removeItem('marcan_user');
         setIsAuthenticated(false);
         setUser(null);
+        
         // Dispatch custom event to sync other components
         window.dispatchEvent(new Event('marcan-auth-change'));
     };
 
-    return { isAuthenticated, user, login, logout, isLoading };
+    return { isAuthenticated, user, login, logout, isLoading, isMounted };
 }

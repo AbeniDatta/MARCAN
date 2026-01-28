@@ -65,7 +65,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="text-white font-bold uppercase mb-1">Headquarters</h4>
                   <p className="text-slate-400 text-sm">
-                    123 Innovation Drive
+                    200 University Avenue West
                     <br />
                     Waterloo, ON N2L 3G1
                     <br />
@@ -81,9 +81,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="text-white font-bold uppercase mb-1">Email Us</h4>
                   <p className="text-slate-400 text-sm">
-                    support@marcan.ca
-                    <br />
-                    partnerships@marcan.ca
+                    marcan.initiative@gmail.com
                   </p>
                 </div>
               </div>
@@ -95,7 +93,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="text-white font-bold uppercase mb-1">Call Us</h4>
                   <p className="text-slate-400 text-sm">
-                    +1 (519) 555-0123
+                    +1 (519) 888-4885
                     <br />
                     Mon-Fri, 9am - 5pm EST
                   </p>

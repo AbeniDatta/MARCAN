@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,31 +25,66 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // TODO: Implement actual authentication logic
-      console.log('Login attempt:', { email, password, rememberMe });
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-      // For demo purposes: accept any email/password to simulate login
-      if (email && password) {
-        // Extract first name from email (before @) or use a default
-        const emailParts = email.split('@')[0].split('.');
-        const firstName = emailParts[0] || 'User';
-        const lastName = emailParts[1] || 'User';
-        const capitalizedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-        const capitalizedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1);
-
-        login({
-          firstName: capitalizedFirstName,
-          lastName: capitalizedLastName,
-          email: email,
-        });
-        router.push('/');
+      // Get user's display name or extract from email
+      let firstName = 'User';
+      let lastName = 'User';
+      
+      if (firebaseUser.displayName) {
+        const nameParts = firebaseUser.displayName.split(' ');
+        firstName = nameParts[0] || 'User';
+        lastName = nameParts.slice(1).join(' ') || 'User';
       } else {
-        setError('Please enter both email and password.');
+        // Extract from email as fallback
+        const emailParts = email.split('@')[0].split('.');
+        firstName = emailParts[0] || 'User';
+        lastName = emailParts[1] || 'User';
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+
+      // Get additional user data from localStorage if available (from previous signup)
+      const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('marcan_user') : null;
+      let userData: any = {
+        firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+        lastName: lastName.charAt(0).toUpperCase() + lastName.slice(1),
+        email: firebaseUser.email || email,
+      };
+
+      if (storedUserData) {
+        try {
+          const parsed = JSON.parse(storedUserData);
+          // Merge stored data with Firebase user data
+          userData = { ...parsed, ...userData };
+        } catch (e) {
+          // If parsing fails, use the basic data
+        }
+      }
+
+      // Update local auth state
+      login(userData);
+      
+      router.push('/');
+    } catch (err: any) {
+      // Handle Firebase Auth errors
+      let errorMessage = 'An error occurred during login.';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -55,10 +92,29 @@ export default function LoginPage() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement password reset logic
-    console.log('Reset password for:', resetEmail);
-    alert('Password reset not yet implemented. This is a placeholder.');
-    setShowForgotPassword(false);
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      alert('Password reset email sent! Please check your inbox.');
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (err: any) {
+      let errorMessage = 'Failed to send password reset email.';
+      
+      if (err.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email address.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

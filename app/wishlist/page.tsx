@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function WishlistPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isMounted } = useAuth();
   const requests = [
     {
       company: 'AerospaceComposites',
@@ -37,17 +37,21 @@ export default function WishlistPage() {
             <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Recent Requests</div>
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Buyer Wishlist</h2>
           </div>
-          {isAuthenticated ? (
+          {isMounted && isAuthenticated ? (
             <button className="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all">
               <i className="fa-solid fa-plus mr-2"></i> Post Request
             </button>
-          ) : (
+          ) : isMounted ? (
             <Link
               href="/login"
               className="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
             >
               <i className="fa-solid fa-plus mr-2"></i> Login to Post Request
             </Link>
+          ) : (
+            <div className="bg-marcan-red/50 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs inline-flex items-center opacity-50">
+              <i className="fa-solid fa-plus mr-2"></i> Post Request
+            </div>
           )}
         </div>
 

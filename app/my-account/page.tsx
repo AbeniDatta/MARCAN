@@ -7,7 +7,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function MyAccountPage() {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading, isMounted } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
@@ -30,6 +30,9 @@ export default function MyAccountPage() {
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
+    // Only check authentication after component has mounted (client-side)
+    if (!isMounted) return;
+    
     // Check authentication status - only redirect if we're sure user is not authenticated
     if (!isLoading) {
       // Double-check localStorage directly to avoid race conditions
@@ -65,7 +68,7 @@ export default function MyAccountPage() {
         setAccountRole(user.role);
       }
     }
-  }, [isAuthenticated, user, router, isLoading]);
+  }, [isAuthenticated, user, router, isLoading, isMounted]);
 
   const getInitials = () => {
     if (user) {
