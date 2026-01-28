@@ -32,12 +32,12 @@ export default function MyAccountPage() {
   useEffect(() => {
     // Only check authentication after component has mounted (client-side)
     if (!isMounted) return;
-    
+
     // Check authentication status - only redirect if we're sure user is not authenticated
     if (!isLoading) {
       // Double-check localStorage directly to avoid race conditions
       const authStatus = typeof window !== 'undefined' ? localStorage.getItem('marcan_auth') : null;
-      
+
       if (authStatus !== 'true' && !isAuthenticated) {
         router.replace('/login');
         return;
@@ -93,7 +93,7 @@ export default function MyAccountPage() {
 
     localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
     window.dispatchEvent(new Event('marcan-auth-change'));
-    
+
     setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
     setTimeout(() => setSaveMessage(null), 3000);
   };
@@ -115,7 +115,7 @@ export default function MyAccountPage() {
 
     localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
     window.dispatchEvent(new Event('marcan-auth-change'));
-    
+
     setSaveMessage({ type: 'success', text: 'Company profile updated successfully!' });
     setTimeout(() => setSaveMessage(null), 3000);
   };
@@ -165,11 +165,10 @@ export default function MyAccountPage() {
           {/* Save Message */}
           {saveMessage && (
             <div
-              className={`mb-6 p-4 rounded-lg border ${
-                saveMessage.type === 'success'
+              className={`mb-6 p-4 rounded-lg border ${saveMessage.type === 'success'
                   ? 'bg-green-500/10 border-green-500/30 text-green-400'
                   : 'bg-red-500/10 border-red-500/30 text-red-400'
-              } text-sm font-bold uppercase tracking-wider`}
+                } text-sm font-bold uppercase tracking-wider`}
             >
               {saveMessage.text}
             </div>
@@ -194,31 +193,28 @@ export default function MyAccountPage() {
             <div className="lg:col-span-1 space-y-1">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === 'profile'
+                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'profile'
                     ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
                     : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Profile Settings
               </button>
               <button
                 onClick={() => setActiveTab('company')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === 'company'
+                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'company'
                     ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
                     : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Company Profile
               </button>
               <button
                 onClick={() => setActiveTab('security')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                  activeTab === 'security'
+                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'security'
                     ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
                     : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Security
               </button>

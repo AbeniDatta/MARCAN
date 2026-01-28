@@ -29,7 +29,7 @@ const getAuthState = () => {
     if (typeof window === 'undefined') {
         return { isAuthenticated: false, user: null };
     }
-    
+
     const authStatus = localStorage.getItem('marcan_auth');
     const userInfo = localStorage.getItem('marcan_user');
 
@@ -58,7 +58,7 @@ export function useAuth() {
     useEffect(() => {
         // Mark as mounted (client-side only)
         setIsMounted(true);
-        
+
         // Check auth state on mount and listen for changes
         const checkAuth = () => {
             const state = getAuthState();
@@ -72,7 +72,7 @@ export function useAuth() {
             if (firebaseUser) {
                 // User is signed in via Firebase
                 setIsAuthenticated(true);
-                
+
                 // Get user data from localStorage (contains extended profile data)
                 const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('marcan_user') : null;
                 if (storedUserData) {
@@ -97,7 +97,7 @@ export function useAuth() {
                         email: firebaseUser.email || '',
                     });
                 }
-                
+
                 // Ensure localStorage is in sync
                 localStorage.setItem('marcan_auth', 'true');
             } else {
@@ -127,7 +127,7 @@ export function useAuth() {
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('marcan-auth-change', handleCustomStorageChange);
-        
+
         return () => {
             unsubscribe(); // Unsubscribe from Firebase Auth listener
             window.removeEventListener('storage', handleStorageChange);
@@ -159,13 +159,13 @@ export function useAuth() {
         } catch (error) {
             console.error('Error signing out from Firebase:', error);
         }
-        
+
         // Clear localStorage
         localStorage.removeItem('marcan_auth');
         localStorage.removeItem('marcan_user');
         setIsAuthenticated(false);
         setUser(null);
-        
+
         // Dispatch custom event to sync other components
         window.dispatchEvent(new Event('marcan-auth-change'));
     };

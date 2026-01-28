@@ -32,7 +32,7 @@ export default function LoginPage() {
       // Get user's display name or extract from email
       let firstName = 'User';
       let lastName = 'User';
-      
+
       if (firebaseUser.displayName) {
         const nameParts = firebaseUser.displayName.split(' ');
         firstName = nameParts[0] || 'User';
@@ -64,12 +64,12 @@ export default function LoginPage() {
 
       // Update local auth state
       login(userData);
-      
+
       router.push('/');
     } catch (err: any) {
       // Handle Firebase Auth errors
       let errorMessage = 'An error occurred during login.';
-      
+
       if (err.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address.';
       } else if (err.code === 'auth/wrong-password') {
@@ -83,7 +83,7 @@ export default function LoginPage() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -102,7 +102,7 @@ export default function LoginPage() {
       setResetEmail('');
     } catch (err: any) {
       let errorMessage = 'Failed to send password reset email.';
-      
+
       if (err.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address.';
       } else if (err.code === 'auth/invalid-email') {
@@ -110,7 +110,7 @@ export default function LoginPage() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
