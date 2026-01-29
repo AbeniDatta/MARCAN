@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted } = useAuth();
@@ -24,9 +26,11 @@ export default function MyAccountPage() {
   const [certifications, setCertifications] = useState<string[]>([]);
   const [accountRole, setAccountRole] = useState<string>('both');
   const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+  const [passwordError, setPasswordError] = useState('');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -120,24 +124,57 @@ export default function MyAccountPage() {
     setTimeout(() => setSaveMessage(null), 3000);
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
+    setPasswordError('');
+    setSaveMessage(null);
+
+    // Validate current password is provided
+    if (!passwordData.currentPassword) {
+      setPasswordError('Please enter your current password');
+      return;
+    }
+
+    // Validate new password matches confirmation
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setSaveMessage({ type: 'error', text: 'Passwords do not match!' });
-      setTimeout(() => setSaveMessage(null), 3000);
+      setPasswordError('New passwords do not match!');
       return;
     }
 
+    // Validate new password length
     if (passwordData.newPassword.length < 6) {
-      setSaveMessage({ type: 'error', text: 'Password must be at least 6 characters!' });
-      setTimeout(() => setSaveMessage(null), 3000);
+      setPasswordError('Password must be at least 6 characters!');
       return;
     }
 
-    // TODO: Implement actual password update logic with backend
-    // For now, just show success message
-    setSaveMessage({ type: 'success', text: 'Password updated successfully!' });
-    setPasswordData({ newPassword: '', confirmPassword: '' });
-    setTimeout(() => setSaveMessage(null), 3000);
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser || !user?.email) {
+      setPasswordError('User not authenticated');
+      return;
+    }
+
+    try {
+      // Re-authenticate user with current password
+      const credential = EmailAuthProvider.credential(user.email, passwordData.currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+
+      // Update password
+      await updatePassword(firebaseUser, passwordData.newPassword);
+
+      // Success
+      setSaveMessage({ type: 'success', text: 'Password updated successfully!' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err: any) {
+      // Handle Firebase Auth errors
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setPasswordError('Current password does not match');
+      } else if (err.code === 'auth/weak-password') {
+        setPasswordError('Password is too weak. Please choose a stronger password.');
+      } else {
+        setPasswordError(err.message || 'Failed to update password');
+      }
+    }
   };
 
 
@@ -166,8 +203,8 @@ export default function MyAccountPage() {
           {saveMessage && (
             <div
               className={`mb-6 p-4 rounded-lg border ${saveMessage.type === 'success'
-                  ? 'bg-green-500/10 border-green-500/30 text-green-400'
-                  : 'bg-red-500/10 border-red-500/30 text-red-400'
+                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                : 'bg-red-500/10 border-red-500/30 text-red-400'
                 } text-sm font-bold uppercase tracking-wider`}
             >
               {saveMessage.text}
@@ -194,26 +231,29 @@ export default function MyAccountPage() {
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'profile'
-                    ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                    : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
+                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
                   }`}
               >
                 Profile Settings
               </button>
-              <button
-                onClick={() => setActiveTab('company')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'company'
+              {/* Only show Company Profile tab if user is a seller */}
+              {(user?.role === 'both' || user?.role === 'sell') && (
+                <button
+                  onClick={() => setActiveTab('company')}
+                  className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'company'
                     ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
                     : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                  }`}
-              >
-                Company Profile
-              </button>
+                    }`}
+                >
+                  Company Profile
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('security')}
                 className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'security'
-                    ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                    : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
+                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
                   }`}
               >
                 Security
@@ -252,7 +292,7 @@ export default function MyAccountPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Job Title</label>
+                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Your Job Title</label>
                       <input
                         type="text"
                         value={formData.jobTitle}
@@ -435,26 +475,55 @@ export default function MyAccountPage() {
                   <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-4">
                     Security
                   </h3>
-                  <div className="grid grid-cols-2 gap-6 mb-6">
+
+                  {/* Password Error Message */}
+                  {passwordError && (
+                    <div className="mb-6 p-4 rounded-lg border bg-red-500/10 border-red-500/30 text-red-400 text-sm font-bold uppercase tracking-wider">
+                      {passwordError}
+                    </div>
+                  )}
+
+                  <div className="space-y-6 mb-6">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">New Password</label>
+                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Current Password</label>
                       <input
                         type="password"
-                        placeholder="••••••••"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        placeholder="Enter your current password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => {
+                          setPasswordData({ ...passwordData, currentPassword: e.target.value });
+                          setPasswordError('');
+                        }}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
                       />
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Confirm Password</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">New Password</label>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          value={passwordData.newPassword}
+                          onChange={(e) => {
+                            setPasswordData({ ...passwordData, newPassword: e.target.value });
+                            setPasswordError('');
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Confirm Password</label>
+                        <input
+                          type="password"
+                          placeholder="••••••••"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => {
+                            setPasswordData({ ...passwordData, confirmPassword: e.target.value });
+                            setPasswordError('');
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end">
