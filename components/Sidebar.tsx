@@ -92,16 +92,13 @@ export default function Sidebar() {
             <div className="mt-auto pt-6 border-t border-white/5 space-y-2">
                 {isMounted && isAuthenticated && user ? (
                     <>
-                        <Link
-                            href="/my-account"
-                            className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
-                        >
+                        <div className="w-full glass-card p-4 rounded-xl flex items-center gap-4">
                             <div className="hidden lg:block text-center whitespace-nowrap">
-                                <span className="text-medium font-bold text-white group-hover:text-marcan-red transition-colors text-center">
+                                <span className="text-medium font-bold text-white text-center">
                                     Welcome {user.firstName}!
                                 </span>
                             </div>
-                        </Link>
+                        </div>
                         <button
                             onClick={logout}
                             className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-red-500/50 transition-colors duration-300 text-left"

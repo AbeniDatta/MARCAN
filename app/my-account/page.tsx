@@ -220,7 +220,7 @@ export default function MyAccountPage() {
                 {user?.firstName || formData.firstName} {user?.lastName || formData.lastName}
               </h2>
               <p className="text-slate-400 text-sm">
-                {formData.jobTitle} at <span className="text-white font-bold">{formData.companyName}</span>
+                {formData.jobTitle} <span className="text-white font-bold">{formData.companyName}</span>
               </p>
             </div>
           </div>

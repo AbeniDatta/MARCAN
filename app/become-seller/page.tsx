@@ -168,7 +168,7 @@ export default function BecomeSellerPage() {
                                     </h2>
 
                                     <p className="text-xl text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto font-light">
-                                        We're glad to have you join our network. <br />
+                                        We're glad to have you join our network! <br />
                                         Marcan connects you with the partners you need to grow your business and strengthen the Canadian supply chain.
                                     </p>
 
