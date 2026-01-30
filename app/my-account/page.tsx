@@ -9,7 +9,7 @@ import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 
 import { auth } from '@/lib/firebase';
 
 export default function MyAccountPage() {
-  const { isAuthenticated, user, isLoading, isMounted } = useAuth();
+  const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
@@ -32,6 +32,9 @@ export default function MyAccountPage() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
+  const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
 
   useEffect(() => {
     // Only check authentication after component has mounted (client-side)
@@ -70,6 +73,18 @@ export default function MyAccountPage() {
       // Load account role
       if (user.role) {
         setAccountRole(user.role);
+      }
+
+      // Load user's wishlist requests
+      if (typeof window !== 'undefined' && user.email) {
+        const allRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
+        const userRequests = allRequests.filter((req: any) => req.userId === user.email);
+        setMyWishlistRequests(userRequests);
+
+        // Load user's supplier listings
+        const allListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
+        const userListings = allListings.filter((listing: any) => listing.userId === user.email);
+        setMySupplierListings(userListings);
       }
     }
   }, [isAuthenticated, user, router, isLoading, isMounted]);
@@ -114,7 +129,7 @@ export default function MyAccountPage() {
       aboutUs: formData.aboutUs,
       capabilities: capabilities,
       certifications: certifications,
-      role: accountRole,
+      // Role is not updated here - it's set during signup/become-seller
     };
 
     localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
@@ -122,6 +137,99 @@ export default function MyAccountPage() {
 
     setSaveMessage({ type: 'success', text: 'Company profile updated successfully!' });
     setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleDeleteWishlistRequest = (requestId: string) => {
+    if (!user?.email) return;
+
+    // Remove from localStorage
+    const allRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
+    const updatedRequests = allRequests.filter((req: any) => req.id !== requestId);
+    localStorage.setItem('marcan_wishlist_requests', JSON.stringify(updatedRequests));
+
+    // Update state
+    setMyWishlistRequests(updatedRequests.filter((req: any) => req.userId === user.email));
+
+    setSaveMessage({ type: 'success', text: 'Wishlist request deleted successfully!' });
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleDeleteSupplierListing = (listingId: string) => {
+    if (!user?.email) return;
+
+    // Remove from localStorage
+    const allListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
+    const updatedListings = allListings.filter((listing: any) => listing.id !== listingId);
+    localStorage.setItem('marcan_supplier_listings', JSON.stringify(updatedListings));
+
+    // Update state
+    setMySupplierListings(updatedListings.filter((listing: any) => listing.userId === user.email));
+
+    setSaveMessage({ type: 'success', text: 'Supplier listing deleted successfully!' });
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
+
+  const handleDeleteSellerProfile = () => {
+    if (!user) return;
+
+    // Remove company from directory
+    const directoryCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
+    const updatedDirectory = directoryCompanies.filter((c: any) => c.userId !== user.email);
+    localStorage.setItem('marcan_directory', JSON.stringify(updatedDirectory));
+
+    // Remove all seller-related data from user profile
+    const updatedUser = {
+      ...user,
+      // Remove seller-specific fields
+      jobTitle: undefined,
+      companyName: undefined,
+      businessNumber: undefined,
+      website: undefined,
+      aboutUs: undefined,
+      capabilities: undefined,
+      certifications: undefined,
+      selectedIcon: undefined,
+      logoUrl: undefined,
+      // Change role back to 'buy'
+      role: 'buy',
+    };
+
+    // Clean up undefined fields
+    Object.keys(updatedUser).forEach((key) => {
+      if ((updatedUser as any)[key] === undefined) {
+        delete (updatedUser as any)[key];
+      }
+    });
+
+    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event('marcan-auth-change'));
+
+    // Update auth state
+    login(updatedUser);
+
+    // Update local state
+    setFormData({
+      firstName: updatedUser.firstName || '',
+      lastName: updatedUser.lastName || '',
+      jobTitle: '',
+      email: updatedUser.email || '',
+      companyName: '',
+      businessNumber: '',
+      website: '',
+      aboutUs: '',
+    });
+    setCapabilities([]);
+    setCertifications([]);
+    setAccountRole('buy');
+
+    setShowDeleteConfirm(false);
+    setSaveMessage({ type: 'success', text: 'Seller profile deleted successfully. Your account is now a buyer account.' });
+    setTimeout(() => setSaveMessage(null), 5000);
+
+    // Refresh the page to update the UI (remove Company Profile tab)
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const handleUpdatePassword = async () => {
@@ -257,6 +365,15 @@ export default function MyAccountPage() {
                   }`}
               >
                 Security
+              </button>
+              <button
+                onClick={() => setActiveTab('my-posts')}
+                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'my-posts'
+                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
+                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  }`}
+              >
+                My Posts
               </button>
             </div>
 
@@ -420,52 +537,191 @@ export default function MyAccountPage() {
                   </div>
 
                   <div className="border-t border-white/5 pt-6">
-                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Account Role</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="account_role"
-                          value="buy"
-                          checked={accountRole === 'buy'}
-                          onChange={(e) => setAccountRole(e.target.value)}
-                          className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
-                        />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition">Buyer Only</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="account_role"
-                          value="sell"
-                          checked={accountRole === 'sell'}
-                          onChange={(e) => setAccountRole(e.target.value)}
-                          className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
-                        />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition">Supplier Only</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer group">
-                        <input
-                          type="radio"
-                          name="account_role"
-                          value="both"
-                          checked={accountRole === 'both'}
-                          onChange={(e) => setAccountRole(e.target.value)}
-                          className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
-                        />
-                        <span className="text-sm text-slate-300 group-hover:text-white transition">Both (Unified)</span>
-                      </label>
+                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Account Role</label>
+                    <div className="text-sm text-white font-semibold">
+                      {accountRole === 'buy' && 'Buyer Only'}
+                      {accountRole === 'sell' && 'Supplier Only'}
+                      {accountRole === 'both' && 'Both (Buyer & Supplier)'}
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-6">
-                    <button
-                      onClick={handleUpdateCompany}
-                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
-                    >
-                      Update Company
-                    </button>
+                  <div className="border-t border-white/5 pt-6 mt-6">
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2"
+                      >
+                        <i className="fa-solid fa-trash"></i> Delete Seller Profile
+                      </button>
+                      <button
+                        onClick={handleUpdateCompany}
+                        className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                      >
+                        Update Company
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Delete Confirmation Modal */}
+                  {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                      <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
+                        <div className="text-center mb-6">
+                          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                            <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+                          </div>
+                          <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">Delete Seller Profile?</h3>
+                          <p className="text-slate-400 text-sm leading-relaxed">
+                            This will permanently delete all seller information, remove your company from the directory, and change your account to buyer-only. This action cannot be undone.
+                          </p>
+                        </div>
+                        <div className="flex gap-4">
+                          <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleDeleteSellerProfile}
+                            className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
+                          >
+                            Delete Profile
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* My Posts Tab */}
+              {activeTab === 'my-posts' && (
+                <div className="space-y-8">
+                  {/* Wishlist Requests Section */}
+                  <div className="glass-card p-8 rounded-2xl border border-white/5">
+                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Wishlist Requests</h3>
+                      <Link
+                        href="/post-request"
+                        className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
+                      >
+                        + Post New Request
+                      </Link>
+                    </div>
+
+                    {myWishlistRequests.length === 0 ? (
+                      <div className="text-center py-12">
+                        <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
+                        <p className="text-slate-400 text-sm mb-4">No wishlist requests posted yet.</p>
+                        <Link
+                          href="/post-request"
+                          className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                        >
+                          Post Your First Request
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {myWishlistRequests.map((request) => (
+                          <div
+                            key={request.id}
+                            className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
+                          >
+                            <button
+                              onClick={() => handleDeleteWishlistRequest(request.id)}
+                              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                              title="Delete request"
+                            >
+                              <i className="fa-solid fa-trash text-xs"></i>
+                            </button>
+                            <div className="flex justify-between items-start mb-2 pr-10">
+                              <div>
+                                <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                                {request.category}
+                              </span>
+                            </div>
+                            <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
+                              {request.specifications || request.description}
+                            </p>
+                            <div className="flex gap-4 text-xs text-slate-500">
+                              {request.quantity && <span>Qty: {request.quantity}</span>}
+                              {request.targetPrice && <span>Price: {request.targetPrice}</span>}
+                              {request.deadline && (
+                                <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Supplier Listings Section */}
+                  {(user?.role === 'both' || user?.role === 'sell') && (
+                    <div className="glass-card p-8 rounded-2xl border border-white/5">
+                      <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Supplier Listings</h3>
+                        <Link
+                          href="/create-listing"
+                          className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
+                        >
+                          + Create New Listing
+                        </Link>
+                      </div>
+
+                      {mySupplierListings.length === 0 ? (
+                        <div className="text-center py-12">
+                          <i className="fa-solid fa-shop text-4xl text-slate-600 mb-4"></i>
+                          <p className="text-slate-400 text-sm mb-4">No supplier listings created yet.</p>
+                          <Link
+                            href="/create-listing"
+                            className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                          >
+                            Create Your First Listing
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {mySupplierListings.map((listing) => (
+                            <div
+                              key={listing.id}
+                              className="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all relative"
+                            >
+                              <button
+                                onClick={() => handleDeleteSupplierListing(listing.id)}
+                                className="absolute top-2 right-2 z-10 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                title="Delete listing"
+                              >
+                                <i className="fa-solid fa-trash text-xs"></i>
+                              </button>
+                              <div className="h-32 bg-black/40 flex items-center justify-center text-slate-600 relative">
+                                <i className="fa-solid fa-box text-3xl group-hover:text-white transition-colors"></i>
+                              </div>
+                              <div className="p-4 border-t border-white/5">
+                                <div className="flex justify-between items-start mb-2">
+                                  <h3 className="font-bold text-white text-sm uppercase truncate pr-8">{listing.title}</h3>
+                                  <span className="font-bold text-marcan-red text-sm">{listing.price}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 mb-2">
+                                  {listing.listingType} • {listing.condition}
+                                </div>
+                                <p className="text-slate-400 text-xs mb-3 line-clamp-2">{listing.description}</p>
+                                <div className="text-[10px] text-slate-500">
+                                  {new Date(listing.createdAt || listing.timestamp).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

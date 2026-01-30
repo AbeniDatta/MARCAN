@@ -1,7 +1,37 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
 export default function HomePage() {
+  const certifications = [
+    { code: 'ISO 9001', label: 'Quality' },
+    { code: 'AS9100', label: 'Aerospace' },
+    { code: 'CGRP', label: 'Controlled' },
+    { code: 'NADCAP', label: 'Process' },
+    { code: 'ISO 14001', label: 'Environmental' },
+    { code: 'ISO 45001', label: 'Safety' },
+    { code: 'IATF 16949', label: 'Automotive' },
+    { code: 'ISO 13485', label: 'Medical' },
+  ];
+
+  const [currentGroup, setCurrentGroup] = useState(0);
+  const certificationsPerGroup = 4;
+  const totalGroups = Math.ceil(certifications.length / certificationsPerGroup);
+
+  const currentCertifications = certifications.slice(
+    currentGroup * certificationsPerGroup,
+    (currentGroup + 1) * certificationsPerGroup
+  );
+
+  const nextGroup = () => {
+    setCurrentGroup((prev) => (prev + 1) % totalGroups);
+  };
+
+  const prevGroup = () => {
+    setCurrentGroup((prev) => (prev - 1 + totalGroups) % totalGroups);
+  };
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Home" />
@@ -198,29 +228,42 @@ export default function HomePage() {
           </div>
 
           {/* Member Certifications */}
-          <div className="lg:col-span-4 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-            <h3 className="font-heading font-bold text-white uppercase text-sm mb-4">Member Certifications</h3>
+          <div className="lg:col-span-4 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent relative">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading font-bold text-white uppercase text-sm">Member Certifications</h3>
+              {totalGroups > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={prevGroup}
+                    className="w-6 h-6 rounded-full bg-white/5 hover:bg-marcan-red/20 border border-white/10 hover:border-marcan-red/50 flex items-center justify-center text-white hover:text-marcan-red transition-all duration-300"
+                    aria-label="Previous certifications"
+                  >
+                    <i className="fa-solid fa-chevron-left text-xs"></i>
+                  </button>
+                  <button
+                    onClick={nextGroup}
+                    className="w-6 h-6 rounded-full bg-white/5 hover:bg-marcan-red/20 border border-white/10 hover:border-marcan-red/50 flex items-center justify-center text-white hover:text-marcan-red transition-all duration-300"
+                    aria-label="Next certifications"
+                  >
+                    <i className="fa-solid fa-chevron-right text-xs"></i>
+                  </button>
+                </div>
+              )}
+            </div>
             <p className="text-xs text-slate-500 mb-6 leading-relaxed">
               Connect with highly qualified suppliers holding top credentials.
             </p>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-black/20 rounded border border-white/10 p-2 text-center hover:border-marcan-red/30 transition-colors cursor-default">
-                <div className="text-white font-bold text-xs">ISO 9001</div>
-                <div className="text-[8px] text-slate-500 uppercase">Quality</div>
-              </div>
-              <div className="bg-black/20 rounded border border-white/10 p-2 text-center hover:border-marcan-red/30 transition-colors cursor-default">
-                <div className="text-white font-bold text-xs">AS9100</div>
-                <div className="text-[8px] text-slate-500 uppercase">Aerospace</div>
-              </div>
-              <div className="bg-black/20 rounded border border-white/10 p-2 text-center hover:border-marcan-red/30 transition-colors cursor-default">
-                <div className="text-white font-bold text-xs">CGRP</div>
-                <div className="text-[8px] text-slate-500 uppercase">Controlled</div>
-              </div>
-              <div className="bg-black/20 rounded border border-white/10 p-2 text-center hover:border-marcan-red/30 transition-colors cursor-default">
-                <div className="text-white font-bold text-xs">NADCAP</div>
-                <div className="text-[8px] text-slate-500 uppercase">Process</div>
-              </div>
+            <div className="grid grid-cols-2 gap-3 relative">
+              {currentCertifications.map((cert, index) => (
+                <div
+                  key={`${cert.code}-${currentGroup}`}
+                  className="bg-black/20 rounded border border-white/10 p-2 text-center hover:border-marcan-red/30 transition-colors cursor-default"
+                >
+                  <div className="text-white font-bold text-xs">{cert.code}</div>
+                  <div className="text-[8px] text-slate-500 uppercase">{cert.label}</div>
+                </div>
+              ))}
             </div>
           </div>
 

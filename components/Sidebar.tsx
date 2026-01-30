@@ -35,8 +35,12 @@ export default function Sidebar() {
         <aside className="relative z-20 w-20 lg:w-72 glass-panel flex flex-col justify-between py-8 px-4 transition-all duration-300">
             {/* Brand */}
             <Link href="/" className="flex items-center gap-4 px-2 mb-10 cursor-pointer group">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300">
-                    <span className="font-heading font-black text-2xl text-white">M</span>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300 relative bg-transparent overflow-hidden">
+                    <img
+                        src="/Gemini_Generated_Image_g2mdjig2mdjig2md.png"
+                        alt="Marcan Logo"
+                        className="w-full h-full object-contain"
+                    />
                 </div>
                 <div className="hidden lg:block">
                     <h1 className="font-heading font-bold text-xl text-white tracking-widest uppercase">Marcan</h1>

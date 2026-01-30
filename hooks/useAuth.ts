@@ -21,6 +21,8 @@ interface UserInfo {
     materials?: string | string[]; // Can be string (comma-separated) or array
     capabilities?: string[];
     certifications?: string[];
+    selectedIcon?: string; // Icon selected for company directory
+    logoUrl?: string; // Uploaded logo URL
     role?: string;
 }
 

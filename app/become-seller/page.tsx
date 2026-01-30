@@ -32,6 +32,8 @@ export default function BecomeSellerPage() {
         // Step 2: Capabilities
         capabilities: [] as string[],
         certifications: [] as string[],
+        selectedIcon: 'fa-industry', // Default icon
+        logoUrl: '', // For uploaded logo
     });
 
     // Load current user data if authenticated
@@ -47,6 +49,8 @@ export default function BecomeSellerPage() {
                 aboutUs: currentUser.aboutUs || '',
                 capabilities: currentUser.capabilities || [],
                 certifications: currentUser.certifications || [],
+                selectedIcon: (currentUser as any).selectedIcon || 'fa-industry',
+                logoUrl: (currentUser as any).logoUrl || '',
             });
         }
     }, [isMounted, isAuthenticated, currentUser]);
@@ -89,12 +93,28 @@ export default function BecomeSellerPage() {
                 aboutUs: sellerData.aboutUs,
                 capabilities: sellerData.capabilities,
                 certifications: sellerData.certifications,
+                selectedIcon: sellerData.selectedIcon,
+                logoUrl: sellerData.logoUrl,
                 role: 'both', // Update role to 'both' since they're now a seller too
             };
 
             // Update localStorage
             localStorage.setItem('marcan_user', JSON.stringify(updatedUserData));
             window.dispatchEvent(new Event('marcan-auth-change'));
+
+            // Add company to directory
+            const directoryCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
+            const newCompany = {
+                id: currentUser!.email || Date.now().toString(),
+                name: sellerData.companyName,
+                location: `${sellerData.city}, ${sellerData.province}`,
+                description: sellerData.aboutUs || 'No description provided.',
+                icon: sellerData.selectedIcon,
+                tags: sellerData.capabilities.length > 0 ? sellerData.capabilities : ['Manufacturing'],
+                userId: currentUser!.email,
+            };
+            directoryCompanies.push(newCompany);
+            localStorage.setItem('marcan_directory', JSON.stringify(directoryCompanies));
 
             // Update auth state
             login(updatedUserData);
@@ -309,12 +329,48 @@ export default function BecomeSellerPage() {
                                             <p className="text-xs text-slate-500">Step 2 of 2: Skill Tags</p>
                                         </div>
                                         <div className="space-y-6">
-                                            <div className="flex gap-4 items-center mb-6 p-4 rounded-lg bg-white/5 border border-white/5">
-                                                <div className="w-16 h-16 rounded-lg bg-black/40 border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:border-marcan-red transition">
-                                                    <i className="fa-solid fa-camera"></i>
-                                                    <span className="text-[8px] uppercase mt-1">Logo</span>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Company Logo / Icon</label>
+                                                <div className="flex gap-4 items-center mb-4 p-4 rounded-lg bg-white/5 border border-white/5">
+                                                    <div className="w-16 h-16 rounded-lg bg-black/40 border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:border-marcan-red transition">
+                                                        <i className="fa-solid fa-camera"></i>
+                                                        <span className="text-[8px] uppercase mt-1">Upload</span>
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 flex-1">Upload your company logo, or choose an icon below.</div>
                                                 </div>
-                                                <div className="text-xs text-slate-400">Upload your company logo to stand out in the directory.</div>
+
+                                                <div className="mb-4">
+                                                    <p className="text-xs text-slate-500 mb-3">Or select an icon:</p>
+                                                    <div className="grid grid-cols-6 gap-3">
+                                                        {[
+                                                            { icon: 'fa-industry', label: 'Industry' },
+                                                            { icon: 'fa-fire-burner', label: 'Foundry' },
+                                                            { icon: 'fa-flask', label: 'Chemical' },
+                                                            { icon: 'fa-microchip', label: 'Tech' },
+                                                            { icon: 'fa-cog', label: 'Machining' },
+                                                            { icon: 'fa-toolbox', label: 'Tools' },
+                                                            { icon: 'fa-wrench', label: 'Repair' },
+                                                            { icon: 'fa-hammer', label: 'Construction' },
+                                                            { icon: 'fa-screwdriver-wrench', label: 'Assembly' },
+                                                            { icon: 'fa-spray-can-sparkles', label: 'Finishing' },
+                                                            { icon: 'fa-shapes', label: 'Design' },
+                                                            { icon: 'fa-cube', label: 'Manufacturing' },
+                                                        ].map((iconOption) => (
+                                                            <button
+                                                                key={iconOption.icon}
+                                                                type="button"
+                                                                onClick={() => setSellerData({ ...sellerData, selectedIcon: iconOption.icon })}
+                                                                className={`w-12 h-12 rounded-lg flex items-center justify-center border-2 transition-all ${sellerData.selectedIcon === iconOption.icon
+                                                                    ? 'bg-marcan-red/20 border-marcan-red text-marcan-red'
+                                                                    : 'bg-black/40 border-white/10 text-slate-400 hover:border-marcan-red/50 hover:text-white'
+                                                                    }`}
+                                                                title={iconOption.label}
+                                                            >
+                                                                <i className={`fa-solid ${iconOption.icon}`}></i>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <div>
