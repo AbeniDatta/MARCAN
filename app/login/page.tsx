@@ -70,7 +70,10 @@ export default function LoginPage() {
       // Handle Firebase Auth errors
       let errorMessage = 'An error occurred during login.';
 
-      if (err.code === 'auth/user-not-found') {
+      if (err.code === 'auth/invalid-credential') {
+        // Firebase 9+ uses this error code for wrong email/password
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (err.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address.';
       } else if (err.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password. Please try again.';
@@ -80,10 +83,13 @@ export default function LoginPage() {
         errorMessage = 'This account has been disabled.';
       } else if (err.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed login attempts. Please try again later.';
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
       } else if (err.message) {
         errorMessage = err.message;
       }
 
+      console.error('Firebase login error:', err.code, err.message);
       setError(errorMessage);
     } finally {
       setIsLoading(false);

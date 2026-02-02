@@ -78,9 +78,52 @@ export default function BecomeSellerPage() {
         e.preventDefault();
         setError('');
 
+        if (!sellerData.companyName) {
+            setError('Company name is required');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
+            // Save profile to database via API
+            const response = await fetch('/api/profiles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: currentUser!.email,
+                    companyName: sellerData.companyName,
+                    jobTitle: sellerData.jobTitle,
+                    businessNumber: sellerData.businessNumber,
+                    website: sellerData.website,
+                    city: sellerData.city,
+                    province: sellerData.province,
+                    aboutUs: sellerData.aboutUs,
+                    capabilities: sellerData.capabilities,
+                    certifications: sellerData.certifications,
+                    selectedIcon: sellerData.selectedIcon,
+                    logoUrl: sellerData.logoUrl,
+                    primaryIntent: 'both', // User is both buyer and seller
+                }),
+            });
+
+            if (!response.ok) {
+                // Try to parse as JSON, but handle HTML error pages
+                let error;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    error = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('API returned non-JSON response:', text.substring(0, 200));
+                    error = { error: `Server error: ${response.status} ${response.statusText}` };
+                }
+                console.error('API Error:', error);
+                throw new Error(error.details || error.error || 'Failed to save seller profile');
+            }
+
             // Update user data with seller information (using existing user data for name/email)
             const updatedUserData = {
                 ...currentUser!,
@@ -101,20 +144,6 @@ export default function BecomeSellerPage() {
             // Update localStorage
             localStorage.setItem('marcan_user', JSON.stringify(updatedUserData));
             window.dispatchEvent(new Event('marcan-auth-change'));
-
-            // Add company to directory
-            const directoryCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
-            const newCompany = {
-                id: currentUser!.email || Date.now().toString(),
-                name: sellerData.companyName,
-                location: `${sellerData.city}, ${sellerData.province}`,
-                description: sellerData.aboutUs || 'No description provided.',
-                icon: sellerData.selectedIcon,
-                tags: sellerData.capabilities.length > 0 ? sellerData.capabilities : ['Manufacturing'],
-                userId: currentUser!.email,
-            };
-            directoryCompanies.push(newCompany);
-            localStorage.setItem('marcan_directory', JSON.stringify(directoryCompanies));
 
             // Update auth state
             login(updatedUserData);

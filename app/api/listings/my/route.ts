@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 // GET user's own listings (authenticated)
 export async function GET(request: NextRequest) {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json([]);
+    }
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 

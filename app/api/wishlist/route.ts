@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 // GET all wishlist requests (public)
 export async function GET() {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.wishlistRequest?.findMany !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json([]);
+    }
+
     const requests = await prisma.wishlistRequest.findMany({
       where: {
         active: true,
@@ -60,6 +66,12 @@ export async function GET() {
 // POST create new wishlist request (authenticated)
 export async function POST(request: NextRequest) {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
+    }
+
     const body = await request.json();
     const { title, category, quantity, specifications, deadline, targetPrice, userId } = body;
 

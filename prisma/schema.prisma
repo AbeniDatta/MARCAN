@@ -6,7 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  // Note: In Prisma 7, url and directUrl are configured in prisma.config.ts, not here
+  // The config file handles DATABASE_URL (pooler) and DIRECT_URL (direct) connections
 }
 
 model Profile {

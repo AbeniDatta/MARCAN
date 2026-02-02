@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 // GET all listings (public)
 export async function GET() {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.listing?.findMany !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json([]);
+    }
+
     const listings = await prisma.listing.findMany({
       where: {
         active: true,
@@ -79,6 +85,12 @@ export async function GET() {
 // POST create new listing (authenticated)
 export async function POST(request: NextRequest) {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
+    }
+
     const body = await request.json();
     const { itemName, listingType, condition, price, location, description, userId } = body;
 

@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 // DELETE wishlist request (authenticated, owner only)
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    // Check if prisma is properly initialized
+    if (!prisma || typeof prisma.wishlistRequest?.findUnique !== 'function') {
+      console.error('Prisma client not properly initialized');
+      return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
+    }
+
     const { id } = params;
     const { userId } = await request.json();
 

@@ -79,9 +79,20 @@ export default function MyAccountPage() {
       if (typeof window !== 'undefined' && user.email) {
         // Fetch user's own wishlist requests
         fetch(`/api/wishlist/my?userId=${encodeURIComponent(user.email)}`)
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error('Failed to fetch wishlist requests');
+            }
+            return res.json();
+          })
           .then((userRequests) => {
-            setMyWishlistRequests(userRequests);
+            // Ensure it's an array
+            if (Array.isArray(userRequests)) {
+              setMyWishlistRequests(userRequests);
+            } else {
+              console.error('Invalid response format:', userRequests);
+              setMyWishlistRequests([]);
+            }
           })
           .catch((err) => {
             console.error('Error fetching wishlist requests:', err);
@@ -91,9 +102,20 @@ export default function MyAccountPage() {
         // Fetch user's own supplier listings (only if seller)
         if (user.role === 'both' || user.role === 'sell') {
           fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
-            .then((res) => res.json())
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error('Failed to fetch listings');
+              }
+              return res.json();
+            })
             .then((userListings) => {
-              setMySupplierListings(userListings);
+              // Ensure it's an array
+              if (Array.isArray(userListings)) {
+                setMySupplierListings(userListings);
+              } else {
+                console.error('Invalid response format:', userListings);
+                setMySupplierListings([]);
+              }
             })
             .catch((err) => {
               console.error('Error fetching listings:', err);
