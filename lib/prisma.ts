@@ -13,20 +13,8 @@ function getPrismaClient(): PrismaClient {
     }
 
     // Ensure DATABASE_URL is available
-    if (!process.env.DATABASE_URL) {
-        // During build, if DATABASE_URL is not set, create a client with a placeholder
-        // This allows the build to complete, but the client won't work until DATABASE_URL is set
-        const client = new PrismaClient({
-            datasources: {
-                db: {
-                    url: 'postgresql://user:password@localhost:5432/dbname',
-                },
-            },
-            log: ['error'],
-        });
-        return client;
-    }
-
+    // If not set, Prisma will use the connection string from prisma.config.ts or environment
+    // During build, we'll create a client that will fail gracefully if DATABASE_URL is missing
     const client = new PrismaClient({
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     });
