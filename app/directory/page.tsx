@@ -76,7 +76,7 @@ export default function DirectoryPage() {
 
                 {/* Industry Tags */}
                 <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                  {company.tags.map((tag) => (
+                  {company.tags.map((tag: string) => (
                     <span
                       key={tag}
                       className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
