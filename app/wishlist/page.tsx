@@ -13,55 +13,33 @@ export default function WishlistPage() {
   const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Default demo requests
-      const defaultRequests = [
-        {
-          id: '1',
-          company: 'AerospaceComposites',
-          initials: 'AC',
-          category: 'Machining',
-          description:
-            'Requesting 5-Axis machining for Titanium Grade 5 brackets. Quantity: 50 units. Tolerance requirement: ±0.002mm. Keywords: Titanium, 5-Axis.',
-          active: true,
-          createdAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-          timestamp: Date.now() - 2 * 60 * 1000,
-          targetPrice: '$5,000',
-        },
-        {
-          id: '2',
-          company: 'MetalWorks Co.',
-          initials: 'MW',
-          category: 'Finishing',
-          description:
-            'Batch Anodizing required. Type II Black. 200 Aluminum casings. Looking for Kitchener/Waterloo local partner.',
-          active: false,
-          createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          timestamp: Date.now() - 5 * 60 * 60 * 1000,
-          targetPrice: '$2,500',
-        },
-      ];
+    // Fetch requests from API
+    const fetchRequests = async () => {
+      try {
+        const response = await fetch('/api/wishlist');
+        if (!response.ok) {
+          throw new Error('Failed to fetch requests');
+        }
+        const data = await response.json();
 
-      // Load requests from localStorage
-      const storedRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
+        // Format time for display
+        const formattedRequests = data.map((req: any) => {
+          const timeAgo = getTimeAgo(req.timestamp || new Date(req.createdAt).getTime());
+          return {
+            ...req,
+            time: timeAgo,
+            description: req.specifications || req.description,
+          };
+        });
 
-      // Merge default requests with stored requests (avoid duplicates)
-      const defaultIds = defaultRequests.map((r) => r.id);
-      const newStoredRequests = storedRequests.filter((req: any) => !defaultIds.includes(req.id));
-      const allRequests = [...defaultRequests, ...newStoredRequests];
+        setRequests(formattedRequests);
+      } catch (error) {
+        console.error('Error fetching wishlist requests:', error);
+        setRequests([]);
+      }
+    };
 
-      // Format time for display
-      const formattedRequests = allRequests.map((req: any) => {
-        const timeAgo = getTimeAgo(req.timestamp || new Date(req.createdAt).getTime());
-        return {
-          ...req,
-          time: timeAgo,
-          description: req.specifications || req.description,
-        };
-      });
-
-      setRequests(formattedRequests);
-    }
+    fetchRequests();
   }, []);
 
   // Helper function to calculate time ago
@@ -167,60 +145,67 @@ export default function WishlistPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {filteredRequests.map((request, index) => (
-            <div
-              key={index}
-              className="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
-            >
+        {filteredRequests.length === 0 ? (
+          <div className="text-center py-12">
+            <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
+            <p className="text-slate-400 text-sm">No wishlist requests available yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredRequests.map((request, index) => (
               <div
-                className={`absolute left-0 top-0 bottom-0 w-1 shadow-neon opacity-50 group-hover:opacity-100 transition-opacity ${request.active ? 'bg-marcan-red' : 'bg-slate-600 group-hover:bg-marcan-red'
-                  }`}
-              ></div>
+                key={index}
+                className="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
+              >
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-1 shadow-neon opacity-50 group-hover:opacity-100 transition-opacity ${request.active ? 'bg-marcan-red' : 'bg-slate-600 group-hover:bg-marcan-red'
+                    }`}
+                ></div>
 
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
-                  {request.initials}
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
+                    {request.initials}
+                  </div>
+                </div>
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="text-white font-bold text-sm uppercase tracking-wide">{request.title || request.company}</h4>
+                      <div className="text-xs text-slate-500">{request.time || 'Recently posted'}</div>
+                      {request.company && request.company !== request.title && (
+                        <div className="text-xs text-slate-400 mt-1">by {request.company}</div>
+                      )}
+                    </div>
+                    <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                      {request.category}
+                    </span>
+                  </div>
+                  <p className="text-slate-400 text-sm leading-relaxed">{request.description || request.specifications}</p>
+                  {request.quantity && (
+                    <div className="mt-2 text-xs text-slate-500">
+                      Quantity: {request.quantity}
+                    </div>
+                  )}
+                  {request.targetPrice && (
+                    <div className="mt-2 text-xs text-marcan-red font-bold">
+                      Target Price: {request.targetPrice}
+                    </div>
+                  )}
+                  {request.deadline && (
+                    <div className="mt-1 text-xs text-slate-500">
+                      Deadline: {new Date(request.deadline).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <button className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                    <i className="fa-solid fa-envelope"></i>
+                  </button>
                 </div>
               </div>
-              <div className="flex-grow">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h4 className="text-white font-bold text-sm uppercase tracking-wide">{request.title || request.company}</h4>
-                    <div className="text-xs text-slate-500">{request.time || 'Recently posted'}</div>
-                    {request.company && request.company !== request.title && (
-                      <div className="text-xs text-slate-400 mt-1">by {request.company}</div>
-                    )}
-                  </div>
-                  <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                    {request.category}
-                  </span>
-                </div>
-                <p className="text-slate-400 text-sm leading-relaxed">{request.description || request.specifications}</p>
-                {request.quantity && (
-                  <div className="mt-2 text-xs text-slate-500">
-                    Quantity: {request.quantity}
-                  </div>
-                )}
-                {request.targetPrice && (
-                  <div className="mt-2 text-xs text-marcan-red font-bold">
-                    Target Price: {request.targetPrice}
-                  </div>
-                )}
-                {request.deadline && (
-                  <div className="mt-1 text-xs text-slate-500">
-                    Deadline: {new Date(request.deadline).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <button className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
-                  <i className="fa-solid fa-envelope"></i>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

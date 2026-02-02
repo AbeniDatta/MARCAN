@@ -19,7 +19,7 @@ export default function CreateListingPage() {
     description: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Get user info for the listing
@@ -33,28 +33,40 @@ export default function CreateListingPage() {
       }
     }
 
-    // Create listing object
-    const newListing = {
-      id: Date.now().toString(),
-      userId: user?.email || '',
-      seller: user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Anonymous',
-      title: formData.itemName,
-      listingType: formData.listingType,
-      condition: formData.condition,
-      price: formData.price,
-      location: formData.location,
-      description: formData.description,
-      createdAt: new Date().toISOString(),
-      timestamp: Date.now(),
-      active: true,
-    };
+    if (!user?.email) {
+      alert('Please log in to create a listing');
+      router.push('/login');
+      return;
+    }
 
-    // Save to localStorage
-    const existingListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
-    existingListings.push(newListing);
-    localStorage.setItem('marcan_supplier_listings', JSON.stringify(existingListings));
+    try {
+      // Create listing via API
+      const response = await fetch('/api/listings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          itemName: formData.itemName,
+          listingType: formData.listingType,
+          condition: formData.condition,
+          price: formData.price,
+          location: formData.location,
+          description: formData.description,
+          userId: user.email,
+        }),
+      });
 
-    router.push('/marketplace');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create listing');
+      }
+
+      router.push('/marketplace');
+    } catch (error: any) {
+      console.error('Error creating listing:', error);
+      alert(error.message || 'Failed to create listing. Please try again.');
+    }
   };
 
   // Redirect if not authenticated or not a seller

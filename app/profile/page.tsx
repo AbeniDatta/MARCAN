@@ -32,68 +32,32 @@ function ProfilePageContent() {
     useEffect(() => {
         if (!companyId) return;
 
-        // Load company from directory
-        const directoryCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
-        const foundCompany = directoryCompanies.find((c: CompanyProfile) => c.id === companyId);
-
-        if (foundCompany) {
-            setCompany(foundCompany);
-
-            // If company has userId, try to load full user data
-            if (foundCompany.userId) {
-                const userInfo = localStorage.getItem('marcan_user');
-                if (userInfo) {
-                    try {
-                        const user = JSON.parse(userInfo);
-                        // Only show user data if it matches the company's userId
-                        if (user.email === foundCompany.userId) {
-                            setUserData(user);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing user info:', e);
-                    }
+        // Fetch company from API
+        const fetchCompany = async () => {
+            try {
+                // Fetch all profiles and find the one matching the companyId
+                const response = await fetch('/api/profiles');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profiles');
                 }
-            }
-        } else {
-            // Fallback to default companies for demo
-            const defaultCompanies: CompanyProfile[] = [
-                {
-                    id: '1',
-                    name: 'NorthYork Precision Ltd.',
-                    location: 'Toronto, ON',
-                    description: 'Aerospace grade CNC machining. 5-Axis capabilities with ISO 9001 certification.',
-                    icon: 'fa-industry',
-                    tags: ['Aerospace', '5-Axis', 'CNC'],
-                    website: 'www.nyp-mfg.ca',
-                    phone: '+1 (416) 555-0199',
-                    email: 'quotes@nyp-mfg.ca',
-                    aboutUs: 'NorthYork Precision has been a leader in high-tolerance CNC machining for over 25 years. We specialize in complex components for the aerospace, medical, and defense sectors.',
-                    capabilities: ['5-Axis CNC Milling', 'Wire EDM', 'CMM Inspection', 'Swiss Turning'],
-                    certifications: ['ISO 9001:2015', 'AS9100 Rev D', 'CGRP Registered'],
-                },
-                {
-                    id: '2',
-                    name: 'Hamilton Castings',
-                    location: 'Hamilton, ON',
-                    description: 'Heavy industrial iron and steel casting. Custom sand molds and rapid prototyping.',
-                    icon: 'fa-fire-burner',
-                    tags: ['Foundry', 'Iron/Steel', 'Molds'],
-                },
-                {
-                    id: '3',
-                    name: 'WestCoast Finishers',
-                    location: 'Richmond, BC',
-                    description: 'Seeking anodizing chemicals and powder coating partners for marine applications.',
-                    icon: 'fa-flask',
-                    tags: ['Finishing', 'Anodizing', 'Chemicals'],
-                },
-            ];
+                const profiles = await response.json();
+                const foundCompany = profiles.find((c: CompanyProfile) => c.id === companyId);
 
-            const defaultCompany = defaultCompanies.find((c) => c.id === companyId);
-            if (defaultCompany) {
-                setCompany(defaultCompany);
+                if (foundCompany) {
+                    setCompany(foundCompany);
+                    // The API already returns all the profile data, so we can use it directly
+                    setUserData(foundCompany);
+                } else {
+                    // Company not found
+                    setCompany(null);
+                }
+            } catch (error) {
+                console.error('Error fetching company profile:', error);
+                setCompany(null);
             }
-        }
+        };
+
+        fetchCompany();
     }, [companyId]);
 
     if (!company) {

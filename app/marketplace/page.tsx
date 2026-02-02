@@ -11,84 +11,22 @@ export default function MarketplacePage() {
   const [listings, setListings] = useState<any[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Default demo listings
-      const defaultListings = [
-        {
-          id: '1',
-          title: 'Steel Injection Molds',
-          price: '$1,200',
-          seller: 'Ontario Plastics',
-          badge: 'Liquidation',
-          badgeColor: 'red',
-          icon: 'fa-dolly',
-          listingType: 'Equipment / Machinery',
-          condition: 'Used - Good',
-          location: 'Toronto, ON',
-          description: 'High-quality steel injection molds for plastic manufacturing.',
-          createdAt: new Date().toISOString(),
-          timestamp: Date.now(),
-        },
-        {
-          id: '2',
-          title: 'Carbide End Mills',
-          price: '$450',
-          seller: 'ToolSupply CA',
-          badge: 'Surplus',
-          badgeColor: 'blue',
-          icon: 'fa-shapes',
-          listingType: 'Raw Materials',
-          condition: 'New',
-          location: 'Vancouver, BC',
-          description: 'Premium carbide end mills in various sizes.',
-          createdAt: new Date().toISOString(),
-          timestamp: Date.now(),
-        },
-      ];
-
-      // Load listings from localStorage
-      const storedListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
-
-      // Merge default listings with stored listings (avoid duplicates)
-      const defaultIds = defaultListings.map((l) => l.id);
-      const newStoredListings = storedListings.filter((listing: any) => !defaultIds.includes(listing.id));
-      const allListings = [...defaultListings, ...newStoredListings];
-
-      // Format listings for display
-      const formattedListings = allListings.map((listing: any) => {
-        // Determine badge and icon based on listing type
-        let badge = 'Available';
-        let badgeColor = 'green';
-        let icon = 'fa-box';
-
-        if (listing.listingType === 'Equipment / Machinery') {
-          icon = 'fa-dolly';
-          badge = listing.condition === 'New' ? 'New' : 'Used';
-          badgeColor = listing.condition === 'New' ? 'green' : 'blue';
-        } else if (listing.listingType === 'Raw Materials') {
-          icon = 'fa-shapes';
-          badge = 'Surplus';
-          badgeColor = 'blue';
-        } else if (listing.listingType === 'Surplus Parts') {
-          icon = 'fa-cog';
-          badge = 'Surplus';
-          badgeColor = 'blue';
-        } else if (listing.listingType === 'Production Capacity') {
-          icon = 'fa-industry';
-          badge = 'Capacity';
-          badgeColor = 'purple';
+    // Fetch listings from API
+    const fetchListings = async () => {
+      try {
+        const response = await fetch('/api/listings');
+        if (!response.ok) {
+          throw new Error('Failed to fetch listings');
         }
+        const data = await response.json();
+        setListings(data);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        setListings([]);
+      }
+    };
 
-        return {
-          ...listing,
-          badge: listing.badge || badge,
-          badgeColor: listing.badgeColor || badgeColor,
-          icon: listing.icon || icon,
-        };
-      });
-
-      setListings(formattedListings);
-    }
+    fetchListings();
   }, []);
 
   return (
@@ -107,29 +45,34 @@ export default function MarketplacePage() {
             {isMounted && isAuthenticated && isSeller ? (
               <Link
                 href="/create-listing"
-                className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-block"
+                className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center"
               >
-                Create Listing
+                <i className="fa-solid fa-plus mr-2"></i> Create Listing
               </Link>
             ) : isMounted && isAuthenticated ? (
               <>
                 <button
                   disabled
-                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50"
+                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
                 >
-                  Create Listing
+                  <i className="fa-solid fa-plus mr-2"></i> Create Listing
                 </button>
                 <p className="text-xs text-slate-500 text-right max-w-[200px]">
                   <Link href="/become-seller" className="text-marcan-red hover:text-marcan-red/80 underline">Become a Seller</Link> to create listings
                 </p>
               </>
             ) : isMounted ? (
-              <Link
-                href="/login"
-                className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-block"
-              >
-                Login to Create Listing
-              </Link>
+              <>
+                <button
+                  disabled
+                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
+                >
+                  <i className="fa-solid fa-plus mr-2"></i> Create Listing
+                </button>
+                <p className="text-xs text-slate-500 text-right max-w-[200px]">
+                  Please <Link href="/login" className="text-marcan-red hover:text-marcan-red/80 underline">log in</Link> or <Link href="/signup" className="text-marcan-red hover:text-marcan-red/80 underline">sign up</Link> to create a listing
+                </p>
+              </>
             ) : (
               <div className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs inline-block opacity-50">
                 Create Listing

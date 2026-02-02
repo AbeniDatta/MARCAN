@@ -5,73 +5,25 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 
 export default function DirectoryPage() {
-  const [companies, setCompanies] = useState([
-    {
-      id: '1',
-      name: 'NorthYork Precision',
-      location: 'Toronto, ON',
-      description: 'Aerospace grade CNC machining. 5-Axis capabilities with ISO 9001 certification.',
-      icon: 'fa-industry',
-      tags: ['Aerospace', '5-Axis', 'CNC'],
-    },
-    {
-      id: '2',
-      name: 'Hamilton Castings',
-      location: 'Hamilton, ON',
-      description: 'Heavy industrial iron and steel casting. Custom sand molds and rapid prototyping.',
-      icon: 'fa-fire-burner',
-      tags: ['Foundry', 'Iron/Steel', 'Molds'],
-    },
-    {
-      id: '3',
-      name: 'WestCoast Finishers',
-      location: 'Richmond, BC',
-      description: 'Seeking anodizing chemicals and powder coating partners for marine applications.',
-      icon: 'fa-flask',
-      tags: ['Finishing', 'Anodizing', 'Chemicals'],
-    },
-  ]);
+  const [companies, setCompanies] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load companies from localStorage
-    if (typeof window !== 'undefined') {
-      const defaultCompanies = [
-        {
-          id: '1',
-          name: 'NorthYork Precision',
-          location: 'Toronto, ON',
-          description: 'Aerospace grade CNC machining. 5-Axis capabilities with ISO 9001 certification.',
-          icon: 'fa-industry',
-          tags: ['Aerospace', '5-Axis', 'CNC'],
-        },
-        {
-          id: '2',
-          name: 'Hamilton Castings',
-          location: 'Hamilton, ON',
-          description: 'Heavy industrial iron and steel casting. Custom sand molds and rapid prototyping.',
-          icon: 'fa-fire-burner',
-          tags: ['Foundry', 'Iron/Steel', 'Molds'],
-        },
-        {
-          id: '3',
-          name: 'WestCoast Finishers',
-          location: 'Richmond, BC',
-          description: 'Seeking anodizing chemicals and powder coating partners for marine applications.',
-          icon: 'fa-flask',
-          tags: ['Finishing', 'Anodizing', 'Chemicals'],
-        },
-      ];
-
-      const storedCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
-      if (storedCompanies.length > 0) {
-        // Merge with default companies, avoiding duplicates
-        const defaultIds = defaultCompanies.map(c => c.id);
-        const newCompanies = storedCompanies.filter((c: any) => !defaultIds.includes(c.id));
-        setCompanies([...defaultCompanies, ...newCompanies]);
-      } else {
-        setCompanies(defaultCompanies);
+    // Fetch companies from API
+    const fetchCompanies = async () => {
+      try {
+        const response = await fetch('/api/profiles');
+        if (!response.ok) {
+          throw new Error('Failed to fetch companies');
+        }
+        const data = await response.json();
+        setCompanies(data);
+      } catch (error) {
+        console.error('Error fetching companies:', error);
+        setCompanies([]);
       }
-    }
+    };
+
+    fetchCompanies();
   }, []);
 
   return (
@@ -93,50 +45,57 @@ export default function DirectoryPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {companies.map((company) => (
-            <div
-              key={company.id}
-              className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col"
-            >
-              <div className="flex justify-between items-start mb-4">
-                {(company as any).logoUrl ? (
-                  <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
-                    <img src={(company as any).logoUrl} alt={company.name} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
-                    <i className={`fa-solid ${company.icon || 'fa-industry'}`}></i>
-                  </div>
-                )}
-              </div>
-              <h3 className="font-heading font-bold text-lg text-white mb-1">{company.name}</h3>
-              <p className="text-xs text-slate-500 uppercase mb-4">
-                <i className="fa-solid fa-location-dot"></i> {company.location}
-              </p>
-              <p className="text-slate-400 text-xs mb-6 leading-relaxed">{company.description}</p>
-
-              {/* Industry Tags */}
-              <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                {company.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <Link
-                href={`/profile?id=${company.id}`}
-                className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
+        {companies.length === 0 ? (
+          <div className="text-center py-12">
+            <i className="fa-solid fa-building text-4xl text-slate-600 mb-4"></i>
+            <p className="text-slate-400 text-sm">No companies available yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {companies.map((company) => (
+              <div
+                key={company.id}
+                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col"
               >
-                View Profile
-              </Link>
-            </div>
-          ))}
-        </div>
+                <div className="flex justify-between items-start mb-4">
+                  {(company as any).logoUrl ? (
+                    <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
+                      <img src={(company as any).logoUrl} alt={company.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                      <i className={`fa-solid ${company.icon || 'fa-industry'}`}></i>
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-heading font-bold text-lg text-white mb-1">{company.name}</h3>
+                <p className="text-xs text-slate-500 uppercase mb-4">
+                  <i className="fa-solid fa-location-dot"></i> {company.location}
+                </p>
+                <p className="text-slate-400 text-xs mb-6 leading-relaxed">{company.description}</p>
+
+                {/* Industry Tags */}
+                <div className="mt-auto flex flex-wrap gap-2 mb-4">
+                  {company.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <Link
+                  href={`/profile?id=${company.id}`}
+                  className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
+                >
+                  View Profile
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

@@ -18,7 +18,7 @@ export default function PostRequestPage() {
         targetPrice: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         // Get user info for the request
@@ -32,31 +32,41 @@ export default function PostRequestPage() {
             }
         }
 
-        // Create request object
-        const newRequest = {
-            id: Date.now().toString(),
-            userId: user?.email || '',
-            company: user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Anonymous',
-            initials: user?.companyName
-                ? user.companyName.split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase()
-                : `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase() || 'AN',
-            title: formData.title,
-            category: formData.category,
-            quantity: formData.quantity,
-            specifications: formData.specifications,
-            deadline: formData.deadline,
-            targetPrice: formData.targetPrice,
-            createdAt: new Date().toISOString(),
-            timestamp: Date.now(),
-            active: true,
-        };
+        if (!user?.email) {
+            alert('Please log in to post a request');
+            router.push('/login');
+            return;
+        }
 
-        // Save to localStorage
-        const existingRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
-        existingRequests.push(newRequest);
-        localStorage.setItem('marcan_wishlist_requests', JSON.stringify(existingRequests));
+        try {
+            // Create request via API
+            const response = await fetch('/api/wishlist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: formData.title,
+                    category: formData.category,
+                    quantity: formData.quantity,
+                    specifications: formData.specifications,
+                    deadline: formData.deadline || null,
+                    targetPrice: formData.targetPrice,
+                    userId: user.email,
+                    companyName: user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Anonymous',
+                }),
+            });
 
-        router.push('/wishlist');
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to create request');
+            }
+
+            router.push('/wishlist');
+        } catch (error: any) {
+            console.error('Error creating request:', error);
+            alert(error.message || 'Failed to create request. Please try again.');
+        }
     };
 
     // Redirect if not authenticated

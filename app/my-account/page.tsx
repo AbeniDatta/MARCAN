@@ -75,16 +75,33 @@ export default function MyAccountPage() {
         setAccountRole(user.role);
       }
 
-      // Load user's wishlist requests
+      // Load user's wishlist requests and listings from API
       if (typeof window !== 'undefined' && user.email) {
-        const allRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
-        const userRequests = allRequests.filter((req: any) => req.userId === user.email);
-        setMyWishlistRequests(userRequests);
+        // Fetch user's own wishlist requests
+        fetch(`/api/wishlist/my?userId=${encodeURIComponent(user.email)}`)
+          .then((res) => res.json())
+          .then((userRequests) => {
+            setMyWishlistRequests(userRequests);
+          })
+          .catch((err) => {
+            console.error('Error fetching wishlist requests:', err);
+            setMyWishlistRequests([]);
+          });
 
-        // Load user's supplier listings
-        const allListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
-        const userListings = allListings.filter((listing: any) => listing.userId === user.email);
-        setMySupplierListings(userListings);
+        // Fetch user's own supplier listings (only if seller)
+        if (user.role === 'both' || user.role === 'sell') {
+          fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
+            .then((res) => res.json())
+            .then((userListings) => {
+              setMySupplierListings(userListings);
+            })
+            .catch((err) => {
+              console.error('Error fetching listings:', err);
+              setMySupplierListings([]);
+            });
+        } else {
+          setMySupplierListings([]);
+        }
       }
     }
   }, [isAuthenticated, user, router, isLoading, isMounted]);
@@ -139,34 +156,62 @@ export default function MyAccountPage() {
     setTimeout(() => setSaveMessage(null), 3000);
   };
 
-  const handleDeleteWishlistRequest = (requestId: string) => {
+  const handleDeleteWishlistRequest = async (requestId: string) => {
     if (!user?.email) return;
 
-    // Remove from localStorage
-    const allRequests = JSON.parse(localStorage.getItem('marcan_wishlist_requests') || '[]');
-    const updatedRequests = allRequests.filter((req: any) => req.id !== requestId);
-    localStorage.setItem('marcan_wishlist_requests', JSON.stringify(updatedRequests));
+    try {
+      const response = await fetch(`/api/wishlist/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.email }),
+      });
 
-    // Update state
-    setMyWishlistRequests(updatedRequests.filter((req: any) => req.userId === user.email));
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete request');
+      }
 
-    setSaveMessage({ type: 'success', text: 'Wishlist request deleted successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+      // Update state by removing the deleted request
+      setMyWishlistRequests((prev) => prev.filter((req) => req.id !== requestId));
+
+      setSaveMessage({ type: 'success', text: 'Wishlist request deleted successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error: any) {
+      console.error('Error deleting wishlist request:', error);
+      setSaveMessage({ type: 'error', text: error.message || 'Failed to delete request' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
-  const handleDeleteSupplierListing = (listingId: string) => {
+  const handleDeleteSupplierListing = async (listingId: string) => {
     if (!user?.email) return;
 
-    // Remove from localStorage
-    const allListings = JSON.parse(localStorage.getItem('marcan_supplier_listings') || '[]');
-    const updatedListings = allListings.filter((listing: any) => listing.id !== listingId);
-    localStorage.setItem('marcan_supplier_listings', JSON.stringify(updatedListings));
+    try {
+      const response = await fetch(`/api/listings/${listingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.email }),
+      });
 
-    // Update state
-    setMySupplierListings(updatedListings.filter((listing: any) => listing.userId === user.email));
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete listing');
+      }
 
-    setSaveMessage({ type: 'success', text: 'Supplier listing deleted successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+      // Update state by removing the deleted listing
+      setMySupplierListings((prev) => prev.filter((listing) => listing.id !== listingId));
+
+      setSaveMessage({ type: 'success', text: 'Supplier listing deleted successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (error: any) {
+      console.error('Error deleting listing:', error);
+      setSaveMessage({ type: 'error', text: error.message || 'Failed to delete listing' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
   const handleDeleteSellerProfile = () => {

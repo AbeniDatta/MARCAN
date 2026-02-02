@@ -21,6 +21,8 @@ model Profile {
   province      String?   @db.Text
   aboutUs       String?   @map("about_us") @db.Text
   logoUrl       String?   @map("logo_url") @db.Text
+  selectedIcon  String?   @map("selected_icon") @db.Text
+  jobTitle      String?   @map("job_title") @db.Text
   capabilities  String[]  @db.Text
   materials     String[]  @db.Text
   certifications String[] @db.Text
@@ -43,6 +45,10 @@ model Listing {
   category    String?   @db.Text
   badge       String?   @db.Text
   imageUrl    String?   @map("image_url") @db.Text
+  listingType String?   @map("listing_type") @db.Text
+  condition   String?   @db.Text
+  location    String?   @db.Text
+  active      Boolean   @default(true)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -56,9 +62,14 @@ model Listing {
 model WishlistRequest {
   id          String    @id @default(uuid()) @db.Uuid
   profileId   String    @map("profile_id") @db.Uuid
+  title       String    @db.Text
   companyName String    @map("company_name") @db.Text
   category    String?   @db.Text
   description String    @db.Text
+  quantity    String?   @db.Text
+  targetPrice String?   @map("target_price") @db.Text
+  deadline    DateTime? @db.Timestamptz(6)
+  active      Boolean   @default(true)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
