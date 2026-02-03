@@ -236,66 +236,95 @@ export default function MyAccountPage() {
     }
   };
 
-  const handleDeleteSellerProfile = () => {
+  const handleDeleteSellerProfile = async () => {
     if (!user) return;
 
-    // Remove company from directory
-    const directoryCompanies = JSON.parse(localStorage.getItem('marcan_directory') || '[]');
-    const updatedDirectory = directoryCompanies.filter((c: any) => c.userId !== user.email);
-    localStorage.setItem('marcan_directory', JSON.stringify(updatedDirectory));
+    setIsLoading(true);
+    setError('');
 
-    // Remove all seller-related data from user profile
-    const updatedUser = {
-      ...user,
-      // Remove seller-specific fields
-      jobTitle: undefined,
-      companyName: undefined,
-      businessNumber: undefined,
-      website: undefined,
-      aboutUs: undefined,
-      capabilities: undefined,
-      certifications: undefined,
-      selectedIcon: undefined,
-      logoUrl: undefined,
-      // Change role back to 'buy'
-      role: 'buy',
-    };
+    try {
+      // Delete profile from database (this will cascade delete listings and wishlist requests)
+      const response = await fetch(`/api/profiles/${encodeURIComponent(user.email)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    // Clean up undefined fields
-    Object.keys(updatedUser).forEach((key) => {
-      if ((updatedUser as any)[key] === undefined) {
-        delete (updatedUser as any)[key];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to delete seller profile');
       }
-    });
 
-    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-    window.dispatchEvent(new Event('marcan-auth-change'));
+      const result = await response.json();
+      console.log('Profile deleted:', result);
 
-    // Update auth state
-    login(updatedUser);
+      // Remove all seller-related data from user profile
+      const updatedUser = {
+        ...user,
+        // Remove seller-specific fields
+        jobTitle: undefined,
+        companyName: undefined,
+        businessNumber: undefined,
+        website: undefined,
+        aboutUs: undefined,
+        capabilities: undefined,
+        certifications: undefined,
+        selectedIcon: undefined,
+        logoUrl: undefined,
+        // Change role back to 'buy'
+        role: 'buy',
+      };
 
-    // Update local state
-    setFormData({
-      firstName: updatedUser.firstName || '',
-      lastName: updatedUser.lastName || '',
-      jobTitle: '',
-      email: updatedUser.email || '',
-      companyName: '',
-      businessNumber: '',
-      website: '',
-      aboutUs: '',
-    });
-    setCapabilities([]);
-    setCertifications([]);
-    setAccountRole('buy');
+      // Clean up undefined fields
+      Object.keys(updatedUser).forEach((key) => {
+        if ((updatedUser as any)[key] === undefined) {
+          delete (updatedUser as any)[key];
+        }
+      });
 
-    setShowDeleteConfirm(false);
-    setSaveMessage({ type: 'success', text: 'Seller profile deleted successfully. Your account is now a buyer account.' });
-    setTimeout(() => setSaveMessage(null), 5000);
+      // Update localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event('marcan-auth-change'));
+      }
 
-    // Refresh the page to update the UI (remove Company Profile tab)
-    setTimeout(() => {
-      window.location.reload();
+      // Update auth state
+      login(updatedUser);
+
+      // Update local state
+      setFormData({
+        firstName: updatedUser.firstName || '',
+        lastName: updatedUser.lastName || '',
+        jobTitle: '',
+        email: updatedUser.email || '',
+        companyName: '',
+        businessNumber: '',
+        website: '',
+        aboutUs: '',
+      });
+      setCapabilities([]);
+      setCertifications([]);
+      setAccountRole('buy');
+
+      setShowDeleteConfirm(false);
+      setSaveMessage({ 
+        type: 'success', 
+        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace. Your account is now a buyer account.` 
+      });
+      setTimeout(() => setSaveMessage(null), 5000);
+
+      // Refresh the page to update the UI (remove Company Profile tab)
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err: any) {
+      console.error('Error deleting seller profile:', err);
+      setError(err.message || 'Failed to delete seller profile');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsLoading(false);
+    }
     }, 1000);
   };
 

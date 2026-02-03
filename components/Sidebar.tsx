@@ -37,7 +37,7 @@ export default function Sidebar() {
             <Link href="/" className="flex items-center gap-4 px-2 mb-10 cursor-pointer group">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300 relative bg-transparent overflow-hidden">
                     <img
-                        src="/Gemini_Generated_Image_g2mdjig2mdjig2md.png"
+                        src="/images/marcan-potential-logo.png"
                         alt="Marcan Logo"
                         className="w-full h-full object-contain"
                     />
