@@ -310,11 +310,12 @@ export default function MyAccountPage() {
       setShowDeleteConfirm(false);
       setSaveMessage({ 
         type: 'success', 
-        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace. Your account is now a buyer account.` 
+        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace and company from directory. Your account is now a buyer account.` 
       });
       setTimeout(() => setSaveMessage(null), 5000);
 
       // Refresh the page to update the UI (remove Company Profile tab)
+      // This also refreshes the directory and marketplace pages if they're open
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -325,7 +326,6 @@ export default function MyAccountPage() {
     } finally {
       setIsLoading(false);
     }
-    }, 1000);
   };
 
   const handleUpdatePassword = async () => {

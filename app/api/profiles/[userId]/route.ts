@@ -61,23 +61,39 @@ export async function DELETE(
       );
     }
 
-    // Delete the profile
-    // Due to onDelete: Cascade in the schema, this will automatically delete:
-    // - All listings associated with this profile
-    // - All wishlist requests associated with this profile
+    const listingsCount = profile.listings.length;
+    const wishlistCount = profile.wishlistRequests.length;
+
+    // Explicitly delete listings first (even though cascade should handle it, this ensures it works)
+    if (listingsCount > 0) {
+      await prisma.listing.deleteMany({
+        where: { profileId: profile.id },
+      });
+      console.log(`Deleted ${listingsCount} listings for profile ${profile.id}`);
+    }
+
+    // Explicitly delete wishlist requests
+    if (wishlistCount > 0) {
+      await prisma.wishlistRequest.deleteMany({
+        where: { profileId: profile.id },
+      });
+      console.log(`Deleted ${wishlistCount} wishlist requests for profile ${profile.id}`);
+    }
+
+    // Delete the profile (this will also cascade delete any remaining related records)
     await prisma.profile.delete({
       where: { userId },
     });
 
     console.log(`Deleted profile for userId: ${userId}`);
-    console.log(`Cascaded delete: ${profile.listings.length} listings and ${profile.wishlistRequests.length} wishlist requests`);
+    console.log(`Deleted ${listingsCount} listings and ${wishlistCount} wishlist requests`);
 
     return NextResponse.json(
       {
         success: true,
         message: 'Seller profile and all associated listings have been deleted',
-        deletedListings: profile.listings.length,
-        deletedWishlistRequests: profile.wishlistRequests.length,
+        deletedListings: listingsCount,
+        deletedWishlistRequests: wishlistCount,
       },
       {
         status: 200,
