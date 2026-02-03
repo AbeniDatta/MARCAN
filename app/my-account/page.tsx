@@ -35,6 +35,8 @@ export default function MyAccountPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
   const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
+  const [isDeletingProfile, setIsDeletingProfile] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Only check authentication after component has mounted (client-side)
@@ -239,7 +241,7 @@ export default function MyAccountPage() {
   const handleDeleteSellerProfile = async () => {
     if (!user) return;
 
-    setIsLoading(true);
+    setIsDeletingProfile(true);
     setError('');
 
     try {
@@ -324,7 +326,7 @@ export default function MyAccountPage() {
       setError(err.message || 'Failed to delete seller profile');
       setShowDeleteConfirm(false);
     } finally {
-      setIsLoading(false);
+      setIsDeletingProfile(false);
     }
   };
 
@@ -680,9 +682,10 @@ export default function MyAccountPage() {
                           </button>
                           <button
                             onClick={handleDeleteSellerProfile}
-                            className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
+                            disabled={isDeletingProfile}
+                            className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Delete Profile
+                            {isDeletingProfile ? 'Deleting...' : 'Delete Profile'}
                           </button>
                         </div>
                       </div>
