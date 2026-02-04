@@ -18,7 +18,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: 'Marcan - Manufacturing Canada',
-  description: 'Sourcing local just got smarter. The ultimate ecosystem for Canadian Manufacturing Micro & Small Enterprises.'
+  description: 'Sourcing local just got smarter. The ultimate ecosystem for Canadian Manufacturing Enterprises.'
 };
 
 export default function RootLayout({

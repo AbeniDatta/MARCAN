@@ -21,7 +21,7 @@ export default function CreateListingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Get user info for the listing
     const userInfo = localStorage.getItem('marcan_user');
     let user = null;

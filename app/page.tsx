@@ -67,7 +67,7 @@ export default function HomePage() {
               <p className="text-slate-400 text-lg mb-8 max-w-lg font-light leading-relaxed">
                 Sourcing local just got smarter.
                 <br>
-                </br>The ultimate ecosystem for Canadian Manufacturing Micro & Small Enterprises.
+                </br>The ultimate ecosystem for Canadian Manufacturing Enterprises.
               </p>
               <div className="flex gap-4">
                 <Link
@@ -124,11 +124,11 @@ export default function HomePage() {
           {/* Industry Hubs */}
           <div className="lg:col-span-12">
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Our Industries</h3>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Industries</h3>
               <div className="h-[1px] bg-white/10 flex-grow"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {/* Industry Card 1 */}
               <Link
                 href="/directory"
@@ -196,39 +196,64 @@ export default function HomePage() {
                   Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
+
+              {/* Industry Card 5 */}
+              <Link
+                href="/directory"
+                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
+              >
+                <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
+                  <i className="fa-solid fa-robot text-2xl"></i>
+                </div>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">Automation</h4>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                  Robotics, PLC programming, and automated manufacturing systems for increased efficiency.
+                </p>
+                <div className="flex items-center text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
+                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Standard Section */}
+          <div className="lg:col-span-12">
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Standard</h3>
+              <div className="h-[1px] bg-white/10 flex-grow"></div>
             </div>
           </div>
 
           {/* Trust & Impact */}
-          <div className="lg:col-span-8 glass-card p-8 rounded-3xl border border-white/5">
+          <div className="lg:col-span-6 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
             <div className="flex items-center gap-3 mb-6">
               <i className="fa-solid fa-shield-halved text-marcan-red text-xl"></i>
               <h3 className="font-heading font-bold text-white uppercase text-lg">The Marcan Standard</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-2">
-                <div className="text-white font-bold text-sm">1. Verification</div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Every MSE on Marcan is manually verified to ensure they are a legitimate Canadian business.
-                </p>
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-marcan-red/10 flex items-center justify-center text-marcan-red border border-marcan-red/20 shrink-0">
+                  <i className="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">Local First</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">Proudly connecting you with partners found right here in Canada to strengthen our domestic supply chain.</p>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="text-white font-bold text-sm">2. Local First</div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Our search algorithm prioritizes geographic proximity to reduce shipping costs.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="text-white font-bold text-sm">3. Direct Contact</div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  No middlemen fees. Connect directly with the shop floor for quotes.
-                </p>
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shrink-0">
+                  <i className="fa-solid fa-handshake-simple"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">Direct Contact</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">No middlemen fees. Connect directly with the shop floor for quotes and lead times.</p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Member Certifications */}
-          <div className="lg:col-span-4 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent relative">
+          <div className="lg:col-span-6 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-heading font-bold text-white uppercase text-sm">Member Certifications</h3>
               {totalGroups > 1 && (
@@ -250,11 +275,9 @@ export default function HomePage() {
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              Connect with highly qualified suppliers holding top credentials.
-            </p>
+            <p className="text-xs text-slate-500 mb-6 leading-relaxed">Connect with highly qualified suppliers holding top credentials.</p>
 
-            <div className="grid grid-cols-2 gap-3 relative">
+            <div className="grid grid-cols-2 gap-3">
               {currentCertifications.map((cert, index) => (
                 <div
                   key={`${cert.code}-${currentGroup}`}
@@ -269,8 +292,7 @@ export default function HomePage() {
 
           {/* Trusted Partners Section */}
           <div className="lg:col-span-12">
-            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Our
-              Manufacturers</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Manufacturers</div>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {['TechFab', 'MapleCNC', 'IronWorks', 'CanCast', 'PrecisionQC', 'AutoParts CA'].map((partner) => (
                 <div

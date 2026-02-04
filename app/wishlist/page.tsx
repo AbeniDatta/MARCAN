@@ -91,13 +91,13 @@ export default function WishlistPage() {
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
-      <Header breadcrumb="Buyer Wishlist" />
+      <Header breadcrumb="Sourcing Requests" />
 
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="flex justify-between items-end mb-8">
           <div>
             <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Recent Requests</div>
-            <h2 className="font-heading text-3xl font-bold text-white uppercase">Buyer Wishlist</h2>
+            <h2 className="font-heading text-3xl font-bold text-white uppercase">Sourcing Requests</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
             {isMounted && isAuthenticated ? (
@@ -148,7 +148,7 @@ export default function WishlistPage() {
         {filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-            <p className="text-slate-400 text-sm">No wishlist requests available yet.</p>
+            <p className="text-slate-400 text-sm">No sourcing requests available yet.</p>
           </div>
         ) : (
           <div className="space-y-4">

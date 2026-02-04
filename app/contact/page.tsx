@@ -85,20 +85,6 @@ export default function ContactPage() {
                   </p>
                 </div>
               </div>
-
-              <div className="glass-card p-6 rounded-2xl flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-marcan-red/20 flex items-center justify-center text-marcan-red shrink-0">
-                  <i className="fa-solid fa-phone"></i>
-                </div>
-                <div>
-                  <h4 className="text-white font-bold uppercase mb-1">Call Us</h4>
-                  <p className="text-slate-400 text-sm">
-                    +1 (519) 888-4885
-                    <br />
-                    Mon-Fri, 9am - 5pm EST
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

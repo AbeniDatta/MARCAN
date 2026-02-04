@@ -310,9 +310,9 @@ export default function MyAccountPage() {
       setAccountRole('buy');
 
       setShowDeleteConfirm(false);
-      setSaveMessage({ 
-        type: 'success', 
-        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace and company from directory. Your account is now a buyer account.` 
+      setSaveMessage({
+        type: 'success',
+        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace and company from directory. Your account is now a buyer account.`
       });
       setTimeout(() => setSaveMessage(null), 5000);
 
@@ -700,7 +700,7 @@ export default function MyAccountPage() {
                   {/* Wishlist Requests Section */}
                   <div className="glass-card p-8 rounded-2xl border border-white/5">
                     <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Wishlist Requests</h3>
+                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                       <Link
                         href="/post-request"
                         className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
@@ -712,7 +712,7 @@ export default function MyAccountPage() {
                     {myWishlistRequests.length === 0 ? (
                       <div className="text-center py-12">
                         <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                        <p className="text-slate-400 text-sm mb-4">No wishlist requests posted yet.</p>
+                        <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
                         <Link
                           href="/post-request"
                           className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"

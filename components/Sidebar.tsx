@@ -18,8 +18,8 @@ export default function Sidebar() {
     const navItems: NavItem[] = [
         { href: '/', label: 'Home', icon: 'fa-house' },
         { href: '/about', label: 'About Us', icon: 'fa-shield-halved' },
-        { href: '/directory', label: 'Directory', icon: 'fa-address-book' },
-        { href: '/wishlist', label: 'Buyer Wishlist', icon: 'fa-bullhorn' },
+        { href: '/directory', label: 'Network Directory', icon: 'fa-address-book' },
+        { href: '/wishlist', label: 'Sourcing Requests', icon: 'fa-bullhorn' },
         { href: '/marketplace', label: 'Supplier Listings', icon: 'fa-shop' },
         { href: '/contact', label: 'Contact Us', icon: 'fa-envelope' },
     ];

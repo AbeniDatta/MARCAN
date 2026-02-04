@@ -18,23 +18,20 @@ export default function AboutPage() {
             Trust & Authority
           </h2>
           <p className="text-xl text-slate-400 leading-relaxed mb-12">
-            Marcan is a project dedicated to revitalizing the Canadian industrial sector. We bridge the gap between
-            small shops and large contracts through verification and transparency.
+            Marcan is a project dedicated to revitalizing the Canadian industrial sector.
           </p>
 
           <div className="grid md:grid-cols-2 gap-8 text-left">
             <div className="glass-card p-8 rounded-2xl border-t-4 border-marcan-red">
               <h3 className="font-bold text-xl text-white mb-3 uppercase">Who We Are</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                We are a collective of engineers and supply chain experts. Marcan was built to solve the fragmentation
-                in local manufacturing, making it easier to source "Made in Canada."
+                We are two engineering students at the University of Waterloo, dedicated to solving the fragmentation in local manufacturing and making it easier to source locally.
               </p>
             </div>
             <div className="glass-card p-8 rounded-2xl border-t-4 border-blue-500">
               <h3 className="font-bold text-xl text-white mb-3 uppercase">Our Sponsors</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Supported by leading industry bodies and government grants focused on digital transformation in the MSE
-                sector.
+                Supported by the University of Waterloo Faculty of Engineering and Next Generation Manufacturing Canada (NGEN).
               </p>
             </div>
           </div>

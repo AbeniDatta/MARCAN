@@ -97,14 +97,14 @@ export default function MarketplacePage() {
                   <i className={`fa-solid ${listing.icon} text-4xl group-hover:text-white transition-colors group-hover:scale-110 duration-500`}></i>
                   <div
                     className={`absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold uppercase ${listing.badgeColor === 'red'
-                        ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                        : listing.badgeColor === 'blue'
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                          : listing.badgeColor === 'green'
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                            : listing.badgeColor === 'purple'
-                              ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                              : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      : listing.badgeColor === 'blue'
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        : listing.badgeColor === 'green'
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                          : listing.badgeColor === 'purple'
+                            ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                            : 'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                       }`}
                   >
                     {listing.badge}
