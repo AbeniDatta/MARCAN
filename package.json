@@ -11,6 +11,7 @@
         "db:push": "prisma db push",
         "db:migrate": "prisma migrate dev",
         "db:studio": "prisma studio",
+        "db:seed": "node scripts/seed-capabilities.js",
         "db:clean": "node scripts/clean-database.js"
     },
     "dependencies": {

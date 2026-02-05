@@ -1,60 +1,164 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// prisma/schema.prisma
+// Learn more: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
   // Note: In Prisma 7, url and directUrl are configured in prisma.config.ts, not here
-  // The config file handles DATABASE_URL (pooler) and DIRECT_URL (direct) connections
+}
+
+enum CapabilityType {
+  PROCESS
+  MATERIAL
+  FINISH
+  CERTIFICATION
+  INDUSTRY
+  SERVICE
+  COMPANY_TYPE
+}
+
+enum OnboardingMethod {
+  IMPORT
+  MANUAL
+}
+
+enum TypicalJobSize {
+  PROTOTYPE
+  LOW_VOLUME
+  MEDIUM_VOLUME
+  HIGH_VOLUME
+}
+
+enum PreferredContactMethod {
+  EMAIL
+  PLATFORM_ONLY
+}
+
+model Capability {
+  id      String         @id @default(uuid()) @db.Uuid
+  type    CapabilityType
+  slug    String         @db.Text
+  name    String         @db.Text
+  aliases String[]       @default([]) @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  profiles ProfileCapability[]
+
+  @@unique([type, slug])
+  @@index([type])
+  @@map("capabilities")
+}
+
+model ProfileCapability {
+  id           String @id @default(uuid()) @db.Uuid
+  profileId    String @map("profile_id") @db.Uuid
+  capabilityId String @map("capability_id") @db.Uuid
+
+  // Optional fields for ranking / filtering later
+  // Examples: "in_house", "outsourced", "partner"
+  mode     String? @db.Text
+  verified Boolean @default(false)
+
+  // Optional but very useful for signup + enrichment + ranking
+  // Examples: "signup", "import", "ai", "admin"
+  source String? @db.Text
+  isCore Boolean @default(false) @map("is_core")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profile    Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  capability Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, capabilityId])
+  @@index([profileId])
+  @@index([capabilityId])
+  @@index([profileId, isCore])
+  @@map("profile_capabilities")
 }
 
 model Profile {
-  id            String    @id @default(uuid()) @db.Uuid
-  userId        String    @unique @map("user_id") @db.Text
-  companyName   String    @map("company_name") @db.Text
-  businessNumber String?  @map("business_number") @db.Text
-  website       String?   @db.Text
-  phone         String?   @db.Text
-  streetAddress String?   @map("street_address") @db.Text
-  city          String?   @db.Text
-  province      String?   @db.Text
-  aboutUs       String?   @map("about_us") @db.Text
-  logoUrl       String?   @map("logo_url") @db.Text
-  selectedIcon  String?   @map("selected_icon") @db.Text
-  jobTitle      String?   @map("job_title") @db.Text
-  capabilities  String[]  @db.Text
-  materials     String[]  @db.Text
-  certifications String[] @db.Text
-  primaryIntent String?   @map("primary_intent") @db.Text // 'buy' | 'sell'
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id             String  @id @default(uuid()) @db.Uuid
+  userId         String  @unique @map("user_id") @db.Text
+  companyName    String  @map("company_name") @db.Text
+  businessNumber String? @map("business_number") @db.Text
+  website        String? @db.Text
+  phone          String? @db.Text
+  streetAddress  String? @map("street_address") @db.Text
+  city           String? @db.Text
+  province       String? @db.Text
+  aboutUs        String? @map("about_us") @db.Text
+  logoUrl        String? @map("logo_url") @db.Text
+  selectedIcon   String? @map("selected_icon") @db.Text
+  jobTitle       String? @map("job_title") @db.Text
 
-  listings      Listing[]
+  // Backward-compatible arrays (keep for now; migrate later to ProfileCapability)
+  capabilities   String[] @default([]) @db.Text
+  materials      String[] @default([]) @db.Text
+  certifications String[] @default([]) @db.Text
+
+  primaryIntent String? @map("primary_intent") @db.Text // 'buy' | 'sell'
+
+  // Logistics & coverage (attributes, not taxonomy)
+  provincesServed    String[] @default([]) @map("provinces_served") @db.Text // ["ON","QC",...]
+  shippingCapability String?  @map("shipping_capability") @db.Text // "local" | "national" | "international"
+  minOrderQty        Int?     @map("min_order_qty")
+  leadTimeMinDays    Int?     @map("lead_time_min_days")
+  leadTimeMaxDays    Int?     @map("lead_time_max_days")
+  maxPartSizeMmX     Int?     @map("max_part_size_mm_x")
+  maxPartSizeMmY     Int?     @map("max_part_size_mm_y")
+  maxPartSizeMmZ     Int?     @map("max_part_size_mm_z")
+
+  // Step 3: production profile (ranking)
+  typicalJobSize TypicalJobSize? @map("typical_job_size")
+
+  // Step 5: contact / RFQ preferences (future-proofing)
+  rfqEmail               String?                 @map("rfq_email") @db.Text
+  preferredContactMethod PreferredContactMethod? @map("preferred_contact_method")
+
+  // Internal (hidden) fields for eligibility + enrichment lifecycle
+  searchable               Boolean           @default(false)
+  profileCompletenessScore Int               @default(0) @map("profile_completeness_score")
+  onboardingMethod         OnboardingMethod? @map("onboarding_method")
+  taxonomyVersion          String            @default("v1") @map("taxonomy_version")
+  lastVerifiedAt           DateTime?         @map("last_verified_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listings         Listing[]
   wishlistRequests WishlistRequest[]
 
+  // Normalized taxonomy relations
+  profileCapabilities ProfileCapability[]
+
+  @@index([searchable])
+  @@index([province])
+  @@index([createdAt(sort: Desc)])
   @@map("profiles")
 }
 
 model Listing {
-  id          String    @id @default(uuid()) @db.Uuid
-  profileId   String    @map("profile_id") @db.Uuid
-  title       String    @db.Text
-  description String?   @db.Text
-  price       String?   @db.Text
-  category    String?   @db.Text
-  badge       String?   @db.Text
-  imageUrl    String?   @map("image_url") @db.Text
-  listingType String?   @map("listing_type") @db.Text
-  condition   String?   @db.Text
-  location    String?   @db.Text
-  active      Boolean   @default(true)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id          String   @id @default(uuid()) @db.Uuid
+  profileId   String   @map("profile_id") @db.Uuid
+  title       String   @db.Text
+  description String?  @db.Text
+  price       String?  @db.Text
+  category    String?  @db.Text
+  badge       String?  @db.Text
+  imageUrl    String?  @map("image_url") @db.Text
+  listingType String?  @map("listing_type") @db.Text
+  condition   String?  @db.Text
+  location    String?  @db.Text
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([createdAt(sort: Desc)])
@@ -75,7 +179,7 @@ model WishlistRequest {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([createdAt(sort: Desc)])

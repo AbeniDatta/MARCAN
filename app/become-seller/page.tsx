@@ -2,485 +2,893 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
-import { updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
-type WizardStep = 1 | 2;
+type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 type View = 'landing' | 'form';
+type OnboardingMethod = 'IMPORT' | 'MANUAL';
+type TypicalJobSize = 'PROTOTYPE' | 'LOW_VOLUME' | 'MEDIUM_VOLUME' | 'HIGH_VOLUME';
+type PreferredContactMethod = 'EMAIL' | 'PLATFORM_ONLY';
+
+interface Capability {
+  id: string;
+  type: string;
+  slug: string;
+  name: string;
+}
+
+const CANADIAN_PROVINCES = [
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Quebec' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'AB', name: 'Alberta' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NU', name: 'Nunavut' },
+];
 
 export default function BecomeSellerPage() {
-    const router = useRouter();
-    const { login, user: currentUser, isAuthenticated, isMounted } = useAuth();
-    const [currentView, setCurrentView] = useState<View>('landing');
-    const [wizardStep, setWizardStep] = useState<WizardStep>(1);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+  const router = useRouter();
+  const { login, user: currentUser, isAuthenticated, isMounted } = useAuth();
+  const [currentView, setCurrentView] = useState<View>('landing');
+  const [wizardStep, setWizardStep] = useState<WizardStep>(0);
+  const [lastCompletedStep, setLastCompletedStep] = useState<WizardStep | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [capabilities, setCapabilities] = useState<{
+    PROCESS: Capability[];
+    MATERIAL: Capability[];
+    FINISH: Capability[];
+    CERTIFICATION: Capability[];
+    INDUSTRY: Capability[];
+    COMPANY_TYPE: Capability[];
+  }>({
+    PROCESS: [],
+    MATERIAL: [],
+    FINISH: [],
+    CERTIFICATION: [],
+    INDUSTRY: [],
+    COMPANY_TYPE: [],
+  });
 
-    // Seller wizard state
-    const [sellerData, setSellerData] = useState({
-        // Step 1: Company Profile
-        jobTitle: '',
-        companyName: '',
-        businessNumber: '',
-        website: '',
-        city: '',
-        province: '',
-        aboutUs: '',
-        // Step 2: Capabilities
-        capabilities: [] as string[],
-        certifications: [] as string[],
-        selectedIcon: 'fa-industry', // Default icon
-        logoUrl: '', // For uploaded logo
-    });
+  // Form state
+  const [formData, setFormData] = useState({
+    // Step 0
+    onboardingMethod: null as OnboardingMethod | null,
+    // Step 1
+    companyName: '',
+    city: '',
+    province: '',
+    provincesServed: [] as string[],
+    companyType: null as string | null,
+    website: '',
+    // Step 2
+    processes: [] as string[], // capability IDs
+    materials: [] as string[], // capability IDs
+    finishes: [] as string[], // capability IDs
+    // Step 3
+    typicalJobSize: null as TypicalJobSize | null,
+    leadTimeMinDays: '',
+    leadTimeMaxDays: '',
+    maxPartSizeMmX: '',
+    maxPartSizeMmY: '',
+    maxPartSizeMmZ: '',
+    // Step 4
+    certifications: [] as string[], // capability IDs
+    industries: [] as string[], // capability IDs
+    aboutUs: '',
+    // Step 5
+    rfqEmail: '',
+    preferredContactMethod: null as PreferredContactMethod | null,
+  });
 
-    // Load current user data if authenticated
-    useEffect(() => {
-        if (isMounted && isAuthenticated && currentUser) {
-            setSellerData({
-                jobTitle: currentUser.jobTitle || '',
-                companyName: currentUser.companyName || '',
-                businessNumber: currentUser.businessNumber || '',
-                website: currentUser.website || '',
-                city: currentUser.city || '',
-                province: currentUser.province || '',
-                aboutUs: currentUser.aboutUs || '',
-                capabilities: currentUser.capabilities || [],
-                certifications: currentUser.certifications || [],
-                selectedIcon: (currentUser as any).selectedIcon || 'fa-industry',
-                logoUrl: (currentUser as any).logoUrl || '',
-            });
-        }
-    }, [isMounted, isAuthenticated, currentUser]);
-
-    // Redirect if not authenticated
-    useEffect(() => {
-        if (isMounted && !isAuthenticated) {
-            router.replace('/login');
-        }
-    }, [isMounted, isAuthenticated, router]);
-
-    const nextWizardStep = () => {
-        if (wizardStep < 2) {
-            setWizardStep((prev) => (prev + 1) as WizardStep);
-        }
+  // Load capabilities on mount
+  useEffect(() => {
+    const loadCapabilities = async () => {
+      try {
+        const types = ['PROCESS', 'MATERIAL', 'FINISH', 'CERTIFICATION', 'INDUSTRY', 'COMPANY_TYPE'];
+        const promises = types.map(async (type) => {
+          try {
+            const res = await fetch(`/api/capabilities?type=${type}`);
+            const data = await res.json();
+            // Ensure we always return an array
+            return Array.isArray(data) ? data : [];
+          } catch (err) {
+            console.error(`Error loading ${type} capabilities:`, err);
+            return [];
+          }
+        });
+        const results = await Promise.all(promises);
+        setCapabilities({
+          PROCESS: Array.isArray(results[0]) ? results[0] : [],
+          MATERIAL: Array.isArray(results[1]) ? results[1] : [],
+          FINISH: Array.isArray(results[2]) ? results[2] : [],
+          CERTIFICATION: Array.isArray(results[3]) ? results[3] : [],
+          INDUSTRY: Array.isArray(results[4]) ? results[4] : [],
+          COMPANY_TYPE: Array.isArray(results[5]) ? results[5] : [],
+        });
+      } catch (err) {
+        console.error('Error loading capabilities:', err);
+        // Ensure capabilities are always arrays even on error
+        setCapabilities({
+          PROCESS: [],
+          MATERIAL: [],
+          FINISH: [],
+          CERTIFICATION: [],
+          INDUSTRY: [],
+          COMPANY_TYPE: [],
+        });
+      }
     };
+    loadCapabilities();
+  }, []);
 
-    const prevWizardStep = () => {
-        if (wizardStep > 1) {
-            setWizardStep((prev) => (prev - 1) as WizardStep);
-        }
-    };
-
-    const handleSellerSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-
-        if (!sellerData.companyName) {
-            setError('Company name is required');
-            return;
-        }
-
-        setIsLoading(true);
-
+  // Load saved form data from localStorage
+  useEffect(() => {
+    if (isMounted && currentUser?.email) {
+      const savedDataKey = `seller_registration_${currentUser.email}`;
+      const savedData = localStorage.getItem(savedDataKey);
+      if (savedData) {
         try {
-            // Save profile to database via API
-            const response = await fetch('/api/profiles', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: currentUser!.email,
-                    companyName: sellerData.companyName,
-                    jobTitle: sellerData.jobTitle,
-                    businessNumber: sellerData.businessNumber,
-                    website: sellerData.website,
-                    city: sellerData.city,
-                    province: sellerData.province,
-                    aboutUs: sellerData.aboutUs,
-                    capabilities: sellerData.capabilities,
-                    certifications: sellerData.certifications,
-                    selectedIcon: sellerData.selectedIcon,
-                    logoUrl: sellerData.logoUrl,
-                    primaryIntent: 'both', // User is both buyer and seller
-                }),
-            });
-
-            if (!response.ok) {
-                // Try to parse as JSON, but handle HTML error pages
-                let error;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    error = await response.json();
-                } else {
-                    const text = await response.text();
-                    console.error('API returned non-JSON response:', text.substring(0, 200));
-                    error = { error: `Server error: ${response.status} ${response.statusText}` };
-                }
-                console.error('API Error:', error);
-                throw new Error(error.details || error.error || 'Failed to save seller profile');
-            }
-
-            // Update user data with seller information (using existing user data for name/email)
-            const updatedUserData = {
-                ...currentUser!,
-                jobTitle: sellerData.jobTitle,
-                companyName: sellerData.companyName,
-                businessNumber: sellerData.businessNumber,
-                website: sellerData.website,
-                city: sellerData.city,
-                province: sellerData.province,
-                aboutUs: sellerData.aboutUs,
-                capabilities: sellerData.capabilities,
-                certifications: sellerData.certifications,
-                selectedIcon: sellerData.selectedIcon,
-                logoUrl: sellerData.logoUrl,
-                role: 'both', // Update role to 'both' since they're now a seller too
-            };
-
-            // Update localStorage
-            localStorage.setItem('marcan_user', JSON.stringify(updatedUserData));
-            window.dispatchEvent(new Event('marcan-auth-change'));
-
-            // Update auth state
-            login(updatedUserData);
-
-            // Redirect to home page
-            router.push('/');
-        } catch (err: any) {
-            let errorMessage = 'An error occurred while updating your profile.';
-            if (err.message) {
-                errorMessage = err.message;
-            }
-            setError(errorMessage);
-        } finally {
-            setIsLoading(false);
+          const parsed = JSON.parse(savedData);
+          if (parsed.formData) {
+            setFormData(parsed.formData);
+          }
+          if (parsed.lastCompletedStep !== undefined && parsed.lastCompletedStep !== null) {
+            setLastCompletedStep(parsed.lastCompletedStep);
+          }
+        } catch (err) {
+          console.error('Error loading saved form data:', err);
         }
-    };
+      }
+    }
+  }, [isMounted, currentUser]);
 
-    const toggleCapability = (cap: string) => {
-        setSellerData((prev) => ({
-            ...prev,
-            capabilities: prev.capabilities.includes(cap)
-                ? prev.capabilities.filter((c) => c !== cap)
-                : [...prev.capabilities, cap],
-        }));
-    };
+  // Save form data to localStorage whenever it changes (debounced)
+  useEffect(() => {
+    if (isMounted && currentUser?.email) {
+      const savedDataKey = `seller_registration_${currentUser.email}`;
+      const dataToSave = {
+        formData,
+        lastCompletedStep,
+        wizardStep,
+      };
+      // Debounce the save to avoid too many writes
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem(savedDataKey, JSON.stringify(dataToSave));
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData, lastCompletedStep, wizardStep, isMounted, currentUser]);
 
-    const toggleCertification = (cert: string) => {
-        setSellerData((prev) => ({
-            ...prev,
-            certifications: prev.certifications.includes(cert)
-                ? prev.certifications.filter((c) => c !== cert)
-                : [...prev.certifications, cert],
-        }));
-    };
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (isMounted && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isMounted, isAuthenticated, router]);
 
-    if (!isMounted) {
-        return null; // Prevent flash of content before auth check
+  const saveAndNextStep = () => {
+    if (validateStep(wizardStep)) {
+      // Save current step as completed
+      setLastCompletedStep(wizardStep);
+      
+      // Move to next step
+      if (wizardStep < 5) {
+        setWizardStep((prev) => (prev + 1) as WizardStep);
+        setError('');
+      }
+    }
+  };
+
+  const prevStep = () => {
+    if (wizardStep > 0) {
+      setWizardStep((prev) => (prev - 1) as WizardStep);
+      setError('');
+    }
+  };
+
+  const validateStep = (step: WizardStep): boolean => {
+    switch (step) {
+      case 0:
+        if (!formData.onboardingMethod) {
+          setError('Please select an onboarding method');
+          return false;
+        }
+        return true;
+      case 1:
+        if (!formData.companyName || !formData.city || !formData.province || formData.provincesServed.length === 0) {
+          setError('Company name, city, province, and at least one province served are required');
+          return false;
+        }
+        return true;
+      case 2:
+        if (formData.processes.length === 0 || formData.materials.length === 0) {
+          setError('Please select at least one process and one material');
+          return false;
+        }
+        return true;
+      case 3:
+        if (!formData.typicalJobSize) {
+          setError('Please select a typical job size');
+          return false;
+        }
+        return true;
+      case 5:
+        if (!formData.rfqEmail) {
+          setError('RFQ email is required');
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep(5)) return;
+
+    if (!currentUser || !currentUser.email) {
+      setError('You must be logged in to complete setup');
+      return;
     }
 
-    return (
-        <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
-            <Header breadcrumb="Become a Seller" />
+    setIsLoading(true);
+    setError('');
 
-            <div className="flex-1 overflow-y-auto p-8 relative">
-                <div className="flex items-center justify-center py-10">
-                    <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
+    const submitData = {
+      userId: currentUser.email,
+          onboardingMethod: formData.onboardingMethod,
+          companyName: formData.companyName,
+          city: formData.city,
+          province: formData.province,
+          provincesServed: formData.provincesServed,
+          website: formData.website || null,
+          companyType: formData.companyType,
+          processes: formData.processes,
+          materials: formData.materials,
+          finishes: formData.finishes,
+          typicalJobSize: formData.typicalJobSize,
+          leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays) : null,
+          leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays) : null,
+          maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX) : null,
+          maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY) : null,
+          maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ) : null,
+          certifications: formData.certifications,
+          industries: formData.industries,
+          aboutUs: formData.aboutUs || null,
+      rfqEmail: formData.rfqEmail,
+      preferredContactMethod: formData.preferredContactMethod,
+    };
 
-                        {/* Error Message */}
-                        {error && (
-                            <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
-                                {error}
-                            </div>
-                        )}
+    console.log('Submitting profile data:', { userId: submitData.userId, companyName: submitData.companyName });
 
-                        {/* LANDING PAGE */}
-                        {currentView === 'landing' && (
-                            <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-                                <div className="glass-card p-12 rounded-3xl w-full max-w-3xl text-center relative overflow-hidden flex flex-col items-center justify-center border border-white/10">
-                                    {/* Decor */}
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
-                                    <div className="absolute -right-20 -top-20 w-64 h-64 bg-marcan-red/10 rounded-full blur-3xl pointer-events-none"></div>
-                                    <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    try {
+      const response = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
 
-                                    <div className="mb-8 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-marcan-red to-red-900 shadow-neon text-white text-4xl animate-pulse-slow">
-                                        <i className="fa-solid fa-handshake"></i>
-                                    </div>
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        let error;
+        if (contentType && contentType.includes('application/json')) {
+          error = await response.json();
+        } else {
+          error = { error: `Server error: ${response.status}` };
+        }
+        throw new Error(error.details || error.error || 'Failed to save profile');
+      }
 
-                                    <h2 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-widest mb-6 leading-tight">
-                                        Welcome to the <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">MARCAN Network</span>
-                                    </h2>
+      // Update user role in localStorage to reflect seller status
+      const updatedUser = {
+        ...currentUser,
+        role: 'both', // User is now both buyer and seller
+        companyName: formData.companyName,
+        city: formData.city,
+        province: formData.province,
+      };
 
-                                    <p className="text-xl text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto font-light">
-                                        We're glad to have you join our network! <br />
-                                        Marcan connects you with the partners you need to grow your business and strengthen the Canadian supply chain.
-                                    </p>
+      // Update localStorage
+      localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('marcan-auth-change'));
 
-                                    <button
-                                        onClick={() => setCurrentView('form')}
-                                        className="bg-marcan-red text-white px-10 py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-3"
-                                    >
-                                        Continue to Registration <i className="fa-solid fa-arrow-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+      // Update auth state
+      login(updatedUser);
 
-                        {/* SELLER WIZARD */}
-                        {currentView === 'form' && (
-                            <div>
-                                <div className="flex justify-between items-center mb-8">
-                                    <Link
-                                        href="/"
-                                        className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
-                                    >
-                                        <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Home
-                                    </Link>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`h-1 w-8 rounded-full transition-all ${wizardStep >= 1 ? 'bg-marcan-red' : 'bg-white/10'}`}></div>
-                                        <div className={`h-1 w-8 rounded-full transition-all ${wizardStep >= 2 ? 'bg-marcan-red' : 'bg-white/10'}`}></div>
-                                    </div>
-                                </div>
+      // Clear saved registration data since registration is complete
+      if (currentUser?.email) {
+        const savedDataKey = `seller_registration_${currentUser.email}`;
+        localStorage.removeItem(savedDataKey);
+      }
 
-                                <form onSubmit={handleSellerSubmit} className="max-w-2xl mx-auto">
-                                    {/* Slide 1: Company Profile */}
-                                    <div
-                                        className={`transition-all duration-300 ${wizardStep === 1 ? 'opacity-100 translate-x-0 block' : 'opacity-0 pointer-events-none translate-x-10 hidden'
-                                            }`}
-                                    >
-                                        <div className="text-center mb-8">
-                                            <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Company Profile</h2>
-                                            <p className="text-xs text-slate-500">Step 1 of 2: Business Details</p>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Your Job Title</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Procurement Manager"
-                                                    value={sellerData.jobTitle}
-                                                    onChange={(e) => setSellerData({ ...sellerData, jobTitle: e.target.value })}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Legal Company Name</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="NorthYork Precision Ltd."
-                                                    value={sellerData.companyName}
-                                                    onChange={(e) => setSellerData({ ...sellerData, companyName: e.target.value })}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Business Number (BN)</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="12345 6789 RT0001"
-                                                        value={sellerData.businessNumber}
-                                                        onChange={(e) => setSellerData({ ...sellerData, businessNumber: e.target.value })}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Website</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="www.company.com"
-                                                        value={sellerData.website}
-                                                        onChange={(e) => setSellerData({ ...sellerData, website: e.target.value })}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">City</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Toronto"
-                                                        value={sellerData.city}
-                                                        onChange={(e) => setSellerData({ ...sellerData, city: e.target.value })}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Province</label>
-                                                    <select
-                                                        value={sellerData.province}
-                                                        onChange={(e) => setSellerData({ ...sellerData, province: e.target.value })}
-                                                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
-                                                    >
-                                                        <option value="">Select...</option>
-                                                        <option value="ON">Ontario</option>
-                                                        <option value="QC">Quebec</option>
-                                                        <option value="AB">Alberta</option>
-                                                        <option value="BC">British Columbia</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">About Us</label>
-                                                <textarea
-                                                    rows={3}
-                                                    placeholder="Describe your company history, mission, and specialization..."
-                                                    value={sellerData.aboutUs}
-                                                    onChange={(e) => setSellerData({ ...sellerData, aboutUs: e.target.value })}
-                                                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                                ></textarea>
-                                            </div>
-                                        </div>
-                                        <div className="mt-8 flex justify-end">
-                                            <button
-                                                type="button"
-                                                onClick={nextWizardStep}
-                                                className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
-                                            >
-                                                Next Step <i className="fa-solid fa-arrow-right ml-2"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while saving your profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-                                    {/* Slide 2: Capabilities */}
-                                    <div
-                                        className={`transition-all duration-300 ${wizardStep === 2 ? 'opacity-100 translate-x-0 block' : 'opacity-0 pointer-events-none translate-x-10 hidden'
-                                            }`}
-                                    >
-                                        <div className="text-center mb-8">
-                                            <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Capabilities</h2>
-                                            <p className="text-xs text-slate-500">Step 2 of 2: Skill Tags</p>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Company Logo / Icon</label>
-                                                <div className="flex gap-4 items-center mb-4 p-4 rounded-lg bg-white/5 border border-white/5">
-                                                    <div className="w-16 h-16 rounded-lg bg-black/40 border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500 cursor-pointer hover:border-marcan-red transition">
-                                                        <i className="fa-solid fa-camera"></i>
-                                                        <span className="text-[8px] uppercase mt-1">Upload</span>
-                                                    </div>
-                                                    <div className="text-xs text-slate-400 flex-1">Upload your company logo, or choose an icon below.</div>
-                                                </div>
+  const toggleArrayItem = (array: string[], item: string) => {
+    return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
+  };
 
-                                                <div className="mb-4">
-                                                    <p className="text-xs text-slate-500 mb-3">Or select an icon:</p>
-                                                    <div className="grid grid-cols-6 gap-3">
-                                                        {[
-                                                            { icon: 'fa-industry', label: 'Industry' },
-                                                            { icon: 'fa-fire-burner', label: 'Foundry' },
-                                                            { icon: 'fa-flask', label: 'Chemical' },
-                                                            { icon: 'fa-microchip', label: 'Tech' },
-                                                            { icon: 'fa-cog', label: 'Machining' },
-                                                            { icon: 'fa-toolbox', label: 'Tools' },
-                                                            { icon: 'fa-wrench', label: 'Repair' },
-                                                            { icon: 'fa-hammer', label: 'Construction' },
-                                                            { icon: 'fa-screwdriver-wrench', label: 'Assembly' },
-                                                            { icon: 'fa-spray-can-sparkles', label: 'Finishing' },
-                                                            { icon: 'fa-shapes', label: 'Design' },
-                                                            { icon: 'fa-cube', label: 'Manufacturing' },
-                                                        ].map((iconOption) => (
-                                                            <button
-                                                                key={iconOption.icon}
-                                                                type="button"
-                                                                onClick={() => setSellerData({ ...sellerData, selectedIcon: iconOption.icon })}
-                                                                className={`w-12 h-12 rounded-lg flex items-center justify-center border-2 transition-all ${sellerData.selectedIcon === iconOption.icon
-                                                                    ? 'bg-marcan-red/20 border-marcan-red text-marcan-red'
-                                                                    : 'bg-black/40 border-white/10 text-slate-400 hover:border-marcan-red/50 hover:text-white'
-                                                                    }`}
-                                                                title={iconOption.label}
-                                                            >
-                                                                <i className={`fa-solid ${iconOption.icon}`}></i>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
+  if (!isMounted) {
+    return null;
+  }
 
-                                            <div>
-                                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Primary Capabilities</label>
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                    {['CNC Machining', 'Casting', 'Fabrication', 'Finishing', 'Tooling', 'Assembly'].map((cap) => (
-                                                        <label
-                                                            key={cap}
-                                                            className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={sellerData.capabilities.includes(cap)}
-                                                                onChange={() => toggleCapability(cap)}
-                                                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
-                                                            />
-                                                            <span className="text-[10px] font-bold text-white uppercase">{cap}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="+ Add custom capability..."
-                                                    className="w-full mt-2 bg-transparent border-b border-white/10 py-2 text-xs text-white focus:border-marcan-red outline-none"
-                                                />
-                                            </div>
+  return (
+    <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
+      <Header breadcrumb="Become a Seller" />
 
-                                            <div>
-                                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Certifications</label>
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                                    {['ISO 9001', 'AS9100', 'CGRP'].map((cert) => (
-                                                        <label
-                                                            key={cert}
-                                                            className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={sellerData.certifications.includes(cert)}
-                                                                onChange={() => toggleCertification(cert)}
-                                                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
-                                                            />
-                                                            <span className="text-[10px] font-bold text-white uppercase">{cert}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="+ Add custom certification..."
-                                                    className="w-full mt-2 bg-transparent border-b border-white/10 py-2 text-xs text-white focus:border-marcan-red outline-none"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="mt-8 flex justify-between">
-                                            <button
-                                                type="button"
-                                                onClick={prevWizardStep}
-                                                className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
-                                            >
-                                                Back
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={isLoading}
-                                                className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {isLoading ? (
-                                                    <span>
-                                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
-                                                    </span>
-                                                ) : (
-                                                    'Complete Seller Setup'
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-                    </div>
+      <div className="flex-1 overflow-y-auto p-8 relative">
+        <div className="flex items-center justify-center py-10">
+          <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
+
+            {error && (
+              <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
+                {error}
+              </div>
+            )}
+
+            {/* LANDING PAGE */}
+            {currentView === 'landing' && (
+              <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
+                <div className="glass-card p-12 rounded-3xl w-full max-w-3xl text-center relative overflow-hidden flex flex-col items-center justify-center border border-white/10">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
+                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-marcan-red/10 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                  <div className="mb-8 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-marcan-red to-red-900 shadow-neon text-white text-4xl animate-pulse-slow">
+                    <i className="fa-solid fa-handshake"></i>
+                  </div>
+
+                  <h2 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-widest mb-6 leading-tight">
+                    Welcome to the <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">MARCAN Network</span>
+                  </h2>
+
+                  <p className="text-xl text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto font-light">
+                    We're glad to have you join our network! <br />
+                    Marcan connects you with the partners you need to grow your business and strengthen the Canadian supply chain.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setCurrentView('form');
+                      // If user has progress, resume from last completed step + 1
+                      // But don't go beyond step 5 (the last step)
+                      if (lastCompletedStep !== null && lastCompletedStep >= 0 && lastCompletedStep < 5) {
+                        setWizardStep((lastCompletedStep + 1) as WizardStep);
+                      } else if (lastCompletedStep === 5) {
+                        // If they completed all steps, start from step 5 (final step)
+                        setWizardStep(5);
+                      } else {
+                        setWizardStep(0);
+                      }
+                    }}
+                    className="bg-marcan-red text-white px-10 py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-3"
+                  >
+                    {lastCompletedStep !== null && lastCompletedStep >= 0 ? 'Continue Registration' : 'Begin Registration'} <i className="fa-solid fa-arrow-right"></i>
+                  </button>
                 </div>
-            </div>
-        </main>
-    );
+              </div>
+            )}
+
+            {/* WIZARD FORM */}
+            {currentView === 'form' && (
+              <div>
+                <div className="flex justify-between items-center mb-8">
+                  <button
+                    onClick={() => setCurrentView('landing')}
+                    className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
+                  >
+                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Home
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {[0, 1, 2, 3, 4, 5].map((step) => (
+                      <div
+                        key={step}
+                        className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 0: Entry - Onboarding Method */}
+                {wizardStep === 0 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Get Started</h2>
+                      <p className="text-xs text-slate-500">How would you like to set up your profile?</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, onboardingMethod: 'IMPORT' });
+                          setLastCompletedStep(0);
+                          saveAndNextStep();
+                        }}
+                        className={`p-8 rounded-lg border-2 transition-all ${formData.onboardingMethod === 'IMPORT' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                      >
+                        <i className="fa-solid fa-globe text-4xl mb-4 text-marcan-red"></i>
+                        <div className="text-white font-bold text-sm uppercase mb-2">Import from Website</div>
+                        <div className="text-xs text-slate-400">Automatically import company information</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, onboardingMethod: 'MANUAL' });
+                          setLastCompletedStep(0);
+                          saveAndNextStep();
+                        }}
+                        className={`p-8 rounded-lg border-2 transition-all ${formData.onboardingMethod === 'MANUAL' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                      >
+                        <i className="fa-solid fa-pen-to-square text-4xl mb-4 text-marcan-red"></i>
+                        <div className="text-white font-bold text-sm uppercase mb-2">Fill Manually</div>
+                        <div className="text-xs text-slate-400">Enter your information step by step</div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 1: Company Basics */}
+                {wizardStep === 1 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Company Basics</h2>
+                      <p className="text-xs text-slate-500">Step 1 of 5</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Legal Company Name *</label>
+                        <input
+                          type="text"
+                          placeholder="NorthYork Precision Ltd."
+                          value={formData.companyName}
+                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">City *</label>
+                          <input
+                            type="text"
+                            placeholder="Toronto"
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Province *</label>
+                          <select
+                            value={formData.province}
+                            onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
+                            required
+                          >
+                            <option value="">Select...</option>
+                            {CANADIAN_PROVINCES.map((p) => (
+                              <option key={p.code} value={p.code}>{p.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Provinces Served *</label>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {CANADIAN_PROVINCES.map((p) => (
+                            <label
+                              key={p.code}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.provincesServed.includes(p.code)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  provincesServed: toggleArrayItem(formData.provincesServed, p.code)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{p.code}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Company Type</label>
+                        <select
+                          value={formData.companyType || ''}
+                          onChange={(e) => setFormData({ ...formData, companyType: e.target.value || null })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
+                        >
+                          <option value="">Select...</option>
+                          {Array.isArray(capabilities.COMPANY_TYPE) && capabilities.COMPANY_TYPE.map((cap) => (
+                            <option key={cap.id} value={cap.id}>{cap.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Website</label>
+                        <input
+                          type="url"
+                          placeholder="https://www.company.com"
+                          value={formData.website}
+                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={saveAndNextStep}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
+                      >
+                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Core Manufacturing Capabilities */}
+                {wizardStep === 2 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Core Capabilities</h2>
+                      <p className="text-xs text-slate-500">Step 2 of 5: Select at least one process and one material</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Primary Processes *</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
+                            <label
+                              key={cap.id}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.processes.includes(cap.id)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  processes: toggleArrayItem(formData.processes, cap.id)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Materials *</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
+                            <label
+                              key={cap.id}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.materials.includes(cap.id)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  materials: toggleArrayItem(formData.materials, cap.id)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Finishes (Optional)</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Array.isArray(capabilities.FINISH) && capabilities.FINISH.map((cap) => (
+                            <label
+                              key={cap.id}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.finishes.includes(cap.id)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  finishes: toggleArrayItem(formData.finishes, cap.id)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAndNextStep}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
+                      >
+                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Production Profile */}
+                {wizardStep === 3 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Production Profile</h2>
+                      <p className="text-xs text-slate-500">Step 3 of 5</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Typical Job Size *</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          {(['PROTOTYPE', 'LOW_VOLUME', 'MEDIUM_VOLUME', 'HIGH_VOLUME'] as TypicalJobSize[]).map((size) => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, typicalJobSize: size })}
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.typicalJobSize === size ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                            >
+                              <div className="text-white font-bold text-sm uppercase">{size.replace('_', ' ')}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Lead Time Min (Days)</label>
+                          <input
+                            type="number"
+                            placeholder="7"
+                            value={formData.leadTimeMinDays}
+                            onChange={(e) => setFormData({ ...formData, leadTimeMinDays: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Lead Time Max (Days)</label>
+                          <input
+                            type="number"
+                            placeholder="30"
+                            value={formData.leadTimeMaxDays}
+                            onChange={(e) => setFormData({ ...formData, leadTimeMaxDays: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Max Part Size (mm) - Optional</label>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-[8px] text-slate-500 mb-1 block">X</label>
+                            <input
+                              type="number"
+                              placeholder="100"
+                              value={formData.maxPartSizeMmX}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmX: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[8px] text-slate-500 mb-1 block">Y</label>
+                            <input
+                              type="number"
+                              placeholder="100"
+                              value={formData.maxPartSizeMmY}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmY: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[8px] text-slate-500 mb-1 block">Z</label>
+                            <input
+                              type="number"
+                              placeholder="100"
+                              value={formData.maxPartSizeMmZ}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmZ: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAndNextStep}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
+                      >
+                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Trust & Enrichment */}
+                {wizardStep === 4 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Trust & Enrichment</h2>
+                      <p className="text-xs text-slate-500">Step 4 of 5: Optional</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Certifications</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Array.isArray(capabilities.CERTIFICATION) && capabilities.CERTIFICATION.map((cap) => (
+                            <label
+                              key={cap.id}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.certifications.includes(cap.id)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  certifications: toggleArrayItem(formData.certifications, cap.id)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Industries Served</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {Array.isArray(capabilities.INDUSTRY) && capabilities.INDUSTRY.map((cap) => (
+                            <label
+                              key={cap.id}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.industries.includes(cap.id)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  industries: toggleArrayItem(formData.industries, cap.id)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">About Us</label>
+                        <textarea
+                          rows={4}
+                          placeholder="Describe your company history, mission, and specialization..."
+                          value={formData.aboutUs}
+                          onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                        ></textarea>
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveAndNextStep}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
+                      >
+                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 5: Contact & RFQ Preferences */}
+                {wizardStep === 5 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Contact & RFQ Preferences</h2>
+                      <p className="text-xs text-slate-500">Step 5 of 5</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">RFQ Email *</label>
+                        <input
+                          type="email"
+                          placeholder="rfq@company.com"
+                          value={formData.rfqEmail}
+                          onChange={(e) => setFormData({ ...formData, rfqEmail: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Preferred Contact Method</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, preferredContactMethod: 'EMAIL' })}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                          >
+                            <div className="text-white font-bold text-sm uppercase">Email</div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, preferredContactMethod: 'PLATFORM_ONLY' })}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'PLATFORM_ONLY' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                          >
+                            <div className="text-white font-bold text-sm uppercase">Platform Only</div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? (
+                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> Saving...</span>
+                        ) : (
+                          'Complete Setup'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }

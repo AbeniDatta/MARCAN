@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     let body;
     try {
       body = await request.json();
+      console.log('Received profile data:', { userId: body.userId, companyName: body.companyName });
     } catch (parseError) {
       console.error('Error parsing request body:', parseError);
       return NextResponse.json({
@@ -50,6 +51,22 @@ export async function POST(request: NextRequest) {
       selectedIcon,
       logoUrl,
       primaryIntent,
+      // New wizard fields
+      onboardingMethod,
+      provincesServed,
+      companyType,
+      processes,
+      materials,
+      finishes,
+      typicalJobSize,
+      leadTimeMinDays,
+      leadTimeMaxDays,
+      maxPartSizeMmX,
+      maxPartSizeMmY,
+      maxPartSizeMmZ,
+      industries,
+      rfqEmail,
+      preferredContactMethod,
     } = body;
 
     if (!userId || !companyName) {
@@ -66,46 +83,115 @@ export async function POST(request: NextRequest) {
     // Check if profile already exists
     const existingProfile = await prisma.profile.findUnique({
       where: { userId },
+      include: { profileCapabilities: true },
     });
+
+    // Calculate eligibility: ≥1 PROCESS, ≥1 MATERIAL, ≥1 provincesServed
+    const hasProcess = Array.isArray(processes) && processes.length > 0;
+    const hasMaterial = Array.isArray(materials) && materials.length > 0;
+    const hasProvinceServed = Array.isArray(provincesServed) && provincesServed.length > 0;
+    const isEligible = hasProcess && hasMaterial && hasProvinceServed;
+
+    // Calculate profile completeness score (simple heuristic)
+    let completenessScore = 0;
+    if (companyName) completenessScore += 10;
+    if (city && province) completenessScore += 10;
+    if (hasProvinceServed) completenessScore += 10;
+    if (hasProcess) completenessScore += 15;
+    if (hasMaterial) completenessScore += 15;
+    if (typicalJobSize) completenessScore += 10;
+    if (rfqEmail) completenessScore += 10;
+    if (aboutUs) completenessScore += 5;
+    if (Array.isArray(finishes) && finishes.length > 0) completenessScore += 5;
+    if (Array.isArray(certifications) && certifications.length > 0) completenessScore += 5;
+    if (Array.isArray(industries) && industries.length > 0) completenessScore += 5;
+    if (website) completenessScore += 5;
+
+    // Prepare profile data
+    const profileData: any = {
+      companyName,
+      jobTitle: jobTitle || null,
+      businessNumber: businessNumber || null,
+      website: website || null,
+      city: city || null,
+      province: province || null,
+      aboutUs: aboutUs || null,
+      capabilities: capabilities || [],
+      certifications: certifications || [],
+      selectedIcon: selectedIcon || null,
+      logoUrl: logoUrl || null,
+      primaryIntent: primaryIntent || 'sell', // Default to 'sell' for seller signup
+      // New fields
+      onboardingMethod: onboardingMethod || null,
+      provincesServed: provincesServed || [],
+      typicalJobSize: typicalJobSize || null,
+      leadTimeMinDays: leadTimeMinDays || null,
+      leadTimeMaxDays: leadTimeMaxDays || null,
+      maxPartSizeMmX: maxPartSizeMmX || null,
+      maxPartSizeMmY: maxPartSizeMmY || null,
+      maxPartSizeMmZ: maxPartSizeMmZ || null,
+      rfqEmail: rfqEmail || null,
+      preferredContactMethod: preferredContactMethod || null,
+      // Eligibility and enrichment
+      searchable: isEligible,
+      profileCompletenessScore: completenessScore,
+      taxonomyVersion: 'v1',
+      lastVerifiedAt: isEligible ? new Date() : null,
+    };
 
     let profile;
     if (existingProfile) {
+      // Delete existing profile capabilities before recreating
+      if (existingProfile.profileCapabilities.length > 0) {
+        await prisma.profileCapability.deleteMany({
+          where: { profileId: existingProfile.id },
+        });
+      }
+
       // Update existing profile
       profile = await prisma.profile.update({
         where: { userId },
-        data: {
-          companyName,
-          jobTitle: jobTitle || null,
-          businessNumber: businessNumber || null,
-          website: website || null,
-          city: city || null,
-          province: province || null,
-          aboutUs: aboutUs || null,
-          capabilities: capabilities || [],
-          certifications: certifications || [],
-          selectedIcon: selectedIcon || null,
-          logoUrl: logoUrl || null,
-          primaryIntent: primaryIntent || 'both',
-        },
+        data: profileData,
       });
     } else {
-      // Create new profile
+      // Create new profile - userId is required for creation
       profile = await prisma.profile.create({
         data: {
-          userId,
-          companyName,
-          jobTitle: jobTitle || null,
-          businessNumber: businessNumber || null,
-          website: website || null,
-          city: city || null,
-          province: province || null,
-          aboutUs: aboutUs || null,
-          capabilities: capabilities || [],
-          certifications: certifications || [],
-          selectedIcon: selectedIcon || null,
-          logoUrl: logoUrl || null,
-          primaryIntent: primaryIntent || 'both',
+          ...profileData,
+          userId, // userId must be included in the data object for create
         },
+      });
+    }
+
+    // Create ProfileCapability records for all selected capabilities
+    const capabilityIds: string[] = [];
+    
+    // Core capabilities (isCore = true, source = "signup")
+    if (Array.isArray(processes)) capabilityIds.push(...processes);
+    if (Array.isArray(materials)) capabilityIds.push(...materials);
+    if (Array.isArray(finishes)) capabilityIds.push(...finishes);
+    
+    // Non-core capabilities (isCore = false, source = "signup")
+    if (companyType) capabilityIds.push(companyType);
+    if (Array.isArray(certifications)) capabilityIds.push(...certifications);
+    if (Array.isArray(industries)) capabilityIds.push(...industries);
+
+    // Create ProfileCapability records
+    if (capabilityIds.length > 0) {
+      const coreCapabilityIds = new Set([
+        ...(processes || []),
+        ...(materials || []),
+        ...(finishes || []),
+      ]);
+
+      await prisma.profileCapability.createMany({
+        data: capabilityIds.map((capabilityId) => ({
+          profileId: profile.id,
+          capabilityId,
+          isCore: coreCapabilityIds.has(capabilityId),
+          source: 'signup',
+        })),
+        skipDuplicates: true,
       });
     }
 
@@ -173,9 +259,10 @@ export async function GET() {
 
     const profiles = await prisma.profile.findMany({
       where: {
-        primaryIntent: {
-          in: ['sell', 'both'],
-        },
+        OR: [
+          { primaryIntent: { in: ['sell', 'both'] } },
+          { searchable: true }, // Also include searchable profiles (eligible sellers)
+        ],
       },
       orderBy: {
         createdAt: 'desc',
@@ -195,6 +282,7 @@ export async function GET() {
 
       return {
         id: profile.id,
+        userId: profile.userId, // Include userId for matching user profiles
         name: profile.companyName,
         location,
         description: profile.aboutUs || 'No description available.',
@@ -211,6 +299,7 @@ export async function GET() {
         streetAddress: profile.streetAddress,
         businessNumber: profile.businessNumber,
         jobTitle: profile.jobTitle,
+        primaryIntent: profile.primaryIntent, // Include primaryIntent
       };
     });
 

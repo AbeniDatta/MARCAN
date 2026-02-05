@@ -79,6 +79,51 @@ export default function MyAccountPage() {
 
       // Load user's wishlist requests and listings from API
       if (typeof window !== 'undefined' && user.email) {
+        // Fetch user's profile from database to check if they have a seller profile
+        fetch(`/api/profiles`)
+          .then((res) => res.json())
+          .then((allProfiles) => {
+            // Find the user's profile
+            const userProfile = Array.isArray(allProfiles) 
+              ? allProfiles.find((p: any) => p.userId === user.email || p.id === user.email)
+              : null;
+            
+            // If user has a seller profile, update role and form data
+            if (userProfile) {
+              const hasSellerProfile = userProfile.primaryIntent === 'sell' || userProfile.primaryIntent === 'both';
+              if (hasSellerProfile) {
+                // Update account role if user has seller profile
+                const newRole = userProfile.primaryIntent === 'both' ? 'both' : 'sell';
+                setAccountRole(newRole);
+                
+                // Also update user role in localStorage to keep it in sync
+                const updatedUser = { ...user, role: newRole };
+                localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+                window.dispatchEvent(new Event('marcan-auth-change'));
+                
+                // Update form data with profile data
+                setFormData(prev => ({
+                  ...prev,
+                  companyName: userProfile.companyName || prev.companyName,
+                  jobTitle: userProfile.jobTitle || prev.jobTitle,
+                  businessNumber: userProfile.businessNumber || prev.businessNumber,
+                  website: userProfile.website || prev.website,
+                  aboutUs: userProfile.aboutUs || prev.aboutUs,
+                }));
+                
+                if (userProfile.capabilities) {
+                  setCapabilities(userProfile.capabilities);
+                }
+                if (userProfile.certifications) {
+                  setCertifications(userProfile.certifications);
+                }
+              }
+            }
+          })
+          .catch((err) => {
+            console.error('Error fetching user profile:', err);
+          });
+
         // Fetch user's own wishlist requests
         fetch(`/api/wishlist/my?userId=${encodeURIComponent(user.email)}`)
           .then((res) => {
@@ -101,31 +146,27 @@ export default function MyAccountPage() {
             setMyWishlistRequests([]);
           });
 
-        // Fetch user's own supplier listings (only if seller)
-        if (user.role === 'both' || user.role === 'sell') {
-          fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
-            .then((res) => {
-              if (!res.ok) {
-                throw new Error('Failed to fetch listings');
-              }
-              return res.json();
-            })
-            .then((userListings) => {
-              // Ensure it's an array
-              if (Array.isArray(userListings)) {
-                setMySupplierListings(userListings);
-              } else {
-                console.error('Invalid response format:', userListings);
-                setMySupplierListings([]);
-              }
-            })
-            .catch((err) => {
-              console.error('Error fetching listings:', err);
+        // Fetch user's own supplier listings (check if user has seller profile)
+        fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error('Failed to fetch listings');
+            }
+            return res.json();
+          })
+          .then((userListings) => {
+            // Ensure it's an array
+            if (Array.isArray(userListings)) {
+              setMySupplierListings(userListings);
+            } else {
+              console.error('Invalid response format:', userListings);
               setMySupplierListings([]);
-            });
-        } else {
-          setMySupplierListings([]);
-        }
+            }
+          })
+          .catch((err) => {
+            console.error('Error fetching listings:', err);
+            setMySupplierListings([]);
+          });
       }
     }
   }, [isAuthenticated, user, router, isLoading, isMounted]);

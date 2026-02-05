@@ -8,11 +8,11 @@ A Next.js application for connecting Canadian Micro & Small Enterprises in the m
 - **React 18**
 - **TypeScript**
 - **Tailwind CSS**
-- **Font Awesome 6.5.1**
-- **Prisma** (ORM for PostgreSQL)
-- **PostgreSQL** (via Supabase or standalone)
+- **Font Awesome 6.5.1** (via CDN)
+- **Prisma 7.3.0** (ORM for PostgreSQL)
+- **PostgreSQL** (hosted via Supabase)
 - **Firebase** (Authentication)
-- **Supabase** (Optional - for Supabase client SDK)
+- **@prisma/adapter-pg** (PostgreSQL adapter for Prisma)
 
 ## Getting Started
 
@@ -95,19 +95,11 @@ marcan26/
 │   ├── Header.tsx
 │   └── Sidebar.tsx
 ├── lib/                  # Utility libraries
-│   ├── prisma.ts         # Prisma Client instance
-│   ├── supabase.ts       # Supabase client (server-side, optional)
-│   ├── supabase-client.ts # Supabase client (client-side, optional)
-│   └── db/               # Database helper functions
-│       ├── profiles.ts
-│       ├── listings.ts
-│       └── wishlist.ts
+│   └── prisma.ts         # Prisma Client instance
 ├── prisma/               # Prisma configuration
 │   └── schema.prisma     # Prisma schema (database models)
 ├── hooks/                # Custom React hooks
 │   └── useAuth.ts        # Authentication hook
-├── supabase/             # Supabase SQL schema (legacy)
-│   └── schema.sql        # SQL migration file
 ├── public/               # Static assets
 ├── package.json
 ├── tailwind.config.ts
