@@ -84,10 +84,10 @@ export default function MyAccountPage() {
           .then((res) => res.json())
           .then((allProfiles) => {
             // Find the user's profile
-            const userProfile = Array.isArray(allProfiles) 
+            const userProfile = Array.isArray(allProfiles)
               ? allProfiles.find((p: any) => p.userId === user.email || p.id === user.email)
               : null;
-            
+
             // If user has a seller profile, update role and form data
             if (userProfile) {
               const hasSellerProfile = userProfile.primaryIntent === 'sell' || userProfile.primaryIntent === 'both';
@@ -95,12 +95,12 @@ export default function MyAccountPage() {
                 // Update account role if user has seller profile
                 const newRole = userProfile.primaryIntent === 'both' ? 'both' : 'sell';
                 setAccountRole(newRole);
-                
+
                 // Also update user role in localStorage to keep it in sync
                 const updatedUser = { ...user, role: newRole };
                 localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
                 window.dispatchEvent(new Event('marcan-auth-change'));
-                
+
                 // Update form data with profile data
                 setFormData(prev => ({
                   ...prev,
@@ -110,7 +110,7 @@ export default function MyAccountPage() {
                   website: userProfile.website || prev.website,
                   aboutUs: userProfile.aboutUs || prev.aboutUs,
                 }));
-                
+
                 if (userProfile.capabilities) {
                   setCapabilities(userProfile.capabilities);
                 }

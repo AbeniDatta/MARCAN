@@ -101,6 +101,11 @@ model Profile {
   materials      String[] @default([]) @db.Text
   certifications String[] @default([]) @db.Text
 
+  // Buyer account fields (for AI search optimization)
+  primaryProcesses String[] @default([]) @map("primary_processes") @db.Text
+  industriesServed String[] @default([]) @map("industries_served") @db.Text
+  otherComments    String?  @map("other_comments") @db.Text
+
   primaryIntent String? @map("primary_intent") @db.Text // 'buy' | 'sell'
 
   // Logistics & coverage (attributes, not taxonomy)

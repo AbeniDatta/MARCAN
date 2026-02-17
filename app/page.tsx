@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
 export default function HomePage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+
   const certifications = [
     { code: 'ISO 9001', label: 'Quality' },
     { code: 'AS9100', label: 'Aerospace' },
@@ -32,6 +36,13 @@ export default function HomePage() {
   const prevGroup = () => {
     setCurrentGroup((prev) => (prev - 1 + totalGroups) % totalGroups);
   };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Home" />
@@ -39,19 +50,27 @@ export default function HomePage() {
       {/* Content Scroll Area */}
       <div className="flex-1 overflow-y-auto p-8 relative">
         {/* Search Bar Container */}
-        <div className="mb-8 w-full">
+        <form onSubmit={handleSearch} className="mb-8 w-full">
           <div className="relative group w-full">
             <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
             <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 py-3 px-6 shadow-lg w-full cursor-text">
               <i className="fa-solid fa-magnifying-glass text-slate-400 text-lg mr-4"></i>
               <input
                 type="text"
-                placeholder="Find local partners, capabilities, or materials..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearch(e);
+                  }
+                }}
+                placeholder="Find manufacturers, equipment, or sourcing opportunities..."
                 className="bg-transparent text-white py-1 focus:outline-none placeholder:text-slate-500 font-medium text-lg text-left w-full md:w-[500px]"
               />
             </label>
           </div>
-        </div>
+        </form>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Hero Card */}

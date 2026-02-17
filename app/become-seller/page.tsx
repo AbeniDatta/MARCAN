@@ -41,7 +41,10 @@ export default function BecomeSellerPage() {
   const [wizardStep, setWizardStep] = useState<WizardStep>(0);
   const [lastCompletedStep, setLastCompletedStep] = useState<WizardStep | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
   const [error, setError] = useState('');
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];
@@ -175,11 +178,73 @@ export default function BecomeSellerPage() {
     }
   }, [isMounted, isAuthenticated, router]);
 
+  const handleImportWebsite = async () => {
+    if (!importUrl.trim()) {
+      setError('Please enter a website URL');
+      return;
+    }
+
+    setIsImporting(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/import-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ websiteUrl: importUrl.trim() }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to import website');
+      }
+
+      const result = await response.json();
+      const importedData = result.data;
+
+      // Pre-fill form data with imported information
+      setFormData({
+        ...formData,
+        onboardingMethod: 'IMPORT',
+        companyName: importedData.companyName || formData.companyName,
+        city: importedData.city || formData.city,
+        province: importedData.province || formData.province,
+        provincesServed: importedData.provincesServed || formData.provincesServed,
+        companyType: importedData.companyType || formData.companyType,
+        website: importedData.website || importUrl.trim(),
+        processes: importedData.processes || formData.processes,
+        materials: importedData.materials || formData.materials,
+        finishes: importedData.finishes || formData.finishes,
+        certifications: importedData.certifications || formData.certifications,
+        industries: importedData.industries || formData.industries,
+        typicalJobSize: importedData.typicalJobSize || formData.typicalJobSize,
+        leadTimeMinDays: importedData.leadTimeMinDays || formData.leadTimeMinDays,
+        leadTimeMaxDays: importedData.leadTimeMaxDays || formData.leadTimeMaxDays,
+        maxPartSizeMmX: importedData.maxPartSizeMmX || formData.maxPartSizeMmX,
+        maxPartSizeMmY: importedData.maxPartSizeMmY || formData.maxPartSizeMmY,
+        maxPartSizeMmZ: importedData.maxPartSizeMmZ || formData.maxPartSizeMmZ,
+        aboutUs: importedData.aboutUs || formData.aboutUs,
+        rfqEmail: importedData.rfqEmail || formData.rfqEmail,
+        preferredContactMethod: importedData.preferredContactMethod || formData.preferredContactMethod,
+      });
+
+      // Mark step 0 as completed and move to step 1
+      setLastCompletedStep(0);
+      setWizardStep(1);
+      setError('');
+    } catch (err: any) {
+      console.error('Import error:', err);
+      setError(err.message || 'Failed to import website. Please try again or fill manually.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const saveAndNextStep = () => {
     if (validateStep(wizardStep)) {
       // Save current step as completed
       setLastCompletedStep(wizardStep);
-      
+
       // Move to next step
       if (wizardStep < 5) {
         setWizardStep((prev) => (prev + 1) as WizardStep);
@@ -198,6 +263,11 @@ export default function BecomeSellerPage() {
   const validateStep = (step: WizardStep): boolean => {
     switch (step) {
       case 0:
+        // Step 0 validation is handled in the import flow
+        if (formData.onboardingMethod === 'IMPORT' && !importUrl.trim()) {
+          setError('Please enter a website URL');
+          return false;
+        }
         if (!formData.onboardingMethod) {
           setError('Please select an onboarding method');
           return false;
@@ -245,25 +315,25 @@ export default function BecomeSellerPage() {
 
     const submitData = {
       userId: currentUser.email,
-          onboardingMethod: formData.onboardingMethod,
-          companyName: formData.companyName,
-          city: formData.city,
-          province: formData.province,
-          provincesServed: formData.provincesServed,
-          website: formData.website || null,
-          companyType: formData.companyType,
-          processes: formData.processes,
-          materials: formData.materials,
-          finishes: formData.finishes,
-          typicalJobSize: formData.typicalJobSize,
-          leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays) : null,
-          leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays) : null,
-          maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX) : null,
-          maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY) : null,
-          maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ) : null,
-          certifications: formData.certifications,
-          industries: formData.industries,
-          aboutUs: formData.aboutUs || null,
+      onboardingMethod: formData.onboardingMethod,
+      companyName: formData.companyName,
+      city: formData.city,
+      province: formData.province,
+      provincesServed: formData.provincesServed,
+      website: formData.website || null,
+      companyType: formData.companyType,
+      processes: formData.processes,
+      materials: formData.materials,
+      finishes: formData.finishes,
+      typicalJobSize: formData.typicalJobSize,
+      leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays) : null,
+      leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays) : null,
+      maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX) : null,
+      maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY) : null,
+      maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ) : null,
+      certifications: formData.certifications,
+      industries: formData.industries,
+      aboutUs: formData.aboutUs || null,
       rfqEmail: formData.rfqEmail,
       preferredContactMethod: formData.preferredContactMethod,
     };
@@ -322,6 +392,52 @@ export default function BecomeSellerPage() {
     return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
   };
 
+  const handleRestartRegistration = () => {
+    setShowRestartConfirm(true);
+  };
+
+  const confirmRestart = () => {
+    // Clear form data
+    setFormData({
+      onboardingMethod: null,
+      companyName: '',
+      city: '',
+      province: '',
+      provincesServed: [],
+      companyType: null,
+      website: '',
+      processes: [],
+      materials: [],
+      finishes: [],
+      typicalJobSize: null,
+      leadTimeMinDays: '',
+      leadTimeMaxDays: '',
+      maxPartSizeMmX: '',
+      maxPartSizeMmY: '',
+      maxPartSizeMmZ: '',
+      certifications: [],
+      industries: [],
+      aboutUs: '',
+      rfqEmail: '',
+      preferredContactMethod: null,
+    });
+
+    // Reset state
+    setWizardStep(0);
+    setLastCompletedStep(null);
+    setCurrentView('landing');
+    setImportUrl('');
+    setError('');
+
+    // Clear localStorage
+    if (currentUser?.email) {
+      const savedDataKey = `seller_registration_${currentUser.email}`;
+      localStorage.removeItem(savedDataKey);
+    }
+
+    setShowRestartConfirm(false);
+  };
+
   if (!isMounted) {
     return null;
   }
@@ -331,7 +447,7 @@ export default function BecomeSellerPage() {
       <Header breadcrumb="Become a Seller" />
 
       <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="flex items-center justify-center py-10">
+        <div className="flex items-center justify-center py-10 relative">
           <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
 
@@ -394,13 +510,23 @@ export default function BecomeSellerPage() {
                   >
                     <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Home
                   </button>
-                  <div className="flex items-center gap-2">
-                    {[0, 1, 2, 3, 4, 5].map((step) => (
-                      <div
-                        key={step}
-                        className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
-                      ></div>
-                    ))}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {[0, 1, 2, 3, 4, 5].map((step) => (
+                        <div
+                          key={step}
+                          className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
+                        ></div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleRestartRegistration}
+                      className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
+                      title="Restart Registration"
+                    >
+                      <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
+                      <span className="hidden sm:inline">Restart</span>
+                    </button>
                   </div>
                 </div>
 
@@ -411,34 +537,105 @@ export default function BecomeSellerPage() {
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Get Started</h2>
                       <p className="text-xs text-slate-500">How would you like to set up your profile?</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, onboardingMethod: 'IMPORT' });
-                          setLastCompletedStep(0);
-                          saveAndNextStep();
-                        }}
-                        className={`p-8 rounded-lg border-2 transition-all ${formData.onboardingMethod === 'IMPORT' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
-                      >
-                        <i className="fa-solid fa-globe text-4xl mb-4 text-marcan-red"></i>
-                        <div className="text-white font-bold text-sm uppercase mb-2">Import from Website</div>
-                        <div className="text-xs text-slate-400">Automatically import company information</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, onboardingMethod: 'MANUAL' });
-                          setLastCompletedStep(0);
-                          saveAndNextStep();
-                        }}
-                        className={`p-8 rounded-lg border-2 transition-all ${formData.onboardingMethod === 'MANUAL' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
-                      >
-                        <i className="fa-solid fa-pen-to-square text-4xl mb-4 text-marcan-red"></i>
-                        <div className="text-white font-bold text-sm uppercase mb-2">Fill Manually</div>
-                        <div className="text-xs text-slate-400">Enter your information step by step</div>
-                      </button>
-                    </div>
+
+                    {formData.onboardingMethod === null && (
+                      <div className="grid grid-cols-2 gap-6">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, onboardingMethod: 'IMPORT' });
+                          }}
+                          className="p-8 rounded-lg border-2 border-white/10 hover:border-marcan-red/50 transition-all"
+                        >
+                          <i className="fa-solid fa-globe text-4xl mb-4 text-marcan-red"></i>
+                          <div className="text-white font-bold text-sm uppercase mb-2">Import from Website</div>
+                          <div className="text-xs text-slate-400">Automatically import company information</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, onboardingMethod: 'MANUAL' });
+                            setLastCompletedStep(0);
+                            setWizardStep(1);
+                            setError('');
+                          }}
+                          className="p-8 rounded-lg border-2 border-white/10 hover:border-marcan-red/50 transition-all"
+                        >
+                          <i className="fa-solid fa-pen-to-square text-4xl mb-4 text-marcan-red"></i>
+                          <div className="text-white font-bold text-sm uppercase mb-2">Fill Manually</div>
+                          <div className="text-xs text-slate-400">Enter your information step by step</div>
+                        </button>
+                      </div>
+                    )}
+
+                    {formData.onboardingMethod === 'IMPORT' && (
+                      <div className="space-y-6">
+                        <div className="p-6 rounded-lg border-2 border-marcan-red bg-marcan-red/10">
+                          <div className="flex items-center gap-3 mb-4">
+                            <i className="fa-solid fa-globe text-2xl text-marcan-red"></i>
+                            <h3 className="text-white font-bold text-sm uppercase">Import from Website</h3>
+                          </div>
+                          <p className="text-xs text-slate-400 mb-4">
+                            Enter your company website URL below. We'll automatically extract and fill in your company information.
+                          </p>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">
+                                Website URL *
+                              </label>
+                              <input
+                                type="url"
+                                value={importUrl}
+                                onChange={(e) => setImportUrl(e.target.value)}
+                                placeholder="https://www.yourcompany.com"
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                                disabled={isImporting}
+                              />
+                            </div>
+
+                            {error && (
+                              <div className="text-xs font-semibold text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
+                                {error}
+                              </div>
+                            )}
+
+                            <div className="flex gap-4">
+                              <button
+                                type="button"
+                                onClick={handleImportWebsite}
+                                disabled={isImporting || !importUrl.trim()}
+                                className="flex-1 bg-marcan-red text-white px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                              >
+                                {isImporting ? (
+                                  <>
+                                    <i className="fa-solid fa-spinner fa-spin"></i>
+                                    Importing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <i className="fa-solid fa-download"></i>
+                                    Import & Continue
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormData({ ...formData, onboardingMethod: null });
+                                  setImportUrl('');
+                                  setError('');
+                                }}
+                                disabled={isImporting}
+                                className="px-6 py-3 rounded-lg border border-white/10 text-white text-sm font-bold uppercase tracking-wider hover:bg-white/5 transition-all disabled:opacity-50"
+                              >
+                                Back
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -534,7 +731,19 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                     </div>
-                    <div className="mt-8 flex justify-end">
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, onboardingMethod: null });
+                          setImportUrl('');
+                          setWizardStep(0);
+                          setError('');
+                        }}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4 transition-colors"
+                      >
+                        <i className="fa-solid fa-arrow-left mr-2"></i> Back
+                      </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
@@ -889,6 +1098,37 @@ export default function BecomeSellerPage() {
           </div>
         </div>
       </div>
+
+      {/* Restart Confirmation Modal */}
+      {showRestartConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+              </div>
+              <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">Restart Registration?</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Are you sure you want to restart registration? All your progress will be lost and you'll need to start from the beginning.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowRestartConfirm(false)}
+                className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRestart}
+                className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
+              >
+                Restart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

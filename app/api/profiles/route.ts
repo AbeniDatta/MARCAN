@@ -165,12 +165,12 @@ export async function POST(request: NextRequest) {
 
     // Create ProfileCapability records for all selected capabilities
     const capabilityIds: string[] = [];
-    
+
     // Core capabilities (isCore = true, source = "signup")
     if (Array.isArray(processes)) capabilityIds.push(...processes);
     if (Array.isArray(materials)) capabilityIds.push(...materials);
     if (Array.isArray(finishes)) capabilityIds.push(...finishes);
-    
+
     // Non-core capabilities (isCore = false, source = "signup")
     if (companyType) capabilityIds.push(companyType);
     if (Array.isArray(certifications)) capabilityIds.push(...certifications);

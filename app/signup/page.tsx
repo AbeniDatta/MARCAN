@@ -25,6 +25,11 @@ export default function SignupPage() {
     phone: '',
     city: '',
     province: '',
+    primaryProcesses: '',
+    materials: '',
+    certifications: '',
+    industriesServed: '',
+    otherComments: '',
   });
 
   const handleBuyerSubmit = async (e: React.FormEvent) => {
@@ -56,6 +61,14 @@ export default function SignupPage() {
         displayName: `${buyerData.firstName} ${buyerData.lastName}`,
       });
 
+      // Parse comma-separated values into arrays
+      const parseCommaSeparated = (value: string): string[] => {
+        return value
+          .split(',')
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0);
+      };
+
       const userData = {
         firstName: buyerData.firstName,
         lastName: buyerData.lastName,
@@ -65,7 +78,43 @@ export default function SignupPage() {
         city: buyerData.city,
         province: buyerData.province,
         role: 'buy',
+        primaryProcesses: parseCommaSeparated(buyerData.primaryProcesses),
+        materials: parseCommaSeparated(buyerData.materials),
+        certifications: parseCommaSeparated(buyerData.certifications),
+        industriesServed: parseCommaSeparated(buyerData.industriesServed),
+        otherComments: buyerData.otherComments.trim(),
       };
+
+      // Save to database
+      try {
+        const saveResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: buyerData.email,
+            firstName: buyerData.firstName,
+            lastName: buyerData.lastName,
+            email: buyerData.email,
+            companyName: buyerData.company,
+            phone: buyerData.phone,
+            city: buyerData.city,
+            province: buyerData.province,
+            primaryProcesses: userData.primaryProcesses,
+            materials: userData.materials,
+            certifications: userData.certifications,
+            industriesServed: userData.industriesServed,
+            otherComments: userData.otherComments,
+          }),
+        });
+
+        if (!saveResponse.ok) {
+          console.error('Failed to save user data to database');
+          // Continue anyway - data is saved to localStorage
+        }
+      } catch (dbError) {
+        console.error('Error saving to database:', dbError);
+        // Continue anyway - data is saved to localStorage
+      }
 
       login(userData);
       router.push('/');
@@ -105,7 +154,7 @@ export default function SignupPage() {
             {/* BUYER FORM */}
             <div>
               <div className="text-center mb-10">
-                <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Buyer Account</h2>
+                <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Create Your Account</h2>
                 <p className="text-xs text-slate-500">Create your procurement profile.</p>
               </div>
 
@@ -163,7 +212,7 @@ export default function SignupPage() {
                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password</label>
                     <input
                       type="password"
-                      placeholder="Repeat Password"
+                      placeholder="Confirm Password"
                       value={buyerData.confirmPassword}
                       onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -223,6 +272,80 @@ export default function SignupPage() {
                   </div>
                 </div>
 
+                <div className="pt-4 border-t border-white/5">
+                  <label className="text-[10px] font-bold text-marcan-red uppercase mb-4 block tracking-widest">
+                    Additional Information (Optional)
+                  </label>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Help us understand your needs better. Enter comma-separated values (e.g., "CNC Machining, Milling, Turning").
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                        Primary Processes
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., CNC Machining, Milling, Turning, Welding"
+                        value={buyerData.primaryProcesses}
+                        onChange={(e) => setBuyerData({ ...buyerData, primaryProcesses: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                        Materials
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Aluminum, Steel, Titanium, Plastics"
+                        value={buyerData.materials}
+                        onChange={(e) => setBuyerData({ ...buyerData, materials: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                        Certifications
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., ISO 9001, AS9100, ISO 13485"
+                        value={buyerData.certifications}
+                        onChange={(e) => setBuyerData({ ...buyerData, certifications: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                        Industries Served
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Aerospace, Automotive, Medical, Defense"
+                        value={buyerData.industriesServed}
+                        onChange={(e) => setBuyerData({ ...buyerData, industriesServed: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-1 block">
+                        Other / Additional Comments
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Add any other information, requirements, or keywords that might help us find the right partners for you (e.g., specific tolerances, volume needs, special requirements, custom processes)..."
+                        value={buyerData.otherComments}
+                        onChange={(e) => setBuyerData({ ...buyerData, otherComments: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all resize-none"
+                      />
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        This information will be saved as comments and used by our AI to help find the best matches for your needs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -233,7 +356,7 @@ export default function SignupPage() {
                       <i className="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...
                     </span>
                   ) : (
-                    'Create Buyer Account'
+                    'Create Your Account'
                   )}
                 </button>
               </form>
