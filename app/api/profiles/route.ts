@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
       maxPartSizeMmZ,
       industries,
       rfqEmail,
+      phone,
       preferredContactMethod,
       otherComments,
     } = body;
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
       maxPartSizeMmY: maxPartSizeMmY || null,
       maxPartSizeMmZ: maxPartSizeMmZ || null,
       rfqEmail: rfqEmail || null,
+      phone: phone || null,
       preferredContactMethod: preferredContactMethod || null,
       otherComments: otherComments || null,
       // Eligibility and enrichment

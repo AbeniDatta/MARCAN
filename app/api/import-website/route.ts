@@ -128,7 +128,7 @@ Return ONLY valid JSON matching this structure. Use null for missing values. For
                 }
             });
 
-            return [...new Set(matched)]; // Remove duplicates
+            return Array.from(new Set(matched)); // Remove duplicates
         };
 
         // Format the response with matched capability IDs

@@ -9,7 +9,7 @@ type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 type View = 'landing' | 'form';
 type OnboardingMethod = 'IMPORT' | 'MANUAL';
 type TypicalJobSize = 'PROTOTYPE' | 'LOW_VOLUME' | 'MEDIUM_VOLUME' | 'HIGH_VOLUME';
-type PreferredContactMethod = 'EMAIL' | 'PLATFORM_ONLY';
+type PreferredContactMethod = 'EMAIL' | 'PHONE' | 'PLATFORM_ONLY';
 
 interface Capability {
   id: string;
@@ -94,6 +94,7 @@ export default function BecomeSellerPage() {
     aboutUs: '',
     // Step 5
     rfqEmail: '',
+    phone: '',
     preferredContactMethod: null as PreferredContactMethod | null,
   });
 
@@ -240,6 +241,7 @@ export default function BecomeSellerPage() {
         maxPartSizeMmZ: importedData.maxPartSizeMmZ || formData.maxPartSizeMmZ,
         aboutUs: importedData.aboutUs || formData.aboutUs,
         rfqEmail: importedData.rfqEmail || formData.rfqEmail,
+        phone: importedData.phone || formData.phone,
         preferredContactMethod: importedData.preferredContactMethod || formData.preferredContactMethod,
       });
 
@@ -361,6 +363,7 @@ export default function BecomeSellerPage() {
       industries: formData.industries,
       aboutUs: formData.aboutUs || null,
       rfqEmail: formData.rfqEmail,
+      phone: formData.phone || null,
       preferredContactMethod: formData.preferredContactMethod,
       otherComments: otherComments || null,
     };
@@ -451,6 +454,7 @@ export default function BecomeSellerPage() {
       otherIndustries: '',
       aboutUs: '',
       rfqEmail: '',
+      phone: '',
       preferredContactMethod: null,
     });
 
@@ -544,7 +548,7 @@ export default function BecomeSellerPage() {
                   </button>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      {[0, 1, 2, 3, 4, 5].map((step) => (
+                      {[1, 2, 3, 4, 5].map((step) => (
                         <div
                           key={step}
                           className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
@@ -1138,22 +1142,50 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Preferred Contact Method</label>
-                        <div className="grid grid-cols-2 gap-4">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Phone Number (Optional)</label>
+                        <input
+                          type="tel"
+                          placeholder="+1 (555) 000-0000"
+                          value={formData.phone}
+                          onChange={(e) => {
+                            const phoneValue = e.target.value;
+                            setFormData({
+                              ...formData,
+                              phone: phoneValue,
+                              // Clear preferred contact method if phone is cleared
+                              preferredContactMethod: phoneValue.trim() === '' ? null : formData.preferredContactMethod
+                            });
+                          }}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                        />
+                      </div>
+                      <div>
+                        <label className={`text-[10px] font-bold uppercase mb-1 block ${formData.phone.trim() ? 'text-slate-400' : 'text-slate-600'}`}>
+                          Preferred Contact Method {formData.phone.trim() ? '' : '(Enter phone number to enable)'}
+                        </label>
+                        <div className={`grid gap-4 ${formData.phone.trim() ? 'grid-cols-2' : 'grid-cols-1'}`}>
                           <button
                             type="button"
                             onClick={() => setFormData({ ...formData, preferredContactMethod: 'EMAIL' })}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
+                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL'
+                                ? 'border-marcan-red bg-marcan-red/10'
+                                : 'border-white/10 hover:border-marcan-red/50'
+                              }`}
                           >
                             <div className="text-white font-bold text-sm uppercase">Email</div>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, preferredContactMethod: 'PLATFORM_ONLY' })}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'PLATFORM_ONLY' ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
-                          >
-                            <div className="text-white font-bold text-sm uppercase">Platform Only</div>
-                          </button>
+                          {formData.phone.trim() && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, preferredContactMethod: 'PHONE' })}
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'PHONE'
+                                  ? 'border-marcan-red bg-marcan-red/10'
+                                  : 'border-white/10 hover:border-marcan-red/50'
+                                }`}
+                            >
+                              <div className="text-white font-bold text-sm uppercase">Phone</div>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
