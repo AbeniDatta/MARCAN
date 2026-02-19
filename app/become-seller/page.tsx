@@ -148,7 +148,7 @@ export default function BecomeSellerPage() {
         try {
           const parsed = JSON.parse(savedData);
           if (parsed.formData) {
-            // Ensure all array fields are properly initialized as arrays
+            // Ensure all array fields are properly initialized as arrays and string fields have defaults
             const loadedFormData = {
               ...parsed.formData,
               provincesServed: Array.isArray(parsed.formData.provincesServed) ? parsed.formData.provincesServed : [],
@@ -157,6 +157,7 @@ export default function BecomeSellerPage() {
               finishes: Array.isArray(parsed.formData.finishes) ? parsed.formData.finishes : [],
               certifications: Array.isArray(parsed.formData.certifications) ? parsed.formData.certifications : [],
               industries: Array.isArray(parsed.formData.industries) ? parsed.formData.industries : [],
+              phone: parsed.formData.phone || '',
             };
             setFormData(loadedFormData);
           }
@@ -1146,7 +1147,7 @@ export default function BecomeSellerPage() {
                         <input
                           type="tel"
                           placeholder="+1 (555) 000-0000"
-                          value={formData.phone}
+                          value={formData.phone || ''}
                           onChange={(e) => {
                             const phoneValue = e.target.value;
                             setFormData({
@@ -1159,35 +1160,35 @@ export default function BecomeSellerPage() {
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                         />
                       </div>
-                      <div>
-                        <label className={`text-[10px] font-bold uppercase mb-1 block ${formData.phone.trim() ? 'text-slate-400' : 'text-slate-600'}`}>
-                          Preferred Contact Method {formData.phone.trim() ? '' : '(Enter phone number to enable)'}
-                        </label>
-                        <div className={`grid gap-4 ${formData.phone.trim() ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                          <button
-                            type="button"
-                            onClick={() => setFormData({ ...formData, preferredContactMethod: 'EMAIL' })}
-                            className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL'
+                      {formData.phone?.trim() && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                            Preferred Contact Method
+                          </label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, preferredContactMethod: 'EMAIL' })}
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL'
                                 ? 'border-marcan-red bg-marcan-red/10'
                                 : 'border-white/10 hover:border-marcan-red/50'
-                              }`}
-                          >
-                            <div className="text-white font-bold text-sm uppercase">Email</div>
-                          </button>
-                          {formData.phone.trim() && (
+                                }`}
+                            >
+                              <div className="text-white font-bold text-sm uppercase">Email</div>
+                            </button>
                             <button
                               type="button"
                               onClick={() => setFormData({ ...formData, preferredContactMethod: 'PHONE' })}
                               className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'PHONE'
-                                  ? 'border-marcan-red bg-marcan-red/10'
-                                  : 'border-white/10 hover:border-marcan-red/50'
+                                ? 'border-marcan-red bg-marcan-red/10'
+                                : 'border-white/10 hover:border-marcan-red/50'
                                 }`}
                             >
                               <div className="text-white font-bold text-sm uppercase">Phone</div>
                             </button>
-                          )}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                     <div className="mt-8 flex justify-between">
                       <button

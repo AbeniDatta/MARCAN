@@ -244,11 +244,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET all profiles (public - for directory)
-export async function GET() {
+// GET all profiles (public - for directory) or single profile by userId
+export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findMany !== 'function') {
+    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({
         error: 'Database connection not available',
@@ -261,6 +261,43 @@ export async function GET() {
       });
     }
 
+    // Check if userId query parameter is provided (for single profile fetch)
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
+    if (userId) {
+      // Fetch single profile by userId
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+      });
+
+      if (!profile) {
+        return NextResponse.json({
+          error: 'Profile not found'
+        }, {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+
+      return NextResponse.json({
+        id: profile.id,
+        userId: profile.userId,
+        companyName: profile.companyName,
+        city: profile.city,
+        province: profile.province,
+        phone: profile.phone,
+        email: profile.userId, // userId is the email
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    // Otherwise, return all profiles (existing behavior)
     const profiles = await prisma.profile.findMany({
       where: {
         OR: [

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -7,8 +8,46 @@ interface HeaderProps {
     breadcrumb?: string;
 }
 
+interface ProfileData {
+    city?: string | null;
+    province?: string | null;
+}
+
 export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
     const { isAuthenticated, user, isMounted } = useAuth();
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+
+    // Fetch profile data from database when user is authenticated
+    useEffect(() => {
+        if (isMounted && isAuthenticated && user?.email) {
+            const fetchProfile = async () => {
+                try {
+                    const response = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setProfileData({
+                            city: data.city,
+                            province: data.province,
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                    // Fallback to localStorage data if fetch fails
+                    setProfileData({
+                        city: user.city,
+                        province: user.province,
+                    });
+                }
+            };
+            fetchProfile();
+        } else {
+            setProfileData(null);
+        }
+    }, [isMounted, isAuthenticated, user?.email]);
+
+    // Use database profile data if available, otherwise fallback to localStorage user data
+    const displayCity = profileData?.city ?? user?.city;
+    const displayProvince = profileData?.province ?? user?.province;
     return (
         <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
             {/* Left: Context */}
@@ -22,12 +61,18 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
 
             {/* Right: Relevance & Actions */}
             <div className="flex items-center gap-6">
-                {/* Location Selector */}
-                <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white cursor-pointer transition group">
-                    <i className="fa-solid fa-location-dot text-marcan-red group-hover:shadow-neon transition-shadow"></i>
-                    <span>Ontario, CA</span>
-                    <i className="fa-solid fa-chevron-down text-[10px] ml-1 opacity-50"></i>
-                </div>
+                {/* Location Selector - Only show when logged in */}
+                {isMounted && isAuthenticated && user && (displayCity || displayProvince) && (
+                    <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white cursor-pointer transition group">
+                        <i className="fa-solid fa-location-dot text-marcan-red group-hover:shadow-neon transition-shadow"></i>
+                        <span>
+                            {displayCity && displayProvince 
+                                ? `${displayCity}, ${displayProvince}`
+                                : displayCity || displayProvince || 'Location'}
+                        </span>
+                        <i className="fa-solid fa-chevron-down text-[10px] ml-1 opacity-50"></i>
+                    </div>
+                )}
 
                 {/* Language Toggle */}
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
