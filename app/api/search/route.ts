@@ -35,12 +35,12 @@ export async function POST(req: NextRequest) {
     });
 
     const searchIntent = JSON.parse(searchResponse.choices[0]?.message?.content || '{"keywords": []}');
-    const keywords = searchIntent.keywords || [];
-    const location = searchIntent.location || '';
-    const searchTerms = keywords.length > 0 ? keywords : query.split(' ').filter(w => w.length > 2);
+    const keywords: string[] = searchIntent.keywords || [];
+    const location: string = searchIntent.location || '';
+    const searchTerms: string[] = keywords.length > 0 ? keywords : query.split(' ').filter((w: string) => w.length > 2);
 
     // Build search conditions
-    const searchConditions = searchTerms.map(term => ({
+    const searchConditions = searchTerms.map((term: string) => ({
       OR: [
         { companyName: { contains: term, mode: 'insensitive' as const } },
         { aboutUs: { contains: term, mode: 'insensitive' as const } },
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Search Supplier Listings
-    const listingSearchConditions = searchTerms.map(term => ({
+    const listingSearchConditions = searchTerms.map((term: string) => ({
       OR: [
         { title: { contains: term, mode: 'insensitive' as const } },
         { description: { contains: term, mode: 'insensitive' as const } },
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Search Sourcing Requests
-    const requestSearchConditions = searchTerms.map(term => ({
+    const requestSearchConditions = searchTerms.map((term: string) => ({
       OR: [
         { title: { contains: term, mode: 'insensitive' as const } },
         { description: { contains: term, mode: 'insensitive' as const } },
