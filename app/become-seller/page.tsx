@@ -986,7 +986,7 @@ export default function BecomeSellerPage() {
                     <div className="space-y-6">
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Certifications</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.CERTIFICATION) && capabilities.CERTIFICATION.map((cap) => (
                             <label
                               key={cap.id}
@@ -1005,10 +1005,21 @@ export default function BecomeSellerPage() {
                             </label>
                           ))}
                         </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Certifications (comma-separated)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Custom Certification 1, Custom Certification 2"
+                            value={formData.otherCertifications}
+                            onChange={(e) => setFormData({ ...formData, otherCertifications: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Add certifications not listed above. These will be saved as comments for AI search.</p>
+                        </div>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Industries Served</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.INDUSTRY) && capabilities.INDUSTRY.map((cap) => (
                             <label
                               key={cap.id}
@@ -1026,6 +1037,17 @@ export default function BecomeSellerPage() {
                               <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
                             </label>
                           ))}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Industries (comma-separated)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Custom Industry 1, Custom Industry 2"
+                            value={formData.otherIndustries}
+                            onChange={(e) => setFormData({ ...formData, otherIndustries: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Add industries not listed above. These will be saved as comments for AI search.</p>
                         </div>
                       </div>
                       <div>
