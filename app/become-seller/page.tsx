@@ -76,6 +76,9 @@ export default function BecomeSellerPage() {
     processes: [] as string[], // capability IDs
     materials: [] as string[], // capability IDs
     finishes: [] as string[], // capability IDs
+    otherProcesses: '', // custom processes not in list
+    otherMaterials: '', // custom materials not in list
+    otherFinishes: '', // custom finishes not in list
     // Step 3
     typicalJobSize: null as TypicalJobSize | null,
     leadTimeMinDays: '',
@@ -86,6 +89,8 @@ export default function BecomeSellerPage() {
     // Step 4
     certifications: [] as string[], // capability IDs
     industries: [] as string[], // capability IDs
+    otherCertifications: '', // custom certifications not in list
+    otherIndustries: '', // custom industries not in list
     aboutUs: '',
     // Step 5
     rfqEmail: '',
@@ -787,7 +792,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Materials *</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label
                               key={cap.id}
@@ -806,10 +811,21 @@ export default function BecomeSellerPage() {
                             </label>
                           ))}
                         </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Materials (comma-separated)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Custom Material 1, Custom Material 2"
+                            value={formData.otherMaterials}
+                            onChange={(e) => setFormData({ ...formData, otherMaterials: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Add materials not listed above. These will be saved as comments for AI search.</p>
+                        </div>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Finishes (Optional)</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.FINISH) && capabilities.FINISH.map((cap) => (
                             <label
                               key={cap.id}
@@ -827,6 +843,17 @@ export default function BecomeSellerPage() {
                               <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
                             </label>
                           ))}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Finishes (comma-separated)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Custom Finish 1, Custom Finish 2"
+                            value={formData.otherFinishes}
+                            onChange={(e) => setFormData({ ...formData, otherFinishes: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Add finishes not listed above. These will be saved as comments for AI search.</p>
                         </div>
                       </div>
                     </div>
