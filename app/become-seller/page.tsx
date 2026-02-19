@@ -147,7 +147,17 @@ export default function BecomeSellerPage() {
         try {
           const parsed = JSON.parse(savedData);
           if (parsed.formData) {
-            setFormData(parsed.formData);
+            // Ensure all array fields are properly initialized as arrays
+            const loadedFormData = {
+              ...parsed.formData,
+              provincesServed: Array.isArray(parsed.formData.provincesServed) ? parsed.formData.provincesServed : [],
+              processes: Array.isArray(parsed.formData.processes) ? parsed.formData.processes : [],
+              materials: Array.isArray(parsed.formData.materials) ? parsed.formData.materials : [],
+              finishes: Array.isArray(parsed.formData.finishes) ? parsed.formData.finishes : [],
+              certifications: Array.isArray(parsed.formData.certifications) ? parsed.formData.certifications : [],
+              industries: Array.isArray(parsed.formData.industries) ? parsed.formData.industries : [],
+            };
+            setFormData(loadedFormData);
           }
           if (parsed.lastCompletedStep !== undefined && parsed.lastCompletedStep !== null) {
             setLastCompletedStep(parsed.lastCompletedStep);
@@ -214,14 +224,14 @@ export default function BecomeSellerPage() {
         companyName: importedData.companyName || formData.companyName,
         city: importedData.city || formData.city,
         province: importedData.province || formData.province,
-        provincesServed: importedData.provincesServed || formData.provincesServed,
+        provincesServed: Array.isArray(importedData.provincesServed) ? importedData.provincesServed : (formData.provincesServed || []),
         companyType: importedData.companyType || formData.companyType,
         website: importedData.website || importUrl.trim(),
-        processes: importedData.processes || formData.processes,
-        materials: importedData.materials || formData.materials,
-        finishes: importedData.finishes || formData.finishes,
-        certifications: importedData.certifications || formData.certifications,
-        industries: importedData.industries || formData.industries,
+        processes: Array.isArray(importedData.processes) ? importedData.processes : (formData.processes || []),
+        materials: Array.isArray(importedData.materials) ? importedData.materials : (formData.materials || []),
+        finishes: Array.isArray(importedData.finishes) ? importedData.finishes : (formData.finishes || []),
+        certifications: Array.isArray(importedData.certifications) ? importedData.certifications : (formData.certifications || []),
+        industries: Array.isArray(importedData.industries) ? importedData.industries : (formData.industries || []),
         typicalJobSize: importedData.typicalJobSize || formData.typicalJobSize,
         leadTimeMinDays: importedData.leadTimeMinDays || formData.leadTimeMinDays,
         leadTimeMaxDays: importedData.leadTimeMaxDays || formData.leadTimeMaxDays,
@@ -318,6 +328,17 @@ export default function BecomeSellerPage() {
     setIsLoading(true);
     setError('');
 
+    // Combine "other" fields into comments for AI search
+    const otherComments = [
+      formData.otherProcesses && `Other Processes: ${formData.otherProcesses}`,
+      formData.otherMaterials && `Other Materials: ${formData.otherMaterials}`,
+      formData.otherFinishes && `Other Finishes: ${formData.otherFinishes}`,
+      formData.otherCertifications && `Other Certifications: ${formData.otherCertifications}`,
+      formData.otherIndustries && `Other Industries: ${formData.otherIndustries}`,
+    ]
+      .filter(Boolean)
+      .join('; ');
+
     const submitData = {
       userId: currentUser.email,
       onboardingMethod: formData.onboardingMethod,
@@ -341,6 +362,7 @@ export default function BecomeSellerPage() {
       aboutUs: formData.aboutUs || null,
       rfqEmail: formData.rfqEmail,
       preferredContactMethod: formData.preferredContactMethod,
+      otherComments: otherComments || null,
     };
 
     console.log('Submitting profile data:', { userId: submitData.userId, companyName: submitData.companyName });
@@ -414,6 +436,9 @@ export default function BecomeSellerPage() {
       processes: [],
       materials: [],
       finishes: [],
+      otherProcesses: '',
+      otherMaterials: '',
+      otherFinishes: '',
       typicalJobSize: null,
       leadTimeMinDays: '',
       leadTimeMaxDays: '',
@@ -422,6 +447,8 @@ export default function BecomeSellerPage() {
       maxPartSizeMmZ: '',
       certifications: [],
       industries: [],
+      otherCertifications: '',
+      otherIndustries: '',
       aboutUs: '',
       rfqEmail: '',
       preferredContactMethod: null,
@@ -770,7 +797,7 @@ export default function BecomeSellerPage() {
                     <div className="space-y-6">
                       <div>
                         <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Primary Processes *</label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
                               key={cap.id}
@@ -788,6 +815,17 @@ export default function BecomeSellerPage() {
                               <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
                             </label>
                           ))}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Processes (comma-separated)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., Custom Process 1, Custom Process 2"
+                            value={formData.otherProcesses}
+                            onChange={(e) => setFormData({ ...formData, otherProcesses: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-[10px] text-slate-500 mt-1">Add processes not listed above.</p>
                         </div>
                       </div>
                       <div>
@@ -820,7 +858,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherMaterials: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add materials not listed above. These will be saved as comments for AI search.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Add materials not listed above.</p>
                         </div>
                       </div>
                       <div>
@@ -853,7 +891,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherFinishes: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add finishes not listed above. These will be saved as comments for AI search.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Add finishes not listed above.</p>
                         </div>
                       </div>
                     </div>
@@ -1014,7 +1052,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherCertifications: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add certifications not listed above. These will be saved as comments for AI search.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Add certifications not listed above.</p>
                         </div>
                       </div>
                       <div>
@@ -1047,7 +1085,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherIndustries: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add industries not listed above. These will be saved as comments for AI search.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Add industries not listed above.</p>
                         </div>
                       </div>
                       <div>

@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       industries,
       rfqEmail,
       preferredContactMethod,
+      otherComments,
     } = body;
 
     if (!userId || !companyName) {
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
       maxPartSizeMmZ: maxPartSizeMmZ || null,
       rfqEmail: rfqEmail || null,
       preferredContactMethod: preferredContactMethod || null,
+      otherComments: otherComments || null,
       // Eligibility and enrichment
       searchable: isEligible,
       profileCompletenessScore: completenessScore,
