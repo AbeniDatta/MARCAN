@@ -66,7 +66,7 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                     <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white cursor-pointer transition group">
                         <i className="fa-solid fa-location-dot text-marcan-red group-hover:shadow-neon transition-shadow"></i>
                         <span>
-                            {displayCity && displayProvince 
+                            {displayCity && displayProvince
                                 ? `${displayCity}, ${displayProvince}`
                                 : displayCity || displayProvince || 'Location'}
                         </span>

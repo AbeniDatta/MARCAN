@@ -9,6 +9,12 @@ type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 type View = 'landing' | 'form';
 type OnboardingMethod = 'IMPORT' | 'MANUAL';
 type TypicalJobSize = 'PROTOTYPE' | 'LOW_VOLUME' | 'MEDIUM_VOLUME' | 'HIGH_VOLUME';
+type TypicalLeadTime =
+  | 'ONE_TWO_WEEKS'
+  | 'TWO_FOUR_WEEKS'
+  | 'ONE_THREE_MONTHS'
+  | 'THREE_PLUS_MONTHS'
+  | 'DEPENDS_ON_WORKLOAD';
 type PreferredContactMethod = 'EMAIL' | 'PHONE' | 'PLATFORM_ONLY';
 
 interface Capability {
@@ -80,7 +86,8 @@ export default function BecomeSellerPage() {
     otherMaterials: '', // custom materials not in list
     otherFinishes: '', // custom finishes not in list
     // Step 3
-    typicalJobSize: null as TypicalJobSize | null,
+    typicalJobSize: [] as TypicalJobSize[],
+    typicalLeadTime: null as TypicalLeadTime | null,
     leadTimeMinDays: '',
     leadTimeMaxDays: '',
     maxPartSizeMmX: '',
@@ -157,6 +164,11 @@ export default function BecomeSellerPage() {
               finishes: Array.isArray(parsed.formData.finishes) ? parsed.formData.finishes : [],
               certifications: Array.isArray(parsed.formData.certifications) ? parsed.formData.certifications : [],
               industries: Array.isArray(parsed.formData.industries) ? parsed.formData.industries : [],
+              typicalJobSize: Array.isArray(parsed.formData.typicalJobSize)
+                ? parsed.formData.typicalJobSize
+                : parsed.formData.typicalJobSize
+                  ? [parsed.formData.typicalJobSize]
+                  : [],
               phone: parsed.formData.phone || '',
             };
             setFormData(loadedFormData);
@@ -226,15 +238,29 @@ export default function BecomeSellerPage() {
         companyName: importedData.companyName || formData.companyName,
         city: importedData.city || formData.city,
         province: importedData.province || formData.province,
-        provincesServed: Array.isArray(importedData.provincesServed) ? importedData.provincesServed : (formData.provincesServed || []),
+        provincesServed: Array.isArray(importedData.provincesServed)
+          ? importedData.provincesServed
+          : formData.provincesServed || [],
         companyType: importedData.companyType || formData.companyType,
         website: importedData.website || importUrl.trim(),
-        processes: Array.isArray(importedData.processes) ? importedData.processes : (formData.processes || []),
-        materials: Array.isArray(importedData.materials) ? importedData.materials : (formData.materials || []),
-        finishes: Array.isArray(importedData.finishes) ? importedData.finishes : (formData.finishes || []),
-        certifications: Array.isArray(importedData.certifications) ? importedData.certifications : (formData.certifications || []),
-        industries: Array.isArray(importedData.industries) ? importedData.industries : (formData.industries || []),
-        typicalJobSize: importedData.typicalJobSize || formData.typicalJobSize,
+        processes: Array.isArray(importedData.processes) ? importedData.processes : formData.processes || [],
+        materials: Array.isArray(importedData.materials) ? importedData.materials : formData.materials || [],
+        finishes: Array.isArray(importedData.finishes) ? importedData.finishes : formData.finishes || [],
+        certifications: Array.isArray(importedData.certifications)
+          ? importedData.certifications
+          : formData.certifications || [],
+        industries: Array.isArray(importedData.industries) ? importedData.industries : formData.industries || [],
+        // Handle "other" fields for unmatched capabilities
+        otherProcesses: importedData.otherProcesses || formData.otherProcesses,
+        otherMaterials: importedData.otherMaterials || formData.otherMaterials,
+        otherFinishes: importedData.otherFinishes || formData.otherFinishes,
+        otherCertifications: importedData.otherCertifications || formData.otherCertifications,
+        otherIndustries: importedData.otherIndustries || formData.otherIndustries,
+        typicalJobSize: importedData.typicalJobSize
+          ? [importedData.typicalJobSize]
+          : Array.isArray(formData.typicalJobSize)
+            ? formData.typicalJobSize
+            : [],
         leadTimeMinDays: importedData.leadTimeMinDays || formData.leadTimeMinDays,
         leadTimeMaxDays: importedData.leadTimeMaxDays || formData.leadTimeMaxDays,
         maxPartSizeMmX: importedData.maxPartSizeMmX || formData.maxPartSizeMmX,
@@ -298,14 +324,23 @@ export default function BecomeSellerPage() {
         }
         return true;
       case 2:
-        if (formData.processes.length === 0 || formData.materials.length === 0) {
-          setError('Please select at least one process and one material');
+        // Check if processes are provided (either checkbox selected or otherProcesses filled)
+        const hasProcesses = formData.processes.length > 0 || (formData.otherProcesses && formData.otherProcesses.trim().length > 0);
+        // Check if materials are provided (either checkbox selected or otherMaterials filled)
+        const hasMaterials = formData.materials.length > 0 || (formData.otherMaterials && formData.otherMaterials.trim().length > 0);
+
+        if (!hasProcesses || !hasMaterials) {
+          setError('Please select at least one process and one material, or enter them in the "Other" fields');
           return false;
         }
         return true;
       case 3:
-        if (!formData.typicalJobSize) {
-          setError('Please select a typical job size');
+        if (!formData.typicalJobSize || formData.typicalJobSize.length === 0) {
+          setError('Please select at least one typical job size');
+          return false;
+        }
+        if (!formData.typicalLeadTime) {
+          setError('Please select a typical lead time');
           return false;
         }
         return true;
@@ -342,6 +377,16 @@ export default function BecomeSellerPage() {
       .filter(Boolean)
       .join('; ');
 
+    const jobSizeSelection = formData.typicalJobSize;
+    const jobSizeOrder: TypicalJobSize[] = ['PROTOTYPE', 'LOW_VOLUME', 'MEDIUM_VOLUME', 'HIGH_VOLUME'];
+    const normalizedTypicalJobSize =
+      Array.isArray(jobSizeSelection) && jobSizeSelection.length > 0
+        ? jobSizeOrder.reduce<TypicalJobSize | null>(
+          (acc, size) => (jobSizeSelection.includes(size) ? size : acc),
+          null
+        )
+        : null;
+
     const submitData = {
       userId: currentUser.email,
       onboardingMethod: formData.onboardingMethod,
@@ -351,17 +396,20 @@ export default function BecomeSellerPage() {
       provincesServed: formData.provincesServed,
       website: formData.website || null,
       companyType: formData.companyType,
+      // Normalized taxonomy selections (capability IDs)
       processes: formData.processes,
       materials: formData.materials,
       finishes: formData.finishes,
-      typicalJobSize: formData.typicalJobSize,
-      leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays) : null,
-      leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays) : null,
-      maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX) : null,
-      maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY) : null,
-      maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ) : null,
       certifications: formData.certifications,
       industries: formData.industries,
+      // Production profile and logistics
+      typicalJobSize: normalizedTypicalJobSize,
+      leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays, 10) : null,
+      leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays, 10) : null,
+      maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX, 10) : null,
+      maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY, 10) : null,
+      maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ, 10) : null,
+      // Narrative and contact
       aboutUs: formData.aboutUs || null,
       rfqEmail: formData.rfqEmail,
       phone: formData.phone || null,
@@ -419,8 +467,8 @@ export default function BecomeSellerPage() {
     }
   };
 
-  const toggleArrayItem = (array: string[], item: string) => {
-    return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
+  const toggleArrayItem = <T,>(array: T[], item: T): T[] => {
+    return array.includes(item) ? array.filter((i) => i !== item) : [...array, item];
   };
 
   const handleRestartRegistration = () => {
@@ -443,7 +491,8 @@ export default function BecomeSellerPage() {
       otherProcesses: '',
       otherMaterials: '',
       otherFinishes: '',
-      typicalJobSize: null,
+      typicalJobSize: [],
+      typicalLeadTime: null,
       leadTimeMinDays: '',
       leadTimeMaxDays: '',
       maxPartSizeMmX: '',
@@ -745,7 +794,29 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Company Type</label>
+                        <div className="mb-1 flex items-center gap-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Company Type</label>
+                          <div className="relative group inline-flex items-center cursor-pointer">
+                            <i className="fa-solid fa-circle-info text-[10px] text-slate-500 group-hover:text-white transition-colors"></i>
+                            <div className="hidden group-hover:block absolute right-0 mt-2 w-80 bg-black/90 border border-white/10 rounded-lg p-3 text-[10px] text-slate-200 shadow-lg z-20">
+                              <div className="font-bold text-xs mb-2 text-white">How to choose your company type</div>
+                              <ul className="space-y-1">
+                                <li>
+                                  <span className="font-semibold">1️⃣ Contract Manufacturer</span> — You manufacture parts or products for other companies based on their designs.
+                                </li>
+                                <li>
+                                  <span className="font-semibold">2️⃣ Distributor</span> — You resell parts, materials, or components made by other manufacturers.
+                                </li>
+                                <li>
+                                  <span className="font-semibold">3️⃣ Job Shop</span> — You focus on custom, small-batch, or one-off manufacturing work.
+                                </li>
+                                <li>
+                                  <span className="font-semibold">4️⃣ OEM (Original Equipment Manufacturer)</span> — You design and manufacture your own products.
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
                         <select
                           value={formData.companyType || ''}
                           onChange={(e) => setFormData({ ...formData, companyType: e.target.value || null })}
@@ -928,40 +999,169 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Typical Job Size *</label>
-                        <div className="grid grid-cols-2 gap-4">
-                          {(['PROTOTYPE', 'LOW_VOLUME', 'MEDIUM_VOLUME', 'HIGH_VOLUME'] as TypicalJobSize[]).map((size) => (
-                            <button
-                              key={size}
-                              type="button"
-                              onClick={() => setFormData({ ...formData, typicalJobSize: size })}
-                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.typicalJobSize === size ? 'border-marcan-red bg-marcan-red/10' : 'border-white/10 hover:border-marcan-red/50'}`}
-                            >
-                              <div className="text-white font-bold text-sm uppercase">{size.replace('_', ' ')}</div>
-                            </button>
-                          ))}
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Job Size *</label>
+                        <div className="space-y-2">
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('PROTOTYPE')}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  typicalJobSize: toggleArrayItem<TypicalJobSize>(formData.typicalJobSize, 'PROTOTYPE'),
+                                })
+                              }
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Prototype</div>
+                              <div>One-offs, testing, early design — <span className="text-slate-400">1–10 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('LOW_VOLUME')}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  typicalJobSize: toggleArrayItem<TypicalJobSize>(formData.typicalJobSize, 'LOW_VOLUME'),
+                                })
+                              }
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Low volume</div>
+                              <div>Small production runs — <span className="text-slate-400">10–500 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('MEDIUM_VOLUME')}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  typicalJobSize: toggleArrayItem<TypicalJobSize>(
+                                    formData.typicalJobSize,
+                                    'MEDIUM_VOLUME'
+                                  ),
+                                })
+                              }
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Medium volume</div>
+                              <div>Repeat production — <span className="text-slate-400">500–5,000 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('HIGH_VOLUME')}
+                              onChange={() =>
+                                setFormData({
+                                  ...formData,
+                                  typicalJobSize: toggleArrayItem<TypicalJobSize>(formData.typicalJobSize, 'HIGH_VOLUME'),
+                                })
+                              }
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">High volume</div>
+                              <div>Mass production — <span className="text-slate-400">5,000+ parts</span></div>
+                            </div>
+                          </label>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Lead Time Min (Days)</label>
-                          <input
-                            type="number"
-                            placeholder="7"
-                            value={formData.leadTimeMinDays}
-                            onChange={(e) => setFormData({ ...formData, leadTimeMinDays: e.target.value })}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Lead Time Max (Days)</label>
-                          <input
-                            type="number"
-                            placeholder="30"
-                            value={formData.leadTimeMaxDays}
-                            onChange={(e) => setFormData({ ...formData, leadTimeMaxDays: e.target.value })}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                          />
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Lead Time *</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="radio"
+                              name="typicalLeadTime"
+                              checked={formData.typicalLeadTime === 'ONE_TWO_WEEKS'}
+                              onChange={() => {
+                                setFormData({
+                                  ...formData,
+                                  typicalLeadTime: 'ONE_TWO_WEEKS',
+                                  leadTimeMinDays: '7',
+                                  leadTimeMaxDays: '14',
+                                });
+                              }}
+                              className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <span className="text-xs text-slate-200">1–2 weeks</span>
+                          </label>
+                          <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="radio"
+                              name="typicalLeadTime"
+                              checked={formData.typicalLeadTime === 'TWO_FOUR_WEEKS'}
+                              onChange={() => {
+                                setFormData({
+                                  ...formData,
+                                  typicalLeadTime: 'TWO_FOUR_WEEKS',
+                                  leadTimeMinDays: '14',
+                                  leadTimeMaxDays: '30',
+                                });
+                              }}
+                              className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <span className="text-xs text-slate-200">2–4 weeks</span>
+                          </label>
+                          <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="radio"
+                              name="typicalLeadTime"
+                              checked={formData.typicalLeadTime === 'ONE_THREE_MONTHS'}
+                              onChange={() => {
+                                setFormData({
+                                  ...formData,
+                                  typicalLeadTime: 'ONE_THREE_MONTHS',
+                                  leadTimeMinDays: '30',
+                                  leadTimeMaxDays: '90',
+                                });
+                              }}
+                              className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <span className="text-xs text-slate-200">1–3 months</span>
+                          </label>
+                          <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="radio"
+                              name="typicalLeadTime"
+                              checked={formData.typicalLeadTime === 'THREE_PLUS_MONTHS'}
+                              onChange={() => {
+                                setFormData({
+                                  ...formData,
+                                  typicalLeadTime: 'THREE_PLUS_MONTHS',
+                                  leadTimeMinDays: '90',
+                                  leadTimeMaxDays: '',
+                                });
+                              }}
+                              className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <span className="text-xs text-slate-200">3+ months</span>
+                          </label>
+                          <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="radio"
+                              name="typicalLeadTime"
+                              checked={formData.typicalLeadTime === 'DEPENDS_ON_WORKLOAD'}
+                              onChange={() => {
+                                setFormData({
+                                  ...formData,
+                                  typicalLeadTime: 'DEPENDS_ON_WORKLOAD',
+                                  leadTimeMinDays: '',
+                                  leadTimeMaxDays: '',
+                                });
+                              }}
+                              className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <span className="text-xs text-slate-200">Depends on workload</span>
+                          </label>
                         </div>
                       </div>
                       <div>

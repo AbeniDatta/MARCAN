@@ -49,11 +49,11 @@ export async function POST(req: NextRequest) {
 
     const locationCondition = location
       ? {
-          OR: [
-            { city: { contains: location, mode: 'insensitive' as const } },
-            { province: { contains: location, mode: 'insensitive' as const } },
-          ],
-        }
+        OR: [
+          { city: { contains: location, mode: 'insensitive' as const } },
+          { province: { contains: location, mode: 'insensitive' as const } },
+        ],
+      }
       : {};
 
     // Search Companies (Profiles)

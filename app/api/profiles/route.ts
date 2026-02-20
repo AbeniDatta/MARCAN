@@ -68,7 +68,9 @@ export async function POST(request: NextRequest) {
       rfqEmail,
       phone,
       preferredContactMethod,
-      otherComments,
+      // Additional profile attributes
+      shippingCapability,
+      minOrderQty,
     } = body;
 
     if (!userId || !companyName) {
@@ -109,6 +111,79 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(industries) && industries.length > 0) completenessScore += 5;
     if (website) completenessScore += 5;
 
+    // Look up companyType capability ID if companyType is provided as a string name
+    let companyTypeCapabilityId: string | null = null;
+    if (companyType && typeof companyType === 'string') {
+      // Check if it's already a UUID (capability ID)
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(companyType)) {
+        // It's already a UUID, use it directly
+        companyTypeCapabilityId = companyType;
+      } else {
+        // It's a name/slug, look it up
+        const companyTypeCap = await prisma.capability.findFirst({
+          where: {
+            type: 'COMPANY_TYPE',
+            OR: [
+              { name: { equals: companyType, mode: 'insensitive' } },
+              { slug: { equals: companyType.toLowerCase().replace(/\s+/g, '-'), mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (companyTypeCap) {
+          companyTypeCapabilityId = companyTypeCap.id;
+        }
+      }
+    }
+
+    // Load capability records so we can store human-readable names in legacy arrays
+    // while still using IDs for the normalized relations.
+    const allCapabilityIdsSet = new Set<string>();
+    if (Array.isArray(processes)) processes.forEach((id: string) => allCapabilityIdsSet.add(id));
+    if (Array.isArray(materials)) materials.forEach((id: string) => allCapabilityIdsSet.add(id));
+    if (Array.isArray(finishes)) finishes.forEach((id: string) => allCapabilityIdsSet.add(id));
+    if (Array.isArray(certifications)) certifications.forEach((id: string) => allCapabilityIdsSet.add(id));
+    if (Array.isArray(industries)) industries.forEach((id: string) => allCapabilityIdsSet.add(id));
+    if (companyTypeCapabilityId) allCapabilityIdsSet.add(companyTypeCapabilityId);
+
+    const allCapabilityIds = Array.from(allCapabilityIdsSet);
+
+    let capabilityById: Map<string, { id: string; type: string; name: string }> = new Map();
+    if (allCapabilityIds.length > 0) {
+      const caps = await prisma.capability.findMany({
+        where: { id: { in: allCapabilityIds } },
+        select: { id: true, type: true, name: true },
+      });
+      capabilityById = new Map(caps.map((c) => [c.id, c]));
+    }
+
+    const mapCapabilityNames = (ids: string[] | undefined | null, typeFilter?: string) => {
+      if (!Array.isArray(ids)) return [] as string[];
+      const result: string[] = [];
+      for (const id of ids) {
+        const cap = capabilityById.get(id);
+        if (!cap) continue;
+        if (typeFilter && cap.type !== typeFilter) continue;
+        result.push(cap.name);
+      }
+      return result;
+    };
+
+    // Normalize numeric fields that might arrive as strings
+    const normalizedLeadTimeMin =
+      typeof leadTimeMinDays === 'string' ? parseInt(leadTimeMinDays, 10) || null : leadTimeMinDays ?? null;
+    const normalizedLeadTimeMax =
+      typeof leadTimeMaxDays === 'string' ? parseInt(leadTimeMaxDays, 10) || null : leadTimeMaxDays ?? null;
+    const normalizedMaxX =
+      typeof maxPartSizeMmX === 'string' ? parseInt(maxPartSizeMmX, 10) || null : maxPartSizeMmX ?? null;
+    const normalizedMaxY =
+      typeof maxPartSizeMmY === 'string' ? parseInt(maxPartSizeMmY, 10) || null : maxPartSizeMmY ?? null;
+    const normalizedMaxZ =
+      typeof maxPartSizeMmZ === 'string' ? parseInt(maxPartSizeMmZ, 10) || null : maxPartSizeMmZ ?? null;
+    const normalizedMinOrderQty =
+      typeof minOrderQty === 'string' ? parseInt(minOrderQty, 10) || null : minOrderQty ?? null;
+
     // Prepare profile data
     const profileData: any = {
       companyName,
@@ -118,8 +193,14 @@ export async function POST(request: NextRequest) {
       city: city || null,
       province: province || null,
       aboutUs: aboutUs || null,
-      capabilities: capabilities || [],
-      certifications: certifications || [],
+      // Legacy array fields (use human-readable names for backward compatibility and AI search)
+      capabilities: Array.isArray(capabilities) && capabilities.length > 0
+        ? capabilities
+        : mapCapabilityNames(processes, 'PROCESS'),
+      materials: mapCapabilityNames(materials, 'MATERIAL'),
+      certifications: mapCapabilityNames(certifications, 'CERTIFICATION'),
+      shippingCapability: shippingCapability || null,
+      minOrderQty: normalizedMinOrderQty,
       selectedIcon: selectedIcon || null,
       logoUrl: logoUrl || null,
       primaryIntent: primaryIntent || 'sell', // Default to 'sell' for seller signup
@@ -127,15 +208,14 @@ export async function POST(request: NextRequest) {
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
       typicalJobSize: typicalJobSize || null,
-      leadTimeMinDays: leadTimeMinDays || null,
-      leadTimeMaxDays: leadTimeMaxDays || null,
-      maxPartSizeMmX: maxPartSizeMmX || null,
-      maxPartSizeMmY: maxPartSizeMmY || null,
-      maxPartSizeMmZ: maxPartSizeMmZ || null,
+      leadTimeMinDays: normalizedLeadTimeMin,
+      leadTimeMaxDays: normalizedLeadTimeMax,
+      maxPartSizeMmX: normalizedMaxX,
+      maxPartSizeMmY: normalizedMaxY,
+      maxPartSizeMmZ: normalizedMaxZ,
       rfqEmail: rfqEmail || null,
       phone: phone || null,
       preferredContactMethod: preferredContactMethod || null,
-      otherComments: otherComments || null,
       // Eligibility and enrichment
       searchable: isEligible,
       profileCompletenessScore: completenessScore,
@@ -176,7 +256,7 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(finishes)) capabilityIds.push(...finishes);
 
     // Non-core capabilities (isCore = false, source = "signup")
-    if (companyType) capabilityIds.push(companyType);
+    if (companyTypeCapabilityId) capabilityIds.push(companyTypeCapabilityId);
     if (Array.isArray(certifications)) capabilityIds.push(...certifications);
     if (Array.isArray(industries)) capabilityIds.push(...industries);
 
@@ -266,9 +346,16 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     if (userId) {
-      // Fetch single profile by userId
+      // Fetch single profile by userId with capabilities for rich display in My Account
       const profile = await prisma.profile.findUnique({
         where: { userId },
+        include: {
+          profileCapabilities: {
+            include: {
+              capability: true,
+            },
+          },
+        },
       });
 
       if (!profile) {
@@ -282,14 +369,32 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      // Group capabilities by type for easier consumption on the frontend
+      const capabilitiesByType: Record<string, string[]> = {
+        PROCESS: [],
+        MATERIAL: [],
+        FINISH: [],
+        CERTIFICATION: [],
+        INDUSTRY: [],
+        COMPANY_TYPE: [],
+      };
+
+      for (const pc of profile.profileCapabilities) {
+        const type = pc.capability.type as unknown as string;
+        if (!capabilitiesByType[type]) {
+          capabilitiesByType[type] = [];
+        }
+        capabilitiesByType[type].push(pc.capability.name);
+      }
+
+      // Return the full profile plus a friendly capabilitiesByType helper object.
+      // Header currently only uses city/province; My Account can use the richer shape.
+      const { profileCapabilities, ...rest } = profile;
+
       return NextResponse.json({
-        id: profile.id,
-        userId: profile.userId,
-        companyName: profile.companyName,
-        city: profile.city,
-        province: profile.province,
-        phone: profile.phone,
-        email: profile.userId, // userId is the email
+        ...rest,
+        capabilitiesByType,
+        email: profile.userId, // expose email explicitly for convenience
       }, {
         headers: {
           'Content-Type': 'application/json',

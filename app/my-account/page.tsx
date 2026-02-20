@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
-import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
@@ -24,13 +22,8 @@ export default function MyAccountPage() {
   });
   const [capabilities, setCapabilities] = useState<string[]>([]);
   const [certifications, setCertifications] = useState<string[]>([]);
+  const [supplierProfile, setSupplierProfile] = useState<any | null>(null);
   const [accountRole, setAccountRole] = useState<string>('both');
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  const [passwordError, setPasswordError] = useState('');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
@@ -65,59 +58,61 @@ export default function MyAccountPage() {
         website: user.website || '',
         aboutUs: user.aboutUs || '',
       });
-      // Load capabilities and certifications
+      // Load capabilities and certifications from local user snapshot if present
       if (user.capabilities) {
         setCapabilities(user.capabilities);
       }
       if (user.certifications) {
         setCertifications(user.certifications);
       }
-      // Load account role
+      // Load account role from auth user; role is managed by signup / become-seller flows only
       if (user.role) {
         setAccountRole(user.role);
       }
 
-      // Load user's wishlist requests and listings from API
+      // Load user's wishlist requests, listings, and rich supplier profile from API
       if (typeof window !== 'undefined' && user.email) {
-        // Fetch user's profile from database to check if they have a seller profile
-        fetch(`/api/profiles`)
-          .then((res) => res.json())
-          .then((allProfiles) => {
-            // Find the user's profile
-            const userProfile = Array.isArray(allProfiles)
-              ? allProfiles.find((p: any) => p.userId === user.email || p.id === user.email)
-              : null;
-
-            // If user has a seller profile, update role and form data
-            if (userProfile) {
-              const hasSellerProfile = userProfile.primaryIntent === 'sell' || userProfile.primaryIntent === 'both';
-              if (hasSellerProfile) {
-                // Update account role if user has seller profile
-                const newRole = userProfile.primaryIntent === 'both' ? 'both' : 'sell';
-                setAccountRole(newRole);
-
-                // Also update user role in localStorage to keep it in sync
-                const updatedUser = { ...user, role: newRole };
-                localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-                window.dispatchEvent(new Event('marcan-auth-change'));
-
-                // Update form data with profile data
-                setFormData(prev => ({
-                  ...prev,
-                  companyName: userProfile.companyName || prev.companyName,
-                  jobTitle: userProfile.jobTitle || prev.jobTitle,
-                  businessNumber: userProfile.businessNumber || prev.businessNumber,
-                  website: userProfile.website || prev.website,
-                  aboutUs: userProfile.aboutUs || prev.aboutUs,
-                }));
-
-                if (userProfile.capabilities) {
-                  setCapabilities(userProfile.capabilities);
-                }
-                if (userProfile.certifications) {
-                  setCertifications(userProfile.certifications);
-                }
+        // Fetch the supplier profile for this user (if it exists)
+        fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+          .then((res) => {
+            if (!res.ok) {
+              if (res.status === 404) {
+                return null;
               }
+              throw new Error('Failed to fetch supplier profile');
+            }
+            return res.json();
+          })
+          .then((profile) => {
+            if (!profile) {
+              setSupplierProfile(null);
+              return;
+            }
+
+            setSupplierProfile(profile);
+
+            // If the profile indicates seller intent, reflect that in read-only accountRole state
+            if (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both') {
+              const newRole = profile.primaryIntent === 'both' ? 'both' : 'sell';
+              setAccountRole(newRole);
+            }
+
+            // Hydrate company-related fields in the form for convenience
+            setFormData((prev) => ({
+              ...prev,
+              companyName: profile.companyName || prev.companyName,
+              jobTitle: profile.jobTitle || prev.jobTitle,
+              businessNumber: profile.businessNumber || prev.businessNumber,
+              website: profile.website || prev.website,
+              aboutUs: profile.aboutUs || prev.aboutUs,
+            }));
+
+            // Prefer capabilities / certifications from the supplier profile if present
+            if (Array.isArray(profile.capabilities) && profile.capabilities.length > 0) {
+              setCapabilities(profile.capabilities);
+            }
+            if (Array.isArray(profile.certifications) && profile.certifications.length > 0) {
+              setCertifications(profile.certifications);
             }
           })
           .catch((err) => {
@@ -371,60 +366,6 @@ export default function MyAccountPage() {
     }
   };
 
-  const handleUpdatePassword = async () => {
-    setPasswordError('');
-    setSaveMessage(null);
-
-    // Validate current password is provided
-    if (!passwordData.currentPassword) {
-      setPasswordError('Please enter your current password');
-      return;
-    }
-
-    // Validate new password matches confirmation
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('New passwords do not match!');
-      return;
-    }
-
-    // Validate new password length
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters!');
-      return;
-    }
-
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser || !user?.email) {
-      setPasswordError('User not authenticated');
-      return;
-    }
-
-    try {
-      // Re-authenticate user with current password
-      const credential = EmailAuthProvider.credential(user.email, passwordData.currentPassword);
-      await reauthenticateWithCredential(firebaseUser, credential);
-
-      // Update password
-      await updatePassword(firebaseUser, passwordData.newPassword);
-
-      // Success
-      setSaveMessage({ type: 'success', text: 'Password updated successfully!' });
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setPasswordError('');
-      setTimeout(() => setSaveMessage(null), 3000);
-    } catch (err: any) {
-      // Handle Firebase Auth errors
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setPasswordError('Current password does not match');
-      } else if (err.code === 'auth/weak-password') {
-        setPasswordError('Password is too weak. Please choose a stronger password.');
-      } else {
-        setPasswordError(err.message || 'Failed to update password');
-      }
-    }
-  };
-
-
   if (isLoading) {
     return (
       <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -458,280 +399,363 @@ export default function MyAccountPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-2xl font-bold text-white shadow-neon">
+          {/* Profile Header Banner */}
+          <div className="glass-card rounded-3xl p-8 mb-8 flex items-center gap-6 relative overflow-hidden border border-white/5">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-marcan-red/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-3xl font-black text-white shadow-neon shrink-0 z-10">
               {getInitials()}
             </div>
-            <div>
-              <h2 className="font-heading text-3xl font-bold text-white">
+            <div className="z-10">
+              <h2 className="font-heading text-3xl font-black text-white tracking-wide mb-1">
                 {user?.firstName || formData.firstName} {user?.lastName || formData.lastName}
               </h2>
-              <p className="text-slate-400 text-sm">
-                {formData.jobTitle} <span className="text-white font-bold">{formData.companyName}</span>
+              <p className="text-slate-400 text-sm flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase tracking-wider text-white">
+                  Verified Account
+                </span>
+                {formData.email}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Settings Sidebar */}
-            <div className="lg:col-span-1 space-y-1">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Settings Sidebar Tabs */}
+            <div className="lg:col-span-3 space-y-2">
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'profile'
-                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'profile'
+                  ? 'bg-marcan-red/10 text-white border-marcan-red'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                   }`}
               >
                 Profile Settings
               </button>
-              {/* Only show Company Profile tab if user is a seller */}
-              {(user?.role === 'both' || user?.role === 'sell') && (
+              {/* Only show Supplier Company Profile tab if user is a seller */}
+              {(user?.role === 'both' || user?.role === 'sell' || accountRole === 'both' || accountRole === 'sell') && (
                 <button
                   onClick={() => setActiveTab('company')}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'company'
-                    ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                    : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                  className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'company'
+                    ? 'bg-marcan-red/10 text-white border-marcan-red'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                     }`}
                 >
-                  Company Profile
+                  Supplier Company Profile
                 </button>
               )}
               <button
-                onClick={() => setActiveTab('security')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'security'
-                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
-                  }`}
-              >
-                Security
-              </button>
-              <button
                 onClick={() => setActiveTab('my-posts')}
-                className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition ${activeTab === 'my-posts'
-                  ? 'bg-marcan-red/10 text-white border-l-2 border-marcan-red'
-                  : 'hover:bg-white/5 text-slate-400 hover:text-white'
+                className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'my-posts'
+                  ? 'bg-marcan-red/10 text-white border-marcan-red'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                   }`}
               >
                 My Posts
               </button>
             </div>
 
-            {/* Settings Content */}
-            <div className="lg:col-span-3 space-y-8">
-              {/* Profile Settings Tab */}
+            {/* Settings Content Area */}
+            <div className="lg:col-span-9 relative min-h-[500px]">
+              {/* TAB: Personal Information */}
               {activeTab === 'profile' && (
-                <div className="glass-card p-8 rounded-2xl border border-white/5">
-                  <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                    <h3 className="font-bold text-lg text-white uppercase tracking-wide">Personal Information</h3>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold">Last updated: Today</span>
-                  </div>
+                <div className="account-tab block animate-fade-in">
+                  <div className="glass-card p-8 rounded-3xl border border-white/5">
+                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                      <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
+                        Personal Information
+                      </h3>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold">Last updated: Today</span>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">First Name</label>
-                      <input
-                        type="text"
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Last Name</label>
-                      <input
-                        type="text"
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Your Job Title
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.jobTitle}
+                          onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Your Job Title</label>
-                      <input
-                        type="text"
-                        value={formData.jobTitle}
-                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Email Address</label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSaveProfile}
-                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
-                    >
-                      Save Changes
-                    </button>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleSaveProfile}
+                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Company Profile Tab */}
+              {/* Supplier Company Profile Tab */}
               {activeTab === 'company' && (
-                <div className="glass-card p-8 rounded-2xl border border-white/5">
-                  <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-4">
-                    Company Details
-                  </h3>
+                <div className="account-tab block animate-fade-in">
+                  <div className="glass-card p-8 rounded-3xl border border-white/5">
+                    <div className="mb-8 border-b border-white/5 pb-4">
+                      <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
+                        Supplier Company Details
+                      </h3>
+                    </div>
 
-                  <div className="mb-6 flex gap-4 items-center">
-                    <div className="w-20 h-20 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center text-xl font-bold text-white">
-                      {formData.companyName
-                        .split(' ')
-                        .map((word) => word[0])
-                        .join('')
-                        .substring(0, 3)}
-                    </div>
-                    <div>
-                      <button className="text-xs text-marcan-red font-bold uppercase hover:text-white transition mb-1 block">
-                        Change Logo
-                      </button>
-                      <p className="text-[10px] text-slate-500">Recommended: 400x400px PNG</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6 mb-6">
-                    <div className="col-span-2">
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">
-                        Company Legal Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.companyName}
-                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">
-                        Business Number (BN)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.businessNumber}
-                        onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Website URL</label>
-                      <input
-                        type="text"
-                        value={formData.website}
-                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">About Us</label>
-                    <textarea
-                      rows={4}
-                      value={formData.aboutUs}
-                      onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">
-                      Capabilities & Certs
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {capabilities.map((item) => (
-                        <span
-                          key={item}
-                          className="px-3 py-1 rounded bg-marcan-red text-white text-[10px] font-bold uppercase cursor-pointer hover:bg-red-600 transition"
-                        >
-                          {item} <i className="fa-solid fa-xmark ml-1"></i>
+                    {/* Logo / Avatar area */}
+                    <div className="mb-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center p-6 bg-black/20 rounded-2xl border border-white/5">
+                      <div className="w-24 h-24 rounded-xl bg-black/60 border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500">
+                        <span className="text-xl font-bold text-white">
+                          {(formData.companyName || supplierProfile?.companyName || 'M')
+                            .split(' ')
+                            .map((w: string) => w[0])
+                            .join('')
+                            .substring(0, 3)
+                            .toUpperCase()}
                         </span>
-                      ))}
-                      {certifications.map((item) => (
-                        <span
-                          key={item}
-                          className="px-3 py-1 rounded bg-marcan-red text-white text-[10px] font-bold uppercase cursor-pointer hover:bg-red-600 transition"
-                        >
-                          {item} <i className="fa-solid fa-xmark ml-1"></i>
-                        </span>
-                      ))}
-                      {capabilities.length === 0 && certifications.length === 0 && (
-                        <span className="text-slate-500 text-xs">No capabilities or certifications added yet</span>
-                      )}
-                      <button className="px-3 py-1 rounded border border-white/20 text-slate-400 text-[10px] font-bold uppercase hover:text-white hover:border-white transition">
-                        + Add
-                      </button>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-sm mb-1 uppercase">Company Logo</h4>
+                        <p className="text-xs text-slate-500 mb-3">
+                          Recommended: 400x400px transparent PNG.
+                        </p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+                          Logo upload coming soon
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="border-t border-white/5 pt-6">
-                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Account Role</label>
-                    <div className="text-sm text-white font-semibold">
-                      {accountRole === 'buy' && 'Buyer Only'}
-                      {accountRole === 'sell' && 'Supplier Only'}
-                      {accountRole === 'both' && 'Both (Buyer & Supplier)'}
+                    {/* Core company fields (name / BN / website) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="md:col-span-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Company Legal Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.companyName}
+                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                          placeholder="Enter company name"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Business Number (BN)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.businessNumber}
+                          onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                          placeholder="Optional"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Website URL
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.website}
+                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                          placeholder="www.example.com"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="border-t border-white/5 pt-6 mt-6">
-                    <div className="flex justify-between items-center">
+                    {/* Location & logistics from supplier profile */}
+                    {supplierProfile && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Location
+                          </label>
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {(supplierProfile.city || '') && (supplierProfile.province || '')
+                              ? `${supplierProfile.city}, ${supplierProfile.province}`
+                              : supplierProfile.city || supplierProfile.province || 'Not specified'}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Provinces Served
+                          </label>
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {Array.isArray(supplierProfile.provincesServed) && supplierProfile.provincesServed.length > 0
+                              ? supplierProfile.provincesServed.join(', ')
+                              : 'Not specified'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* About Us */}
+                    <div className="mb-8">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                        About Us
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={formData.aboutUs}
+                        onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
+                        placeholder="Describe your company's mission, history, and core focus..."
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                      />
+                    </div>
+
+                    {/* Capabilities & Certifications from profile */}
+                    <div className="mb-8">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                        Capabilities & Certs
+                      </label>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                        {capabilities.map((item) => (
+                          <span
+                            key={item}
+                            className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                        {certifications.map((item) => (
+                          <span
+                            key={item}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-white/10"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                        {capabilities.length === 0 && certifications.length === 0 && (
+                          <span className="text-xs text-slate-500 italic">
+                            No capabilities or certifications added yet.
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Contact details from supplier profile */}
+                    {supplierProfile && (
+                      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            RFQ Email
+                          </label>
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {supplierProfile.rfqEmail || 'Not specified'}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Phone Number
+                          </label>
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {supplierProfile.phone || 'Not specified'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Account Role - read only */}
+                    <div className="mb-8 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
+                          Account Role
+                        </label>
+                        <div className="text-white font-bold text-sm">
+                          {accountRole === 'buy' && 'Buyer Only'}
+                          {accountRole === 'sell' && 'Supplier Only'}
+                          {accountRole === 'both' && 'Buyer and Supplier'}
+                        </div>
+                      </div>
+                      {/* Role is intentionally read-only – no change role button */}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
                       <button
                         onClick={() => setShowDeleteConfirm(true)}
-                        className="text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-2"
+                        className="text-marcan-red text-xs font-bold uppercase tracking-wider hover:text-red-400 transition-colors flex items-center gap-2"
                       >
-                        <i className="fa-solid fa-trash"></i> Delete Seller Profile
+                        <i className="fa-solid fa-trash-can"></i> Delete Profile
                       </button>
                       <button
                         onClick={handleUpdateCompany}
-                        className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
                       >
                         Update Company
                       </button>
                     </div>
-                  </div>
 
-                  {/* Delete Confirmation Modal */}
-                  {showDeleteConfirm && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                      <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
-                        <div className="text-center mb-6">
-                          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                            <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+                    {/* Delete Confirmation Modal */}
+                    {showDeleteConfirm && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                        <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
+                          <div className="text-center mb-6">
+                            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                              <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+                            </div>
+                            <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">
+                              Delete Seller Profile?
+                            </h3>
+                            <p className="text-slate-400 text-sm leading-relaxed">
+                              This will permanently delete all seller information, remove your company from the directory, and change your account to buyer-only. This action cannot be undone.
+                            </p>
                           </div>
-                          <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">Delete Seller Profile?</h3>
-                          <p className="text-slate-400 text-sm leading-relaxed">
-                            This will permanently delete all seller information, remove your company from the directory, and change your account to buyer-only. This action cannot be undone.
-                          </p>
-                        </div>
-                        <div className="flex gap-4">
-                          <button
-                            onClick={() => setShowDeleteConfirm(false)}
-                            className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleDeleteSellerProfile}
-                            disabled={isDeletingProfile}
-                            className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isDeletingProfile ? 'Deleting...' : 'Delete Profile'}
-                          </button>
+                          <div className="flex gap-4">
+                            <button
+                              onClick={() => setShowDeleteConfirm(false)}
+                              className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleDeleteSellerProfile}
+                              disabled={isDeletingProfile}
+                              className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isDeletingProfile ? 'Deleting...' : 'Delete Profile'}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -862,74 +886,6 @@ export default function MyAccountPage() {
                       )}
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* Security Tab */}
-              {activeTab === 'security' && (
-                <div className="glass-card p-8 rounded-2xl border border-white/5">
-                  <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-4">
-                    Security
-                  </h3>
-
-                  {/* Password Error Message */}
-                  {passwordError && (
-                    <div className="mb-6 p-4 rounded-lg border bg-red-500/10 border-red-500/30 text-red-400 text-sm font-bold uppercase tracking-wider">
-                      {passwordError}
-                    </div>
-                  )}
-
-                  <div className="space-y-6 mb-6">
-                    <div>
-                      <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Current Password</label>
-                      <input
-                        type="password"
-                        placeholder="Enter your current password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => {
-                          setPasswordData({ ...passwordData, currentPassword: e.target.value });
-                          setPasswordError('');
-                        }}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">New Password</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          value={passwordData.newPassword}
-                          onChange={(e) => {
-                            setPasswordData({ ...passwordData, newPassword: e.target.value });
-                            setPasswordError('');
-                          }}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Confirm Password</label>
-                        <input
-                          type="password"
-                          placeholder="••••••••"
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => {
-                            setPasswordData({ ...passwordData, confirmPassword: e.target.value });
-                            setPasswordError('');
-                          }}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleUpdatePassword}
-                      className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
-                    >
-                      Update Password
-                    </button>
-                  </div>
                 </div>
               )}
 
