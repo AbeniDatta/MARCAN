@@ -7,8 +7,38 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function MarketplacePage() {
   const { isAuthenticated, user, isMounted } = useAuth();
-  const isSeller = user && (user.role === 'sell' || user.role === 'both');
+  const [isSeller, setIsSeller] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
+
+  // Check if user has a seller profile
+  useEffect(() => {
+    if (isMounted && isAuthenticated && user?.email) {
+      fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+        .then((res) => {
+          if (!res.ok) {
+            if (res.status === 404) {
+              return null;
+            }
+            throw new Error('Failed to fetch profile');
+          }
+          return res.json();
+        })
+        .then((profile) => {
+          if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+            setIsSeller(true);
+          } else {
+            setIsSeller(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Error checking seller profile:', err);
+          // Fallback to localStorage role check
+          setIsSeller(user?.role === 'sell' || user?.role === 'both');
+        });
+    } else {
+      setIsSeller(false);
+    }
+  }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
   useEffect(() => {
     // Fetch listings from API
@@ -49,7 +79,7 @@ export default function MarketplacePage() {
               >
                 <i className="fa-solid fa-plus mr-2"></i> Create Listing
               </Link>
-            ) : isMounted && isAuthenticated ? (
+            ) : isMounted && isAuthenticated && !isSeller ? (
               <>
                 <button
                   disabled

@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       lastName,
       email,
       companyName,
+      jobTitle,
       phone,
       city,
       province,
@@ -46,7 +47,11 @@ export async function POST(request: NextRequest) {
 
     const profileData: any = {
       userId,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      email: email || userId || null,
       companyName: companyName || `${firstName} ${lastName}`.trim(),
+      jobTitle: jobTitle || null,
       phone: phone || null,
       city: city || null,
       province: province || null,
@@ -64,15 +69,20 @@ export async function POST(request: NextRequest) {
     let profile;
     if (existingProfile) {
       // Update existing profile
+      console.log('Updating existing profile for userId:', userId);
       profile = await prisma.profile.update({
         where: { userId },
         data: profileData,
       });
+      console.log('Profile updated successfully:', profile.id);
     } else {
       // Create new profile
+      console.log('Creating new profile for userId:', userId);
+      console.log('Profile data:', { userId, firstName, lastName, email, companyName, jobTitle, phone, city, province });
       profile = await prisma.profile.create({
         data: profileData,
       });
+      console.log('Profile created successfully:', profile.id);
     }
 
     return NextResponse.json(
@@ -84,10 +94,16 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Error creating/updating user profile:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
     return NextResponse.json(
       {
         error: 'Failed to create/update user profile',
         details: error.message || 'Unknown error',
+        code: error.code || 'UNKNOWN',
       },
       { status: 500 }
     );

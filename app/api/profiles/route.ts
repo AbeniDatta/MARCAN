@@ -39,6 +39,9 @@ export async function POST(request: NextRequest) {
 
     const {
       userId,
+      firstName,
+      lastName,
+      email,
       companyName,
       jobTitle,
       businessNumber,
@@ -186,6 +189,9 @@ export async function POST(request: NextRequest) {
 
     // Prepare profile data
     const profileData: any = {
+      firstName: firstName || null,
+      lastName: lastName || null,
+      email: email || userId || null, // Use userId as fallback for email
       companyName,
       jobTitle: jobTitle || null,
       businessNumber: businessNumber || null,
@@ -389,10 +395,9 @@ export async function GET(request: NextRequest) {
 
       // Return the full profile plus a friendly capabilitiesByType helper object.
       // Header currently only uses city/province; My Account can use the richer shape.
-      const { profileCapabilities, ...rest } = profile;
-
+      // Include profileCapabilities for edit mode to get capability IDs
       return NextResponse.json({
-        ...rest,
+        ...profile,
         capabilitiesByType,
         email: profile.userId, // expose email explicitly for convenience
       }, {

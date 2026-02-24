@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,7 @@ interface NavItem {
 export default function Sidebar() {
     const pathname = usePathname();
     const { isAuthenticated, user, logout, isMounted } = useAuth();
+    const [hasSellerProfile, setHasSellerProfile] = useState(false);
 
     const navItems: NavItem[] = [
         { href: '/', label: 'Home', icon: 'fa-house' },
@@ -23,6 +25,36 @@ export default function Sidebar() {
         { href: '/marketplace', label: 'Supplier Listings', icon: 'fa-shop' },
         { href: '/contact', label: 'Contact Us', icon: 'fa-envelope' },
     ];
+
+    // Check if user has a seller profile in the database
+    useEffect(() => {
+        if (isMounted && isAuthenticated && user?.email) {
+            fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+                .then((res) => {
+                    if (!res.ok) {
+                        if (res.status === 404) {
+                            return null;
+                        }
+                        throw new Error('Failed to fetch profile');
+                    }
+                    return res.json();
+                })
+                .then((profile) => {
+                    if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+                        setHasSellerProfile(true);
+                    } else {
+                        setHasSellerProfile(false);
+                    }
+                })
+                .catch((err) => {
+                    console.error('Error checking seller profile:', err);
+                    // Fallback to localStorage role check
+                    setHasSellerProfile(user?.role === 'sell' || user?.role === 'both');
+                });
+        } else {
+            setHasSellerProfile(false);
+        }
+    }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
     const isActive = (href: string) => {
         if (href === '/') {
@@ -74,7 +106,7 @@ export default function Sidebar() {
                 })}
 
                 {/* Become a Seller - Only show if authenticated and not already a seller */}
-                {isMounted && isAuthenticated && user && user.role !== 'both' && user.role !== 'sell' && (
+                {isMounted && isAuthenticated && user && !hasSellerProfile && (
                     <Link
                         href="/become-seller"
                         className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl border-2 ${isActive('/become-seller')

@@ -207,6 +207,33 @@ export default function BecomeSellerPage() {
     }
   }, [isMounted, isAuthenticated, router]);
 
+  // Redirect if user already has a seller profile
+  useEffect(() => {
+    if (isMounted && isAuthenticated && currentUser?.email) {
+      fetch(`/api/profiles?userId=${encodeURIComponent(currentUser.email)}`)
+        .then((res) => {
+          if (!res.ok) {
+            if (res.status === 404) {
+              // No profile exists, they can proceed
+              return null;
+            }
+            throw new Error('Failed to fetch profile');
+          }
+          return res.json();
+        })
+        .then((profile) => {
+          if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+            // User already has a seller profile, redirect to my account
+            router.replace('/my-account');
+          }
+        })
+        .catch((err) => {
+          console.error('Error checking seller profile:', err);
+          // On error, allow them to proceed (they might not have a profile yet)
+        });
+    }
+  }, [isMounted, isAuthenticated, currentUser?.email, router]);
+
   const handleImportWebsite = async () => {
     if (!importUrl.trim()) {
       setError('Please enter a website URL');

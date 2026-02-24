@@ -22,6 +22,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
     company: '',
+    jobTitle: '',
     phone: '',
     city: '',
     province: '',
@@ -33,6 +34,12 @@ export default function SignupPage() {
 
     if (!buyerData.firstName || !buyerData.lastName || !buyerData.email || !buyerData.password) {
       setError('Please fill in all required fields.');
+      return;
+    }
+
+    // If company name is provided, job title is required
+    if (buyerData.company.trim() && !buyerData.jobTitle.trim()) {
+      setError('Please enter your role in the company.');
       return;
     }
 
@@ -61,6 +68,7 @@ export default function SignupPage() {
         lastName: buyerData.lastName,
         email: buyerData.email,
         companyName: buyerData.company,
+        jobTitle: buyerData.jobTitle,
         phone: buyerData.phone,
         city: buyerData.city,
         province: buyerData.province,
@@ -77,20 +85,27 @@ export default function SignupPage() {
             firstName: buyerData.firstName,
             lastName: buyerData.lastName,
             email: buyerData.email,
-            companyName: buyerData.company,
-            phone: buyerData.phone,
-            city: buyerData.city,
-            province: buyerData.province,
+            companyName: buyerData.company || `${buyerData.firstName} ${buyerData.lastName}`.trim(),
+            jobTitle: buyerData.jobTitle || null,
+            phone: buyerData.phone || null,
+            city: buyerData.city || null,
+            province: buyerData.province || null,
           }),
         });
 
         if (!saveResponse.ok) {
-          console.error('Failed to save user data to database');
-          // Continue anyway - data is saved to localStorage
+          const errorData = await saveResponse.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Failed to save user data to database:', errorData);
+          // Don't throw - allow user to continue, but log the error
+          // The profile can be created/updated later from My Account page
+        } else {
+          const result = await saveResponse.json();
+          console.log('Profile created successfully:', result);
         }
-      } catch (dbError) {
+      } catch (dbError: any) {
         console.error('Error saving to database:', dbError);
-        // Continue anyway - data is saved to localStorage
+        // Don't throw - allow user to continue, but log the error
+        // The profile can be created/updated later from My Account page
       }
 
       login(userData);
@@ -207,10 +222,25 @@ export default function SignupPage() {
                         type="text"
                         placeholder="Organization you represent"
                         value={buyerData.company}
-                        onChange={(e) => setBuyerData({ ...buyerData, company: e.target.value })}
+                        onChange={(e) => setBuyerData({ ...buyerData, company: e.target.value, jobTitle: e.target.value.trim() ? buyerData.jobTitle : '' })}
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                       />
                     </div>
+                    {buyerData.company.trim() && (
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-1 block">
+                          Role in Company <span className="text-marcan-red">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Procurement Manager, Buyer, Director"
+                          value={buyerData.jobTitle}
+                          onChange={(e) => setBuyerData({ ...buyerData, jobTitle: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                          required
+                        />
+                      </div>
+                    )}
                     <div>
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Phone Number</label>
                       <input
@@ -236,13 +266,20 @@ export default function SignupPage() {
                           onChange={(e) => setBuyerData({ ...buyerData, province: e.target.value })}
                           className="bg-black/40 border border-white/10 rounded-lg px-2 py-3 text-sm font-semibold text-slate-400 focus:border-marcan-red focus:shadow-neon outline-none"
                         >
-                          <option value="" disabled>
-                            Prov.
-                          </option>
+                          <option value="">Prov.</option>
                           <option value="ON">ON</option>
                           <option value="QC">QC</option>
                           <option value="BC">BC</option>
                           <option value="AB">AB</option>
+                          <option value="MB">MB</option>
+                          <option value="SK">SK</option>
+                          <option value="NS">NS</option>
+                          <option value="NB">NB</option>
+                          <option value="NL">NL</option>
+                          <option value="PE">PE</option>
+                          <option value="NT">NT</option>
+                          <option value="YT">YT</option>
+                          <option value="NU">NU</option>
                         </select>
                       </div>
                     </div>

@@ -6,10 +6,27 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
+const CANADIAN_PROVINCES = [
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Quebec' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'AB', name: 'Alberta' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NU', name: 'Nunavut' },
+];
+
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,16 +36,56 @@ export default function MyAccountPage() {
     businessNumber: '',
     website: '',
     aboutUs: '',
+    // Seller-specific fields
+    city: '',
+    province: '',
+    provincesServed: [] as string[],
+    companyType: null as string | null,
+    processes: [] as string[], // capability IDs
+    materials: [] as string[], // capability IDs
+    finishes: [] as string[], // capability IDs
+    certifications: [] as string[], // capability IDs
+    industries: [] as string[], // capability IDs
+    otherProcesses: '',
+    otherMaterials: '',
+    otherFinishes: '',
+    otherCertifications: '',
+    otherIndustries: '',
+    typicalJobSize: [] as string[],
+    leadTimeMinDays: '',
+    leadTimeMaxDays: '',
+    maxPartSizeMmX: '',
+    maxPartSizeMmY: '',
+    maxPartSizeMmZ: '',
+    rfqEmail: '',
+    phone: '',
+    preferredContactMethod: null as string | null,
   });
   const [capabilities, setCapabilities] = useState<string[]>([]);
   const [certifications, setCertifications] = useState<string[]>([]);
+  const [availableCapabilities, setAvailableCapabilities] = useState<{
+    PROCESS: any[];
+    MATERIAL: any[];
+    FINISH: any[];
+    CERTIFICATION: any[];
+    INDUSTRY: any[];
+    COMPANY_TYPE: any[];
+  }>({
+    PROCESS: [],
+    MATERIAL: [],
+    FINISH: [],
+    CERTIFICATION: [],
+    INDUSTRY: [],
+    COMPANY_TYPE: [],
+  });
   const [supplierProfile, setSupplierProfile] = useState<any | null>(null);
-  const [accountRole, setAccountRole] = useState<string>('both');
+  const [accountRole, setAccountRole] = useState<string>('buy');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
   const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
   const [isDeletingProfile, setIsDeletingProfile] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -48,7 +105,8 @@ export default function MyAccountPage() {
 
     // Load user data from localStorage (saved during signup)
     if (user && isAuthenticated) {
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         jobTitle: user.jobTitle || '',
@@ -57,7 +115,7 @@ export default function MyAccountPage() {
         businessNumber: user.businessNumber || '',
         website: user.website || '',
         aboutUs: user.aboutUs || '',
-      });
+      }));
       // Load capabilities and certifications from local user snapshot if present
       if (user.capabilities) {
         setCapabilities(user.capabilities);
@@ -66,9 +124,8 @@ export default function MyAccountPage() {
         setCertifications(user.certifications);
       }
       // Load account role from auth user; role is managed by signup / become-seller flows only
-      if (user.role) {
-        setAccountRole(user.role);
-      }
+      // Default to 'buy' if not set
+      setAccountRole(user.role || 'buy');
 
       // Load user's wishlist requests, listings, and rich supplier profile from API
       if (typeof window !== 'undefined' && user.email) {
@@ -93,21 +150,70 @@ export default function MyAccountPage() {
 
             // If the profile indicates seller intent, reflect that in read-only accountRole state
             if (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both') {
-              const newRole = profile.primaryIntent === 'both' ? 'both' : 'sell';
-              setAccountRole(newRole);
+              setAccountRole('both'); // If they have a seller profile, they are both buyer and supplier
+            } else {
+              setAccountRole('buy'); // Otherwise, they are buyer only
             }
 
-            // Hydrate company-related fields in the form for convenience
+            // Hydrate all fields from the profile, including user info
             setFormData((prev) => ({
               ...prev,
+              firstName: profile.firstName || prev.firstName,
+              lastName: profile.lastName || prev.lastName,
+              email: profile.email || prev.email,
               companyName: profile.companyName || prev.companyName,
               jobTitle: profile.jobTitle || prev.jobTitle,
               businessNumber: profile.businessNumber || prev.businessNumber,
               website: profile.website || prev.website,
               aboutUs: profile.aboutUs || prev.aboutUs,
+              city: profile.city || prev.city,
+              province: profile.province || prev.province,
+              provincesServed: Array.isArray(profile.provincesServed) ? profile.provincesServed : prev.provincesServed,
+              companyType: profile.companyType || prev.companyType,
+              typicalJobSize: profile.typicalJobSize
+                ? (Array.isArray(profile.typicalJobSize) ? profile.typicalJobSize : [profile.typicalJobSize])
+                : prev.typicalJobSize,
+              leadTimeMinDays: profile.leadTimeMinDays ? profile.leadTimeMinDays.toString() : prev.leadTimeMinDays,
+              leadTimeMaxDays: profile.leadTimeMaxDays ? profile.leadTimeMaxDays.toString() : prev.leadTimeMaxDays,
+              maxPartSizeMmX: profile.maxPartSizeMmX ? profile.maxPartSizeMmX.toString() : prev.maxPartSizeMmX,
+              maxPartSizeMmY: profile.maxPartSizeMmY ? profile.maxPartSizeMmY.toString() : prev.maxPartSizeMmY,
+              maxPartSizeMmZ: profile.maxPartSizeMmZ ? profile.maxPartSizeMmZ.toString() : prev.maxPartSizeMmZ,
+              rfqEmail: profile.rfqEmail || prev.rfqEmail,
+              phone: profile.phone || prev.phone,
+              preferredContactMethod: profile.preferredContactMethod || prev.preferredContactMethod,
             }));
 
-            // Prefer capabilities / certifications from the supplier profile if present
+            // Load capability IDs from profileCapabilities if available
+            if (profile.profileCapabilities && Array.isArray(profile.profileCapabilities)) {
+              const processIds: string[] = [];
+              const materialIds: string[] = [];
+              const finishIds: string[] = [];
+              const certIds: string[] = [];
+              const industryIds: string[] = [];
+
+              profile.profileCapabilities.forEach((pc: any) => {
+                if (pc.capability) {
+                  const type = pc.capability.type;
+                  const id = pc.capability.id;
+                  if (type === 'PROCESS') processIds.push(id);
+                  else if (type === 'MATERIAL') materialIds.push(id);
+                  else if (type === 'FINISH') finishIds.push(id);
+                  else if (type === 'CERTIFICATION') certIds.push(id);
+                  else if (type === 'INDUSTRY') industryIds.push(id);
+                }
+              });
+
+              setFormData((prev) => ({
+                ...prev,
+                processes: processIds,
+                materials: materialIds,
+                finishes: finishIds,
+                certifications: certIds,
+                industries: industryIds,
+              }));
+            }
+
+            // Prefer capabilities / certifications from the supplier profile if present (for display)
             if (Array.isArray(profile.capabilities) && profile.capabilities.length > 0) {
               setCapabilities(profile.capabilities);
             }
@@ -166,6 +272,40 @@ export default function MyAccountPage() {
     }
   }, [isAuthenticated, user, router, isLoading, isMounted]);
 
+  // Load capabilities when entering edit mode
+  useEffect(() => {
+    if (isEditMode && supplierProfile) {
+      const loadCapabilities = async () => {
+        try {
+          const types = ['PROCESS', 'MATERIAL', 'FINISH', 'CERTIFICATION', 'INDUSTRY', 'COMPANY_TYPE'];
+          const promises = types.map(async (type) => {
+            try {
+              const res = await fetch(`/api/capabilities?type=${type}`);
+              const data = await res.json();
+              return Array.isArray(data) ? data : [];
+            } catch (err) {
+              console.error(`Error loading ${type} capabilities:`, err);
+              return [];
+            }
+          });
+
+          const results = await Promise.all(promises);
+          setAvailableCapabilities({
+            PROCESS: results[0],
+            MATERIAL: results[1],
+            FINISH: results[2],
+            CERTIFICATION: results[3],
+            INDUSTRY: results[4],
+            COMPANY_TYPE: results[5],
+          });
+        } catch (err) {
+          console.error('Error loading capabilities:', err);
+        }
+      };
+      loadCapabilities();
+    }
+  }, [isEditMode, supplierProfile]);
+
   const getInitials = () => {
     if (user) {
       const firstInitial = user.firstName.charAt(0).toUpperCase();
@@ -175,45 +315,206 @@ export default function MyAccountPage() {
     return 'JS';
   };
 
-  const handleSaveProfile = () => {
-    if (!user) return;
-
-    // Update user data in localStorage
-    const updatedUser = {
-      ...user,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      jobTitle: formData.jobTitle,
-    };
-
-    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-    window.dispatchEvent(new Event('marcan-auth-change'));
-
-    setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+  const toggleArrayItem = (array: string[], item: string) => {
+    if (array.includes(item)) {
+      return array.filter((i) => i !== item);
+    }
+    return [...array, item];
   };
 
-  const handleUpdateCompany = () => {
-    if (!user) return;
+  const handleSaveProfile = async () => {
+    if (!user || !user.email) return;
 
-    // Update user data in localStorage
-    const updatedUser = {
-      ...user,
-      companyName: formData.companyName,
-      businessNumber: formData.businessNumber,
-      website: formData.website,
-      aboutUs: formData.aboutUs,
-      capabilities: capabilities,
-      certifications: certifications,
-      // Role is not updated here - it's set during signup/become-seller
-    };
+    setIsSaving(true);
+    setError('');
 
-    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-    window.dispatchEvent(new Event('marcan-auth-change'));
+    try {
+      // Update user data in localStorage
+      const updatedUser = {
+        ...user,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        jobTitle: formData.jobTitle,
+      };
 
-    setSaveMessage({ type: 'success', text: 'Company profile updated successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+      localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('marcan-auth-change'));
+
+      // Update auth state
+      login(updatedUser);
+
+      // Update profile in database (works for both buyer and seller profiles)
+      // First, check if profile exists
+      const profileCheckResponse = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
+
+      if (profileCheckResponse.ok) {
+        // Profile exists, update it via profiles API
+        const existingProfile = await profileCheckResponse.json();
+        const response = await fetch('/api/profiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.email,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            companyName: existingProfile.companyName || formData.companyName || `${formData.firstName} ${formData.lastName}`.trim(),
+            jobTitle: formData.jobTitle || null,
+            // Preserve all existing profile data
+            onboardingMethod: existingProfile.onboardingMethod || 'MANUAL',
+            city: existingProfile.city || formData.city || null,
+            province: existingProfile.province || formData.province || null,
+            provincesServed: existingProfile.provincesServed || formData.provincesServed || [],
+            website: existingProfile.website || formData.website || null,
+            companyType: existingProfile.companyType || formData.companyType || null,
+            processes: existingProfile.profileCapabilities?.filter((pc: any) => pc.capability?.type === 'PROCESS').map((pc: any) => pc.capabilityId) || formData.processes || [],
+            materials: existingProfile.profileCapabilities?.filter((pc: any) => pc.capability?.type === 'MATERIAL').map((pc: any) => pc.capabilityId) || formData.materials || [],
+            finishes: existingProfile.profileCapabilities?.filter((pc: any) => pc.capability?.type === 'FINISH').map((pc: any) => pc.capabilityId) || formData.finishes || [],
+            certifications: existingProfile.profileCapabilities?.filter((pc: any) => pc.capability?.type === 'CERTIFICATION').map((pc: any) => pc.capabilityId) || formData.certifications || [],
+            industries: existingProfile.profileCapabilities?.filter((pc: any) => pc.capability?.type === 'INDUSTRY').map((pc: any) => pc.capabilityId) || formData.industries || [],
+            typicalJobSize: existingProfile.typicalJobSize || null,
+            leadTimeMinDays: existingProfile.leadTimeMinDays || null,
+            leadTimeMaxDays: existingProfile.leadTimeMaxDays || null,
+            maxPartSizeMmX: existingProfile.maxPartSizeMmX || null,
+            maxPartSizeMmY: existingProfile.maxPartSizeMmY || null,
+            maxPartSizeMmZ: existingProfile.maxPartSizeMmZ || null,
+            aboutUs: existingProfile.aboutUs || formData.aboutUs || null,
+            rfqEmail: existingProfile.rfqEmail || formData.rfqEmail || null,
+            phone: existingProfile.phone || formData.phone || null,
+            preferredContactMethod: existingProfile.preferredContactMethod || formData.preferredContactMethod || null,
+            primaryIntent: existingProfile.primaryIntent || 'buy',
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.details || errorData.error || 'Failed to update profile');
+        }
+
+        // Reload the profile to get updated data
+        const profileResponse = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
+        if (profileResponse.ok) {
+          const updatedProfile = await profileResponse.json();
+          setSupplierProfile(updatedProfile);
+        }
+      } else if (profileCheckResponse.status === 404) {
+        // Profile doesn't exist, create a buyer profile via /api/users
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.email,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            companyName: formData.companyName || `${formData.firstName} ${formData.lastName}`.trim(),
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save profile');
+        }
+      } else {
+        throw new Error('Failed to check profile status');
+      }
+
+      setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setError(err.message || 'Failed to save profile');
+      setSaveMessage({ type: 'error', text: err.message || 'Failed to save profile' });
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateCompany = async () => {
+    if (!user || !user.email) return;
+
+    setIsSaving(true);
+    setError('');
+
+    try {
+      // Combine "other" fields into comments for AI search
+      const otherComments = [
+        formData.otherProcesses && `Other Processes: ${formData.otherProcesses}`,
+        formData.otherMaterials && `Other Materials: ${formData.otherMaterials}`,
+        formData.otherFinishes && `Other Finishes: ${formData.otherFinishes}`,
+        formData.otherCertifications && `Other Certifications: ${formData.otherCertifications}`,
+        formData.otherIndustries && `Other Industries: ${formData.otherIndustries}`,
+      ]
+        .filter(Boolean)
+        .join('; ');
+
+      // Normalize typicalJobSize array to single value (highest priority)
+      const jobSizeOrder = ['PROTOTYPE', 'LOW_VOLUME', 'MEDIUM_VOLUME', 'HIGH_VOLUME'];
+      const normalizedTypicalJobSize =
+        Array.isArray(formData.typicalJobSize) && formData.typicalJobSize.length > 0
+          ? jobSizeOrder.find(size => formData.typicalJobSize.includes(size)) || null
+          : null;
+
+      const submitData = {
+        userId: user.email,
+        onboardingMethod: supplierProfile?.onboardingMethod || 'MANUAL',
+        companyName: formData.companyName,
+        city: formData.city,
+        province: formData.province,
+        provincesServed: formData.provincesServed,
+        website: formData.website || null,
+        companyType: formData.companyType,
+        processes: formData.processes,
+        materials: formData.materials,
+        finishes: formData.finishes,
+        certifications: formData.certifications,
+        industries: formData.industries,
+        typicalJobSize: normalizedTypicalJobSize,
+        leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays, 10) : null,
+        leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays, 10) : null,
+        maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX, 10) : null,
+        maxPartSizeMmY: formData.maxPartSizeMmY ? parseInt(formData.maxPartSizeMmY, 10) : null,
+        maxPartSizeMmZ: formData.maxPartSizeMmZ ? parseInt(formData.maxPartSizeMmZ, 10) : null,
+        aboutUs: formData.aboutUs || null,
+        rfqEmail: formData.rfqEmail,
+        phone: formData.phone || null,
+        preferredContactMethod: formData.preferredContactMethod,
+        otherComments: otherComments || null,
+        jobTitle: formData.jobTitle || null,
+        businessNumber: formData.businessNumber || null,
+      };
+
+      const response = await fetch('/api/profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to update profile');
+      }
+
+      // Reload the profile to get updated data
+      const profileResponse = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
+      if (profileResponse.ok) {
+        const updatedProfile = await profileResponse.json();
+        setSupplierProfile(updatedProfile);
+      }
+
+      setIsEditMode(false);
+      setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.message || 'Failed to update profile');
+      setSaveMessage({ type: 'error', text: err.message || 'Failed to update profile' });
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteWishlistRequest = async (requestId: string) => {
@@ -331,7 +632,8 @@ export default function MyAccountPage() {
       login(updatedUser);
 
       // Update local state
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         firstName: updatedUser.firstName || '',
         lastName: updatedUser.lastName || '',
         jobTitle: '',
@@ -340,7 +642,7 @@ export default function MyAccountPage() {
         businessNumber: '',
         website: '',
         aboutUs: '',
-      });
+      }));
       setCapabilities([]);
       setCertifications([]);
       setAccountRole('buy');
@@ -409,10 +711,7 @@ export default function MyAccountPage() {
               <h2 className="font-heading text-3xl font-black text-white tracking-wide mb-1">
                 {user?.firstName || formData.firstName} {user?.lastName || formData.lastName}
               </h2>
-              <p className="text-slate-400 text-sm flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold uppercase tracking-wider text-white">
-                  Verified Account
-                </span>
+              <p className="text-slate-400 text-sm">
                 {formData.email}
               </p>
             </div>
@@ -428,7 +727,7 @@ export default function MyAccountPage() {
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                   }`}
               >
-                Profile Settings
+                My Buyer Profile
               </button>
               {/* Only show Supplier Company Profile tab if user is a seller */}
               {(user?.role === 'both' || user?.role === 'sell' || accountRole === 'both' || accountRole === 'sell') && (
@@ -439,7 +738,7 @@ export default function MyAccountPage() {
                     : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                     }`}
                 >
-                  Supplier Company Profile
+                  My Supplier Company Profile
                 </button>
               )}
               <button
@@ -461,7 +760,7 @@ export default function MyAccountPage() {
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
                     <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                       <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
-                        Personal Information
+                        My Buyer Profile Information
                       </h3>
                       <span className="text-[10px] text-slate-500 uppercase font-bold">Last updated: Today</span>
                     </div>
@@ -515,12 +814,26 @@ export default function MyAccountPage() {
                       </div>
                     </div>
 
+                    {/* Account Role - read only */}
+                    <div className="mb-8 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
+                          Account Role
+                        </label>
+                        <div className="text-white font-bold text-sm">
+                          {(accountRole === 'both' || accountRole === 'sell') ? 'Both Buyer and Supplier' : 'Buyer Only'}
+                        </div>
+                      </div>
+                      {/* Role is intentionally read-only – no change role button */}
+                    </div>
+
                     <div className="flex justify-end">
                       <button
                         onClick={handleSaveProfile}
-                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        disabled={isSaving}
+                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Save Changes
+                        {isSaving ? 'Saving...' : 'Save Changes'}
                       </button>
                     </div>
                   </div>
@@ -533,7 +846,7 @@ export default function MyAccountPage() {
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
                     <div className="mb-8 border-b border-white/5 pb-4">
                       <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
-                        Supplier Company Details
+                        My Supplier Company Profile Information
                       </h3>
                     </div>
 
@@ -564,148 +877,667 @@ export default function MyAccountPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div className="md:col-span-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Company Legal Name
+                          Company Legal Name <span className="text-marcan-red">*</span>
                         </label>
-                        <input
-                          type="text"
-                          value={formData.companyName}
-                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="Enter company name"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.companyName}
+                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="Enter company name"
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.companyName || supplierProfile?.companyName || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Business Number (BN)
                         </label>
-                        <input
-                          type="text"
-                          value={formData.businessNumber}
-                          onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="Optional"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.businessNumber}
+                            onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="Optional"
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.businessNumber || supplierProfile?.businessNumber || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Website URL
                         </label>
-                        <input
-                          type="text"
-                          value={formData.website}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="www.example.com"
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.website}
+                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="www.example.com"
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.website || supplierProfile?.website || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Location & logistics from supplier profile */}
-                    {supplierProfile && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                            Location
-                          </label>
+                    {/* Location & Company Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          City <span className="text-marcan-red">*</span>
+                        </label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="Enter city"
+                          />
+                        ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
-                            {(supplierProfile.city || '') && (supplierProfile.province || '')
-                              ? `${supplierProfile.city}, ${supplierProfile.province}`
-                              : supplierProfile.city || supplierProfile.province || 'Not specified'}
+                            {formData.city || supplierProfile?.city || 'Not specified'}
                           </div>
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                            Provinces Served
-                          </label>
-                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
-                            {Array.isArray(supplierProfile.provincesServed) && supplierProfile.provincesServed.length > 0
-                              ? supplierProfile.provincesServed.join(', ')
-                              : 'Not specified'}
-                          </div>
-                        </div>
+                        )}
                       </div>
-                    )}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Province <span className="text-marcan-red">*</span>
+                        </label>
+                        {isEditMode ? (
+                          <select
+                            value={formData.province}
+                            onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                          >
+                            <option value="">Select Province</option>
+                            {CANADIAN_PROVINCES.map((p) => (
+                              <option key={p.code} value={p.code}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.province || supplierProfile?.province || 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Provinces Served <span className="text-marcan-red">*</span>
+                        </label>
+                        {isEditMode ? (
+                          <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 bg-black/20 rounded-lg border border-white/10">
+                            {CANADIAN_PROVINCES.map((p) => (
+                              <label key={p.code} className="flex items-center gap-2 text-xs text-white cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.provincesServed.includes(p.code)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    provincesServed: toggleArrayItem(formData.provincesServed, p.code)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                {p.name}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {Array.isArray(formData.provincesServed) && formData.provincesServed.length > 0
+                              ? formData.provincesServed.map(code => CANADIAN_PROVINCES.find(p => p.code === code)?.name || code).join(', ')
+                              : Array.isArray(supplierProfile?.provincesServed) && supplierProfile.provincesServed.length > 0
+                                ? supplierProfile.provincesServed.map((code: string) => CANADIAN_PROVINCES.find(p => p.code === code)?.name || code).join(', ')
+                                : 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Company Type
+                        </label>
+                        {isEditMode ? (
+                          <select
+                            value={formData.companyType || ''}
+                            onChange={(e) => setFormData({ ...formData, companyType: e.target.value || null })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                          >
+                            <option value="">Select Company Type</option>
+                            {availableCapabilities.COMPANY_TYPE.map((ct) => (
+                              <option key={ct.id} value={ct.name}>
+                                {ct.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.companyType || supplierProfile?.companyType || 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
                     {/* About Us */}
                     <div className="mb-8">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                         About Us
                       </label>
-                      <textarea
-                        rows={4}
-                        value={formData.aboutUs}
-                        onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
-                        placeholder="Describe your company's mission, history, and core focus..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                      />
-                    </div>
-
-                    {/* Capabilities & Certifications from profile */}
-                    <div className="mb-8">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                        Capabilities & Certs
-                      </label>
-                      <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
-                        {capabilities.map((item) => (
-                          <span
-                            key={item}
-                            className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                        {certifications.map((item) => (
-                          <span
-                            key={item}
-                            className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-white/10"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                        {capabilities.length === 0 && certifications.length === 0 && (
-                          <span className="text-xs text-slate-500 italic">
-                            No capabilities or certifications added yet.
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Contact details from supplier profile */}
-                    {supplierProfile && (
-                      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                            RFQ Email
-                          </label>
-                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
-                            {supplierProfile.rfqEmail || 'Not specified'}
-                          </div>
+                      {isEditMode ? (
+                        <textarea
+                          rows={4}
+                          value={formData.aboutUs}
+                          onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
+                          placeholder="Describe your company's mission, history, and core focus..."
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                        />
+                      ) : (
+                        <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 min-h-[100px]">
+                          {formData.aboutUs || supplierProfile?.aboutUs || 'Not specified'}
                         </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                            Phone Number
+                      )}
+                    </div>
+
+                    {/* Processes, Materials, Finishes */}
+                    {isEditMode ? (
+                      <>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-3 block">
+                            Processes <span className="text-marcan-red">*</span>
                           </label>
-                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
-                            {supplierProfile.phone || 'Not specified'}
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
+                            {availableCapabilities.PROCESS.map((cap) => (
+                              <label key={cap.id} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.processes.includes(cap.id)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    processes: toggleArrayItem(formData.processes, cap.id)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                              </label>
+                            ))}
                           </div>
+                          <input
+                            type="text"
+                            value={formData.otherProcesses}
+                            onChange={(e) => setFormData({ ...formData, otherProcesses: e.target.value })}
+                            placeholder="Other processes (comma-separated)"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-3 block">
+                            Materials <span className="text-marcan-red">*</span>
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
+                            {availableCapabilities.MATERIAL.map((cap) => (
+                              <label key={cap.id} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.materials.includes(cap.id)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    materials: toggleArrayItem(formData.materials, cap.id)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={formData.otherMaterials}
+                            onChange={(e) => setFormData({ ...formData, otherMaterials: e.target.value })}
+                            placeholder="Other materials (comma-separated)"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
+                            Finishes (Optional)
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
+                            {availableCapabilities.FINISH.map((cap) => (
+                              <label key={cap.id} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.finishes.includes(cap.id)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    finishes: toggleArrayItem(formData.finishes, cap.id)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={formData.otherFinishes}
+                            onChange={(e) => setFormData({ ...formData, otherFinishes: e.target.value })}
+                            placeholder="Other finishes (comma-separated)"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mb-8">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Processes <span className="text-marcan-red">*</span>
+                        </label>
+                        <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                          {capabilities.length > 0 ? (
+                            capabilities.map((item) => (
+                              <span key={item} className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider">
+                                {item}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-500 italic">Not specified</span>
+                          )}
+                        </div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block mt-4">
+                          Materials <span className="text-marcan-red">*</span>
+                        </label>
+                        <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                          {supplierProfile?.materials && Array.isArray(supplierProfile.materials) && supplierProfile.materials.length > 0 ? (
+                            supplierProfile.materials.map((item: string) => (
+                              <span key={item} className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider">
+                                {item}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-500 italic">Not specified</span>
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {/* Account Role - read only */}
-                    <div className="mb-8 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
-                          Account Role
+                    {/* Certifications & Industries */}
+                    {isEditMode ? (
+                      <>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
+                            Certifications
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
+                            {availableCapabilities.CERTIFICATION.map((cap) => (
+                              <label key={cap.id} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.certifications.includes(cap.id)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    certifications: toggleArrayItem(formData.certifications, cap.id)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={formData.otherCertifications}
+                            onChange={(e) => setFormData({ ...formData, otherCertifications: e.target.value })}
+                            placeholder="Other certifications (comma-separated)"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
+                            Industries
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
+                            {availableCapabilities.INDUSTRY.map((cap) => (
+                              <label key={cap.id} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.industries.includes(cap.id)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    industries: toggleArrayItem(formData.industries, cap.id)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={formData.otherIndustries}
+                            onChange={(e) => setFormData({ ...formData, otherIndustries: e.target.value })}
+                            placeholder="Other industries (comma-separated)"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Certifications
+                          </label>
+                          <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                            {certifications.length > 0 ? (
+                              certifications.map((item) => (
+                                <span key={item} className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                                  {item}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-500 italic">Not specified</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mb-8">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Industries
+                          </label>
+                          <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                            {supplierProfile?.industries && Array.isArray(supplierProfile.industries) && supplierProfile.industries.length > 0 ? (
+                              supplierProfile.industries.map((item: string) => (
+                                <span key={item} className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                                  {item}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-500 italic">Not specified</span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Production Profile: Typical Job Size, Lead Times, Max Part Size */}
+                    <div className="mb-8">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                        Typical Job Size
+                      </label>
+                      {isEditMode ? (
+                        <div className="space-y-2">
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('PROTOTYPE')}
+                              onChange={() => setFormData({
+                                ...formData,
+                                typicalJobSize: toggleArrayItem(formData.typicalJobSize, 'PROTOTYPE')
+                              })}
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Prototype</div>
+                              <div>One-offs, testing, early design — <span className="text-slate-400">1–10 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('LOW_VOLUME')}
+                              onChange={() => setFormData({
+                                ...formData,
+                                typicalJobSize: toggleArrayItem(formData.typicalJobSize, 'LOW_VOLUME')
+                              })}
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Low Volume</div>
+                              <div>Small production runs — <span className="text-slate-400">10–500 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('MEDIUM_VOLUME')}
+                              onChange={() => setFormData({
+                                ...formData,
+                                typicalJobSize: toggleArrayItem(formData.typicalJobSize, 'MEDIUM_VOLUME')
+                              })}
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">Medium Volume</div>
+                              <div>Repeat production — <span className="text-slate-400">500–5,000 parts</span></div>
+                            </div>
+                          </label>
+                          <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                            <input
+                              type="checkbox"
+                              checked={formData.typicalJobSize.includes('HIGH_VOLUME')}
+                              onChange={() => setFormData({
+                                ...formData,
+                                typicalJobSize: toggleArrayItem(formData.typicalJobSize, 'HIGH_VOLUME')
+                              })}
+                              className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                            />
+                            <div className="text-xs text-slate-200">
+                              <div className="font-semibold text-white">High Volume</div>
+                              <div>Mass production — <span className="text-slate-400">5,000+ parts</span></div>
+                            </div>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 min-h-[50px]">
+                          {Array.isArray(formData.typicalJobSize) && formData.typicalJobSize.length > 0
+                            ? formData.typicalJobSize.map(size => {
+                              const labels: Record<string, string> = {
+                                'PROTOTYPE': 'Prototype',
+                                'LOW_VOLUME': 'Low Volume',
+                                'MEDIUM_VOLUME': 'Medium Volume',
+                                'HIGH_VOLUME': 'High Volume'
+                              };
+                              return labels[size] || size;
+                            }).join(', ')
+                            : supplierProfile?.typicalJobSize
+                              ? (() => {
+                                const labels: Record<string, string> = {
+                                  'PROTOTYPE': 'Prototype',
+                                  'LOW_VOLUME': 'Low Volume',
+                                  'MEDIUM_VOLUME': 'Medium Volume',
+                                  'HIGH_VOLUME': 'High Volume'
+                                };
+                                return labels[supplierProfile.typicalJobSize] || supplierProfile.typicalJobSize;
+                              })()
+                              : 'Not specified'}
+                        </div>
+                      )}
+                    </div>
+                    {formData.phone?.trim() && (
+                      <div className="mb-8">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                          Preferred Contact Method
                         </label>
-                        <div className="text-white font-bold text-sm">
-                          {accountRole === 'buy' && 'Buyer Only'}
-                          {accountRole === 'sell' && 'Supplier Only'}
-                          {accountRole === 'both' && 'Buyer and Supplier'}
+                        {isEditMode ? (
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, preferredContactMethod: 'EMAIL' })}
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'EMAIL'
+                                ? 'border-marcan-red bg-marcan-red/10'
+                                : 'border-white/10 hover:border-marcan-red/50'
+                                }`}
+                            >
+                              <div className="text-white font-bold text-sm uppercase">Email</div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({ ...formData, preferredContactMethod: 'PHONE' })}
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${formData.preferredContactMethod === 'PHONE'
+                                ? 'border-marcan-red bg-marcan-red/10'
+                                : 'border-white/10 hover:border-marcan-red/50'
+                                }`}
+                            >
+                              <div className="text-white font-bold text-sm uppercase">Phone</div>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {(formData.preferredContactMethod === 'EMAIL' || supplierProfile?.preferredContactMethod === 'EMAIL')
+                              ? 'Email'
+                              : (formData.preferredContactMethod === 'PHONE' || supplierProfile?.preferredContactMethod === 'PHONE')
+                                ? 'Phone'
+                                : 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Lead Time Min (days)
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="number"
+                              value={formData.leadTimeMinDays}
+                              onChange={(e) => setFormData({ ...formData, leadTimeMinDays: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              placeholder="Min days"
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.leadTimeMinDays || supplierProfile?.leadTimeMinDays || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Lead Time Max (days)
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="number"
+                              value={formData.leadTimeMaxDays}
+                              onChange={(e) => setFormData({ ...formData, leadTimeMaxDays: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              placeholder="Max days"
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.leadTimeMaxDays || supplierProfile?.leadTimeMaxDays || 'Not specified'}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      {/* Role is intentionally read-only – no change role button */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Max Part Size X (mm)
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="number"
+                              value={formData.maxPartSizeMmX}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmX: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              placeholder="mm"
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.maxPartSizeMmX || supplierProfile?.maxPartSizeMmX || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Max Part Size Y (mm)
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="number"
+                              value={formData.maxPartSizeMmY}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmY: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              placeholder="mm"
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.maxPartSizeMmY || supplierProfile?.maxPartSizeMmY || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Max Part Size Z (mm)
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="number"
+                              value={formData.maxPartSizeMmZ}
+                              onChange={(e) => setFormData({ ...formData, maxPartSizeMmZ: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              placeholder="mm"
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.maxPartSizeMmZ || supplierProfile?.maxPartSizeMmZ || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Contact details */}
+                    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-2 block">
+                          RFQ Email <span className="text-marcan-red">*</span>
+                        </label>
+                        {isEditMode ? (
+                          <input
+                            type="email"
+                            value={formData.rfqEmail}
+                            onChange={(e) => setFormData({ ...formData, rfqEmail: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="rfq@company.com"
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.rfqEmail || supplierProfile?.rfqEmail || 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Phone Number
+                        </label>
+                        {isEditMode ? (
+                          <input
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="+1 (555) 000-0000"
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.phone || supplierProfile?.phone || 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
 
                     <div className="flex justify-between items-center pt-4 border-t border-white/5">
                       <button
@@ -714,12 +1546,30 @@ export default function MyAccountPage() {
                       >
                         <i className="fa-solid fa-trash-can"></i> Delete Profile
                       </button>
-                      <button
-                        onClick={handleUpdateCompany}
-                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
-                      >
-                        Update Company
-                      </button>
+                      {!isEditMode ? (
+                        <button
+                          onClick={() => setIsEditMode(true)}
+                          className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        >
+                          <i className="fa-solid fa-pencil mr-2"></i> Edit Profile
+                        </button>
+                      ) : (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setIsEditMode(false)}
+                            className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleUpdateCompany}
+                            disabled={isSaving}
+                            className="bg-marcan-red border border-marcan-red text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Delete Confirmation Modal */}
