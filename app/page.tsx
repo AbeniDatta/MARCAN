@@ -141,7 +141,7 @@ export default function HomePage() {
           {/* Standard Section */}
           <div className="lg:col-span-12">
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Standard</h3>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Our Standard</h3>
               <div className="h-[1px] bg-white/10 flex-grow"></div>
             </div>
           </div>
