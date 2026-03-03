@@ -85,13 +85,6 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
 
                 {/* Actions */}
                 <div className="flex gap-3 items-center">
-                    <Link
-                        href="/help"
-                        className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center hover:bg-white/5 transition text-slate-400 hover:text-white"
-                        title="Support Center / Help"
-                    >
-                        <i className="fa-regular fa-circle-question"></i>
-                    </Link>
                     {isMounted && isAuthenticated && user ? (
                         <Link
                             href="/my-account"

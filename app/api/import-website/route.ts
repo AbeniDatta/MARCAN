@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+const INDUSTRY_HUB_NAMES = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -307,74 +309,590 @@ export async function POST(req: NextRequest) {
 
         // Use OpenAI to extract structured information
         const extractionResponse = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-5-mini',
             messages: [
                 {
                     role: 'system',
-                    content: `You are extracting REAL company information from website text content for a Canadian manufacturing supplier registration form.
+                    content: `You will be given plain text extracted from ALL pages of a supplier’s website.
 
-IMPORTANT: The text content below includes information from MULTIPLE PAGES of the website (homepage, contact page, about page, services page, etc.). Each page section is marked with "=== PAGE NAME ===" headers. You should extract information from ALL pages.
+Page sections may be marked with headers like:
+=== HOME PAGE ===
+=== ABOUT US ===
+=== SERVICES ===
+=== INDUSTRIES ===
+=== CONTACT US ===
+=== CAPABILITIES ===
+=== QUALITY ===
+=== CERTIFICATIONS ===
 
-CRITICAL RULES:
-- Extract ONLY actual information found in the provided website text from ALL pages
-- You MUST analyze ALL page sections carefully and extract ALL available information
-- NEVER use placeholder values, example values, or made-up data
-- If information is not found in the text, use null or empty array (never use "example", "placeholder", "N/A", "TBD", etc.)
-- Extract all information accurately from the website text content across all pages
-- Fill in ALL fields that can be found, including optional ones
-- Look for company name in headings, titles, and prominent text (check homepage and about pages)
-- Look for location information in addresses, contact sections, or "About" sections (especially check contact page)
-- Look for processes, materials, finishes in service descriptions, capabilities lists, or "What We Do" sections (check services/capabilities pages)
-- Look for certifications in dedicated sections or footer areas (check certifications/quality pages)
-- Look for contact information (email, phone) in contact sections, headers, or footers (especially check contact page - this is where contact info is most likely to be found)
+You may also see extra rule-based hints such as:
+Rule-based emails: [...]
+Rule-based phones: [...]
+Rule-based location candidates: [...]
 
-Extract the following information and return it as JSON:
-- companyName: Legal company name (extract from website text - look in titles, headings, or company name mentions)
-- city: City location (extract actual city name from address or location mentions)
-- province: Canadian province code (ON, QC, BC, AB, MB, SK, NS, NB, NL, PE, NT, YT, NU) - extract from address/location info
-- provincesServed: Array of province codes the company serves (extract from service area information, "We serve..." text, or coverage areas)
-- companyType: Company type - must match one of: Job Shop, Contract Manufacturer, OEM, Distributor (infer from business description, or null if unclear)
-- website: Website URL (use: ${websiteUrl})
-- aboutUs: Company description/about section (extract actual description from "About Us", "About", or company description sections)
-- processes: Array of manufacturing processes found on website (look for: CNC machining, milling, turning, welding, 3D printing, injection molding, sheet metal, etc. - use exact names from website)
-- materials: Array of materials found on website (look for: aluminum, steel, titanium, plastic, composites, etc. - use exact names from website)
-- finishes: Array of finishes found on website (look for: anodizing, powder coating, plating, painting, etc. - use exact names from website)
-- certifications: Array of certifications found on website (look for: ISO 9001, AS9100, ISO 14001, NADCAP, etc. - use exact names from website)
-- industries: Array of industries served found on website (look for: aerospace, automotive, medical, defense, etc. - use exact names from website)
-- typicalJobSize: PROTOTYPE, LOW_VOLUME, MEDIUM_VOLUME, or HIGH_VOLUME (infer from text mentioning "prototype", "low volume", "high volume", "production runs", etc., or null)
-- leadTimeMinDays: Minimum lead time in days (extract actual number if mentioned like "2-3 weeks", "10-15 days", etc., or null)
-- leadTimeMaxDays: Maximum lead time in days (extract actual number if mentioned, or null)
-- maxPartSizeMmX: Maximum part size X dimension in mm (extract actual number if mentioned, or null)
-- maxPartSizeMmY: Maximum part size Y dimension in mm (extract actual number if mentioned, or null)
-- maxPartSizeMmZ: Maximum part size Z dimension in mm (extract actual number if mentioned, or null)
-- rfqEmail: Email for RFQ inquiries (extract actual email from contact section, "Contact Us", or email mentions, or null)
-- phone: Phone number (extract actual phone number from contact section, header, or footer, or null)
-- preferredContactMethod: EMAIL or PLATFORM_ONLY (infer from website, or null)
+Your task is to extract supplier signup information for the MARCAN supplier profile system.
 
-Available capabilities for reference (but include ALL processes/materials/etc found in the text, even if not in this list):
-${JSON.stringify(allCapabilities, null, 2)}
+Return EXACTLY ONE valid JSON object matching the schema defined below.
 
-Available company types:
-${JSON.stringify(companyTypes, null, 2)}
+You must extract ONLY information relevant to MARCAN supplier signup fields.
 
-Return ONLY valid JSON matching this structure. Use null for missing values. For arrays, use empty arrays if none found.
-IMPORTANT: Carefully read through the website text and extract ALL available information. Never use example or placeholder values.`,
+Treat the provided website text as the ONLY source of truth.
+
+DO NOT use prior knowledge, assumptions, or external information.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRIMARY OBJECTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract only the information needed to populate these MARCAN supplier signup fields:
+
+• Company identity
+• Location
+• Contact info
+• Core manufacturing capabilities
+• Materials
+• Finishes
+• Certifications
+• Industries served
+• Production profile indicators (if explicitly stated)
+
+Ignore all irrelevant technical, legal, patent, or marketing information.
+
+Your output must be CLEAN, NORMALIZED, and usable directly in supplier search and matching.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ABSOLUTE RULES (NO EXCEPTIONS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) NO HALLUCINATIONS OR GUESSING
+
+Extract ONLY information explicitly present in the website text or rule-based hints.
+
+If information is missing, use:
+
+null → for single-value fields  
+[] → for array fields
+
+Never invent or assume.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2) IGNORE NON-SIGNUP INFORMATION
+
+DO NOT extract:
+
+• Patent titles
+• Patent numbers
+• Machine model numbers
+• Legal boilerplate
+• Marketing slogans
+• Trademark names
+• Internal proprietary system names
+• Long descriptive paragraphs of how machines work
+
+Example to IGNORE:
+
+"VACUUM DIE CUTTING APPARATUS FOR FOAM BACKED MATERIALS"
+
+Example to EXTRACT:
+
+Process → "Die cutting"  
+Material → "Foam"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3) NORMALIZE ALL CAPABILITIES TO CLEAN GENERIC TERMS
+
+Convert all website descriptions into clean generic manufacturing capability names.
+
+DO NOT output raw website phrases.
+
+DO NOT output marketing descriptions.
+
+Correct examples:
+
+"CNC machining centers" → "CNC machining"  
+"DIEVAC vacuum die cutting system" → "Die cutting"  
+"precision sheet metal fabrication" → "Sheet metal fabrication"
+
+Materials normalization:
+
+"laminated materials" → "Composites"  
+"foam backed materials" → "Foam"  
+"aluminum alloys" → "Aluminum"
+
+Use concise generic industry-standard terms only.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4) ONLY EXTRACT CAPABILITIES RELEVANT TO SUPPLIER MATCHING
+
+Extract only real manufacturing capabilities such as:
+
+Processes:
+CNC machining  
+CNC milling  
+CNC turning  
+Die cutting  
+Laser cutting  
+Waterjet cutting  
+Stamping  
+Welding  
+Fabrication  
+Sheet metal fabrication  
+Assembly  
+Injection molding  
+Tooling  
+Prototyping  
+
+Materials:
+Aluminum  
+Steel  
+Stainless steel  
+Plastic  
+Foam  
+Rubber  
+Composites  
+Copper  
+Brass  
+Titanium  
+
+Finishes:
+Powder coating  
+Anodizing  
+Painting  
+Plating  
+Polishing  
+Heat treatment  
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5) REMOVE DUPLICATES AND NOISE
+
+• Deduplicate all arrays
+• Exclude vague phrases like:
+  - "advanced solutions"
+  - "state-of-the-art technology"
+  - "high precision manufacturing"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CANADIAN LOCATION RULES (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+province must be one of:
+
+ON, QC, BC, AB, MB, SK, NS, NB, NL, PE, NT, YT, NU
+
+Infer province ONLY if city is clearly Canadian and unambiguous.
+
+Otherwise use null.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONTACT INFORMATION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+rfqEmail priority order:
+
+1. sales@
+2. quotes@
+3. rfq@
+4. info@
+5. contact@
+
+Must appear in text or rule-based hints.
+
+Otherwise null.
+
+phone must appear in text or hints.
+
+Otherwise null.
+
+preferredContactMethod:
+
+EMAIL → if email clearly preferred  
+PHONE → if phone clearly preferred  
+PLATFORM_ONLY → if website requires portal  
+
+Otherwise null.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPANY TYPE RULES (WITH INTERPRETATION)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Use exactly one of:
+
+Job Shop  
+Contract Manufacturer  
+OEM  
+Distributor  
+
+Otherwise null.
+
+Use the following interpretation rules:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Contract Manufacturer
+
+Use if website indicates they manufacture parts, components, or products for customers.
+
+Common signals:
+
+• "manufacturing services"
+• "custom manufacturing"
+• "build to customer specifications"
+• "manufacture parts for customers"
+• "contract manufacturing"
+• "production services"
+• "component manufacturing"
+
+This is the MOST COMMON supplier type.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Job Shop
+
+Use if website emphasizes something like:
+
+• custom machining
+• small batch production
+• prototype work
+• one-off parts
+• short-run production
+
+Typical signals:
+
+• "precision machining shop"
+• "custom machine shop"
+• "prototype machining"
+• "small batch production"
+
+If both Contract Manufacturer and Job Shop apply, prefer:
+
+Contract Manufacturer
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OEM (Original Equipment Manufacturer)
+
+Use ONLY if website clearly states they design and manufacture their OWN branded products.
+
+Common signals:
+
+• "we design and manufacture our own products"
+• "our products include..."
+• "manufacturer of [their own equipment/products]"
+
+DO NOT use OEM if they only manufacture parts for others.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Distributor
+
+Use ONLY if website indicates they sell or distribute products made by other manufacturers.
+
+Common signals:
+
+• "distributor of"
+• "supplier of"
+• "reseller of"
+• "authorized distributor"
+
+DO NOT use Distributor if they manufacture parts.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If unclear → use null
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CERTIFICATION EXTRACTION RULES (STRICT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract ONLY formal industry certifications.
+
+Examples of valid certifications:
+
+ISO 9001
+ISO 13485
+AS9100
+IATF 16949
+ISO 14001
+NADCAP
+ITAR compliant
+CSA certified
+UL certified
+
+DO NOT extract:
+
+• Awards
+• Supplier awards
+• Supplier of the year recognitions
+• Innovation awards
+• Customer recognitions
+• Internal company awards
+
+Examples to IGNORE:
+
+"Lear Corporation Supplier of the Year"
+"Business Excellence Award"
+"Supplier Hall of Fame"
+
+If unsure whether it is a certification → DO NOT include it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+JOB SIZE RULES (WITH INTERPRETATION)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+typicalJobSize must be exactly one of:
+
+PROTOTYPE  
+LOW_VOLUME  
+MEDIUM_VOLUME  
+HIGH_VOLUME  
+
+Use these interpretations:
+
+PROTOTYPE
+Use if site mentions:
+• prototype
+• prototyping
+• one-off parts
+• R&D support
+• product development support
+• early-stage manufacturing
+
+LOW_VOLUME
+Use if site mentions:
+• low volume production
+• small batch production
+• short production runs
+• custom parts manufacturing
+
+MEDIUM_VOLUME
+Use if site mentions:
+• repeat production
+• batch production
+• ongoing production
+• mid-volume production
+
+HIGH_VOLUME
+Use if site mentions:
+• mass production
+• high volume production
+• large-scale manufacturing
+• production at scale
+• automated production lines
+
+If site mentions BOTH prototype and production, choose the HIGHEST applicable category.
+
+If unclear → null
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LEAD TIME RULES (WITH INTERPRETATION)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract typical production lead time.
+
+Convert all time units to days.
+
+Examples:
+
+"1 week" → 7  
+"2–4 weeks" → 14, 28  
+"6–8 weeks" → 42, 56  
+"3 months" → 90  
+
+Interpret phrases like:
+
+"rapid turnaround"
+"fast turnaround"
+"short lead times"
+
+ONLY if numeric ranges are provided nearby.
+
+DO NOT guess numeric values.
+
+If site only says vague phrases like:
+
+"fast turnaround"
+"competitive lead times"
+
+Use:
+
+leadTimeMinDays = null  
+leadTimeMaxDays = null
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PART SIZE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Convert inches to mm.
+
+1 inch = 25.4 mm
+
+Otherwise null.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INDUSTRIES SERVED RULES (WITH NORMALIZATION)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Normalize to clean industry names.
+
+Examples:
+
+"aerospace and defense" → Aerospace, Defense  
+"automotive sector" → Automotive  
+"medical device manufacturers" → Medical  
+"industrial equipment manufacturers" → Industrial  
+"consumer electronics" → Electronics  
+
+Common valid industries:
+
+Aerospace  
+Automotive  
+Medical  
+Defense  
+Energy  
+Industrial  
+Electronics  
+Consumer products  
+Agriculture  
+Construction  
+Oil and gas  
+
+DO NOT extract vague phrases like:
+
+"various industries"
+"multiple sectors"
+
+If none explicitly mentioned → []
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INDUSTRY HUBS (FOR MARCAN HOMEPAGE FILTERS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+In addition to industriesServed, you MUST also select zero or more of the following MARCAN industry hubs:
+
+- Precision Machining  
+- Foundries & Casting  
+- Surface Finishing  
+- Tooling & Molds  
+- Automation  
+
+Use these ONLY if the website clearly indicates the company is active in that area.
+
+Examples:
+
+"CNC milling, turning, EDM" → Precision Machining  
+"sand casting, die casting, investment casting" → Foundries & Casting  
+"anodizing, powder coating, plating" → Surface Finishing  
+"injection molds, die design, mold making" → Tooling & Molds  
+"robotic cells, PLC programming, automated systems" → Automation  
+
+If unsure or not mentioned → use [].
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROVINCES SERVED RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract only explicitly mentioned provinces.
+
+Use 2-letter codes.
+
+Otherwise [].
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ABOUT US RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract a concise 1–3 sentence summary describing:
+
+• What the company does
+• What they manufacture
+• Their core expertise
+
+Remove marketing fluff.
+
+Keep factual.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SELF VALIDATION STEP (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before outputting JSON:
+
+• Ensure valid JSON
+• Ensure all required keys exist
+• Ensure no extra keys exist
+• Ensure arrays use []
+• Ensure enums valid
+• Ensure no hallucinations
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FINAL OUTPUT REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return EXACTLY ONE JSON object.
+
+No explanation.
+No markdown.
+No extra text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+JSON SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{
+  "companyName": string or null,
+  "website": string,
+  "aboutUs": string or null,
+  "city": string or null,
+  "province": string or null,
+  "provincesServed": array of strings,
+  "companyType": "Job Shop" | "Contract Manufacturer" | "OEM" | "Distributor" | null,
+  "processes": array of strings,
+  "materials": array of strings,
+  "finishes": array of strings,
+  "certifications": array of strings,
+  "industries": array of strings,
+  "industryHubs": array of strings (each MUST be exactly one of: "Precision Machining", "Foundries & Casting", "Surface Finishing", "Tooling & Molds", "Automation"),
+  "typicalJobSize": "PROTOTYPE" | "LOW_VOLUME" | "MEDIUM_VOLUME" | "HIGH_VOLUME" | null,
+  "leadTimeMinDays": number or null,
+  "leadTimeMaxDays": number or null,
+  "maxPartSizeMmX": number or null,
+  "maxPartSizeMmY": number or null,
+  "maxPartSizeMmZ": number or null,
+  "rfqEmail": string or null,
+  "phone": string or null,
+  "preferredContactMethod": "EMAIL" | "PHONE" | "PLATFORM_ONLY" | null
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+NOW PERFORM EXTRACTION FROM:
+
+{PASTE_WEBSITE_TEXT_HERE}`,
                 },
                 {
                     role: 'user',
                     content: `Extract company information from this website text content. The website URL is: ${websiteUrl}
 
-The text below contains content from ${pageCount} page(s) of the website. Each page section is marked with "=== PAGE NAME ===" headers. Pay special attention to:
-- Contact page for email addresses and phone numbers
-- About page for company description and location
-- Services/Capabilities pages for processes, materials, and finishes
-- Certifications/Quality pages for certifications
+The text below contains content from ${pageCount} page(s) of the website. Sections may be marked with "=== PAGE NAME ===" headers, but you must carefully analyze ALL text regardless of headers.
 
 Website text content from all pages:\n\n${extractedText}`,
                 },
             ],
             response_format: { type: 'json_object' },
-            temperature: 0.1, // Lower temperature for more accurate extraction
+            temperature: 1, // Lower temperature for more accurate extraction
         });
 
         const rawResponse = extractionResponse.choices[0]?.message?.content || '{}';
@@ -463,6 +981,25 @@ Website text content from all pages:\n\n${extractedText}`,
                 lower.length > 0;
         };
 
+        // Normalize industry hubs to the fixed MARCAN list
+        const rawIndustryHubs: string[] = Array.isArray(extractedData.industryHubs) ? extractedData.industryHubs : [];
+        const normalizedIndustryHubs = Array.from(
+            new Set(
+                rawIndustryHubs
+                    .filter(isValidValue)
+                    .map((hub) => hub.toLowerCase().trim())
+            )
+        )
+            .map((lowerHub) =>
+                INDUSTRY_HUB_NAMES.find(
+                    (name) =>
+                        name.toLowerCase() === lowerHub ||
+                        lowerHub.includes(name.toLowerCase()) ||
+                        name.toLowerCase().includes(lowerHub)
+                )
+            )
+            .filter((name): name is string => !!name);
+
         // Format the response with matched capability IDs and unmatched in "other" fields
         const formattedData = {
             companyName: isValidValue(extractedData.companyName) ? extractedData.companyName.trim() : '',
@@ -486,6 +1023,7 @@ Website text content from all pages:\n\n${extractedText}`,
             otherCertifications: certificationsMatch.unmatched.filter(isValidValue).join(', '),
             industries: industriesMatch.matched,
             otherIndustries: industriesMatch.unmatched.filter(isValidValue).join(', '),
+            industryHubs: normalizedIndustryHubs,
             typicalJobSize: extractedData.typicalJobSize || null,
             leadTimeMinDays: extractedData.leadTimeMinDays ? extractedData.leadTimeMinDays.toString() : '',
             leadTimeMaxDays: extractedData.leadTimeMaxDays ? extractedData.leadTimeMaxDays.toString() : '',

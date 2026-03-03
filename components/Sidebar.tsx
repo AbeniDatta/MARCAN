@@ -24,6 +24,7 @@ export default function Sidebar() {
         { href: '/wishlist', label: 'Sourcing Requests', icon: 'fa-bullhorn' },
         { href: '/marketplace', label: 'Supplier Listings', icon: 'fa-shop' },
         { href: '/contact', label: 'Contact Us', icon: 'fa-envelope' },
+        { href: '/help', label: 'Help Center', icon: 'fa-circle-question' },
     ];
 
     // Check if user has a seller profile in the database
@@ -105,23 +106,6 @@ export default function Sidebar() {
                     );
                 })}
 
-                {/* Become a Seller - Only show if authenticated and not already a seller */}
-                {isMounted && isAuthenticated && user && !hasSellerProfile && (
-                    <Link
-                        href="/become-seller"
-                        className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl border-2 ${isActive('/become-seller')
-                            ? 'text-white border-marcan-red bg-marcan-red/20 shadow-neon'
-                            : 'text-marcan-red border-marcan-red/50 bg-marcan-red/10 hover:bg-marcan-red/20 hover:border-marcan-red hover:text-white'
-                            } transition-all duration-300 group relative overflow-hidden`}
-                    >
-                        <div
-                            className={`absolute inset-0 bg-marcan-red/20 transition-transform duration-300 ${isActive('/become-seller') ? 'translate-x-0' : 'translate-x-[-100%] group-hover:translate-x-0'
-                                }`}
-                        />
-                        <i className="fa-solid fa-store text-xl w-6 text-center relative z-10"></i>
-                        <span className="hidden lg:block font-bold text-sm tracking-wide relative z-10">Become a Seller</span>
-                    </Link>
-                )}
             </nav>
 
             {/* User Panel */}

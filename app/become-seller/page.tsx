@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -24,6 +24,8 @@ interface Capability {
   name: string;
 }
 
+const INDUSTRY_HUB_NAMES = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
   { code: 'QC', name: 'Quebec' },
@@ -42,9 +44,10 @@ const CANADIAN_PROVINCES = [
 
 export default function BecomeSellerPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, user: currentUser, isAuthenticated, isMounted } = useAuth();
-  const [currentView, setCurrentView] = useState<View>('landing');
-  const [wizardStep, setWizardStep] = useState<WizardStep>(0);
+  const [currentView, setCurrentView] = useState<View>('form');
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
   const [lastCompletedStep, setLastCompletedStep] = useState<WizardStep | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -96,6 +99,7 @@ export default function BecomeSellerPage() {
     // Step 4
     certifications: [] as string[], // capability IDs
     industries: [] as string[], // capability IDs
+    industryHubs: [] as string[],
     otherCertifications: '', // custom certifications not in list
     otherIndustries: '', // custom industries not in list
     aboutUs: '',
@@ -164,6 +168,7 @@ export default function BecomeSellerPage() {
               finishes: Array.isArray(parsed.formData.finishes) ? parsed.formData.finishes : [],
               certifications: Array.isArray(parsed.formData.certifications) ? parsed.formData.certifications : [],
               industries: Array.isArray(parsed.formData.industries) ? parsed.formData.industries : [],
+              industryHubs: Array.isArray(parsed.formData.industryHubs) ? parsed.formData.industryHubs : [],
               typicalJobSize: Array.isArray(parsed.formData.typicalJobSize)
                 ? parsed.formData.typicalJobSize
                 : parsed.formData.typicalJobSize
@@ -200,12 +205,91 @@ export default function BecomeSellerPage() {
     }
   }, [formData, lastCompletedStep, wizardStep, isMounted, currentUser]);
 
-  // Redirect if not authenticated
+  const [hasAutoImported, setHasAutoImported] = useState(false);
+
+  // Initialize view based on query param (e.g., start=import or start=manual from signup)
   useEffect(() => {
-    if (isMounted && !isAuthenticated) {
-      router.replace('/login');
+    if (!isMounted) return;
+    const start = searchParams.get('start');
+    const urlFromQuery = searchParams.get('url');
+    if (start === 'import' && urlFromQuery && !hasAutoImported) {
+      setCurrentView('form');
+      setWizardStep(1);
+      setIsImporting(true);
+      setHasAutoImported(true);
+
+      const runImport = async () => {
+        try {
+          const response = await fetch('/api/import-website', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ websiteUrl: urlFromQuery.trim() }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to import website' }));
+            throw new Error(errorData.error || 'Failed to import website');
+          }
+
+          const result = await response.json();
+          const importedData = result.data;
+
+          setFormData((prev) => ({
+            ...prev,
+            onboardingMethod: 'IMPORT',
+            companyName: importedData.companyName || prev.companyName,
+            city: importedData.city || prev.city,
+            province: importedData.province || prev.province,
+            provincesServed: Array.isArray(importedData.provincesServed)
+              ? importedData.provincesServed
+              : prev.provincesServed || [],
+            companyType: importedData.companyType || prev.companyType,
+            website: importedData.website || urlFromQuery.trim(),
+            processes: Array.isArray(importedData.processes) ? importedData.processes : prev.processes || [],
+            materials: Array.isArray(importedData.materials) ? importedData.materials : prev.materials || [],
+            finishes: Array.isArray(importedData.finishes) ? importedData.finishes : prev.finishes || [],
+            certifications: Array.isArray(importedData.certifications)
+              ? importedData.certifications
+              : prev.certifications || [],
+            industries: Array.isArray(importedData.industries) ? importedData.industries : prev.industries || [],
+            otherProcesses: importedData.otherProcesses || prev.otherProcesses,
+            otherMaterials: importedData.otherMaterials || prev.otherMaterials,
+            otherFinishes: importedData.otherFinishes || prev.otherFinishes,
+            otherCertifications: importedData.otherCertifications || prev.otherCertifications,
+            otherIndustries: importedData.otherIndustries || prev.otherIndustries,
+            typicalJobSize: importedData.typicalJobSize
+              ? [importedData.typicalJobSize]
+              : Array.isArray(prev.typicalJobSize)
+                ? prev.typicalJobSize
+                : [],
+            leadTimeMinDays: importedData.leadTimeMinDays || prev.leadTimeMinDays,
+            leadTimeMaxDays: importedData.leadTimeMaxDays || prev.leadTimeMaxDays,
+            maxPartSizeMmX: importedData.maxPartSizeMmX || prev.maxPartSizeMmX,
+            maxPartSizeMmY: importedData.maxPartSizeMmY || prev.maxPartSizeMmY,
+            maxPartSizeMmZ: importedData.maxPartSizeMmZ || prev.maxPartSizeMmZ,
+            aboutUs: importedData.aboutUs || prev.aboutUs,
+            rfqEmail: importedData.rfqEmail || prev.rfqEmail,
+            phone: importedData.phone || prev.phone,
+            preferredContactMethod: importedData.preferredContactMethod || prev.preferredContactMethod,
+          }));
+        } catch (err: any) {
+          console.error('Auto-import error:', err);
+          setError(err.message || 'Failed to import website. You can still fill out your profile manually.');
+        } finally {
+          setIsImporting(false);
+        }
+      };
+
+      runImport();
+    } else if (start === 'manual') {
+      setCurrentView('form');
+      setWizardStep(1);
+      setFormData((prev) => ({
+        ...prev,
+        onboardingMethod: 'MANUAL',
+      }));
     }
-  }, [isMounted, isAuthenticated, router]);
+  }, [isMounted, searchParams, hasAutoImported]);
 
   // Redirect if user already has a seller profile
   useEffect(() => {
@@ -349,6 +433,10 @@ export default function BecomeSellerPage() {
           setError('Company name, city, province, and at least one province served are required');
           return false;
         }
+        if (!formData.industryHubs || formData.industryHubs.length === 0) {
+          setError('Please select at least one industry hub');
+          return false;
+        }
         return true;
       case 2:
         // Check if processes are provided (either checkbox selected or otherProcesses filled)
@@ -385,8 +473,9 @@ export default function BecomeSellerPage() {
   const handleSubmit = async () => {
     if (!validateStep(5)) return;
 
-    if (!currentUser || !currentUser.email) {
-      setError('You must be logged in to complete setup');
+    const userId = currentUser?.email || formData.rfqEmail;
+    if (!userId) {
+      setError('RFQ email is required to complete setup');
       return;
     }
 
@@ -400,6 +489,7 @@ export default function BecomeSellerPage() {
       formData.otherFinishes && `Other Finishes: ${formData.otherFinishes}`,
       formData.otherCertifications && `Other Certifications: ${formData.otherCertifications}`,
       formData.otherIndustries && `Other Industries: ${formData.otherIndustries}`,
+      formData.industryHubs && formData.industryHubs.length > 0 && `Industry Hubs: ${formData.industryHubs.join(', ')}`,
     ]
       .filter(Boolean)
       .join('; ');
@@ -415,7 +505,7 @@ export default function BecomeSellerPage() {
         : null;
 
     const submitData = {
-      userId: currentUser.email,
+      userId,
       onboardingMethod: formData.onboardingMethod,
       companyName: formData.companyName,
       city: formData.city,
@@ -464,24 +554,24 @@ export default function BecomeSellerPage() {
         throw new Error(error.details || error.error || 'Failed to save profile');
       }
 
-      // Update user role in localStorage to reflect seller status
-      const updatedUser = {
-        ...currentUser,
-        role: 'both', // User is now both buyer and seller
-        companyName: formData.companyName,
-        city: formData.city,
-        province: formData.province,
-      };
-
-      // Update localStorage
-      localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event('marcan-auth-change'));
-
-      // Update auth state
-      login(updatedUser);
-
-      // Clear saved registration data since registration is complete
+      // If the user is logged in, update their local profile/role
       if (currentUser?.email) {
+        const updatedUser = {
+          ...currentUser,
+          role: 'both', // User is now both buyer and seller
+          companyName: formData.companyName,
+          city: formData.city,
+          province: formData.province,
+        };
+
+        // Update localStorage
+        localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+        window.dispatchEvent(new Event('marcan-auth-change'));
+
+        // Update auth state
+        login(updatedUser);
+
+        // Clear saved registration data since registration is complete
         const savedDataKey = `seller_registration_${currentUser.email}`;
         localStorage.removeItem(savedDataKey);
       }
@@ -505,7 +595,7 @@ export default function BecomeSellerPage() {
   const confirmRestart = () => {
     // Clear form data
     setFormData({
-      onboardingMethod: null,
+      onboardingMethod: 'MANUAL',
       companyName: '',
       city: '',
       province: '',
@@ -535,12 +625,11 @@ export default function BecomeSellerPage() {
       preferredContactMethod: null,
     });
 
-    // Reset state
-    setWizardStep(0);
+    // Reset state and return to the start of Page 1 (Company Basics)
+    setWizardStep(1);
     setLastCompletedStep(null);
-    setCurrentView('landing');
-    setImportUrl('');
     setError('');
+    setImportUrl('');
 
     // Clear localStorage
     if (currentUser?.email) {
@@ -564,52 +653,22 @@ export default function BecomeSellerPage() {
           <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
 
-            {error && (
-              <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
-                {error}
+            {/* Import Loading Overlay */}
+            {isImporting && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-3xl">
+                <div className="w-14 h-14 rounded-full border-2 border-marcan-red/40 border-t-marcan-red animate-spin mb-4" />
+                <div className="text-sm font-bold text-white mb-1 uppercase tracking-widest">
+                  Analyzing your website
+                </div>
+                <p className="text-[11px] text-slate-400 max-w-xs text-center">
+                  We&apos;re using AI to read your site and pre-fill your supplier profile. This usually takes just a few seconds.
+                </p>
               </div>
             )}
 
-            {/* LANDING PAGE */}
-            {currentView === 'landing' && (
-              <div className="flex items-center justify-center min-h-[calc(100vh-140px)]">
-                <div className="glass-card p-12 rounded-3xl w-full max-w-3xl text-center relative overflow-hidden flex flex-col items-center justify-center border border-white/10">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
-                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-marcan-red/10 rounded-full blur-3xl pointer-events-none"></div>
-                  <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                  <div className="mb-8 inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-marcan-red to-red-900 shadow-neon text-white text-4xl animate-pulse-slow">
-                    <i className="fa-solid fa-handshake"></i>
-                  </div>
-
-                  <h2 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-widest mb-6 leading-tight">
-                    Welcome to the <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">MARCAN Network</span>
-                  </h2>
-
-                  <p className="text-xl text-slate-300 leading-relaxed mb-10 max-w-xl mx-auto font-light">
-                    We're glad to have you join our network! <br />
-                    Marcan connects you with the partners you need to grow your business and strengthen the Canadian supply chain.
-                  </p>
-
-                  <button
-                    onClick={() => {
-                      setCurrentView('form');
-                      // If user has progress, resume from last completed step + 1
-                      // But don't go beyond step 5 (the last step)
-                      if (lastCompletedStep !== null && lastCompletedStep >= 0 && lastCompletedStep < 5) {
-                        setWizardStep((lastCompletedStep + 1) as WizardStep);
-                      } else if (lastCompletedStep === 5) {
-                        // If they completed all steps, start from step 5 (final step)
-                        setWizardStep(5);
-                      } else {
-                        setWizardStep(0);
-                      }
-                    }}
-                    className="bg-marcan-red text-white px-10 py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-105 transition-all duration-300 shadow-lg flex items-center gap-3"
-                  >
-                    {lastCompletedStep !== null && lastCompletedStep >= 0 ? 'Continue Registration' : 'Begin Registration'} <i className="fa-solid fa-arrow-right"></i>
-                  </button>
-                </div>
+            {error && (
+              <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
+                {error}
               </div>
             )}
 
@@ -618,10 +677,10 @@ export default function BecomeSellerPage() {
               <div>
                 <div className="flex justify-between items-center mb-8">
                   <button
-                    onClick={() => setCurrentView('landing')}
+                    onClick={() => router.push('/signup')}
                     className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                   >
-                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Home
+                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Change Option
                   </button>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
@@ -632,125 +691,18 @@ export default function BecomeSellerPage() {
                         ></div>
                       ))}
                     </div>
-                    <button
-                      onClick={handleRestartRegistration}
-                      className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
-                      title="Restart Registration"
-                    >
-                      <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
-                      <span className="hidden sm:inline">Restart</span>
-                    </button>
+                    {wizardStep >= 1 && (
+                      <button
+                        onClick={handleRestartRegistration}
+                        className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
+                        title="Restart Registration"
+                      >
+                        <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
+                        <span className="hidden sm:inline">Restart</span>
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                {/* Step 0: Entry - Onboarding Method */}
-                {wizardStep === 0 && (
-                  <div className="max-w-2xl mx-auto">
-                    <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Get Started</h2>
-                      <p className="text-xs text-slate-500">How would you like to set up your profile?</p>
-                    </div>
-
-                    {formData.onboardingMethod === null && (
-                      <div className="grid grid-cols-2 gap-6">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, onboardingMethod: 'IMPORT' });
-                          }}
-                          className="p-8 rounded-lg border-2 border-white/10 hover:border-marcan-red/50 transition-all"
-                        >
-                          <i className="fa-solid fa-globe text-4xl mb-4 text-marcan-red"></i>
-                          <div className="text-white font-bold text-sm uppercase mb-2">Import from Website</div>
-                          <div className="text-xs text-slate-400">Automatically import company information</div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, onboardingMethod: 'MANUAL' });
-                            setLastCompletedStep(0);
-                            setWizardStep(1);
-                            setError('');
-                          }}
-                          className="p-8 rounded-lg border-2 border-white/10 hover:border-marcan-red/50 transition-all"
-                        >
-                          <i className="fa-solid fa-pen-to-square text-4xl mb-4 text-marcan-red"></i>
-                          <div className="text-white font-bold text-sm uppercase mb-2">Fill Manually</div>
-                          <div className="text-xs text-slate-400">Enter your information step by step</div>
-                        </button>
-                      </div>
-                    )}
-
-                    {formData.onboardingMethod === 'IMPORT' && (
-                      <div className="space-y-6">
-                        <div className="p-6 rounded-lg border-2 border-marcan-red bg-marcan-red/10">
-                          <div className="flex items-center gap-3 mb-4">
-                            <i className="fa-solid fa-globe text-2xl text-marcan-red"></i>
-                            <h3 className="text-white font-bold text-sm uppercase">Import from Website</h3>
-                          </div>
-                          <p className="text-xs text-slate-400 mb-4">
-                            Enter your company website URL below. We'll automatically extract and fill in your company information.
-                          </p>
-
-                          <div className="space-y-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">
-                                Website URL *
-                              </label>
-                              <input
-                                type="url"
-                                value={importUrl}
-                                onChange={(e) => setImportUrl(e.target.value)}
-                                placeholder="https://www.yourcompany.com"
-                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                                disabled={isImporting}
-                              />
-                            </div>
-
-                            {error && (
-                              <div className="text-xs font-semibold text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
-                                {error}
-                              </div>
-                            )}
-
-                            <div className="flex gap-4">
-                              <button
-                                type="button"
-                                onClick={handleImportWebsite}
-                                disabled={isImporting || !importUrl.trim()}
-                                className="flex-1 bg-marcan-red text-white px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                              >
-                                {isImporting ? (
-                                  <>
-                                    <i className="fa-solid fa-spinner fa-spin"></i>
-                                    Importing...
-                                  </>
-                                ) : (
-                                  <>
-                                    <i className="fa-solid fa-download"></i>
-                                    Import & Continue
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFormData({ ...formData, onboardingMethod: null });
-                                  setImportUrl('');
-                                  setError('');
-                                }}
-                                disabled={isImporting}
-                                className="px-6 py-3 rounded-lg border border-white/10 text-white text-sm font-bold uppercase tracking-wider hover:bg-white/5 transition-all disabled:opacity-50"
-                              >
-                                Back
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Step 1: Company Basics */}
                 {wizardStep === 1 && (
@@ -816,6 +768,32 @@ export default function BecomeSellerPage() {
                                 className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                               />
                               <span className="text-[10px] font-bold text-white uppercase">{p.code}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                          Industry Hub(s) <span className="text-marcan-red">*</span>
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {INDUSTRY_HUB_NAMES.map((hub) => (
+                            <label
+                              key={hub}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.industryHubs.includes(hub)}
+                                onChange={() =>
+                                  setFormData({
+                                    ...formData,
+                                    industryHubs: toggleArrayItem(formData.industryHubs, hub),
+                                  })
+                                }
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{hub}</span>
                             </label>
                           ))}
                         </div>

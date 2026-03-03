@@ -123,11 +123,10 @@ function SearchPageContent() {
               <div className="flex gap-2 mb-6 border-b border-white/10">
                 <button
                   onClick={() => setActiveTab('companies')}
-                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${
-                    activeTab === 'companies'
+                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'companies'
                       ? 'text-marcan-red'
                       : 'text-slate-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Companies ({results.counts.companies})
                   {activeTab === 'companies' && (
@@ -136,11 +135,10 @@ function SearchPageContent() {
                 </button>
                 <button
                   onClick={() => setActiveTab('listings')}
-                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${
-                    activeTab === 'listings'
+                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'listings'
                       ? 'text-marcan-red'
                       : 'text-slate-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Supplier Listings ({results.counts.listings})
                   {activeTab === 'listings' && (
@@ -149,11 +147,10 @@ function SearchPageContent() {
                 </button>
                 <button
                   onClick={() => setActiveTab('requests')}
-                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${
-                    activeTab === 'requests'
+                  className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'requests'
                       ? 'text-marcan-red'
                       : 'text-slate-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Sourcing Requests ({results.counts.requests})
                   {activeTab === 'requests' && (

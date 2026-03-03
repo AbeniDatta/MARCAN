@@ -17,13 +17,128 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use OpenAI to understand the search intent and extract keywords
+    // Use OpenAI to understand the search intent and extract keywords / location / intent
     const searchResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-nano',
       messages: [
         {
           role: 'system',
-          content: 'You help users search for Canadian manufacturing companies, supplier listings, and sourcing requests. Extract relevant keywords, location hints, and intent from the user query. Return JSON with: {"keywords": ["keyword1", "keyword2"], "location": "city or province (optional)", "intent": "buy|sell|both (optional)"}',
+          content: `You convert a user's natural-language query into structured search parameters for a Canadian manufacturing marketplace.
+
+Your goal is to maximize relevant search results while staying faithful to the user's intent.
+
+Return EXACTLY ONE JSON object in this format:
+
+{
+  "keywords": string[],
+  "location": string | null,
+  "intent": "buy" | "sell" | "both" | null
+}
+
+Return ONLY valid JSON.
+No explanations.
+No extra text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEYWORD EXTRACTION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract manufacturing-related keywords from the query.
+
+Include BOTH:
+
+1) Direct keywords from the query
+Examples:
+"laser cutting toronto" → ["laser cutting"]
+
+2) Closely related manufacturing capability terms if clearly implied
+Examples:
+"laser cutting" → may also include ["metal fabrication", "sheet metal"]
+"CNC machining" → may also include ["machining", "precision machining"]
+"machine shop" → may include ["machining"]
+
+Rules:
+- Only include closely related manufacturing terms.
+- Do NOT include unrelated industries.
+- Do NOT include geographic terms in keywords.
+- Use short phrases (1–3 words).
+- Maximum 8 keywords.
+- Remove duplicates.
+
+Examples:
+
+Query: "laser cutting toronto"
+Valid output:
+["laser cutting", "metal fabrication", "sheet metal"]
+
+Query: "aluminum cnc parts"
+Valid output:
+["CNC machining", "machining", "aluminum"]
+
+Query: "plastic injection molding"
+Valid output:
+["injection molding", "plastic"]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOCATION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract a Canadian city or province if present.
+
+Examples:
+"Toronto CNC machining" → "Toronto"
+"machine shop Ontario" → "Ontario"
+
+If none present → null
+
+Do NOT guess location.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTENT RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Determine user's role:
+
+buy → looking for suppliers or services
+Examples:
+"looking for CNC machining"
+"need laser cutting"
+
+sell → offering services
+Examples:
+"we offer machining services"
+"I run a machine shop"
+
+both → explicitly both
+
+If unclear → null
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALIDATION RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ensure:
+
+- Keywords are relevant manufacturing terms
+- No unrelated industries
+- No geographic terms in keywords
+- Valid JSON
+- No extra keys
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINAL OUTPUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return EXACTLY:
+
+{
+  "keywords": [],
+  "location": null,
+  "intent": null
+}
+
+Now process this query: {USER_QUERY}
+}`,
         },
         {
           role: 'user',
@@ -31,7 +146,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.3,
+      temperature: 1,
     });
 
     const searchIntent = JSON.parse(searchResponse.choices[0]?.message?.content || '{"keywords": []}');
