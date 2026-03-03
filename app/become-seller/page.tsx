@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -44,7 +44,6 @@ const CANADIAN_PROVINCES = [
 
 export default function BecomeSellerPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, user: currentUser, isAuthenticated, isMounted } = useAuth();
   const [currentView, setCurrentView] = useState<View>('form');
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
@@ -205,18 +204,22 @@ export default function BecomeSellerPage() {
     }
   }, [formData, lastCompletedStep, wizardStep, isMounted, currentUser]);
 
-  const [hasAutoImported, setHasAutoImported] = useState(false);
+  const [hasProcessedQueryParams, setHasProcessedQueryParams] = useState(false);
 
-  // Initialize view based on query param (e.g., start=import or start=manual from signup)
+  // Initialize view based on query params (start=import or start=manual from signup)
   useEffect(() => {
-    if (!isMounted) return;
-    const start = searchParams.get('start');
-    const urlFromQuery = searchParams.get('url');
-    if (start === 'import' && urlFromQuery && !hasAutoImported) {
+    if (!isMounted || hasProcessedQueryParams) return;
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const start = params.get('start');
+    const urlFromQuery = params.get('url');
+
+    if (start === 'import' && urlFromQuery) {
       setCurrentView('form');
       setWizardStep(1);
       setIsImporting(true);
-      setHasAutoImported(true);
+      setHasProcessedQueryParams(true);
 
       const runImport = async () => {
         try {
@@ -271,6 +274,7 @@ export default function BecomeSellerPage() {
             rfqEmail: importedData.rfqEmail || prev.rfqEmail,
             phone: importedData.phone || prev.phone,
             preferredContactMethod: importedData.preferredContactMethod || prev.preferredContactMethod,
+            industryHubs: Array.isArray(importedData.industryHubs) ? importedData.industryHubs : prev.industryHubs,
           }));
         } catch (err: any) {
           console.error('Auto-import error:', err);
@@ -288,8 +292,9 @@ export default function BecomeSellerPage() {
         ...prev,
         onboardingMethod: 'MANUAL',
       }));
+      setHasProcessedQueryParams(true);
     }
-  }, [isMounted, searchParams, hasAutoImported]);
+  }, [isMounted, hasProcessedQueryParams]);
 
   // Redirect if user already has a seller profile
   useEffect(() => {
