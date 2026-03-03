@@ -623,6 +623,7 @@ export default function BecomeSellerPage() {
       rfqEmail: '',
       phone: '',
       preferredContactMethod: null,
+      industryHubs: [],
     });
 
     // Reset state and return to the start of Page 1 (Company Basics)
