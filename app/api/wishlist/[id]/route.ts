@@ -20,19 +20,20 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the request and verify ownership
+    // Find the request and verify ownership (via buyer profile)
     const wishlistRequest = await prisma.wishlistRequest.findUnique({
       where: { id },
       include: {
-        profile: true,
+        buyerProfile: true,
       },
     });
 
-    if (!wishlistRequest) {
+    if (!wishlistRequest || !wishlistRequest.buyerProfile) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 });
     }
 
-    if (wishlistRequest.profile.userId !== userId) {
+    // Ensure the authenticated user owns the buyer profile for this request
+    if (wishlistRequest.buyerProfile.userId !== userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

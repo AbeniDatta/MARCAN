@@ -18,7 +18,7 @@ export async function GET() {
         active: true,
       },
       include: {
-        profile: {
+        sellerProfile: {
           select: {
             companyName: true,
             logoUrl: true,
@@ -59,7 +59,7 @@ export async function GET() {
       return {
         id: listing.id,
         title: listing.title,
-        seller: listing.profile.companyName,
+        seller: listing.sellerProfile?.companyName || 'Unknown',
         price: listing.price || '',
         badge: listing.badge || badge,
         badgeColor,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         active: true,
       },
       include: {
-        profile: {
+        sellerProfile: {
           select: {
             companyName: true,
             logoUrl: true,
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     const formattedListing = {
       id: listing.id,
       title: listing.title,
-      seller: listing.profile.companyName,
+      seller: listing.sellerProfile?.companyName || 'Unknown',
       price: listing.price || '',
       badge: listing.badge || badge,
       badgeColor,
