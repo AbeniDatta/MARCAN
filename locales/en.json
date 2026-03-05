@@ -1,0 +1,37 @@
+{
+  "header": {
+    "brand": "Marcan Platform",
+    "breadcrumbHome": "Home",
+    "login": "Login"
+  },
+  "sidebar": {
+    "home": "Home",
+    "about": "About Us",
+    "directory": "Network Directory",
+    "wishlist": "Sourcing Requests",
+    "marketplace": "Supplier Listings",
+    "contact": "Contact Us",
+    "help": "Help Center"
+  },
+  "home": {
+    "hero": {
+      "titleWelcome": "Welcome to",
+      "tagline": "Sourcing local just got smarter. The ultimate AI-powered ecosystem for Canadian Manufacturing Enterprises.",
+      "findManufacturers": "Find Manufacturers",
+      "joinNetwork": "Join Our Network"
+    },
+    "industriesTitle": "Industries",
+    "marcanStandardTitle": "The Marcan Standard",
+    "marcanStandard": {
+      "aiSetupTitle": "AI-Powered 2-Minute Setup",
+      "aiSetupBody": "No tedious forms. Create a comprehensive supplier profile with your already existing website in just 2 minutes. Our AI scraper does the heavy lifting.",
+      "localFirstTitle": "Local First",
+      "localFirstBody": "Proudly connecting you with partners found right here in Canada to strengthen our domestic supply chain.",
+      "directContactTitle": "Direct Contact",
+      "directContactBody": "No middlemen fees. Connect directly with the shop floor for quotes and lead times.",
+      "freeTitle": "100% Free to Use",
+      "freeBody": "No hidden fees, subscriptions, or paywalls. Access the network, source materials, and grow your business completely free."
+    }
+  }
+}
+

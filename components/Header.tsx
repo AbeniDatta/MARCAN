@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface HeaderProps {
     breadcrumb?: string;
@@ -15,8 +16,8 @@ interface ProfileData {
 
 export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
     const { isAuthenticated, user, isMounted } = useAuth();
+    const { lang, setLang, t } = useI18n();
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
-    const [activeLang, setActiveLang] = useState<'en' | 'fr'>('en');
 
     // Fetch profile data from database when user is authenticated
     useEffect(() => {
@@ -50,65 +51,17 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
     const displayCity = profileData?.city ?? user?.city;
     const displayProvince = profileData?.province ?? user?.province;
 
-    // Initialize Google Translate once on the client
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-
-        const w = window as any;
-
-        if (!w.googleTranslateElementInit) {
-            w.googleTranslateElementInit = function googleTranslateElementInit() {
-                if (!w.google || !w.google.translate) return;
-                new w.google.translate.TranslateElement(
-                    {
-                        pageLanguage: 'en',
-                        includedLanguages: 'en,fr',
-                        autoDisplay: false,
-                    },
-                    'google_translate_element'
-                );
-            };
-        }
-
-        // Only add the script once
-        if (!document.getElementById('google-translate-script')) {
-            const script = document.createElement('script');
-            script.id = 'google-translate-script';
-            script.type = 'text/javascript';
-            script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-            script.async = true;
-            document.body.appendChild(script);
-        }
-    }, []);
-
-    const handleLanguageChange = (lang: 'en' | 'fr') => {
-        setActiveLang(lang);
-
-        if (typeof window === 'undefined') return;
-        const selectField = document.querySelector<HTMLSelectElement>('#google_translate_element select');
-        if (!selectField) return;
-
-        const target = lang === 'fr' ? 'fr' : 'en';
-        for (let i = 0; i < selectField.options.length; i++) {
-            const option = selectField.options[i];
-            if (option.value === target) {
-                selectField.selectedIndex = i;
-                selectField.dispatchEvent(new Event('change'));
-                break;
-            }
-        }
-    };
-
     return (
-        <>
-            <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
+        <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
                 {/* Left: Context */}
                 <div className="flex items-center gap-3">
                     <Link href="/" className="font-heading font-bold text-white text-lg tracking-tight hover:text-marcan-red transition-colors cursor-pointer">
-                        Marcan Platform
+                        {t('header.brand')}
                     </Link>
                     <span className="text-slate-600 text-lg">/</span>
-                    <span className="text-slate-400 text-sm font-medium">{breadcrumb}</span>
+                    <span className="text-slate-400 text-sm font-medium">
+                        {breadcrumb === 'Home' ? t('header.breadcrumbHome') : breadcrumb}
+                    </span>
                 </div>
 
                 {/* Right: Relevance & Actions */}
@@ -126,20 +79,20 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                         </div>
                     )}
 
-                    {/* Language Toggle */}
+                    {/* Language Toggle (i18n context only) */}
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
                         <button
                             type="button"
-                            onClick={() => handleLanguageChange('en')}
-                            className={`${activeLang === 'en' ? 'text-white' : 'hover:text-marcan-red'} cursor-pointer transition`}
+                            onClick={() => setLang('en')}
+                            className={`${lang === 'en' ? 'text-white' : 'hover:text-marcan-red'} cursor-pointer transition`}
                         >
                             EN
                         </button>
                         <span className="opacity-30">|</span>
                         <button
                             type="button"
-                            onClick={() => handleLanguageChange('fr')}
-                            className={`${activeLang === 'fr' ? 'text-white' : 'hover:text-marcan-red'} cursor-pointer transition`}
+                            onClick={() => setLang('fr')}
+                            className={`${lang === 'fr' ? 'text-white' : 'hover:text-marcan-red'} cursor-pointer transition`}
                         >
                             FR
                         </button>
@@ -171,9 +124,5 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                     </div>
                 </div>
             </header>
-
-            {/* Hidden Google Translate container */}
-            <div id="google_translate_element" style={{ display: 'none' }} />
-        </>
     );
 }

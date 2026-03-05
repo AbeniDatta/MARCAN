@@ -3,6 +3,7 @@ import { Inter, Montserrat } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import AmbientBackground from '@/components/AmbientBackground';
+import { I18nProvider } from '@/contexts/I18nContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,8 +39,10 @@ export default function RootLayout({
         className={`${inter.variable} ${montserrat.variable} bg-marcan-dark text-slate-300 font-sans h-screen overflow-hidden flex selection:bg-marcan-red selection:text-white`}
       >
         <AmbientBackground />
-        <Sidebar />
-        {children}
+        <I18nProvider>
+          <Sidebar />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

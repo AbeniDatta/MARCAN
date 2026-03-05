@@ -83,24 +83,37 @@ function SearchPageContent() {
 
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="max-w-6xl mx-auto">
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mb-8">
-            <div className="relative group w-full">
-              <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
-              <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 py-3 px-6 shadow-lg w-full cursor-text">
-                <i className="fa-solid fa-magnifying-glass text-slate-400 text-lg mr-4"></i>
+          {/* Search Bar - matches homepage styling */}
+          <form onSubmit={handleSearch} className="mb-4 w-full">
+            <div className="relative group w-full max-w-5xl mx-auto">
+              {/* Enhanced AI Gradient Glow */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red via-orange-500 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+
+              <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 p-2 pl-6 shadow-lg w-full cursor-text">
+                {/* AI Icon */}
+                <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-xl mr-4"></i>
+
+                {/* Prompt-style Input */}
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find local partners, capabilities, or materials..."
-                  className="bg-transparent text-white py-1 focus:outline-none placeholder:text-slate-500 font-medium text-lg text-left w-full"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearch(e);
+                    }
+                  }}
+                  placeholder="Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')..."
+                  className="bg-transparent text-white py-2 focus:outline-none placeholder:text-slate-500 font-medium text-base md:text-lg text-left w-full"
                 />
+
+                {/* AI Action Button */}
                 <button
                   type="submit"
-                  className="ml-4 bg-marcan-red text-white px-6 py-2 rounded-lg font-bold text-sm uppercase hover:shadow-neon transition-all"
+                  className="hidden sm:flex bg-white/5 hover:bg-marcan-red text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-all ml-2 items-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon shrink-0"
                 >
-                  Search
+                  Ask Our AI <i className="fa-solid fa-arrow-right"></i>
                 </button>
               </label>
             </div>
@@ -124,8 +137,8 @@ function SearchPageContent() {
                 <button
                   onClick={() => setActiveTab('companies')}
                   className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'companies'
-                      ? 'text-marcan-red'
-                      : 'text-slate-400 hover:text-white'
+                    ? 'text-marcan-red'
+                    : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   Companies ({results.counts.companies})
@@ -136,8 +149,8 @@ function SearchPageContent() {
                 <button
                   onClick={() => setActiveTab('listings')}
                   className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'listings'
-                      ? 'text-marcan-red'
-                      : 'text-slate-400 hover:text-white'
+                    ? 'text-marcan-red'
+                    : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   Supplier Listings ({results.counts.listings})
@@ -148,8 +161,8 @@ function SearchPageContent() {
                 <button
                   onClick={() => setActiveTab('requests')}
                   className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all relative ${activeTab === 'requests'
-                      ? 'text-marcan-red'
-                      : 'text-slate-400 hover:text-white'
+                    ? 'text-marcan-red'
+                    : 'text-slate-400 hover:text-white'
                     }`}
                 >
                   Sourcing Requests ({results.counts.requests})

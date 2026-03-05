@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useI18n();
 
   const certifications = [
     { code: 'ISO 9001', label: 'Quality' },
@@ -50,11 +52,16 @@ export default function HomePage() {
       {/* Content Scroll Area */}
       <div className="flex-1 overflow-y-auto p-8 relative">
         {/* Search Bar Container */}
-        <form onSubmit={handleSearch} className="mb-8 w-full">
-          <div className="relative group w-full">
-            <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red to-blue-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-200"></div>
-            <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 py-3 px-6 shadow-lg w-full cursor-text">
-              <i className="fa-solid fa-magnifying-glass text-slate-400 text-lg mr-4"></i>
+        <form onSubmit={handleSearch} className="mb-4 w-full">
+          <div className="relative group w-full max-w-5xl mx-auto">
+            {/* Enhanced AI Gradient Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red via-orange-500 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+
+            <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 p-2 pl-6 shadow-lg w-full cursor-text">
+              {/* AI Icon */}
+              <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-xl mr-4"></i>
+
+              {/* Prompt-style Input */}
               <input
                 type="text"
                 value={searchQuery}
@@ -65,12 +72,46 @@ export default function HomePage() {
                     handleSearch(e);
                   }
                 }}
-                placeholder="Find manufacturers, equipment, or sourcing opportunities..."
-                className="bg-transparent text-white py-1 focus:outline-none placeholder:text-slate-500 font-medium text-lg text-left w-full md:w-[500px]"
+                placeholder="Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')..."
+                className="bg-transparent text-white py-2 focus:outline-none placeholder:text-slate-500 font-medium text-base md:text-lg text-left w-full"
               />
+
+              {/* AI Action Button */}
+              <button
+                type="submit"
+                className="hidden sm:flex bg-white/5 hover:bg-marcan-red text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-all ml-2 items-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon shrink-0"
+              >
+                Ask Our AI <i className="fa-solid fa-arrow-right"></i>
+              </button>
             </label>
           </div>
         </form>
+
+        {/* Suggested AI Prompts */}
+        <div className="flex items-center justify-center gap-2 mt-4 mb-6 text-[10px] sm:text-xs font-medium text-slate-400 flex-wrap">
+          <span className="uppercase tracking-widest font-bold text-slate-600 mr-2">Try asking:</span>
+          <button
+            type="button"
+            onClick={() => setSearchQuery('Aluminum anodizing in BC')}
+            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+          >
+            &quot;Aluminum anodizing in BC&quot;
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchQuery('Who can cast steel parts?')}
+            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+          >
+            &quot;Who can cast steel parts?&quot;
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchQuery('Find AS9100 certified suppliers')}
+            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+          >
+            &quot;Find AS9100 certified suppliers&quot;
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Hero Card */}
@@ -78,26 +119,26 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-gradient-to-r from-marcan-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="relative z-10">
               <h1 className="font-heading text-5xl font-black text-white mb-4 tracking-tight leading-none uppercase">
-                Welcome to <br />
+                {t('home.hero.titleWelcome')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">
                   Marcan
                 </span>
               </h1>
               <p className="text-slate-400 text-lg mb-8 max-w-lg font-light leading-relaxed">
-                Sourcing local just got smarter. The ultimate <span className="text-white font-bold">AI-powered</span> ecosystem for Canadian Manufacturing Enterprises.
+                {t('home.hero.tagline')}
               </p>
               <div className="flex gap-4">
                 <Link
                   href="/directory"
                   className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-neon hover:scale-105 transition-all duration-300 inline-block"
                 >
-                  Find Manufacturers
+                  {t('home.hero.findManufacturers')}
                 </Link>
                 <Link
                   href="/signup"
                   className="border border-white/20 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
                 >
-                  Join Our Network
+                  {t('home.hero.joinNetwork')}
                 </Link>
               </div>
             </div>
@@ -138,20 +179,11 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Standard Section */}
-          <div className="lg:col-span-12">
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Our Standard</h3>
-              <div className="h-[1px] bg-white/10 flex-grow"></div>
-            </div>
-          </div>
-
-
           {/* Trust & Impact */}
           <div className="lg:col-span-12 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
             <div className="flex items-center gap-3 mb-6">
               <i className="fa-solid fa-shield-halved text-marcan-red text-xl"></i>
-              <h3 className="font-heading font-bold text-white uppercase text-lg">The Marcan Standard</h3>
+              <h3 className="font-heading font-bold text-white uppercase text-lg">{t('home.marcanStandardTitle')}</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex gap-4">
@@ -159,11 +191,8 @@ export default function HomePage() {
                   <i className="fa-solid fa-bolt"></i>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-sm mb-1">AI-Powered 2-Minute Setup</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    No tedious forms. Create a comprehensive supplier profile with your already existing website in just 2 minutes.
-                    Our AI scraper does the heavy lifting.
-                  </p>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.aiSetupTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.aiSetupBody')}</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -171,8 +200,8 @@ export default function HomePage() {
                   <i className="fa-solid fa-map-location-dot"></i>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-sm mb-1">Local First</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">Proudly connecting you with partners found right here in Canada to strengthen our domestic supply chain.</p>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.localFirstTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.localFirstBody')}</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -180,8 +209,8 @@ export default function HomePage() {
                   <i className="fa-solid fa-handshake-simple"></i>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-sm mb-1">Direct Contact</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">No middlemen fees. Connect directly with the shop floor for quotes and lead times.</p>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.directContactTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.directContactBody')}</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -189,10 +218,8 @@ export default function HomePage() {
                   <i className="fa-solid fa-circle-check"></i>
                 </div>
                 <div>
-                  <div className="text-white font-bold text-sm mb-1">100% Free to Use</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    No hidden fees, subscriptions, or paywalls. Access the network, source materials, and grow your business completely free.
-                  </p>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.freeTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.freeBody')}</p>
                 </div>
               </div>
             </div>
@@ -201,7 +228,7 @@ export default function HomePage() {
           {/* Industry Hubs */}
           <div className="lg:col-span-12">
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">Industries</h3>
+              <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('home.industriesTitle')}</h3>
               <div className="h-[1px] bg-white/10 flex-grow"></div>
             </div>
 

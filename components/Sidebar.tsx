@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface NavItem {
     href: string;
@@ -16,15 +17,16 @@ export default function Sidebar() {
     const pathname = usePathname();
     const { isAuthenticated, user, logout, isMounted } = useAuth();
     const [hasSellerProfile, setHasSellerProfile] = useState(false);
+    const { t } = useI18n();
 
     const navItems: NavItem[] = [
-        { href: '/', label: 'Home', icon: 'fa-house' },
-        { href: '/about', label: 'About Us', icon: 'fa-shield-halved' },
-        { href: '/directory', label: 'Network Directory', icon: 'fa-address-book' },
-        { href: '/wishlist', label: 'Sourcing Requests', icon: 'fa-bullhorn' },
-        { href: '/marketplace', label: 'Supplier Listings', icon: 'fa-shop' },
-        { href: '/contact', label: 'Contact Us', icon: 'fa-envelope' },
-        { href: '/help', label: 'Help Center', icon: 'fa-circle-question' },
+        { href: '/', label: t('sidebar.home'), icon: 'fa-house' },
+        { href: '/about', label: t('sidebar.about'), icon: 'fa-shield-halved' },
+        { href: '/directory', label: t('sidebar.directory'), icon: 'fa-address-book' },
+        { href: '/wishlist', label: t('sidebar.wishlist'), icon: 'fa-bullhorn' },
+        { href: '/marketplace', label: t('sidebar.marketplace'), icon: 'fa-shop' },
+        { href: '/contact', label: t('sidebar.contact'), icon: 'fa-envelope' },
+        { href: '/help', label: t('sidebar.help'), icon: 'fa-circle-question' },
     ];
 
     // Check if user has a seller profile in the database

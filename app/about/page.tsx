@@ -16,11 +16,11 @@ export default function AboutPage() {
           <div className="mb-8">
             <i className="fa-solid fa-shield-halved text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
             <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">
-              Trust & Authority
-            </h2>
+            Trust & Authority
+          </h2>
             <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-              Marcan is a project dedicated to revitalizing the Canadian manufacturing sector.
-            </p>
+            Marcan is a project dedicated to revitalizing the Canadian manufacturing sector.
+          </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 text-left">

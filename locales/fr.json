@@ -1,0 +1,37 @@
+{
+  "header": {
+    "brand": "Plateforme Marcan",
+    "breadcrumbHome": "Maison",
+    "login": "Connexion"
+  },
+  "sidebar": {
+    "home": "Maison",
+    "about": "À propos de nous",
+    "directory": "Annuaire du réseau",
+    "wishlist": "Demandes d'approvisionnement",
+    "marketplace": "Liste des fournisseurs",
+    "contact": "Contactez-nous",
+    "help": "Centre d'aide"
+  },
+  "home": {
+    "hero": {
+      "titleWelcome": "Bienvenue à",
+      "tagline": "L'approvisionnement local est désormais plus intelligent. Un écosystème ultime basé sur l'IA pour les entreprises manufacturières canadiennes.",
+      "findManufacturers": "Trouver des fabricants",
+      "joinNetwork": "Rejoignez notre réseau"
+    },
+    "industriesTitle": "Industries",
+    "marcanStandardTitle": "La norme Marcan",
+    "marcanStandard": {
+      "aiSetupTitle": "Configuration IA en 2 minutes",
+      "aiSetupBody": "Plus de formulaires interminables. Créez un profil fournisseur complet à partir de votre site web existant en seulement 2 minutes. Notre extracteur IA fait le gros du travail.",
+      "localFirstTitle": "Priorité locale",
+      "localFirstBody": "Nous vous mettons en relation avec des partenaires trouvés ici même au Canada afin de renforcer notre chaîne d'approvisionnement domestique.",
+      "directContactTitle": "Contact direct",
+      "directContactBody": "Aucun intermédiaire ni frais cachés. Communiquez directement avec l'atelier pour les soumissions et les délais.",
+      "freeTitle": "100 % gratuit à utiliser",
+      "freeBody": "Aucun frais caché, abonnement ou mur payant. Accédez au réseau, sourcer des matériaux et développez votre entreprise entièrement gratuitement."
+    }
+  }
+}
+
