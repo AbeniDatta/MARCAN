@@ -141,6 +141,9 @@ model SellerProfile {
   selectedIcon   String? @map("selected_icon") @db.Text
   jobTitle       String? @map("job_title") @db.Text
 
+  // Intent: whether this company primarily uses Marcan to sell, buy, or both
+  primaryIntent String? @map("primary_intent") @db.Text
+
   // Backward-compatible arrays (keep for now; migrate later to ProfileCapability)
   capabilities   String[] @default([]) @db.Text
   materials      String[] @default([]) @db.Text
