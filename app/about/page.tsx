@@ -11,15 +11,17 @@ export default function AboutPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="About Us" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="max-w-4xl mx-auto text-center py-12">
-          <i className="fa-solid fa-shield-halved text-6xl text-marcan-red mb-6 shadow-neon rounded-full p-4 bg-white/5"></i>
-          <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-6">
-            Trust & Authority
-          </h2>
-          <p className="text-xl text-slate-400 leading-relaxed mb-12">
-            Marcan is a project dedicated to revitalizing the Canadian manufacturing sector.
-          </p>
+      <div className="flex-1 overflow-y-auto p-6 relative">
+        <div className="max-w-4xl mx-auto text-center py-6">
+          <div className="mb-8">
+            <i className="fa-solid fa-shield-halved text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
+            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">
+              Trust & Authority
+            </h2>
+            <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+              Marcan is a project dedicated to revitalizing the Canadian manufacturing sector.
+            </p>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8 text-left">
             <div className="glass-card p-8 rounded-2xl border-2 border-marcan-red/70 shadow-neon bg-gradient-to-br from-marcan-red/10 to-transparent">

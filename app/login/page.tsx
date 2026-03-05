@@ -137,7 +137,7 @@ export default function LoginPage() {
               <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
                 Welcome Back
               </h2>
-              <p className="text-xs text-slate-500">Access your Marcan Dashboard</p>
+              <p className="text-xs text-slate-500">Access your Marcan Account</p>
             </div>
 
             {/* Error Message */}

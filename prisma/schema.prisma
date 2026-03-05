@@ -34,7 +34,16 @@ enum TypicalJobSize {
 
 enum PreferredContactMethod {
   EMAIL
+  PHONE
   PLATFORM_ONLY
+}
+
+enum TypicalLeadTime {
+  ONE_TWO_WEEKS
+  TWO_FOUR_WEEKS
+  ONE_THREE_MONTHS
+  THREE_PLUS_MONTHS
+  DEPENDS_ON_WORKLOAD
 }
 
 model Capability {
@@ -47,7 +56,7 @@ model Capability {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profiles ProfileCapability[]
+  sellerProfiles ProfileCapability[]
 
   @@unique([type, slug])
   @@index([type])
@@ -56,7 +65,7 @@ model Capability {
 
 model ProfileCapability {
   id           String @id @default(uuid()) @db.Uuid
-  profileId    String @map("profile_id") @db.Uuid
+  sellerProfileId String @map("seller_profile_id") @db.Uuid
   capabilityId String @map("capability_id") @db.Uuid
 
   // Optional fields for ranking / filtering later
@@ -71,17 +80,48 @@ model ProfileCapability {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  profile    Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  capability Capability @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+  sellerProfile SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  capability    Capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
 
-  @@unique([profileId, capabilityId])
-  @@index([profileId])
+  @@unique([sellerProfileId, capabilityId])
+  @@index([sellerProfileId])
   @@index([capabilityId])
-  @@index([profileId, isCore])
+  @@index([sellerProfileId, isCore])
   @@map("profile_capabilities")
 }
 
-model Profile {
+// Buyer Profile - for buyers who source/manufacturing services
+model BuyerProfile {
+  id          String  @id @default(uuid()) @db.Uuid
+  userId      String  @unique @map("user_id") @db.Text
+  firstName   String? @map("first_name") @db.Text
+  lastName    String? @map("last_name") @db.Text
+  email       String? @db.Text
+  companyName String  @map("company_name") @db.Text
+  jobTitle    String? @map("job_title") @db.Text
+  phone       String? @db.Text
+  city        String? @db.Text
+  province    String? @db.Text
+
+  // Buyer-specific fields (for AI search optimization)
+  primaryProcesses String[] @default([]) @map("primary_processes") @db.Text
+  industriesServed String[] @default([]) @map("industries_served") @db.Text
+  materials        String[] @default([]) @db.Text
+  certifications   String[] @default([]) @db.Text
+  otherComments    String?  @map("other_comments") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  wishlistRequests WishlistRequest[]
+
+  @@index([province])
+  @@index([createdAt(sort: Desc)])
+  @@map("buyer_profiles")
+}
+
+// Seller Profile - for suppliers/manufacturers who offer services
+model SellerProfile {
   id             String  @id @default(uuid()) @db.Uuid
   userId         String  @unique @map("user_id") @db.Text
   firstName      String? @map("first_name") @db.Text
@@ -104,13 +144,6 @@ model Profile {
   materials      String[] @default([]) @db.Text
   certifications String[] @default([]) @db.Text
 
-  // Buyer account fields (for AI search optimization)
-  primaryProcesses String[] @default([]) @map("primary_processes") @db.Text
-  industriesServed String[] @default([]) @map("industries_served") @db.Text
-  otherComments    String?  @map("other_comments") @db.Text
-
-  primaryIntent String? @map("primary_intent") @db.Text // 'buy' | 'sell'
-
   // Logistics & coverage (attributes, not taxonomy)
   provincesServed    String[] @default([]) @map("provinces_served") @db.Text // ["ON","QC",...]
   shippingCapability String?  @map("shipping_capability") @db.Text // "local" | "national" | "international"
@@ -123,10 +156,17 @@ model Profile {
 
   // Step 3: production profile (ranking)
   typicalJobSize TypicalJobSize? @map("typical_job_size")
+  typicalLeadTime TypicalLeadTime? @map("typical_lead_time")
 
-  // Step 5: contact / RFQ preferences (future-proofing)
+  // Industry hubs (fixed list: Precision Machining, Foundries & Casting, etc.)
+  industryHubs String[] @default([]) @map("industry_hubs") @db.Text
+
+  // Step 5: contact / RFQ preferences
   rfqEmail               String?                 @map("rfq_email") @db.Text
   preferredContactMethod PreferredContactMethod? @map("preferred_contact_method")
+
+  // Verification status for directory filtering
+  verified Boolean @default(false)
 
   // Internal (hidden) fields for eligibility + enrichment lifecycle
   searchable               Boolean           @default(false)
@@ -138,16 +178,16 @@ model Profile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  listings         Listing[]
-  wishlistRequests WishlistRequest[]
+  listings Listing[]
 
   // Normalized taxonomy relations
   profileCapabilities ProfileCapability[]
 
   @@index([searchable])
   @@index([province])
+  @@index([verified])
   @@index([createdAt(sort: Desc)])
-  @@map("profiles")
+  @@map("seller_profiles")
 }
 
 model Listing {
@@ -166,7 +206,7 @@ model Listing {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  sellerProfile SellerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([createdAt(sort: Desc)])
@@ -175,7 +215,7 @@ model Listing {
 
 model WishlistRequest {
   id          String    @id @default(uuid()) @db.Uuid
-  profileId   String    @map("profile_id") @db.Uuid
+  buyerProfileId String    @map("buyer_profile_id") @db.Uuid
   title       String    @db.Text
   companyName String    @map("company_name") @db.Text
   category    String?   @db.Text
@@ -187,9 +227,9 @@ model WishlistRequest {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  buyerProfile BuyerProfile @relation(fields: [buyerProfileId], references: [id], onDelete: Cascade)
 
-  @@index([profileId])
+  @@index([buyerProfileId])
   @@index([createdAt(sort: Desc)])
   @@map("wishlist_requests")
 }

@@ -134,9 +134,9 @@ export default function SignupPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Sign Up" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="flex items-center justify-center py-10">
-          <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
+      <div className="flex-1 overflow-hidden p-4 relative">
+        <div className="flex items-center justify-center py-4">
+          <div className="glass-card p-6 rounded-3xl w-full max-w-[95rem] relative overflow-visible transition-all duration-500">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
 
             {/* Error Message */}
@@ -148,34 +148,38 @@ export default function SignupPage() {
 
             {/* MODE: CHOICE */}
             {signupMode === 'choice' && (
-              <div className="text-center mb-4">
-                <h2 className="font-heading text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-3">
+              <div className="text-center mb-2">
+                <h2 className="font-heading text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-2">
                   How do you want to use Marcan?
                 </h2>
-                <p className="text-xs text-slate-500 mb-6 max-w-xl mx-auto">
+                <p className="text-sm text-slate-500 mb-4 max-w-xl mx-auto">
                   Choose the path that fits you best. You can always create another type of profile later.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-6 items-stretch">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[95rem] mx-auto mb-4 items-stretch px-4">
                   {/* Option A: Buyer / Sourcing */}
-                  <div className="group glass-card border border-white/10 hover:border-marcan-red/60 hover:bg-white/5 rounded-2xl p-6 text-left transition-all duration-300 h-full flex flex-col">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
-                        <i className="fa-solid fa-magnifying-glass-chart"></i>
+                  <div className="group glass-card border border-white/10 hover:border-marcan-red/60 hover:bg-white/5 rounded-3xl p-8 text-left transition-all duration-300 h-full flex flex-col">
+                    <div className="flex items-center gap-5 mb-4">
+                      <div className="w-20 h-20 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <i className="fa-solid fa-magnifying-glass-chart text-2xl"></i>
                       </div>
                       <div>
-                        <h3 className="text-white font-heading font-bold text-lg">
+                        <h3 className="text-white font-heading font-bold text-2xl">
                           Join as a Buyer
                         </h3>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                      Standard fast sign-up to post requirements, manage RFQs, and connect with vetted Canadian suppliers.
+                    <p className="text-base text-slate-300 leading-relaxed mb-3">
+                      Post requirements and receive competitive quotes from{' '}
+                      <span className="text-white font-bold">vetted Canadian suppliers.</span>
+                    </p>
+                    <p className="text-sm text-slate-400 mb-5">
+                      Manage RFQs, track quotes, and connect directly with manufacturers - all in one place.
                     </p>
 
                     {/* Email field under Option A */}
-                    <div className="mt-2">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block text-left">
+                    <div className="mt-4">
+                      <label className="text-sm font-bold text-slate-400 uppercase mb-2 block text-left">
                         Work Email
                       </label>
                       <div className="flex flex-col sm:flex-row gap-3 items-stretch">
@@ -195,7 +199,7 @@ export default function SignupPage() {
                             }
                           }}
                           placeholder="you@company.com"
-                          className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
+                          className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
                         />
                         <button
                           type="button"
@@ -207,40 +211,40 @@ export default function SignupPage() {
                             setBuyerData((prev) => ({ ...prev, email: choiceEmail.trim() }));
                             setSignupMode('buyer');
                           }}
-                          className="sm:w-10 bg-marcan-red text-white px-0 py-0 rounded-lg font-bold text-[12px] uppercase tracking-widest hover:shadow-neon hover:scale-[1.05] transition-all duration-300 whitespace-nowrap flex items-center justify-center"
+                          className="sm:w-14 bg-marcan-red text-white px-0 py-0 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.05] transition-all duration-300 whitespace-nowrap flex items-center justify-center"
                         >
                           <i className="fa-solid fa-arrow-right"></i>
                         </button>
                       </div>
-                      <p className="mt-1 text-[10px] text-slate-500 text-left">
+                      <p className="mt-2 text-xs text-slate-500 text-left">
                         We&apos;ll pre-fill your account with this email on the next step.
                       </p>
                     </div>
                   </div>
 
                   {/* Option B: Supplier / Seller */}
-                  <div className="group glass-card border border-marcan-red/50 bg-marcan-red/5 hover:bg-marcan-red/10 rounded-2xl p-6 text-left transition-all duration-300 h-full flex flex-col">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-marcan-red/20 flex items-center justify-center text-marcan-red">
-                        <i className="fa-solid fa-industry"></i>
+                  <div className="group glass-card border border-marcan-red/50 bg-marcan-red/5 hover:bg-marcan-red/10 rounded-3xl p-8 text-left transition-all duration-300 h-full flex flex-col">
+                    <div className="flex items-center gap-5 mb-4">
+                      <div className="w-20 h-20 rounded-full bg-marcan-red/20 flex items-center justify-center text-marcan-red">
+                        <i className="fa-solid fa-industry text-2xl"></i>
                       </div>
                       <div>
-                        <h3 className="text-white font-heading font-bold text-lg">
+                        <h3 className="text-white font-heading font-bold text-2xl">
                           Join as a Supplier
                         </h3>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed mb-2">
-                      Showcase your shop to buyers across Canada with an{' '}
+                    <p className="text-base text-slate-300 leading-relaxed mb-3">
+                      Showcase your shop with an{' '}
                       <span className="text-white font-bold">AI-powered 2-minute setup via your website URL.</span>
                     </p>
-                    <p className="text-[11px] text-slate-400 mb-4">
-                      Paste your existing website and let Marcan’s AI scraper build a comprehensive supplier profile for you.
+                    <p className="text-sm text-slate-400 mb-5">
+                      Paste your existing website and let Marcan's AI scraper build a comprehensive supplier profile for you.
                     </p>
 
                     {/* Website URL under Supplier option */}
-                    <div className="mt-1">
-                      <label className="text-[10px] font-bold text-slate-300 uppercase mb-1 block text-left">
+                    <div className="mt-4">
+                      <label className="text-sm font-bold text-slate-300 uppercase mb-2 block text-left">
                         Website URL
                       </label>
                       <div className="flex flex-col sm:flex-row gap-3 items-stretch">
@@ -259,7 +263,7 @@ export default function SignupPage() {
                             }
                           }}
                           placeholder="https://www.yourcompany.com"
-                          className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
+                          className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
                         />
                         <button
                           type="button"
@@ -270,13 +274,13 @@ export default function SignupPage() {
                               : '';
                             router.push(`${base}${urlParam}`);
                           }}
-                          className="sm:w-10 bg-marcan-red text-white px-0 py-0 rounded-lg font-bold text-[12px] uppercase tracking-widest hover:shadow-neon hover:scale-[1.05] transition-all duration-300 whitespace-nowrap flex items-center justify-center"
+                          className="sm:w-14 bg-marcan-red text-white px-0 py-0 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.05] transition-all duration-300 whitespace-nowrap flex items-center justify-center"
                           aria-label="Start supplier setup"
                         >
                           <i className="fa-solid fa-arrow-right"></i>
                         </button>
                       </div>
-                      <p className="mt-1 text-[10px] text-slate-400 text-left mb-3">
+                      <p className="mt-2 text-xs text-slate-400 text-left mb-2">
                         Don&apos;t have a website or prefer to fill it out manually?{' '}
                         <button
                           type="button"
@@ -291,7 +295,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-500">
+                <p className="text-sm text-slate-500 mt-2">
                   Already a member?{' '}
                   <Link href="/login" className="text-marcan-red font-bold hover:text-white transition-colors ml-1">
                     Login
@@ -303,25 +307,25 @@ export default function SignupPage() {
             {/* MODE: BUYER FORM */}
             {signupMode === 'buyer' && (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="text-left">
-                    <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
-                      Create Your Account
-                    </h2>
-                    <p className="text-xs text-slate-500">Create your procurement profile to start sourcing manufacturers.</p>
-                  </div>
+                <div className="relative mb-4">
                   <button
                     type="button"
                     onClick={() => setSignupMode('choice')}
-                    className="text-[11px] text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
+                    className="absolute left-0 top-0 text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
                   >
                     <i className="fa-solid fa-arrow-left"></i>
                     Change Option
                   </button>
+                  <div className="text-center">
+                    <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
+                      Create Your Buyer Account
+                    </h2>
+                    <p className="text-xs text-slate-500">Create your procurement profile to start sourcing manufacturers.</p>
+                  </div>
                 </div>
 
-                <form onSubmit={handleBuyerSubmit} className="space-y-6 max-w-2xl mx-auto">
-                  <div className="grid grid-cols-2 gap-6">
+                <form onSubmit={handleBuyerSubmit} className="space-y-3 max-w-2xl mx-auto">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">First Name</label>
                       <input
@@ -329,7 +333,7 @@ export default function SignupPage() {
                         placeholder="Jane"
                         value={buyerData.firstName}
                         onChange={(e) => setBuyerData({ ...buyerData, firstName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         required
                       />
                     </div>
@@ -340,7 +344,7 @@ export default function SignupPage() {
                         placeholder="Doe"
                         value={buyerData.lastName}
                         onChange={(e) => setBuyerData({ ...buyerData, lastName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         required
                       />
                     </div>
@@ -353,12 +357,12 @@ export default function SignupPage() {
                       placeholder="jane.doe@example.com"
                       value={buyerData.email}
                       onChange={(e) => setBuyerData({ ...buyerData, email: e.target.value })}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Password</label>
                       <input
@@ -366,7 +370,7 @@ export default function SignupPage() {
                         placeholder="Create Password"
                         value={buyerData.password}
                         onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         required
                       />
                     </div>
@@ -377,15 +381,15 @@ export default function SignupPage() {
                         placeholder="Confirm Password"
                         value={buyerData.confirmPassword}
                         onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-white/5">
-                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-4 block tracking-widest">Profile Details</label>
-                    <div className="grid grid-cols-2 gap-6 mb-4">
+                  <div className="pt-2 border-t border-white/5">
+                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block tracking-widest">Profile Details</label>
+                    <div className="grid grid-cols-2 gap-4 mb-2">
                       <div className="col-span-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Company (Optional)</label>
                         <input
@@ -393,7 +397,7 @@ export default function SignupPage() {
                           placeholder="Organization you represent"
                           value={buyerData.company}
                           onChange={(e) => setBuyerData({ ...buyerData, company: e.target.value, jobTitle: e.target.value.trim() ? buyerData.jobTitle : '' })}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         />
                       </div>
                       {buyerData.company.trim() && (
@@ -406,7 +410,7 @@ export default function SignupPage() {
                             placeholder="e.g., Procurement Manager, Buyer, Director"
                             value={buyerData.jobTitle}
                             onChange={(e) => setBuyerData({ ...buyerData, jobTitle: e.target.value })}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                             required
                           />
                         </div>
@@ -418,7 +422,7 @@ export default function SignupPage() {
                           placeholder="+1 (555) 000-0000"
                           value={buyerData.phone}
                           onChange={(e) => setBuyerData({ ...buyerData, phone: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
                         />
                       </div>
                       <div>
@@ -429,12 +433,12 @@ export default function SignupPage() {
                             placeholder="City"
                             value={buyerData.city}
                             onChange={(e) => setBuyerData({ ...buyerData, city: e.target.value })}
-                            className="bg-black/40 border border-white/10 rounded-lg px-3 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600"
+                            className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600"
                           />
                           <select
                             value={buyerData.province}
                             onChange={(e) => setBuyerData({ ...buyerData, province: e.target.value })}
-                            className="bg-black/40 border border-white/10 rounded-lg px-2 py-3 text-sm font-semibold text-slate-400 focus:border-marcan-red focus:shadow-neon outline-none"
+                            className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-sm font-semibold text-slate-400 focus:border-marcan-red focus:shadow-neon outline-none"
                           >
                             <option value="">Prov.</option>
                             <option value="ON">ON</option>
@@ -459,7 +463,7 @@ export default function SignupPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-marcan-red text-white py-4 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-6 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <span>
@@ -471,7 +475,7 @@ export default function SignupPage() {
                   </button>
                 </form>
 
-                <div className="mt-6 text-center">
+                <div className="mt-3 text-center">
                   <p className="text-xs text-slate-500">
                     Already a member?{' '}
                     <Link href="/login" className="text-marcan-red font-bold hover:text-white transition-colors ml-1">

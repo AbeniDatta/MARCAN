@@ -12,16 +12,14 @@ export default function HelpPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Support" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-marcan-red/10 border border-marcan-red/30 mb-6 shadow-neon">
-              <i className="fa-solid fa-life-ring text-2xl text-marcan-red"></i>
-            </div>
-            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-4">
+      <div className="flex-1 overflow-y-auto p-6 relative">
+        <div className="max-w-5xl mx-auto py-6">
+          <div className="text-center mb-8">
+            <i className="fa-solid fa-life-ring text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
+            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">
               Help Center
             </h2>
-            <p className="text-slate-400 text-lg">Find answers to your questions.</p>
+            <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">Browse our FAQs and helpful resources to find answers to your questions.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -42,7 +40,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      Yes, basic membership is free for all Canadian manufacturing enterprises. You can create an account, browse the directory, view supplier listings, and post sourcing requests at no cost.
+                      Yes. Marcan is 100% free to use for Canadian manufacturing enterprises. You can create an account, appear in the Company Directory, browse supplier listings, and post sourcing requests with no subscriptions, commissions, or paywalls.
                     </p>
                   </details>
 
@@ -54,7 +52,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      Yes. Marcan uses a unified account system. You can operate as both a buyer (posting sourcing requests) and a supplier (creating listings and appearing in the directory) with a single account.
+                      You can participate on both sides of the marketplace, but buyer accounts and supplier company profiles are created and managed separately. In practice, that means you&apos;ll have one account for posting sourcing requests as a buyer, and a separate seller profile (with its own onboarding) if you want your company to appear in the Company Directory and Supplier Listings.
                     </p>
                   </details>
 
@@ -66,7 +64,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      First, complete the "Become a Seller" registration process to set up your supplier profile. Once registered, go to the Supplier Listings page and click "Create Listing" to post equipment, materials, surplus parts, or production capacity for sale.
+                      First, complete the <span className="font-semibold">"Become a Seller"</span> onboarding to set up your supplier company profile. You can start this from the main navigation or from prompts on the Supplier Listings page, and you can either import your existing website for a fast AI-powered setup or fill out the form manually. Once your profile is saved, go to the <span className="font-semibold">Supplier Listings</span> page and click <span className="font-semibold">"Create Listing"</span> to publish equipment, materials, surplus parts, or production capacity for sale.
                     </p>
                   </details>
 
@@ -78,7 +76,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      The registration wizard collects: company name, location, provinces served, manufacturing processes, materials, finishes, typical job sizes, lead times, certifications, industries served, and RFQ contact preferences.
+                      The registration wizard collects company basics (legal name, city, province, provinces served, website, and company type), core manufacturing capabilities (processes, materials, and optional finishes), production profile (typical job sizes, lead times, and optional max part sizes), trust and discovery details (certifications, industries served, and industry hubs), and RFQ contact preferences (RFQ email plus optional phone and preferred contact method). If you start with website import, we use AI to pre-fill as much of this as possible and you just review and confirm.
                     </p>
                   </details>
 
@@ -90,7 +88,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      View company profiles in the Company Directory to see contact information (phone, email, website) if provided. Supplier listings and sourcing requests also display contact details for direct inquiries.
+                      View company profiles in the <span className="font-semibold">Company Directory</span> to see contact information (RFQ email, phone number, website) when provided. Supplier listings and sourcing requests also surface the contact details that companies choose to share, so you can reach out directly by email or phone—Marcan does not sit in the middle of your conversations.
                     </p>
                   </details>
 
@@ -102,7 +100,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      The Sourcing Requests feature allows buyers to post requests for quotes (RFQs) for materials or services they need. Suppliers can browse these requests and contact buyers directly through the provided contact information.
+                      Sourcing Requests let buyers post detailed RFQs for the parts, materials, or services they need. You can create a request from the <span className="font-semibold">Post Request</span> flow and then manage it from <span className="font-semibold">My Account → My Posts</span>. Suppliers who see your request can contact you directly using the RFQ email or other contact details you included.
                     </p>
                   </details>
 
@@ -114,7 +112,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      Yes. Go to "My Account" → "My Posts" to manage your supplier listings and sourcing requests. You can delete items from there.
+                      You can manage your content from <span className="font-semibold">My Account → My Posts</span>. From there you can delete any sourcing request or supplier listing; to make changes, delete the old post and create a new one with the updated details.
                     </p>
                   </details>
 
@@ -126,7 +124,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      Marcan is designed for Canadian manufacturing enterprises. You need a valid Canadian business registration number to create a supplier profile and appear in the Company Directory.
+                      Marcan is purpose-built for Canadian manufacturing and industrial enterprises&mdash;including job shops, contract manufacturers, distributors, and OEMs. Anyone can create a buyer account, but appearing in the Company Directory and Supplier Listings is intended for companies that actively operate and serve customers within Canada.
                     </p>
                   </details>
                 </div>

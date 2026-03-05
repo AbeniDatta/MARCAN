@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+type WizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type View = 'landing' | 'form';
 type OnboardingMethod = 'IMPORT' | 'MANUAL';
 type TypicalJobSize = 'PROTOTYPE' | 'LOW_VOLUME' | 'MEDIUM_VOLUME' | 'HIGH_VOLUME';
@@ -106,6 +108,13 @@ export default function BecomeSellerPage() {
     rfqEmail: '',
     phone: '',
     preferredContactMethod: null as PreferredContactMethod | null,
+    // Step 6
+    firstName: '',
+    lastName: '',
+    role: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
   });
 
   // Load capabilities on mount
@@ -406,7 +415,7 @@ export default function BecomeSellerPage() {
       setLastCompletedStep(wizardStep);
 
       // Move to next step
-      if (wizardStep < 5) {
+      if (wizardStep < 6) {
         setWizardStep((prev) => (prev + 1) as WizardStep);
         setError('');
       }
@@ -470,22 +479,89 @@ export default function BecomeSellerPage() {
           return false;
         }
         return true;
+      case 6:
+        if (!formData.firstName || !formData.lastName) {
+          setError('First name and last name are required');
+          return false;
+        }
+        if (!formData.role) {
+          setError('Role/position is required');
+          return false;
+        }
+        if (!formData.username) {
+          setError('Username is required');
+          return false;
+        }
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.username)) {
+          setError('Please enter a valid email address');
+          return false;
+        }
+        if (!formData.password) {
+          setError('Password is required');
+          return false;
+        }
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters long');
+          return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          return false;
+        }
+        return true;
       default:
         return true;
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(5)) return;
-
-    const userId = currentUser?.email || formData.rfqEmail;
-    if (!userId) {
-      setError('RFQ email is required to complete setup');
-      return;
-    }
+    if (!validateStep(6)) return;
 
     setIsLoading(true);
     setError('');
+
+    // Create Firebase account if not already logged in
+    let userId = currentUser?.email;
+    let firebaseUser = null;
+
+    if (!currentUser || !isAuthenticated) {
+      try {
+        // Use username (which is now validated as email) for Firebase account creation
+        const email = formData.username;
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, formData.password);
+        firebaseUser = userCredential.user;
+        userId = email;
+
+        await updateProfile(firebaseUser, {
+          displayName: `${formData.firstName} ${formData.lastName}`,
+        });
+      } catch (err: any) {
+        let errorMessage = 'An error occurred during account creation.';
+        if (err.code === 'auth/email-already-in-use') {
+          errorMessage = 'An account with this email already exists. Please login instead.';
+        } else if (err.code === 'auth/invalid-email') {
+          errorMessage = 'Invalid email address.';
+        } else if (err.code === 'auth/weak-password') {
+          errorMessage = 'Password is too weak. Please choose a stronger password.';
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        setError(errorMessage);
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      userId = currentUser.email;
+    }
+
+    if (!userId) {
+      setError('Unable to determine user ID');
+      setIsLoading(false);
+      return;
+    }
 
     // Combine "other" fields into comments for AI search
     const otherComments = [
@@ -559,27 +635,54 @@ export default function BecomeSellerPage() {
         throw new Error(error.details || error.error || 'Failed to save profile');
       }
 
-      // If the user is logged in, update their local profile/role
-      if (currentUser?.email) {
-        const updatedUser = {
-          ...currentUser,
-          role: 'both', // User is now both buyer and seller
-          companyName: formData.companyName,
-          city: formData.city,
-          province: formData.province,
-        };
+      // Save user account data to database
+      try {
+        const userSaveResponse = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userId,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: userId,
+            companyName: formData.companyName,
+            jobTitle: formData.role,
+            phone: formData.phone || null,
+            city: formData.city,
+            province: formData.province,
+          }),
+        });
 
-        // Update localStorage
-        localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-        window.dispatchEvent(new Event('marcan-auth-change'));
-
-        // Update auth state
-        login(updatedUser);
-
-        // Clear saved registration data since registration is complete
-        const savedDataKey = `seller_registration_${currentUser.email}`;
-        localStorage.removeItem(savedDataKey);
+        if (!userSaveResponse.ok) {
+          console.error('Failed to save user data to database');
+        }
+      } catch (dbError: any) {
+        console.error('Error saving to database:', dbError);
       }
+
+      // Update user auth state
+      const updatedUser = {
+        email: userId,
+        displayName: `${formData.firstName} ${formData.lastName}`,
+        role: 'both', // User is now both buyer and seller
+        companyName: formData.companyName,
+        city: formData.city,
+        province: formData.province,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        jobTitle: formData.role,
+      };
+
+      // Update localStorage
+      localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('marcan-auth-change'));
+
+      // Update auth state
+      login(updatedUser);
+
+      // Clear saved registration data since registration is complete
+      const savedDataKey = `seller_registration_${userId}`;
+      localStorage.removeItem(savedDataKey);
 
       router.push('/');
     } catch (err: any) {
@@ -629,6 +732,12 @@ export default function BecomeSellerPage() {
       phone: '',
       preferredContactMethod: null,
       industryHubs: [],
+      firstName: '',
+      lastName: '',
+      role: '',
+      username: '',
+      password: '',
+      confirmPassword: '',
     });
 
     // Reset state and return to the start of Page 1 (Company Basics)
@@ -667,7 +776,7 @@ export default function BecomeSellerPage() {
                   Analyzing your website
                 </div>
                 <p className="text-[11px] text-slate-400 max-w-xs text-center">
-                  We&apos;re using AI to read your site and pre-fill your supplier profile. This usually takes just a few seconds.
+                  We&apos;re using our AI to read your site and pre-fill your supplier profile. This usually takes a minute or two.
                 </p>
               </div>
             )}
@@ -690,7 +799,7 @@ export default function BecomeSellerPage() {
                   </button>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((step) => (
+                      {[1, 2, 3, 4, 5, 6].map((step) => (
                         <div
                           key={step}
                           className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
@@ -715,7 +824,7 @@ export default function BecomeSellerPage() {
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Company Basics</h2>
-                      <p className="text-xs text-slate-500">Step 1 of 5</p>
+                      <p className="text-xs text-slate-500">Step 1 of 6</p>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -780,7 +889,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          Industry Hub(s) <span className="text-marcan-red">*</span>
+                          Industry Hub(s) *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -850,19 +959,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                     </div>
-                    <div className="mt-8 flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, onboardingMethod: null });
-                          setImportUrl('');
-                          setWizardStep(0);
-                          setError('');
-                        }}
-                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4 transition-colors"
-                      >
-                        <i className="fa-solid fa-arrow-left mr-2"></i> Back
-                      </button>
+                    <div className="mt-8 flex justify-end">
                       <button
                         type="button"
                         onClick={saveAndNextStep}
@@ -879,7 +976,7 @@ export default function BecomeSellerPage() {
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Core Capabilities</h2>
-                      <p className="text-xs text-slate-500">Step 2 of 5: Select at least one process and one material</p>
+                      <p className="text-xs text-slate-500">Step 2 of 6: Select at least one process and one material</p>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -1006,7 +1103,7 @@ export default function BecomeSellerPage() {
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Production Profile</h2>
-                      <p className="text-xs text-slate-500">Step 3 of 5</p>
+                      <p className="text-xs text-slate-500">Step 3 of 6</p>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -1235,7 +1332,7 @@ export default function BecomeSellerPage() {
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Trust & Enrichment</h2>
-                      <p className="text-xs text-slate-500">Step 4 of 5: Optional</p>
+                      <p className="text-xs text-slate-500">Step 4 of 6: Optional</p>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -1339,7 +1436,7 @@ export default function BecomeSellerPage() {
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
                       <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Contact & RFQ Preferences</h2>
-                      <p className="text-xs text-slate-500">Step 5 of 5</p>
+                      <p className="text-xs text-slate-500">Step 5 of 6</p>
                     </div>
                     <div className="space-y-6">
                       <div>
@@ -1411,12 +1508,111 @@ export default function BecomeSellerPage() {
                       </button>
                       <button
                         type="button"
+                        onClick={saveAndNextStep}
+                        className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
+                      >
+                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 6: Account Creation */}
+                {wizardStep === 6 && (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="text-center mb-8">
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Create Your Account</h2>
+                      <p className="text-xs text-slate-500">Step 6 of 6</p>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">First Name *</label>
+                          <input
+                            type="text"
+                            placeholder="John"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Last Name *</label>
+                          <input
+                            type="text"
+                            placeholder="Doe"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Role/Position in Company *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Procurement Manager, Owner, Operations Director"
+                          value={formData.role}
+                          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Username *</label>
+                        <input
+                          type="email"
+                          placeholder="your.email@company.com"
+                          value={formData.username}
+                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                        <p className="text-xs text-slate-500 mt-1">This will be used to log in to your account</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Create Password *</label>
+                          <input
+                            type="password"
+                            placeholder="Create Password"
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password *</label>
+                          <input
+                            type="password"
+                            placeholder="Confirm Password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 flex justify-between">
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={isLoading}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoading ? (
-                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> Saving...</span>
+                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...</span>
                         ) : (
                           'Complete Setup'
                         )}
