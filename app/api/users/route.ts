@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // POST - Create or update buyer user account data
 export async function POST(request: NextRequest) {
   try {
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.buyerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json(
         { error: 'Database connection not available' },
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if profile exists for this user
-    const existingProfile = await prisma.profile.findUnique({
+    const existingProfile = await prisma.buyerProfile.findUnique({
       where: { userId },
     });
 
@@ -55,34 +55,31 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       city: city || null,
       province: province || null,
-      primaryIntent: 'buy',
       // Buyer-specific fields
       primaryProcesses: Array.isArray(primaryProcesses) ? primaryProcesses : [],
       materials: Array.isArray(materials) ? materials : [],
       certifications: Array.isArray(certifications) ? certifications : [],
       industriesServed: Array.isArray(industriesServed) ? industriesServed : [],
       otherComments: otherComments || null,
-      searchable: false, // Buyers are not searchable in directory
-      profileCompletenessScore: 0,
     };
 
     let profile;
     if (existingProfile) {
       // Update existing profile
-      console.log('Updating existing profile for userId:', userId);
-      profile = await prisma.profile.update({
+      console.log('Updating existing buyer profile for userId:', userId);
+      profile = await prisma.buyerProfile.update({
         where: { userId },
         data: profileData,
       });
-      console.log('Profile updated successfully:', profile.id);
+      console.log('Buyer profile updated successfully:', profile.id);
     } else {
       // Create new profile
-      console.log('Creating new profile for userId:', userId);
+      console.log('Creating new buyer profile for userId:', userId);
       console.log('Profile data:', { userId, firstName, lastName, email, companyName, jobTitle, phone, city, province });
-      profile = await prisma.profile.create({
+      profile = await prisma.buyerProfile.create({
         data: profileData,
       });
-      console.log('Profile created successfully:', profile.id);
+      console.log('Buyer profile created successfully:', profile.id);
     }
 
     return NextResponse.json(

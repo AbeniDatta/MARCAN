@@ -86,7 +86,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Find profile for the user (must be a seller)
-    const profile = await prisma.profile.findUnique({
+    // Find seller profile for the user (must be a seller)
+    const profile = await prisma.sellerProfile.findUnique({
       where: { userId },
     });
 

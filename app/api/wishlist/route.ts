@@ -18,11 +18,9 @@ export async function GET() {
         active: true,
       },
       include: {
-        profile: {
+        buyerProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -52,8 +50,8 @@ export async function GET() {
       active: req.active,
       createdAt: req.createdAt.toISOString(),
       timestamp: req.createdAt.getTime(),
-      logoUrl: req.profile.logoUrl,
-      selectedIcon: req.profile.selectedIcon,
+      logoUrl: null,
+      selectedIcon: null,
     }));
 
     return NextResponse.json(formattedRequests);
@@ -67,7 +65,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.buyerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -79,14 +77,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Find or create profile for the user
-    let profile = await prisma.profile.findUnique({
+    // Find or create buyer profile for the user
+    let profile = await prisma.buyerProfile.findUnique({
       where: { userId },
     });
 
     if (!profile) {
-      // Create a basic profile if it doesn't exist
-      profile = await prisma.profile.create({
+      // Create a basic buyer profile if it doesn't exist
+      profile = await prisma.buyerProfile.create({
         data: {
           userId,
           companyName: body.companyName || 'Anonymous',
@@ -97,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Create the wishlist request
     const wishlistRequest = await prisma.wishlistRequest.create({
       data: {
-        profileId: profile.id,
+        buyerProfileId: profile.id,
         title,
         companyName: profile.companyName,
         category: category || null,
@@ -108,11 +106,9 @@ export async function POST(request: NextRequest) {
         active: true,
       },
       include: {
-        profile: {
+        buyerProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -139,8 +135,8 @@ export async function POST(request: NextRequest) {
       active: wishlistRequest.active,
       createdAt: wishlistRequest.createdAt.toISOString(),
       timestamp: wishlistRequest.createdAt.getTime(),
-      logoUrl: wishlistRequest.profile.logoUrl,
-      selectedIcon: wishlistRequest.profile.selectedIcon,
+      logoUrl: null,
+      selectedIcon: null,
     };
 
     return NextResponse.json(formattedRequest, { status: 201 });

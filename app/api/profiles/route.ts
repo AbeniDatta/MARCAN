@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({
         error: 'Database connection not available',
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if profile already exists
-    const existingProfile = await prisma.profile.findUnique({
+    const existingProfile = await prisma.sellerProfile.findUnique({
       where: { userId },
       include: { profileCapabilities: true },
     });
@@ -239,13 +239,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Update existing profile
-      profile = await prisma.profile.update({
+      profile = await prisma.sellerProfile.update({
         where: { userId },
         data: profileData,
       });
     } else {
       // Create new profile - userId is required for creation
-      profile = await prisma.profile.create({
+      profile = await prisma.sellerProfile.create({
         data: {
           ...profileData,
           userId, // userId must be included in the data object for create
@@ -334,7 +334,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({
         error: 'Database connection not available',
@@ -353,7 +353,7 @@ export async function GET(request: NextRequest) {
 
     if (userId) {
       // Fetch single profile by userId with capabilities for rich display in My Account
-      const profile = await prisma.profile.findUnique({
+      const profile = await prisma.sellerProfile.findUnique({
         where: { userId },
         include: {
           profileCapabilities: {
@@ -408,7 +408,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Otherwise, return all profiles (existing behavior)
-    const profiles = await prisma.profile.findMany({
+    const profiles = await prisma.sellerProfile.findMany({
       where: {
         OR: [
           { primaryIntent: { in: ['sell', 'both'] } },

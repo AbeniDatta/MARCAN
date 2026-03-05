@@ -172,7 +172,7 @@ Now process this query: {USER_QUERY}
       : {};
 
     // Search Companies (Profiles)
-    const companies = await prisma.profile.findMany({
+    const companies = await prisma.sellerProfile.findMany({
       where: {
         AND: [
           { searchable: true },
@@ -211,7 +211,7 @@ Now process this query: {USER_QUERY}
       },
       take: 20,
       include: {
-        profile: {
+        sellerProfile: {
           select: {
             companyName: true,
             logoUrl: true,
@@ -242,11 +242,9 @@ Now process this query: {USER_QUERY}
       },
       take: 20,
       include: {
-        profile: {
+        buyerProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -270,15 +268,15 @@ Now process this query: {USER_QUERY}
     const formattedListings = listings.map((l) => ({
       id: l.id,
       title: l.title,
-      seller: l.profile.companyName,
+      seller: l.sellerProfile.companyName,
       price: l.price || '',
       listingType: l.listingType || '',
       condition: l.condition || '',
       location: l.location || '',
       description: l.description || '',
       createdAt: l.createdAt.toISOString(),
-      logoUrl: l.profile.logoUrl,
-      selectedIcon: l.profile.selectedIcon,
+      logoUrl: l.sellerProfile.logoUrl,
+      selectedIcon: l.sellerProfile.selectedIcon,
     }));
 
     const formattedRequests = requests.map((r) => ({
@@ -291,8 +289,8 @@ Now process this query: {USER_QUERY}
       targetPrice: r.targetPrice || '',
       deadline: r.deadline ? r.deadline.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
-      logoUrl: r.profile.logoUrl,
-      selectedIcon: r.profile.selectedIcon,
+      logoUrl: null,
+      selectedIcon: null,
     }));
 
     return NextResponse.json({

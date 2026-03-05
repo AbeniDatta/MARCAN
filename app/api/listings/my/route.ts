@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json([]);
     }
@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    // Find user's profile
-    const profile = await prisma.profile.findUnique({
+    // Find user's seller profile
+    const profile = await prisma.sellerProfile.findUnique({
       where: { userId },
     });
 
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         profileId: profile.id,
       },
       include: {
-        profile: {
+        sellerProfile: {
           select: {
             companyName: true,
             logoUrl: true,
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       return {
         id: listing.id,
         title: listing.title,
-        seller: listing.profile.companyName,
+        seller: listing.sellerProfile.companyName,
         price: listing.price || '',
         badge: listing.badge || badge,
         badgeColor,

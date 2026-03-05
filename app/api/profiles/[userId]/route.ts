@@ -11,7 +11,7 @@ export async function DELETE(
 ) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.profile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json(
         {
@@ -40,18 +40,17 @@ export async function DELETE(
       );
     }
 
-    // Find the profile
-    const profile = await prisma.profile.findUnique({
+    // Find the seller profile
+    const profile = await prisma.sellerProfile.findUnique({
       where: { userId },
       include: {
         listings: true,
-        wishlistRequests: true,
       },
     });
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'Profile not found' },
+        { error: 'Seller profile not found' },
         {
           status: 404,
           headers: {
@@ -62,7 +61,6 @@ export async function DELETE(
     }
 
     const listingsCount = profile.listings.length;
-    const wishlistCount = profile.wishlistRequests.length;
 
     // Explicitly delete listings first (even though cascade should handle it, this ensures it works)
     if (listingsCount > 0) {
@@ -72,28 +70,19 @@ export async function DELETE(
       console.log(`Deleted ${listingsCount} listings for profile ${profile.id}`);
     }
 
-    // Explicitly delete wishlist requests
-    if (wishlistCount > 0) {
-      await prisma.wishlistRequest.deleteMany({
-        where: { profileId: profile.id },
-      });
-      console.log(`Deleted ${wishlistCount} wishlist requests for profile ${profile.id}`);
-    }
-
-    // Delete the profile (this will also cascade delete any remaining related records)
-    await prisma.profile.delete({
+    // Delete the seller profile (this will also cascade delete any remaining related records)
+    await prisma.sellerProfile.delete({
       where: { userId },
     });
 
-    console.log(`Deleted profile for userId: ${userId}`);
-    console.log(`Deleted ${listingsCount} listings and ${wishlistCount} wishlist requests`);
+    console.log(`Deleted seller profile for userId: ${userId}`);
+    console.log(`Deleted ${listingsCount} listings`);
 
     return NextResponse.json(
       {
         success: true,
         message: 'Seller profile and all associated listings have been deleted',
         deletedListings: listingsCount,
-        deletedWishlistRequests: wishlistCount,
       },
       {
         status: 200,

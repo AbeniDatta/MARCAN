@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 4) Query profiles + taxonomy relations
-    const profiles = await prisma.profile.findMany({
+    const profiles = await prisma.sellerProfile.findMany({
       where,
       take: 25,
       orderBy: [
