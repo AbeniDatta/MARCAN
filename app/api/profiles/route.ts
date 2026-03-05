@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
       // Delete existing profile capabilities before recreating
       if (existingProfile.profileCapabilities.length > 0) {
         await prisma.profileCapability.deleteMany({
-          where: { profileId: existingProfile.id },
+          where: { sellerProfileId: existingProfile.id },
         });
       }
 
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
 
       await prisma.profileCapability.createMany({
         data: capabilityIds.map((capabilityId) => ({
-          profileId: profile.id,
+          sellerProfileId: profile.id,
           capabilityId,
           isCore: coreCapabilityIds.has(capabilityId),
           source: 'signup',
