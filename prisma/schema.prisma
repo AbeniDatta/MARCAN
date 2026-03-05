@@ -89,6 +89,7 @@ model ProfileCapability {
   @@index([capabilityId])
   @@index([sellerProfileId, isCore])
   @@map("profile_capabilities")
+  
 }
 
 // Buyer Profile - for buyers who source/manufacturing services
