@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-export default function BuyerSignupPage() {
+function BuyerSignupPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login } = useAuth();
@@ -341,3 +341,25 @@ export default function BuyerSignupPage() {
     );
 }
 
+export default function BuyerSignupPage() {
+    return (
+        <Suspense
+            fallback={
+                <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
+                    <Header breadcrumb="Become a Buyer" />
+                    <div className="flex-1 overflow-hidden p-3 relative">
+                        <div className="flex items-center justify-center py-2">
+                            <div className="glass-card p-5 rounded-3xl w-full max-w-[52rem] relative overflow-visible">
+                                <div className="text-center py-12">
+                                    <p className="text-slate-400">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            }
+        >
+            <BuyerSignupPageContent />
+        </Suspense>
+    );
+}
