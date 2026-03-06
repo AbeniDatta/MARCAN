@@ -156,7 +156,7 @@ export default function BuyerSignupPage() {
                                     <i className="fa-solid fa-arrow-left"></i>
                                     Change Option
                                 </button>
-                                <div className="text-center">
+                                <div className="text-center mt-4">
                                     <h2 className="font-heading text-2xl md:text-2xl font-black text-white uppercase tracking-widest mb-2">
                                         Create Your Buyer Account
                                     </h2>
