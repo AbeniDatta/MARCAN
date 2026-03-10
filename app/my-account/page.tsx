@@ -812,7 +812,7 @@ export default function MyAccountPage() {
                           Account Role
                         </label>
                         <div className="text-white font-bold text-sm">
-                          {accountRole === 'supplier' ? 'Supplier' : 'Buyer'}
+                          Buyer
                         </div>
                       </div>
                       {/* Role is intentionally read-only – no change role button */}
@@ -848,7 +848,7 @@ export default function MyAccountPage() {
                           Account Role
                         </label>
                         <div className="text-white font-bold text-sm">
-                          {accountRole === 'supplier' ? 'Supplier' : 'Buyer'}
+                          Supplier
                         </div>
                       </div>
                       {/* Role is intentionally read-only – no change role button */}
