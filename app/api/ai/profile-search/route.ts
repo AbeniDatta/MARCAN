@@ -263,7 +263,7 @@ ${JSON.stringify(
               minOrderQty: p.minOrderQty,
               leadTimeMinDays: p.leadTimeMinDays,
               leadTimeMaxDays: p.leadTimeMaxDays,
-              capabilities: p.profileCapabilities.map((pc) => ({
+              capabilities: p.profileCapabilities.map((pc: any) => ({
                 type: pc.capability.type,
                 name: pc.capability.name,
                 isCore: pc.isCore,
@@ -304,7 +304,7 @@ Provide a helpful response to the user's query based on these results.`,
         minOrderQty: p.minOrderQty,
         leadTimeMinDays: p.leadTimeMinDays,
         leadTimeMaxDays: p.leadTimeMaxDays,
-        capabilities: p.profileCapabilities.map((pc) => ({
+        capabilities: p.profileCapabilities.map((pc: any) => ({
           type: pc.capability.type,
           name: pc.capability.name,
           isCore: pc.isCore,
