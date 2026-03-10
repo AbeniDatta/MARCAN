@@ -284,7 +284,7 @@ Now process this query: {USER_QUERY}
       name: p.companyName,
       location: `${p.city || ''}, ${p.province || ''}`.trim().replace(/^,/, ''),
       description: p.aboutUs || '',
-      capabilities: p.profileCapabilities.map((pc) => pc.capability.name),
+      capabilities: p.profileCapabilities.map((pc: any) => pc.capability.name),
       website: p.website,
       logoUrl: p.logoUrl,
       selectedIcon: p.selectedIcon,
