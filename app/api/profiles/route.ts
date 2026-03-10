@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       rfqEmail,
       phone,
       preferredContactMethod,
+      industryHubs,
       // Additional profile attributes
       shippingCapability,
       minOrderQty,
@@ -88,10 +89,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if profile already exists
-    const existingProfile = await prisma.sellerProfile.findUnique({
+    // Query without relations first to avoid schema mismatch errors
+    let existingProfile: any = await prisma.sellerProfile.findUnique({
       where: { userId },
-      include: { profileCapabilities: true },
     });
+
+    // If profile exists, try to load capabilities separately
+    if (existingProfile) {
+      try {
+        const capabilities = await prisma.profileCapability.findMany({
+          where: { sellerProfileId: existingProfile.id },
+          include: { capability: true },
+        });
+        existingProfile.profileCapabilities = capabilities;
+      } catch (error: any) {
+        // If profileCapabilities query fails, just set empty array
+        console.warn('Could not load profile capabilities:', error.message);
+        existingProfile.profileCapabilities = [];
+      }
+    }
 
     // Calculate eligibility: ≥1 PROCESS, ≥1 MATERIAL, ≥1 provincesServed
     const hasProcess = Array.isArray(processes) && processes.length > 0;
@@ -214,6 +230,7 @@ export async function POST(request: NextRequest) {
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
       typicalJobSize: typicalJobSize || null,
+      industryHubs: industryHubs || [],
       leadTimeMinDays: normalizedLeadTimeMin,
       leadTimeMaxDays: normalizedLeadTimeMax,
       maxPartSizeMmX: normalizedMaxX,
@@ -353,15 +370,8 @@ export async function GET(request: NextRequest) {
 
     if (userId) {
       // Fetch single profile by userId with capabilities for rich display in My Account
-      const profile = await prisma.sellerProfile.findUnique({
+      let profile: any = await prisma.sellerProfile.findUnique({
         where: { userId },
-        include: {
-          profileCapabilities: {
-            include: {
-              capability: true,
-            },
-          },
-        },
       });
 
       if (!profile) {
@@ -373,6 +383,18 @@ export async function GET(request: NextRequest) {
             'Content-Type': 'application/json',
           },
         });
+      }
+
+      // Load capabilities separately to avoid relation errors
+      try {
+        const capabilities = await prisma.profileCapability.findMany({
+          where: { sellerProfileId: profile.id },
+          include: { capability: true },
+        });
+        profile.profileCapabilities = capabilities;
+      } catch (error: any) {
+        console.warn('Could not load profile capabilities:', error.message);
+        profile.profileCapabilities = [];
       }
 
       // Group capabilities by type for easier consumption on the frontend

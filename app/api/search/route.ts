@@ -172,25 +172,50 @@ Now process this query: {USER_QUERY}
       : {};
 
     // Search Companies (Profiles)
-    const companies = await prisma.sellerProfile.findMany({
-      where: {
-        AND: [
-          { searchable: true },
-          ...(searchConditions.length > 0 ? [{ OR: searchConditions }] : []),
-          ...(location ? [locationCondition] : []),
-        ],
-      },
-      take: 20,
-      include: {
-        profileCapabilities: {
-          include: { capability: true },
+    let companies: any[] = [];
+    try {
+      companies = await prisma.sellerProfile.findMany({
+        where: {
+          AND: [
+            { searchable: true },
+            ...(searchConditions.length > 0 ? [{ OR: searchConditions }] : []),
+            ...(location ? [locationCondition] : []),
+          ],
         },
-      },
-      orderBy: [
-        { profileCompletenessScore: 'desc' },
-        { updatedAt: 'desc' },
-      ],
-    });
+        take: 20,
+        include: {
+          profileCapabilities: {
+            include: { capability: true },
+          },
+        },
+        orderBy: [
+          { profileCompletenessScore: 'desc' },
+          { updatedAt: 'desc' },
+        ],
+      });
+    } catch (error: any) {
+      // Fallback: query without relations if include fails
+      console.warn('Could not load profiles with capabilities, querying without:', error.message);
+      companies = await prisma.sellerProfile.findMany({
+        where: {
+          AND: [
+            { searchable: true },
+            ...(searchConditions.length > 0 ? [{ OR: searchConditions }] : []),
+            ...(location ? [locationCondition] : []),
+          ],
+        },
+        take: 20,
+        orderBy: [
+          { profileCompletenessScore: 'desc' },
+          { updatedAt: 'desc' },
+        ],
+      });
+      // Set empty capabilities for all profiles
+      companies = companies.map((profile: any) => ({
+        ...profile,
+        profileCapabilities: [],
+      }));
+    }
 
     // Search Supplier Listings
     const listingSearchConditions = searchTerms.map((term: string) => ({

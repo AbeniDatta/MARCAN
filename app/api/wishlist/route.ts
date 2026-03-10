@@ -77,6 +77,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Enforce: supplier accounts cannot create sourcing requests
+    // (We use presence of a seller profile as the source of truth.)
+    const sellerProfile = await prisma.sellerProfile?.findUnique?.({
+      where: { userId },
+    });
+    if (sellerProfile) {
+      return NextResponse.json(
+        { error: 'Only buyer accounts can create sourcing requests.' },
+        { status: 403 }
+      );
+    }
+
     // Find or create buyer profile for the user
     let profile = await prisma.buyerProfile.findUnique({
       where: { userId },

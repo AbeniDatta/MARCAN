@@ -9,8 +9,39 @@ type FilterOption = 'new-to-old' | 'old-to-new' | 'price-high-low' | 'price-low-
 
 export default function WishlistPage() {
   const { isAuthenticated, isMounted, user } = useAuth();
+  const [isSupplier, setIsSupplier] = useState(false);
+  const isBuyer = !isSupplier;
   const [filter, setFilter] = useState<FilterOption>('new-to-old');
   const [requests, setRequests] = useState<any[]>([]);
+
+  // Determine role from DB (source of truth): if seller profile exists -> supplier
+  useEffect(() => {
+    if (!isMounted || !isAuthenticated || !user?.email) {
+      setIsSupplier(false);
+      return;
+    }
+
+    fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+      .then((res) => {
+        if (!res.ok) {
+          if (res.status === 404) return null;
+          throw new Error('Failed to fetch profile');
+        }
+        return res.json();
+      })
+      .then((profile) => {
+        if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+          setIsSupplier(true);
+        } else {
+          setIsSupplier(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error checking seller profile:', err);
+        // Fallback to local role snapshot
+        setIsSupplier(user?.role === 'supplier');
+      });
+  }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
   useEffect(() => {
     // Fetch requests from API
@@ -100,13 +131,25 @@ export default function WishlistPage() {
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Sourcing Requests</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {isMounted && isAuthenticated ? (
+            {isMounted && isAuthenticated && isBuyer ? (
               <Link
                 href="/post-request"
                 className="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
               >
                 <i className="fa-solid fa-plus mr-2"></i> Post Request
               </Link>
+            ) : isMounted && isAuthenticated && !isBuyer ? (
+              <>
+                <button
+                  disabled
+                  className="bg-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
+                >
+                  <i className="fa-solid fa-plus mr-2"></i> Post Request
+                </button>
+                <p className="text-xs text-slate-500 text-right max-w-[220px]">
+                  Only <span className="text-slate-300 font-bold">buyer</span> accounts can post sourcing requests.
+                </p>
+              </>
             ) : (
               <>
                 <button

@@ -195,19 +195,38 @@ export async function POST(req: NextRequest) {
     }
 
     // 4) Query profiles + taxonomy relations
-    const profiles = await prisma.sellerProfile.findMany({
-      where,
-      take: 25,
-      orderBy: [
-        { profileCompletenessScore: 'desc' },
-        { updatedAt: 'desc' },
-      ],
-      include: {
-        profileCapabilities: {
-          include: { capability: true },
+    let profiles: any[] = [];
+    try {
+      profiles = await prisma.sellerProfile.findMany({
+        where,
+        take: 25,
+        orderBy: [
+          { profileCompletenessScore: 'desc' },
+          { updatedAt: 'desc' },
+        ],
+        include: {
+          profileCapabilities: {
+            include: { capability: true },
+          },
         },
-      },
-    });
+      });
+    } catch (error: any) {
+      // Fallback: query without relations if include fails
+      console.warn('Could not load profiles with capabilities, querying without:', error.message);
+      profiles = await prisma.sellerProfile.findMany({
+        where,
+        take: 25,
+        orderBy: [
+          { profileCompletenessScore: 'desc' },
+          { updatedAt: 'desc' },
+        ],
+      });
+      // Set empty capabilities for all profiles
+      profiles = profiles.map((profile: any) => ({
+        ...profile,
+        profileCapabilities: [],
+      }));
+    }
 
     // 5) Ask OpenAI to format a grounded answer (no extra facts)
     const answerResponse = await openai.chat.completions.create({

@@ -8,7 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function PostRequestPage() {
     const router = useRouter();
-    const { isAuthenticated, isMounted } = useAuth();
+    const { isAuthenticated, isMounted, user } = useAuth();
+    const [isSupplier, setIsSupplier] = useState(false);
+    const isBuyer = !isSupplier;
     const [formData, setFormData] = useState({
         title: '',
         category: '',
@@ -17,6 +19,35 @@ export default function PostRequestPage() {
         deadline: '',
         targetPrice: '',
     });
+
+    // Determine role from DB (source of truth): if seller profile exists -> supplier
+    useEffect(() => {
+        if (!isMounted || !isAuthenticated || !user?.email) {
+            setIsSupplier(false);
+            return;
+        }
+
+        fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+            .then((res) => {
+                if (!res.ok) {
+                    if (res.status === 404) return null;
+                    throw new Error('Failed to fetch profile');
+                }
+                return res.json();
+            })
+            .then((profile) => {
+                if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+                    setIsSupplier(true);
+                } else {
+                    setIsSupplier(false);
+                }
+            })
+            .catch((err) => {
+                console.error('Error checking seller profile:', err);
+                // Fallback to local role snapshot
+                setIsSupplier(user?.role === 'supplier');
+            });
+    }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,9 +100,13 @@ export default function PostRequestPage() {
         }
     };
 
-    // Redirect if not authenticated
+    // Redirect if not authenticated or not a buyer
     if (isMounted && !isAuthenticated) {
         router.replace('/login');
+        return null;
+    }
+    if (isMounted && isAuthenticated && !isBuyer) {
+        router.replace('/my-account');
         return null;
     }
 

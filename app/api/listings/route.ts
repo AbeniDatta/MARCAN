@@ -98,13 +98,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Find seller profile for the user (must be a seller)
+    // Enforce: only suppliers can create supplier listings
+    // (We use presence of a seller profile as the source of truth.)
     const profile = await prisma.sellerProfile.findUnique({
       where: { userId },
     });
 
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found. Please complete your seller profile first.' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Only supplier accounts can create supplier listings. Please complete your seller profile first.' },
+        { status: 403 }
+      );
     }
 
     // Create the listing

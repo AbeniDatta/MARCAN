@@ -113,6 +113,7 @@ export default function BecomeSellerPage() {
     lastName: '',
     role: '',
     username: '',
+    email: '',
     password: '',
     confirmPassword: '',
   });
@@ -492,9 +493,24 @@ export default function BecomeSellerPage() {
           setError('Username is required');
           return false;
         }
-        // Validate email format
+        // Validate username is not an email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.username)) {
+        if (emailRegex.test(formData.username)) {
+          setError('Username cannot be an email address. Please use a different username.');
+          return false;
+        }
+        // Validate username format (alphanumeric, underscore, hyphen, 3-30 chars)
+        const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
+        if (!usernameRegex.test(formData.username)) {
+          setError('Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens');
+          return false;
+        }
+        if (!formData.email) {
+          setError('Email address is required');
+          return false;
+        }
+        // Validate email format
+        if (!emailRegex.test(formData.email)) {
           setError('Please enter a valid email address');
           return false;
         }
@@ -522,14 +538,30 @@ export default function BecomeSellerPage() {
     setIsLoading(true);
     setError('');
 
+    // Check if username is already taken
+    try {
+      const usernameCheckResponse = await fetch(`/api/users?type=check-username&username=${encodeURIComponent(formData.username)}`);
+      if (usernameCheckResponse.ok) {
+        const checkResult = await usernameCheckResponse.json();
+        if (checkResult.taken) {
+          setError('This username is already taken. Please choose a different one.');
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Error checking username:', err);
+      // Continue anyway - we'll catch duplicates on creation
+    }
+
     // Create Firebase account if not already logged in
     let userId = currentUser?.email;
     let firebaseUser = null;
 
     if (!currentUser || !isAuthenticated) {
       try {
-        // Use username (which is now validated as email) for Firebase account creation
-        const email = formData.username;
+        // Use email for Firebase account creation
+        const email = formData.email;
 
         const userCredential = await createUserWithEmailAndPassword(auth, email, formData.password);
         firebaseUser = userCredential.user;
@@ -587,6 +619,9 @@ export default function BecomeSellerPage() {
 
     const submitData = {
       userId,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
       onboardingMethod: formData.onboardingMethod,
       companyName: formData.companyName,
       city: formData.city,
@@ -594,6 +629,7 @@ export default function BecomeSellerPage() {
       provincesServed: formData.provincesServed,
       website: formData.website || null,
       companyType: formData.companyType,
+      jobTitle: formData.role,
       // Normalized taxonomy selections (capability IDs)
       processes: formData.processes,
       materials: formData.materials,
@@ -612,6 +648,7 @@ export default function BecomeSellerPage() {
       rfqEmail: formData.rfqEmail,
       phone: formData.phone || null,
       preferredContactMethod: formData.preferredContactMethod,
+      industryHubs: formData.industryHubs || [],
       otherComments: otherComments || null,
     };
 
@@ -641,10 +678,11 @@ export default function BecomeSellerPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: userId,
+            userId: userId, // email is used as userId for Firebase compatibility
             firstName: formData.firstName,
             lastName: formData.lastName,
-            email: userId,
+            email: formData.email,
+            username: formData.username, // Store username separately
             companyName: formData.companyName,
             jobTitle: formData.role,
             phone: formData.phone || null,
@@ -663,8 +701,9 @@ export default function BecomeSellerPage() {
       // Update user auth state
       const updatedUser = {
         email: userId,
+        username: formData.username,
         displayName: `${formData.firstName} ${formData.lastName}`,
-        role: 'both', // User is now both buyer and seller
+        role: 'supplier',
         companyName: formData.companyName,
         city: formData.city,
         province: formData.province,
@@ -736,6 +775,7 @@ export default function BecomeSellerPage() {
       lastName: '',
       role: '',
       username: '',
+      email: '',
       password: '',
       confirmPassword: '',
     });
@@ -1563,14 +1603,26 @@ export default function BecomeSellerPage() {
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Username *</label>
                         <input
-                          type="email"
-                          placeholder="your.email@company.com"
+                          type="text"
+                          placeholder="yourcompanyname_marcan"
                           value={formData.username}
                           onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           required
                         />
-                        <p className="text-xs text-slate-500 mt-1">This will be used to log in to your account</p>
+                        <p className="text-xs text-slate-500 mt-1">3-30 characters, letters, numbers, underscores, or hyphens only. Cannot be an email address.</p>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Email Address *</label>
+                        <input
+                          type="email"
+                          placeholder="your.email@company.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                        <p className="text-xs text-slate-500 mt-1">This will be used for authentication and account recovery</p>
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>

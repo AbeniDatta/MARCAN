@@ -33,7 +33,7 @@ export default function MarketplacePage() {
         .catch((err) => {
           console.error('Error checking seller profile:', err);
           // Fallback to localStorage role check
-          setIsSeller(user?.role === 'sell' || user?.role === 'both');
+          setIsSeller(user?.role === 'supplier');
         });
     } else {
       setIsSeller(false);
@@ -88,7 +88,7 @@ export default function MarketplacePage() {
                   <i className="fa-solid fa-plus mr-2"></i> Create Listing
                 </button>
                 <p className="text-xs text-slate-500 text-right max-w-[200px]">
-                  <Link href="/become-seller" className="text-marcan-red hover:text-marcan-red/80 underline">Become a Seller</Link> to create listings
+                  Only <span className="text-slate-300 font-bold">supplier</span> accounts can post supplier listings.
                 </p>
               </>
             ) : isMounted ? (

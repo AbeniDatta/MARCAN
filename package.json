@@ -12,7 +12,9 @@
         "db:migrate": "prisma migrate dev",
         "db:studio": "prisma studio",
         "db:seed": "node scripts/seed-capabilities.js",
-        "db:clean": "node scripts/clean-database.js"
+        "db:clean": "node scripts/clean-database.js",
+        "db:fix": "node scripts/fix-database-schema.js",
+        "db:check": "node scripts/check-database-schema.js"
     },
     "dependencies": {
         "@prisma/adapter-pg": "^7.3.0",

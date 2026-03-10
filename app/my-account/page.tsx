@@ -25,7 +25,7 @@ const CANADIAN_PROVINCES = [
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'my-posts'>('profile');
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -79,7 +79,7 @@ export default function MyAccountPage() {
     COMPANY_TYPE: [],
   });
   const [supplierProfile, setSupplierProfile] = useState<any | null>(null);
-  const [accountRole, setAccountRole] = useState<string>('buy');
+  const [accountRole, setAccountRole] = useState<'buyer' | 'supplier'>('buyer');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
@@ -124,8 +124,10 @@ export default function MyAccountPage() {
         setCertifications(user.certifications);
       }
       // Load account role from auth user; role is managed by signup / become-seller flows only
-      // Default to 'buy' if not set
-      setAccountRole(user.role || 'buy');
+      // Default to 'buyer' if not set
+      setAccountRole(user.role === 'supplier' ? 'supplier' : 'buyer');
+      // Keep active tab valid for the role
+      setActiveTab('profile');
 
       // Load user's wishlist requests, listings, and rich supplier profile from API
       if (typeof window !== 'undefined' && user.email) {
@@ -150,9 +152,9 @@ export default function MyAccountPage() {
 
             // If the profile indicates seller intent, reflect that in read-only accountRole state
             if (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both') {
-              setAccountRole('both'); // If they have a seller profile, they are both buyer and supplier
+              setAccountRole('supplier');
             } else {
-              setAccountRole('buy'); // Otherwise, they are buyer only
+              setAccountRole('buyer');
             }
 
             // Hydrate all fields from the profile, including user info
@@ -611,8 +613,8 @@ export default function MyAccountPage() {
         certifications: undefined,
         selectedIcon: undefined,
         logoUrl: undefined,
-        // Change role back to 'buy'
-        role: 'buy',
+        // Change role back to 'buyer'
+        role: 'buyer',
       };
 
       // Clean up undefined fields
@@ -645,7 +647,7 @@ export default function MyAccountPage() {
       }));
       setCapabilities([]);
       setCertifications([]);
-      setAccountRole('buy');
+      setAccountRole('buyer');
 
       setShowDeleteConfirm(false);
       setSaveMessage({
@@ -727,20 +729,9 @@ export default function MyAccountPage() {
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                   }`}
               >
-                My Buyer Profile
+                {accountRole === 'supplier' ? 'My Supplier Company Profile' : 'My Buyer Profile'}
               </button>
-              {/* Only show Supplier Company Profile tab if user is a seller */}
-              {(user?.role === 'both' || user?.role === 'sell' || accountRole === 'both' || accountRole === 'sell') && (
-                <button
-                  onClick={() => setActiveTab('company')}
-                  className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'company'
-                    ? 'bg-marcan-red/10 text-white border-marcan-red'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
-                    }`}
-                >
-                  My Supplier Company Profile
-                </button>
-              )}
+              {/* For supplier accounts, we don't show a separate buyer tab */}
               <button
                 onClick={() => setActiveTab('my-posts')}
                 className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'my-posts'
@@ -754,8 +745,8 @@ export default function MyAccountPage() {
 
             {/* Settings Content Area */}
             <div className="lg:col-span-9 relative min-h-[500px]">
-              {/* TAB: Personal Information */}
-              {activeTab === 'profile' && (
+              {/* TAB: Buyer Profile */}
+              {activeTab === 'profile' && accountRole === 'buyer' && (
                 <div className="account-tab block animate-fade-in">
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
                     <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
@@ -821,7 +812,7 @@ export default function MyAccountPage() {
                           Account Role
                         </label>
                         <div className="text-white font-bold text-sm">
-                          {(accountRole === 'both' || accountRole === 'sell') ? 'Both Buyer and Supplier' : 'Buyer Only'}
+                          {accountRole === 'supplier' ? 'Supplier' : 'Buyer'}
                         </div>
                       </div>
                       {/* Role is intentionally read-only – no change role button */}
@@ -840,14 +831,27 @@ export default function MyAccountPage() {
                 </div>
               )}
 
-              {/* Supplier Company Profile Tab */}
-              {activeTab === 'company' && (
+              {/* TAB: Supplier Profile */}
+              {activeTab === 'profile' && accountRole === 'supplier' && (
                 <div className="account-tab block animate-fade-in">
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
                     <div className="mb-8 border-b border-white/5 pb-4">
                       <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
                         My Supplier Company Profile Information
                       </h3>
+                    </div>
+
+                    {/* Account Role - read only */}
+                    <div className="mb-8 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
+                          Account Role
+                        </label>
+                        <div className="text-white font-bold text-sm">
+                          {accountRole === 'supplier' ? 'Supplier' : 'Buyer'}
+                        </div>
+                      </div>
+                      {/* Role is intentionally read-only – no change role button */}
                     </div>
 
                     {/* Logo / Avatar area */}
@@ -1616,24 +1620,32 @@ export default function MyAccountPage() {
                   <div className="glass-card p-8 rounded-2xl border border-white/5">
                     <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                       <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
-                      <Link
-                        href="/post-request"
-                        className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
-                      >
-                        + Post New Request
-                      </Link>
+                      {accountRole === 'buyer' ? (
+                        <Link
+                          href="/post-request"
+                          className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
+                        >
+                          + Post New Request
+                        </Link>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                          Buyer accounts only
+                        </span>
+                      )}
                     </div>
 
                     {myWishlistRequests.length === 0 ? (
                       <div className="text-center py-12">
                         <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
                         <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
-                        <Link
-                          href="/post-request"
-                          className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
-                        >
-                          Post Your First Request
-                        </Link>
+                        {accountRole === 'buyer' && (
+                          <Link
+                            href="/post-request"
+                            className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                          >
+                            Post Your First Request
+                          </Link>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -1677,7 +1689,7 @@ export default function MyAccountPage() {
                   </div>
 
                   {/* Supplier Listings Section */}
-                  {(user?.role === 'both' || user?.role === 'sell') && (
+                  {accountRole === 'supplier' && (
                     <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                         <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Supplier Listings</h3>

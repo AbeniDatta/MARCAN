@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function CreateListingPage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
-  const isSeller = user && (user.role === 'sell' || user.role === 'both');
+  const isSeller = user?.role === 'supplier';
   const [formData, setFormData] = useState({
     itemName: '',
     listingType: '',
@@ -74,7 +74,7 @@ export default function CreateListingPage() {
     if (isMounted && !isAuthenticated) {
       router.replace('/login');
     } else if (isMounted && isAuthenticated && !isSeller) {
-      router.replace('/become-seller');
+      router.replace('/my-account');
     }
   }, [isMounted, isAuthenticated, isSeller, router]);
 

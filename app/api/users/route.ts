@@ -4,6 +4,52 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// GET - Check if username is available
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const username = searchParams.get('username');
+    const checkType = searchParams.get('type'); // 'check-username' or null
+
+    if (checkType === 'check-username' && username) {
+      // Check if username is already taken
+      // For now, we'll check if it matches any userId (which should be emails)
+      // Once username field is added to schema, we can check that field
+
+      // Check buyer profiles
+      const buyerProfile = await prisma.buyerProfile.findFirst({
+        where: {
+          userId: username,
+        },
+      });
+
+      // Check seller profiles
+      const sellerProfile = await prisma.sellerProfile.findFirst({
+        where: {
+          userId: username,
+        },
+      });
+
+      // Username is taken if it matches any userId (though it shouldn't since username can't be email)
+      // This is a temporary check until we add username field to schema
+      const taken = !!buyerProfile || !!sellerProfile;
+
+      return NextResponse.json({ taken, available: !taken });
+    }
+
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  } catch (error: any) {
+    console.error('Error checking username:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to check username',
+        details: error.message || 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
 // POST - Create or update buyer user account data
 export async function POST(request: NextRequest) {
   try {

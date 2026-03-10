@@ -75,7 +75,7 @@ function BuyerSignupPageContent() {
                 phone: buyerData.phone,
                 city: buyerData.city,
                 province: buyerData.province,
-                role: 'buy',
+                role: 'buyer',
             };
 
             // Save to database

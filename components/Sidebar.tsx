@@ -52,7 +52,7 @@ export default function Sidebar() {
                 .catch((err) => {
                     console.error('Error checking seller profile:', err);
                     // Fallback to localStorage role check
-                    setHasSellerProfile(user?.role === 'sell' || user?.role === 'both');
+                    setHasSellerProfile(user?.role === 'supplier');
                 });
         } else {
             setHasSellerProfile(false);
