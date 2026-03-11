@@ -331,17 +331,17 @@ export default function MyAccountPage() {
     setError('');
 
     try {
-    // Update user data in localStorage
-    const updatedUser = {
-      ...user,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      jobTitle: formData.jobTitle,
-    };
+      // Update user data in localStorage
+      const updatedUser = {
+        ...user,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        jobTitle: formData.jobTitle,
+      };
 
-    localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
-    window.dispatchEvent(new Event('marcan-auth-change'));
+      localStorage.setItem('marcan_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('marcan-auth-change'));
 
       // Update auth state
       login(updatedUser);
@@ -422,8 +422,8 @@ export default function MyAccountPage() {
         throw new Error('Failed to check profile status');
       }
 
-    setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+      setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
     } catch (err: any) {
       console.error('Error saving profile:', err);
       setError(err.message || 'Failed to save profile');
@@ -462,7 +462,7 @@ export default function MyAccountPage() {
       const submitData = {
         userId: user.email,
         onboardingMethod: supplierProfile?.onboardingMethod || 'MANUAL',
-      companyName: formData.companyName,
+        companyName: formData.companyName,
         city: formData.city,
         province: formData.province,
         provincesServed: formData.provincesServed,
@@ -508,7 +508,7 @@ export default function MyAccountPage() {
 
       setIsEditMode(false);
       setSaveMessage({ type: 'success', text: 'Profile updated successfully!' });
-    setTimeout(() => setSaveMessage(null), 3000);
+      setTimeout(() => setSaveMessage(null), 3000);
     } catch (err: any) {
       console.error('Error updating profile:', err);
       setError(err.message || 'Failed to update profile');
@@ -884,13 +884,13 @@ export default function MyAccountPage() {
                           Company Legal Name <span className="text-marcan-red">*</span>
                         </label>
                         {isEditMode ? (
-                        <input
-                          type="text"
-                          value={formData.companyName}
-                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="Enter company name"
-                        />
+                          <input
+                            type="text"
+                            value={formData.companyName}
+                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="Enter company name"
+                          />
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.companyName || supplierProfile?.companyName || 'Not specified'}
@@ -902,13 +902,13 @@ export default function MyAccountPage() {
                           Business Number (BN)
                         </label>
                         {isEditMode ? (
-                        <input
-                          type="text"
-                          value={formData.businessNumber}
-                          onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="Optional"
-                        />
+                          <input
+                            type="text"
+                            value={formData.businessNumber}
+                            onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="Optional"
+                          />
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.businessNumber || supplierProfile?.businessNumber || 'Not specified'}
@@ -920,13 +920,13 @@ export default function MyAccountPage() {
                           Website URL
                         </label>
                         {isEditMode ? (
-                        <input
-                          type="text"
-                          value={formData.website}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          placeholder="www.example.com"
-                        />
+                          <input
+                            type="text"
+                            value={formData.website}
+                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            placeholder="www.example.com"
+                          />
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.website || supplierProfile?.website || 'Not specified'}
@@ -936,11 +936,11 @@ export default function MyAccountPage() {
                     </div>
 
                     {/* Location & Company Type */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           City <span className="text-marcan-red">*</span>
-                          </label>
+                        </label>
                         {isEditMode ? (
                           <input
                             type="text"
@@ -954,11 +954,11 @@ export default function MyAccountPage() {
                             {formData.city || supplierProfile?.city || 'Not specified'}
                           </div>
                         )}
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Province <span className="text-marcan-red">*</span>
-                          </label>
+                        </label>
                         {isEditMode ? (
                           <select
                             value={formData.province}
@@ -1005,10 +1005,10 @@ export default function MyAccountPage() {
                               ? formData.provincesServed.map(code => CANADIAN_PROVINCES.find(p => p.code === code)?.name || code).join(', ')
                               : Array.isArray(supplierProfile?.provincesServed) && supplierProfile.provincesServed.length > 0
                                 ? supplierProfile.provincesServed.map((code: string) => CANADIAN_PROVINCES.find(p => p.code === code)?.name || code).join(', ')
-                              : 'Not specified'}
+                                : 'Not specified'}
                           </div>
                         )}
-                        </div>
+                      </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Company Type
@@ -1029,8 +1029,8 @@ export default function MyAccountPage() {
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.companyType || supplierProfile?.companyType || 'Not specified'}
-                      </div>
-                    )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1040,13 +1040,13 @@ export default function MyAccountPage() {
                         About Us
                       </label>
                       {isEditMode ? (
-                      <textarea
-                        rows={4}
-                        value={formData.aboutUs}
-                        onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
-                        placeholder="Describe your company's mission, history, and core focus..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                      />
+                        <textarea
+                          rows={4}
+                          value={formData.aboutUs}
+                          onChange={(e) => setFormData({ ...formData, aboutUs: e.target.value })}
+                          placeholder="Describe your company's mission, history, and core focus..."
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                        />
                       ) : (
                         <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300 min-h-[100px]">
                           {formData.aboutUs || supplierProfile?.aboutUs || 'Not specified'}
@@ -1143,16 +1143,16 @@ export default function MyAccountPage() {
                         </div>
                       </>
                     ) : (
-                    <div className="mb-8">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                      <div className="mb-8">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Processes <span className="text-marcan-red">*</span>
-                      </label>
-                      <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
+                        </label>
+                        <div className="p-4 rounded-xl border border-white/5 bg-black/20 flex flex-wrap gap-2 items-center min-h-[60px]">
                           {capabilities.length > 0 ? (
                             capabilities.map((item) => (
                               <span key={item} className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider">
-                            {item}
-                          </span>
+                                {item}
+                              </span>
                             ))
                           ) : (
                             <span className="text-xs text-slate-500 italic">Not specified</span>
@@ -1165,8 +1165,8 @@ export default function MyAccountPage() {
                           {supplierProfile?.materials && Array.isArray(supplierProfile.materials) && supplierProfile.materials.length > 0 ? (
                             supplierProfile.materials.map((item: string) => (
                               <span key={item} className="px-3 py-1.5 rounded-lg bg-marcan-red text-white text-[10px] font-bold uppercase tracking-wider">
-                            {item}
-                          </span>
+                                {item}
+                              </span>
                             ))
                           ) : (
                             <span className="text-xs text-slate-500 italic">Not specified</span>
@@ -1246,13 +1246,13 @@ export default function MyAccountPage() {
                               certifications.map((item) => (
                                 <span key={item} className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-200 text-[10px] font-bold uppercase tracking-wider border border-white/10">
                                   {item}
-                          </span>
+                                </span>
                               ))
                             ) : (
                               <span className="text-xs text-slate-500 italic">Not specified</span>
-                        )}
-                      </div>
-                    </div>
+                            )}
+                          </div>
+                        </div>
                         <div className="mb-8">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                             Industries
@@ -1405,7 +1405,7 @@ export default function MyAccountPage() {
                         )}
                       </div>
                     )}
-                      <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
@@ -1420,9 +1420,9 @@ export default function MyAccountPage() {
                               placeholder="Min days"
                             />
                           ) : (
-                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                               {formData.leadTimeMinDays || supplierProfile?.leadTimeMinDays || 'Not specified'}
-                          </div>
+                            </div>
                           )}
                         </div>
                         <div>
@@ -1438,9 +1438,9 @@ export default function MyAccountPage() {
                               placeholder="Max days"
                             />
                           ) : (
-                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                               {formData.leadTimeMaxDays || supplierProfile?.leadTimeMaxDays || 'Not specified'}
-                          </div>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1460,8 +1460,8 @@ export default function MyAccountPage() {
                           ) : (
                             <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                               {formData.maxPartSizeMmX || supplierProfile?.maxPartSizeMmX || 'Not specified'}
-                      </div>
-                    )}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
@@ -1519,7 +1519,7 @@ export default function MyAccountPage() {
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.rfqEmail || supplierProfile?.rfqEmail || 'Not specified'}
-                        </div>
+                          </div>
                         )}
                       </div>
                       <div>
@@ -1551,10 +1551,10 @@ export default function MyAccountPage() {
                         <i className="fa-solid fa-trash-can"></i> Delete Profile
                       </button>
                       {!isEditMode ? (
-                      <button
+                        <button
                           onClick={() => setIsEditMode(true)}
-                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
-                      >
+                          className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        >
                           <i className="fa-solid fa-pencil mr-2"></i> Edit Profile
                         </button>
                       ) : (
@@ -1571,7 +1571,7 @@ export default function MyAccountPage() {
                             className="bg-marcan-red border border-marcan-red text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isSaving ? 'Saving...' : 'Save Changes'}
-                      </button>
+                          </button>
                         </div>
                       )}
                     </div>

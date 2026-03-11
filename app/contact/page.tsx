@@ -1,8 +1,53 @@
 'use client';
 
+import { useState } from 'react';
 import Header from '@/components/Header';
 
 export default function ContactPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus(null);
+
+    if (!name.trim() || !email.trim() || !message.trim()) {
+      setStatus({ type: 'error', text: 'Please fill in your name, email, and message.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to send message. Please try again.');
+      }
+
+      setStatus({ type: 'success', text: 'Message sent! We’ll get back to you shortly.' });
+      setName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+    } catch (err: any) {
+      console.error('Error sending contact message:', err);
+      setStatus({ type: 'error', text: err.message || 'Failed to send message. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Contact Us" />
@@ -23,35 +68,54 @@ export default function ContactPage() {
           <div className="grid md:grid-cols-2 gap-8 items-stretch">
             {/* Contact Form */}
             <div className="glass-card p-8 rounded-2xl flex flex-col h-full">
-              <h3 className="font-bold text-xl text-white mb-4 uppercase">Send us a message</h3>
-              <form className="space-y-3 flex-1 flex flex-col">
+              <h3 className="font-bold text-xl text-white mb-4 uppercase text-center">Send us a message</h3>
+              {status && (
+                <div
+                  className={`mb-4 p-3 rounded-lg text-xs font-bold uppercase tracking-wider ${status.type === 'success'
+                      ? 'bg-green-500/10 text-green-400 border border-green-500/30'
+                      : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                    }`}
+                >
+                  {status.text}
+                </div>
+              )}
+              <form className="space-y-3 flex-1 flex flex-col" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                   />
                   <input
                     type="email"
                     placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                   />
                 </div>
                 <input
                   type="text"
                   placeholder="Subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                 />
                 <textarea
                   placeholder="How can we help?"
-                  rows={2}
+                  rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                 ></textarea>
                 <button
                   type="submit"
-                  className="w-full bg-marcan-red text-white py-2 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-auto"
+                  disabled={isSubmitting}
+                  className="w-full bg-marcan-red text-white py-2 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-auto disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                 </button>
               </form>
             </div>
