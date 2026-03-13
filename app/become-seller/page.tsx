@@ -931,7 +931,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          Industry Hub(s) *
+                          Industries Served *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -1022,7 +1022,7 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Primary Processes *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Primary Processes *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
@@ -1055,7 +1055,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-marcan-red uppercase mb-3 block">Materials *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Materials *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label

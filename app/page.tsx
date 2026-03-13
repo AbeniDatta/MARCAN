@@ -162,14 +162,10 @@ export default function HomePage() {
               <h4 className="font-heading font-black text-2xl text-white mb-6">How Marcan Works</h4>
 
               {/* Ecosystem Timeline/Node Flow */}
-              <div className="relative mt-2 space-y-7 before:absolute before:inset-y-2 before:left-[7px] before:w-[2px] before:bg-gradient-to-b before:from-blue-500 before:via-purple-500 before:to-marcan-red">
+              <div className="relative mt-2 space-y-7">
 
                 {/* Node 1: Onboarding */}
-                <div className="relative pl-8 group/node cursor-default">
-                  {/* Node Dot */}
-                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-blue-500 flex items-center justify-center shadow-[0_0_10px_rgba(59,130,246,0.5)] z-10 group-hover/node:scale-125 transition-transform duration-300">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                  </div>
+                <div className="relative group/node cursor-default">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
@@ -180,10 +176,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Node 2: Dual Action */}
-                <div className="relative pl-8 group/node cursor-default">
-                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-purple-500 flex items-center justify-center shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10 group-hover/node:scale-125 transition-transform duration-300">
-                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
-                  </div>
+                <div className="relative group/node cursor-default">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
@@ -194,16 +187,13 @@ export default function HomePage() {
                 </div>
 
                 {/* Node 3: Collaborate */}
-                <div className="relative pl-8 group/node cursor-default">
-                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-marcan-red flex items-center justify-center shadow-neon z-10 group-hover/node:scale-125 transition-transform duration-300">
-                    <div className="w-1.5 h-1.5 rounded-full bg-marcan-red"></div>
-                  </div>
+                <div className="relative group/node cursor-default">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-handshake-simple text-marcan-red text-sm"></i>
                       <div className="text-white text-sm font-bold tracking-wide">3. Match & Collaborate</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Access direct contact details to make connections. Negotiate on your own terms and build long-lasting business relationships.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Access direct contact details to make connections. Negotiate your own terms and build long-lasting business-to-business relationships.</div>
                   </div>
                 </div>
 
@@ -232,7 +222,7 @@ export default function HomePage() {
                   CNC milling, turning, and EDM. High tolerance capabilities for aerospace & medical.
                 </p>
                 <div className="flex items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -249,7 +239,7 @@ export default function HomePage() {
                   Sand casting, die casting, and investment casting. Iron, steel, and aluminum alloys.
                 </p>
                 <div className="flex items-center text-[10px] font-bold text-orange-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -266,7 +256,7 @@ export default function HomePage() {
                   Anodizing, powder coating, plating, and heat treatment services.
                 </p>
                 <div className="flex items-center text-[10px] font-bold text-purple-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -283,7 +273,7 @@ export default function HomePage() {
                   Injection molds, dies, and custom tooling solutions for mass production.
                 </p>
                 <div className="flex items-center text-[10px] font-bold text-green-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -300,7 +290,7 @@ export default function HomePage() {
                   Robotics, PLC programming, and automated manufacturing systems for increased efficiency.
                 </p>
                 <div className="flex items-center text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Hub <i className="fa-solid fa-arrow-right ml-2"></i>
+                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
             </div>

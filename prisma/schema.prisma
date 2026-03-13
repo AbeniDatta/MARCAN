@@ -105,13 +105,6 @@ model BuyerProfile {
   city        String? @db.Text
   province    String? @db.Text
 
-  // Buyer-specific fields (for AI search optimization)
-  primaryProcesses String[] @default([]) @map("primary_processes") @db.Text
-  industriesServed String[] @default([]) @map("industries_served") @db.Text
-  materials        String[] @default([]) @db.Text
-  certifications   String[] @default([]) @db.Text
-  otherComments    String?  @map("other_comments") @db.Text
-
   // Account lifecycle / deactivation
   deactivated         Boolean   @default(false)
   deactivatedAt       DateTime? @map("deactivated_at") @db.Timestamptz(6)
