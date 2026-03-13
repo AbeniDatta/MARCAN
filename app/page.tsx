@@ -324,7 +324,7 @@ export default function HomePage() {
               </div>
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shrink-0">
-                  <i className="fa-solid fa-handshake-simple"></i>
+                  <i className="fa-solid fa-people-arrows"></i>
                 </div>
                 <div>
                   <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.directContactTitle')}</div>

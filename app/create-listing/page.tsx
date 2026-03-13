@@ -104,8 +104,8 @@ export default function CreateListingPage() {
           const hasSupplierRole = user?.role === 'supplier';
           setIsSeller(hasSupplierRole);
           if (!hasSupplierRole) {
-            router.replace('/my-account');
-          }
+      router.replace('/my-account');
+    }
         })
         .finally(() => {
           setIsCheckingSeller(false);

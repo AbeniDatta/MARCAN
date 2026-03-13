@@ -816,64 +816,94 @@ export default function MyAccountPage() {
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           First Name <span className="text-marcan-red">*</span>
                         </label>
-                        <input
-                          type="text"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                          required
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                            required
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.firstName || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Last Name <span className="text-marcan-red">*</span>
                         </label>
-                        <input
-                          type="text"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                          required
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                            required
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.lastName || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="mb-6">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                         Email Address <span className="text-marcan-red">*</span>
                       </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        required
-                      />
+                      {isEditMode ? (
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                          required
+                        />
+                      ) : (
+                        <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                          {formData.email || 'Not specified'}
+                        </div>
+                      )}
                     </div>
                     <div className="mb-6">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                         Company (Optional)
                       </label>
-                      <input
-                        type="text"
-                        placeholder="Organization you represent"
-                        value={formData.companyName}
-                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                      />
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          placeholder="Organization you represent"
+                          value={formData.companyName}
+                          onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                        />
+                      ) : (
+                        <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                          {formData.companyName || 'Not specified'}
+                        </div>
+                      )}
                     </div>
                     {formData.companyName.trim() && (
                       <div className="mb-6">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                           Role in Company <span className="text-marcan-red">*</span>
                         </label>
-                        <input
-                          type="text"
-                          placeholder="e.g., Procurement Manager, Buyer, Director"
-                          value={formData.jobTitle}
-                          onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
-                          required={formData.companyName.trim() !== ''}
-                        />
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            placeholder="e.g., Procurement Manager, Buyer, Director"
+                            value={formData.jobTitle}
+                            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                            required={formData.companyName.trim() !== ''}
+                          />
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {formData.jobTitle || 'Not specified'}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -884,13 +914,30 @@ export default function MyAccountPage() {
                       >
                         <i className="fa-solid fa-trash-can"></i> Delete Account
                       </button>
-                      <button
-                        onClick={handleSaveProfile}
-                        disabled={isSaving}
-                        className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                      </button>
+                      {!isEditMode ? (
+                        <button
+                          onClick={() => setIsEditMode(true)}
+                          className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        >
+                          <i className="fa-solid fa-pencil mr-2"></i> Edit Profile
+                        </button>
+                      ) : (
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setIsEditMode(false)}
+                            className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSaveProfile}
+                            disabled={isSaving}
+                            className="bg-marcan-red border border-marcan-red text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -940,8 +987,8 @@ export default function MyAccountPage() {
                               {formData.firstName || supplierProfile?.firstName || user?.firstName || 'Not specified'}
                             </div>
                           )}
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                             Last Name <span className="text-marcan-red">*</span>
                           </label>
@@ -1771,77 +1818,71 @@ export default function MyAccountPage() {
               {/* My Posts Tab */}
               {activeTab === 'my-posts' && (
                 <div className="space-y-8">
-                  {/* Wishlist Requests Section */}
-                  <div className="glass-card p-8 rounded-2xl border border-white/5">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
-                      {accountRole === 'buyer' ? (
+                  {/* Wishlist Requests Section - buyers only */}
+                  {accountRole === 'buyer' && (
+                    <div className="glass-card p-8 rounded-2xl border border-white/5">
+                      <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                         <Link
                           href="/post-request"
                           className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
                         >
                           + Post New Request
                         </Link>
-                      ) : (
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                          Buyer accounts only
-                        </span>
-                      )}
-                    </div>
+                      </div>
 
-                    {myWishlistRequests.length === 0 ? (
-                      <div className="text-center py-12">
-                        <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                        <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
-                        {accountRole === 'buyer' && (
+                      {myWishlistRequests.length === 0 ? (
+                        <div className="text-center py-12">
+                          <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
+                          <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
                           <Link
                             href="/post-request"
                             className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
                           >
                             Post Your First Request
                           </Link>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {myWishlistRequests.map((request) => (
-                          <div
-                            key={request.id}
-                            className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
-                          >
-                            <button
-                              onClick={() => handleDeleteWishlistRequest(request.id)}
-                              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
-                              title="Delete request"
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {myWishlistRequests.map((request) => (
+                            <div
+                              key={request.id}
+                              className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
                             >
-                              <i className="fa-solid fa-trash text-xs"></i>
-                            </button>
-                            <div className="flex justify-between items-start mb-2 pr-10">
-                              <div>
-                                <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
-                                <div className="text-xs text-slate-500 mt-1">
-                                  {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
+                              <button
+                                onClick={() => handleDeleteWishlistRequest(request.id)}
+                                className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                title="Delete request"
+                              >
+                                <i className="fa-solid fa-trash text-xs"></i>
+                              </button>
+                              <div className="flex justify-between items-start mb-2 pr-10">
+                                <div>
+                                  <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
+                                  <div className="text-xs text-slate-500 mt-1">
+                                    {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
+                                  </div>
                                 </div>
+                                <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                                  {request.category}
+                                </span>
                               </div>
-                              <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                                {request.category}
-                              </span>
+                              <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
+                                {request.specifications || request.description}
+                              </p>
+                              <div className="flex gap-4 text-xs text-slate-500">
+                                {request.quantity && <span>Qty: {request.quantity}</span>}
+                                {request.targetPrice && <span>Price: {request.targetPrice}</span>}
+                                {request.deadline && (
+                                  <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
-                              {request.specifications || request.description}
-                            </p>
-                            <div className="flex gap-4 text-xs text-slate-500">
-                              {request.quantity && <span>Qty: {request.quantity}</span>}
-                              {request.targetPrice && <span>Price: {request.targetPrice}</span>}
-                              {request.deadline && (
-                                <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Supplier Listings Section */}
                   {accountRole === 'supplier' && (

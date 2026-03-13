@@ -201,14 +201,14 @@ function BuyerSignupPageContent() {
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Password</label>
                                         <div className="relative">
-                                            <input
+                                        <input
                                                 type={showPassword ? "text" : "password"}
-                                                placeholder="Create Password"
-                                                value={buyerData.password}
-                                                onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
+                                            placeholder="Create Password"
+                                            value={buyerData.password}
+                                            onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
-                                                required
-                                            />
+                                            required
+                                        />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
@@ -221,14 +221,14 @@ function BuyerSignupPageContent() {
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password</label>
                                         <div className="relative">
-                                            <input
+                                        <input
                                                 type={showConfirmPassword ? "text" : "password"}
-                                                placeholder="Confirm Password"
-                                                value={buyerData.confirmPassword}
-                                                onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
+                                            placeholder="Confirm Password"
+                                            value={buyerData.confirmPassword}
+                                            onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
-                                                required
-                                            />
+                                            required
+                                        />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}

@@ -52,8 +52,8 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                 <div className="flex gap-3 items-center">
                     {isMounted && isAuthenticated && user ? (
                         <>
-                            <Link
-                                href="/my-account"
+                        <Link
+                            href="/my-account"
                                 className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all hover:border-marcan-red/50"
                             >
                                 My Account
@@ -62,9 +62,9 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                             <div
                                 className="w-9 h-9 rounded-lg bg-gradient-to-br from-marcan-red to-red-900 flex items-center justify-center text-white text-xs font-bold shadow-neon border border-white/10"
                                 title={`${user.firstName} ${user.lastName || ''}`.trim()}
-                            >
-                                {user.firstName.charAt(0).toUpperCase()}
-                                {user.lastName?.charAt(0).toUpperCase() || ''}
+                        >
+                            {user.firstName.charAt(0).toUpperCase()}
+                            {user.lastName?.charAt(0).toUpperCase() || ''}
                             </div>
                         </>
                     ) : isMounted ? (
