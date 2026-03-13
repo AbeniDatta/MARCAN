@@ -67,7 +67,7 @@ export default function MarketplacePage() {
         <div className="flex justify-between items-end mb-8">
           <div>
             <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">
-              Supplier Listings
+              Explore
             </div>
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Supplier Listings</h2>
           </div>

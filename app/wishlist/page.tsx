@@ -127,7 +127,7 @@ export default function WishlistPage() {
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Recent Requests</div>
+            <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Explore</div>
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Sourcing Requests</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
