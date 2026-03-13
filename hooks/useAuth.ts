@@ -137,7 +137,7 @@ export function useAuth() {
         };
     }, []);
 
-    const login = (userInfo?: UserInfo) => {
+    const login = async (userInfo?: UserInfo) => {
         localStorage.setItem('marcan_auth', 'true');
         setIsAuthenticated(true);
         if (userInfo) {
@@ -152,6 +152,22 @@ export function useAuth() {
         }
         // Dispatch custom event to sync other components
         window.dispatchEvent(new Event('marcan-auth-change'));
+
+        // Best-effort reactivation of any deactivated profiles for this user
+        try {
+            const email = userInfo?.email || getAuthState().user?.email;
+            if (email) {
+                await fetch('/api/account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: email, action: 'reactivate' }),
+                });
+            }
+        } catch (err) {
+            console.warn('Failed to reactivate account on login:', err);
+        }
     };
 
     const logout = async () => {

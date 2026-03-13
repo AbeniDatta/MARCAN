@@ -46,6 +46,7 @@ export default function MyAccountPage() {
     finishes: [] as string[], // capability IDs
     certifications: [] as string[], // capability IDs
     industries: [] as string[], // capability IDs
+    industryHubs: [] as string[],
     otherProcesses: '',
     otherMaterials: '',
     otherFinishes: '',
@@ -172,6 +173,7 @@ export default function MyAccountPage() {
               province: profile.province || prev.province,
               provincesServed: Array.isArray(profile.provincesServed) ? profile.provincesServed : prev.provincesServed,
               companyType: profile.companyType || prev.companyType,
+              industryHubs: Array.isArray(profile.industryHubs) ? profile.industryHubs : prev.industryHubs,
               typicalJobSize: profile.typicalJobSize
                 ? (Array.isArray(profile.typicalJobSize) ? profile.typicalJobSize : [profile.typicalJobSize])
                 : prev.typicalJobSize,
@@ -670,6 +672,46 @@ export default function MyAccountPage() {
     }
   };
 
+  const handleDeactivateAccount = async () => {
+    if (!user) return;
+
+    setIsDeletingProfile(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.email,
+          action: 'deactivate',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to deactivate account');
+      }
+
+      await response.json();
+
+      setShowDeleteConfirm(false);
+      setSaveMessage({
+        type: 'success',
+        text: 'Your account has been marked as deactivated and scheduled for deletion in 30 days. Log in again before then to keep it active.',
+      });
+      setTimeout(() => setSaveMessage(null), 5000);
+    } catch (err: any) {
+      console.error('Error deactivating account:', err);
+      setError(err.message || 'Failed to deactivate account');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeletingProfile(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -756,57 +798,8 @@ export default function MyAccountPage() {
                       <span className="text-[10px] text-slate-500 uppercase font-bold">Last updated: Today</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          First Name
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Last Name
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Your Job Title
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.jobTitle}
-                          onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-
                     {/* Account Role - read only */}
-                    <div className="mb-8 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
+                    <div className="mb-6 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
                           Account Role
@@ -818,7 +811,79 @@ export default function MyAccountPage() {
                       {/* Role is intentionally read-only – no change role button */}
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          First Name <span className="text-marcan-red">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Last Name <span className="text-marcan-red">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mb-6">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                        Email Address <span className="text-marcan-red">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        required
+                      />
+                    </div>
+                    <div className="mb-6">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                        Company (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Organization you represent"
+                        value={formData.companyName}
+                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                      />
+                    </div>
+                    {formData.companyName.trim() && (
+                      <div className="mb-6">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Role in Company <span className="text-marcan-red">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g., Procurement Manager, Buyer, Director"
+                          value={formData.jobTitle}
+                          onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                          required={formData.companyName.trim() !== ''}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-marcan-red text-xs font-bold uppercase tracking-wider hover:text-red-400 transition-colors flex items-center gap-2"
+                      >
+                        <i className="fa-solid fa-trash-can"></i> Delete Account
+                      </button>
                       <button
                         onClick={handleSaveProfile}
                         disabled={isSaving}
@@ -854,26 +919,85 @@ export default function MyAccountPage() {
                       {/* Role is intentionally read-only – no change role button */}
                     </div>
 
-                    {/* Logo / Avatar area */}
-                    <div className="mb-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center p-6 bg-black/20 rounded-2xl border border-white/5">
-                      <div className="w-24 h-24 rounded-xl bg-black/60 border-2 border-dashed border-white/10 flex flex-col items-center justify-center text-slate-500">
-                        <span className="text-xl font-bold text-white">
-                          {(formData.companyName || supplierProfile?.companyName || 'M')
-                            .split(' ')
-                            .map((w: string) => w[0])
-                            .join('')
-                            .substring(0, 3)
-                            .toUpperCase()}
-                        </span>
+                    {/* Personal Account Information */}
+                    <div className="mb-8 border-b border-white/5 pb-6">
+                      <h4 className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-4">Account Information</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            First Name <span className="text-marcan-red">*</span>
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={formData.firstName}
+                              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                              required
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.firstName || supplierProfile?.firstName || user?.firstName || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Last Name <span className="text-marcan-red">*</span>
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              value={formData.lastName}
+                              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                              required
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.lastName || supplierProfile?.lastName || user?.lastName || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-white font-bold text-sm mb-1 uppercase">Company Logo</h4>
-                        <p className="text-xs text-slate-500 mb-3">
-                          Recommended: 400x400px transparent PNG.
-                        </p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">
-                          Logo upload coming soon
-                        </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Role/Position in Company <span className="text-marcan-red">*</span>
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="text"
+                              placeholder="e.g., Procurement Manager, Owner, Operations Director"
+                              value={formData.jobTitle}
+                              onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all placeholder:text-slate-600"
+                              required
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.jobTitle || supplierProfile?.jobTitle || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                            Email Address <span className="text-marcan-red">*</span>
+                          </label>
+                          {isEditMode ? (
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                              required
+                            />
+                          ) : (
+                            <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                              {formData.email || supplierProfile?.email || user?.email || 'Not specified'}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1029,6 +1153,37 @@ export default function MyAccountPage() {
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
                             {formData.companyType || supplierProfile?.companyType || 'Not specified'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                          Industry Hub(s) <span className="text-marcan-red">*</span>
+                        </label>
+                        {isEditMode ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-black/20 rounded-lg border border-white/10">
+                            {['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'].map((hub) => (
+                              <label key={hub} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.industryHubs.includes(hub)}
+                                  onChange={() => setFormData({
+                                    ...formData,
+                                    industryHubs: toggleArrayItem(formData.industryHubs, hub)
+                                  })}
+                                  className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                                />
+                                <span className="text-[10px] font-bold text-white uppercase">{hub}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
+                            {Array.isArray(formData.industryHubs) && formData.industryHubs.length > 0
+                              ? formData.industryHubs.join(', ')
+                              : Array.isArray(supplierProfile?.industryHubs) && supplierProfile.industryHubs.length > 0
+                                ? supplierProfile.industryHubs.join(', ')
+                                : 'Not specified'}
                           </div>
                         )}
                       </div>
@@ -1548,7 +1703,7 @@ export default function MyAccountPage() {
                         onClick={() => setShowDeleteConfirm(true)}
                         className="text-marcan-red text-xs font-bold uppercase tracking-wider hover:text-red-400 transition-colors flex items-center gap-2"
                       >
-                        <i className="fa-solid fa-trash-can"></i> Delete Profile
+                        <i className="fa-solid fa-trash-can"></i> Delete Account
                       </button>
                       {!isEditMode ? (
                         <button
@@ -1585,10 +1740,10 @@ export default function MyAccountPage() {
                               <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
                             </div>
                             <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">
-                              Delete Seller Profile?
+                              Delete Account?
                             </h3>
                             <p className="text-slate-400 text-sm leading-relaxed">
-                              This will permanently delete all seller information, remove your company from the directory, and change your account to buyer-only. This action cannot be undone.
+                              This will mark your account as deactivated and schedule it for permanent deletion in 30 days. If you log in again before then, your account will be restored and the deletion will be cancelled.
                             </p>
                           </div>
                           <div className="flex gap-4">
@@ -1599,11 +1754,11 @@ export default function MyAccountPage() {
                               Cancel
                             </button>
                             <button
-                              onClick={handleDeleteSellerProfile}
+                              onClick={handleDeactivateAccount}
                               disabled={isDeletingProfile}
                               className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {isDeletingProfile ? 'Deleting...' : 'Delete Profile'}
+                              {isDeletingProfile ? 'Deactivating...' : 'Delete Account'}
                             </button>
                           </div>
                         </div>

@@ -115,7 +115,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Hero Card */}
-          <div className="lg:col-span-8 glass-card rounded-3xl p-10 relative overflow-hidden group border border-white/5">
+          <div className="lg:col-span-7 glass-card rounded-3xl p-10 relative overflow-hidden group border border-white/5">
             <div className="absolute inset-0 bg-gradient-to-r from-marcan-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="relative z-10">
               <h1 className="font-heading text-5xl font-black text-white mb-4 tracking-tight leading-none uppercase">
@@ -146,81 +146,67 @@ export default function HomePage() {
             <i className="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[200px] text-white/5 rotate-[-20deg]"></i>
           </div>
 
-          {/* Industry Spotlight */}
-          <div className="lg:col-span-4 glass-card rounded-3xl p-8 flex flex-col justify-between relative overflow-hidden border border-white/5 group">
+          {/* Platform Workflow */}
+          <div className="lg:col-span-5 glass-card rounded-3xl p-8 flex flex-col justify-center relative overflow-hidden border border-white/5 group">
             {/* Background Effect */}
-            <div className="absolute -right-10 -top-10 text-9xl text-white/5 group-hover:text-white/10 transition-colors duration-500">
-              <i className="fa-solid fa-car-side"></i>
+            <div className="absolute -right-10 -bottom-10 text-9xl text-white/5 group-hover:text-marcan-red/10 transition-colors duration-500 pointer-events-none">
+              <i className="fa-solid fa-network-wired"></i>
             </div>
 
-            <div>
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-marcan-red text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-marcan-red rounded-full shadow-neon"></span>
-                  Industry Spotlight
-                </h3>
-                <span className="bg-white/10 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">
-                  Automotive
-                </span>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-5">
+                <i className="fa-solid fa-route text-marcan-red"></i>
+                <h3 className="text-slate-300 text-xs font-bold uppercase tracking-widest">Platform Overview</h3>
               </div>
 
-              <h4 className="font-heading font-black text-2xl text-white mb-3">Ontario's Auto Advantage</h4>
-              <p className="text-slate-400 text-xs leading-relaxed mb-4">
-                Did you know? Ontario is the only sub-national jurisdiction in North America with five major global
-                automotive assemblers.
-              </p>
-            </div>
+              <h4 className="font-heading font-black text-2xl text-white mb-6">How Marcan Works</h4>
 
-            <Link
-              href="/directory"
-              className="w-full py-3 rounded-lg bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
-            >
-              Find Auto Suppliers <i className="fa-solid fa-arrow-right"></i>
-            </Link>
-          </div>
+              {/* Ecosystem Timeline/Node Flow */}
+              <div className="relative mt-2 space-y-7 before:absolute before:inset-y-2 before:left-[7px] before:w-[2px] before:bg-gradient-to-b before:from-blue-500 before:via-purple-500 before:to-marcan-red">
 
-          {/* Trust & Impact */}
-          <div className="lg:col-span-12 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-            <div className="flex items-center gap-3 mb-6">
-              <i className="fa-solid fa-shield-halved text-marcan-red text-xl"></i>
-              <h3 className="font-heading font-bold text-white uppercase text-lg">{t('home.marcanStandardTitle')}</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shrink-0">
-                  <i className="fa-solid fa-bolt"></i>
+                {/* Node 1: Onboarding */}
+                <div className="relative pl-8 group/node cursor-default">
+                  {/* Node Dot */}
+                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-blue-500 flex items-center justify-center shadow-[0_0_10px_rgba(59,130,246,0.5)] z-10 group-hover/node:scale-125 transition-transform duration-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
+                      <div className="text-white text-sm font-bold tracking-wide">1. Instant Onboarding</div>
+                    </div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers set up in seconds. Suppliers can auto-generate a full profile using our 2-minute AI website importer.</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.aiSetupTitle')}</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.aiSetupBody')}</p>
+
+                {/* Node 2: Dual Action */}
+                <div className="relative pl-8 group/node cursor-default">
+                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-purple-500 flex items-center justify-center shadow-[0_0_10px_rgba(168,85,247,0.5)] z-10 group-hover/node:scale-125 transition-transform duration-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
+                      <div className="text-white text-sm font-bold tracking-wide">2. Request or List</div>
+                    </div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Sellers list surplus materials, equipment, or available capacity.</div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-marcan-red/10 flex items-center justify-center text-marcan-red border border-marcan-red/20 shrink-0">
-                  <i className="fa-solid fa-map-location-dot"></i>
+
+                {/* Node 3: Collaborate */}
+                <div className="relative pl-8 group/node cursor-default">
+                  <div className="absolute left-0 top-1 w-4 h-4 rounded-full bg-marcan-dark border-2 border-marcan-red flex items-center justify-center shadow-neon z-10 group-hover/node:scale-125 transition-transform duration-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-marcan-red"></div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-1">
+                      <i className="fa-solid fa-handshake-simple text-marcan-red text-sm"></i>
+                      <div className="text-white text-sm font-bold tracking-wide">3. Match & Collaborate</div>
+                    </div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Access direct contact details to make connections. Negotiate on your own terms and build long-lasting business relationships.</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.localFirstTitle')}</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.localFirstBody')}</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shrink-0">
-                  <i className="fa-solid fa-handshake-simple"></i>
-                </div>
-                <div>
-                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.directContactTitle')}</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.directContactBody')}</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 shrink-0">
-                  <i className="fa-solid fa-circle-check"></i>
-                </div>
-                <div>
-                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.freeTitle')}</div>
-                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.freeBody')}</p>
-                </div>
+
               </div>
             </div>
           </div>
@@ -319,6 +305,54 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
+
+
+          {/* Trust & Impact */}
+          <div className="lg:col-span-12 glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
+            <div className="flex items-center gap-3 mb-6">
+              <i className="fa-solid fa-shield-halved text-marcan-red text-xl"></i>
+              <h3 className="font-heading font-bold text-white uppercase text-lg">{t('home.marcanStandardTitle')}</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20 shrink-0">
+                  <i className="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.aiSetupTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.aiSetupBody')}</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-marcan-red/10 flex items-center justify-center text-marcan-red border border-marcan-red/20 shrink-0">
+                  <i className="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.localFirstTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.localFirstBody')}</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 shrink-0">
+                  <i className="fa-solid fa-handshake-simple"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.directContactTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.directContactBody')}</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 border border-amber-500/20 shrink-0">
+                  <i className="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div className="text-white font-bold text-sm mb-1">{t('home.marcanStandard.freeTitle')}</div>
+                  <p className="text-xs text-slate-500 leading-relaxed">{t('home.marcanStandard.freeBody')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
 
 

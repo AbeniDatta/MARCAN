@@ -15,6 +15,8 @@ function BuyerSignupPageContent() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const initialEmail = searchParams.get('email') || '';
 
@@ -26,9 +28,6 @@ function BuyerSignupPageContent() {
         confirmPassword: '',
         company: '',
         jobTitle: '',
-        phone: '',
-        city: '',
-        province: '',
     });
 
     const handleBuyerSubmit = async (e: React.FormEvent) => {
@@ -72,9 +71,6 @@ function BuyerSignupPageContent() {
                 email: buyerData.email,
                 companyName: buyerData.company,
                 jobTitle: buyerData.jobTitle,
-                phone: buyerData.phone,
-                city: buyerData.city,
-                province: buyerData.province,
                 role: 'buyer',
             };
 
@@ -90,9 +86,6 @@ function BuyerSignupPageContent() {
                         email: buyerData.email,
                         companyName: buyerData.company || `${buyerData.firstName} ${buyerData.lastName}`.trim(),
                         jobTitle: buyerData.jobTitle || null,
-                        phone: buyerData.phone || null,
-                        city: buyerData.city || null,
-                        province: buyerData.province || null,
                     }),
                 });
 
@@ -207,32 +200,47 @@ function BuyerSignupPageContent() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Password</label>
-                                        <input
-                                            type="password"
-                                            placeholder="Create Password"
-                                            value={buyerData.password}
-                                            onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="Create Password"
+                                                value={buyerData.password}
+                                                onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                            >
+                                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password</label>
-                                        <input
-                                            type="password"
-                                            placeholder="Confirm Password"
-                                            value={buyerData.confirmPassword}
-                                            onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
-                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                placeholder="Confirm Password"
+                                                value={buyerData.confirmPassword}
+                                                onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                            >
+                                                <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="pt-1 border-t border-white/5">
-                                    <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block tracking-widest">
-                                        Profile Details
-                                    </label>
                                     <div className="grid grid-cols-2 gap-4 mb-1">
                                         <div className="col-span-2">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Company (Optional)</label>
@@ -252,8 +260,8 @@ function BuyerSignupPageContent() {
                                         </div>
                                         {buyerData.company.trim() && (
                                             <div className="col-span-2">
-                                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-1 block">
-                                                    Role in Company <span className="text-marcan-red">*</span>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                                                    Role in Company *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -265,48 +273,6 @@ function BuyerSignupPageContent() {
                                                 />
                                             </div>
                                         )}
-                                        <div>
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Phone Number</label>
-                                            <input
-                                                type="text"
-                                                placeholder="+1 (555) 000-0000"
-                                                value={buyerData.phone}
-                                                onChange={(e) => setBuyerData({ ...buyerData, phone: e.target.value })}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Location</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="City"
-                                                    value={buyerData.city}
-                                                    onChange={(e) => setBuyerData({ ...buyerData, city: e.target.value })}
-                                                    className="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600"
-                                                />
-                                                <select
-                                                    value={buyerData.province}
-                                                    onChange={(e) => setBuyerData({ ...buyerData, province: e.target.value })}
-                                                    className="bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red focus:shadow-neon outline-none"
-                                                >
-                                                    <option value="">Prov.</option>
-                                                    <option value="ON">ON</option>
-                                                    <option value="QC">QC</option>
-                                                    <option value="BC">BC</option>
-                                                    <option value="AB">AB</option>
-                                                    <option value="MB">MB</option>
-                                                    <option value="SK">SK</option>
-                                                    <option value="NS">NS</option>
-                                                    <option value="NB">NB</option>
-                                                    <option value="NL">NL</option>
-                                                    <option value="PE">PE</option>
-                                                    <option value="NT">NT</option>
-                                                    <option value="YT">YT</option>
-                                                    <option value="NU">NU</option>
-                                                </select>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 

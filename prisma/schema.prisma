@@ -112,6 +112,11 @@ model BuyerProfile {
   certifications   String[] @default([]) @db.Text
   otherComments    String?  @map("other_comments") @db.Text
 
+  // Account lifecycle / deactivation
+  deactivated         Boolean   @default(false)
+  deactivatedAt       DateTime? @map("deactivated_at") @db.Timestamptz(6)
+  scheduledDeletionAt DateTime? @map("scheduled_deletion_at") @db.Timestamptz(6)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -179,6 +184,11 @@ model SellerProfile {
   onboardingMethod         OnboardingMethod? @map("onboarding_method")
   taxonomyVersion          String            @default("v1") @map("taxonomy_version")
   lastVerifiedAt           DateTime?         @map("last_verified_at") @db.Timestamptz(6)
+
+  // Account lifecycle / deactivation
+  deactivated         Boolean   @default(false)
+  deactivatedAt       DateTime? @map("deactivated_at") @db.Timestamptz(6)
+  scheduledDeletionAt DateTime? @map("scheduled_deletion_at") @db.Timestamptz(6)
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

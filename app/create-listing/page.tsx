@@ -9,7 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 export default function CreateListingPage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
-  const isSeller = user?.role === 'supplier';
+  const [isSeller, setIsSeller] = useState(false);
+  const [isCheckingSeller, setIsCheckingSeller] = useState(true);
   const [formData, setFormData] = useState({
     itemName: '',
     listingType: '',
@@ -69,16 +70,52 @@ export default function CreateListingPage() {
     }
   };
 
-  // Redirect if not authenticated or not a seller
+  // Check if user has a seller profile
   useEffect(() => {
     if (isMounted && !isAuthenticated) {
       router.replace('/login');
-    } else if (isMounted && isAuthenticated && !isSeller) {
-      router.replace('/my-account');
+      return;
     }
-  }, [isMounted, isAuthenticated, isSeller, router]);
 
-  if (!isMounted || !isAuthenticated || !isSeller) {
+    if (isMounted && isAuthenticated && user?.email) {
+      setIsCheckingSeller(true);
+      fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+        .then((res) => {
+          if (!res.ok) {
+            if (res.status === 404) {
+              return null;
+            }
+            throw new Error('Failed to fetch profile');
+          }
+          return res.json();
+        })
+        .then((profile) => {
+          if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+            setIsSeller(true);
+          } else {
+            setIsSeller(false);
+            // Redirect to my-account if not a seller
+            router.replace('/my-account');
+          }
+        })
+        .catch((err) => {
+          console.error('Error checking seller profile:', err);
+          // Fallback to localStorage role check
+          const hasSupplierRole = user?.role === 'supplier';
+          setIsSeller(hasSupplierRole);
+          if (!hasSupplierRole) {
+            router.replace('/my-account');
+          }
+        })
+        .finally(() => {
+          setIsCheckingSeller(false);
+        });
+    } else {
+      setIsCheckingSeller(false);
+    }
+  }, [isMounted, isAuthenticated, user?.email, user?.role, router]);
+
+  if (!isMounted || !isAuthenticated || isCheckingSeller || !isSeller) {
     return null;
   }
 
@@ -92,12 +129,12 @@ export default function CreateListingPage() {
             href="/marketplace"
             className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
           >
-            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Marketplace
+            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Exchange
           </Link>
 
           <div className="glass-card p-10 rounded-3xl border border-white/5">
             <div className="mb-8 border-b border-white/10 pb-6">
-              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Create Listing</h2>
+              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Create Asset Listing</h2>
               <p className="text-xs text-slate-500">Sell surplus equipment, materials, or capacity.</p>
             </div>
 
