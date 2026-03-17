@@ -347,7 +347,8 @@ PRIMARY OBJECTIVE
 Extract only the information needed to populate these MARCAN supplier signup fields:
 
 • Company identity
-• Location
+• Location (street address, city, province)
+• Business number
 • Contact info
 • Core manufacturing capabilities
 • Materials
@@ -480,6 +481,21 @@ Heat treatment
 CANADIAN LOCATION RULES (STRICT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+streetAddress:
+Extract the full street address if available (e.g., "123 Main Street", "456 Industrial Blvd, Unit 5").
+Look for addresses in:
+- Contact page
+- Footer
+- About Us page
+- Location information
+
+If not found → null
+
+city:
+Extract the city name if available.
+
+If not found → null
+
 province must be one of:
 
 ON, QC, BC, AB, MB, SK, NS, NB, NL, PE, NT, YT, NU
@@ -487,6 +503,16 @@ ON, QC, BC, AB, MB, SK, NS, NB, NL, PE, NT, YT, NU
 Infer province ONLY if city is clearly Canadian and unambiguous.
 
 Otherwise use null.
+
+businessNumber:
+Extract business registration number if available (e.g., "123456789", "BN 123456789").
+Look for:
+- Business number
+- Registration number
+- Corporate number
+- CRA business number
+
+If not found → null
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -855,8 +881,10 @@ JSON SCHEMA
   "companyName": string or null,
   "website": string,
   "aboutUs": string or null,
+  "streetAddress": string or null,
   "city": string or null,
   "province": string or null,
+  "businessNumber": string or null,
   "provincesServed": array of strings,
   "companyType": "Job Shop" | "Contract Manufacturer" | "OEM" | "Distributor" | null,
   "processes": array of strings,
@@ -1003,8 +1031,10 @@ Website text content from all pages:\n\n${extractedText}`,
         // Format the response with matched capability IDs and unmatched in "other" fields
         const formattedData = {
             companyName: isValidValue(extractedData.companyName) ? extractedData.companyName.trim() : '',
+            streetAddress: isValidValue(extractedData.streetAddress) ? extractedData.streetAddress.trim() : '',
             city: isValidValue(extractedData.city) ? extractedData.city.trim() : '',
             province: isValidValue(extractedData.province) ? extractedData.province.trim().toUpperCase() : '',
+            businessNumber: isValidValue(extractedData.businessNumber) ? extractedData.businessNumber.trim() : '',
             provincesServed: Array.isArray(extractedData.provincesServed)
                 ? extractedData.provincesServed
                     .filter((p: any) => p && typeof p === 'string' && isValidValue(p))

@@ -52,11 +52,11 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                 <div className="flex gap-3 items-center">
                     {isMounted && isAuthenticated && user ? (
                         <>
-                        <Link
-                            href="/my-account"
+                            <Link
+                                href="/my-account"
                                 className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all hover:border-marcan-red/50"
                             >
-                                My Account
+                                {t('header.myAccount')}
                             </Link>
                             <div className="h-4 w-[1px] bg-white/10"></div>
                             <div
@@ -72,7 +72,7 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                             href="/login"
                             className="px-5 py-2 rounded-lg bg-white/10 hover:bg-marcan-red border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-neon transition-all"
                         >
-                            Login
+                            {t('header.login')}
                         </Link>
                     ) : (
                         <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/10"></div>

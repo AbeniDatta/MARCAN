@@ -57,6 +57,7 @@ export default function BecomeSellerPage() {
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];
@@ -79,8 +80,10 @@ export default function BecomeSellerPage() {
     onboardingMethod: null as OnboardingMethod | null,
     // Step 1
     companyName: '',
+    streetAddress: '',
     city: '',
     province: '',
+    businessNumber: '',
     provincesServed: [] as string[],
     companyType: null as string | null,
     website: '',
@@ -186,11 +189,16 @@ export default function BecomeSellerPage() {
                   ? [parsed.formData.typicalJobSize]
                   : [],
               phone: parsed.formData.phone || '',
+              streetAddress: parsed.formData.streetAddress || '',
+              businessNumber: parsed.formData.businessNumber || '',
             };
             setFormData(loadedFormData);
           }
           if (parsed.lastCompletedStep !== undefined && parsed.lastCompletedStep !== null) {
             setLastCompletedStep(parsed.lastCompletedStep);
+          }
+          if (parsed.isGeneralSupplier !== undefined) {
+            setIsGeneralSupplier(parsed.isGeneralSupplier);
           }
         } catch (err) {
           console.error('Error loading saved form data:', err);
@@ -207,6 +215,7 @@ export default function BecomeSellerPage() {
         formData,
         lastCompletedStep,
         wizardStep,
+        isGeneralSupplier,
       };
       // Debounce the save to avoid too many writes
       const timeoutId = setTimeout(() => {
@@ -214,7 +223,7 @@ export default function BecomeSellerPage() {
       }, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData, lastCompletedStep, wizardStep, isMounted, currentUser]);
+  }, [formData, lastCompletedStep, wizardStep, isGeneralSupplier, isMounted, currentUser]);
 
   const [hasProcessedQueryParams, setHasProcessedQueryParams] = useState(false);
 
@@ -253,8 +262,10 @@ export default function BecomeSellerPage() {
             ...prev,
             onboardingMethod: 'IMPORT',
             companyName: importedData.companyName || prev.companyName,
+            streetAddress: importedData.streetAddress || prev.streetAddress,
             city: importedData.city || prev.city,
             province: importedData.province || prev.province,
+            businessNumber: importedData.businessNumber || prev.businessNumber,
             provincesServed: Array.isArray(importedData.provincesServed)
               ? importedData.provincesServed
               : prev.provincesServed || [],
@@ -364,8 +375,10 @@ export default function BecomeSellerPage() {
         ...formData,
         onboardingMethod: 'IMPORT',
         companyName: importedData.companyName || formData.companyName,
+        streetAddress: importedData.streetAddress || formData.streetAddress,
         city: importedData.city || formData.city,
         province: importedData.province || formData.province,
+        businessNumber: importedData.businessNumber || formData.businessNumber,
         provincesServed: Array.isArray(importedData.provincesServed)
           ? importedData.provincesServed
           : formData.provincesServed || [],
@@ -446,34 +459,46 @@ export default function BecomeSellerPage() {
         }
         return true;
       case 1:
-        if (!formData.companyName || !formData.city || !formData.province || formData.provincesServed.length === 0) {
-          setError('Company name, city, province, and at least one province served are required');
+        // Always require basic company location info
+        if (!formData.companyName || !formData.streetAddress || !formData.city || !formData.province) {
+          setError('Company name, street address, city, and province are required');
           return false;
         }
-        if (!formData.industryHubs || formData.industryHubs.length === 0) {
-          setError('Please select at least one industry hub');
-          return false;
+        // Only enforce richer company profile fields on the standard listing
+        if (!isGeneralSupplier) {
+          if (formData.provincesServed.length === 0) {
+            setError('Please select at least one province served');
+            return false;
+          }
+          if (!formData.industryHubs || formData.industryHubs.length === 0) {
+            setError('Please select at least one industry hub');
+            return false;
+          }
         }
         return true;
       case 2:
-        // Check if processes are provided (either checkbox selected or otherProcesses filled)
-        const hasProcesses = formData.processes.length > 0 || (formData.otherProcesses && formData.otherProcesses.trim().length > 0);
-        // Check if materials are provided (either checkbox selected or otherMaterials filled)
-        const hasMaterials = formData.materials.length > 0 || (formData.otherMaterials && formData.otherMaterials.trim().length > 0);
+        // Core capabilities are required for the standard listing, but optional for the general form
+        if (!isGeneralSupplier) {
+          const hasProcesses = formData.processes.length > 0 || (formData.otherProcesses && formData.otherProcesses.trim().length > 0);
+          const hasMaterials = formData.materials.length > 0 || (formData.otherMaterials && formData.otherMaterials.trim().length > 0);
 
-        if (!hasProcesses || !hasMaterials) {
-          setError('Please select at least one process and one material, or enter them in the "Other" fields');
-          return false;
+          if (!hasProcesses || !hasMaterials) {
+            setError('Please select at least one process and one material, or enter them in the "Other" fields');
+            return false;
+          }
         }
         return true;
       case 3:
-        if (!formData.typicalJobSize || formData.typicalJobSize.length === 0) {
-          setError('Please select at least one typical job size');
-          return false;
-        }
-        if (!formData.typicalLeadTime) {
-          setError('Please select a typical lead time');
-          return false;
+        // Production profile is only required for the standard listing
+        if (!isGeneralSupplier) {
+          if (!formData.typicalJobSize || formData.typicalJobSize.length === 0) {
+            setError('Please select at least one typical job size');
+            return false;
+          }
+          if (!formData.typicalLeadTime) {
+            setError('Please select a typical lead time');
+            return false;
+          }
         }
         return true;
       case 5:
@@ -626,8 +651,10 @@ export default function BecomeSellerPage() {
       email: formData.email,
       onboardingMethod: formData.onboardingMethod,
       companyName: formData.companyName,
+      streetAddress: formData.streetAddress,
       city: formData.city,
       province: formData.province,
+      businessNumber: formData.businessNumber || null,
       provincesServed: formData.provincesServed,
       website: formData.website || null,
       companyType: formData.companyType,
@@ -746,8 +773,10 @@ export default function BecomeSellerPage() {
     setFormData({
       onboardingMethod: 'MANUAL',
       companyName: '',
+      streetAddress: '',
       city: '',
       province: '',
+      businessNumber: '',
       provincesServed: [],
       companyType: null,
       website: '',
@@ -787,6 +816,7 @@ export default function BecomeSellerPage() {
     setLastCompletedStep(null);
     setError('');
     setImportUrl('');
+    setIsGeneralSupplier(false);
 
     // Clear localStorage
     if (currentUser?.email) {
@@ -869,6 +899,40 @@ export default function BecomeSellerPage() {
                       <p className="text-xs text-slate-500">Step 1 of 6</p>
                     </div>
                     <div className="space-y-6">
+                      {/* Form type selector */}
+                      <div className="border border-white/10 rounded-lg p-4 bg-black/30">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-3">
+                          Choose Supplier Form Type
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setIsGeneralSupplier(false)}
+                            className={`text-left p-3 rounded-lg border text-xs transition-all ${!isGeneralSupplier
+                              ? 'border-marcan-red bg-marcan-red/10 text-white shadow-neon'
+                              : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
+                              }`}
+                          >
+                            <div className="font-semibold uppercase text-[11px] mb-1">Standard Supplier Listing</div>
+                            <p className="text-[11px] text-slate-300">
+                              Full listing with required fields so buyers (and our AI) can match you to the right RFQs more accurately.
+                            </p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsGeneralSupplier(true)}
+                            className={`text-left p-3 rounded-lg border text-xs transition-all ${isGeneralSupplier
+                              ? 'border-marcan-red bg-marcan-red/10 text-white shadow-neon'
+                              : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
+                              }`}
+                          >
+                            <div className="font-semibold uppercase text-[11px] mb-1">General Supplier Form</div>
+                            <p className="text-[11px] text-slate-300">
+                              Typically used by companies that don't fit into our standard categories just to create supplier listings and sourcing requests. Whatever data you provide, our AI will use that for matching.
+                            </p>
+                          </button>
+                        </div>
+                      </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Legal Company Name *</label>
                         <input
@@ -876,6 +940,17 @@ export default function BecomeSellerPage() {
                           placeholder="NorthYork Precision Ltd."
                           value={formData.companyName}
                           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Street Address *</label>
+                        <input
+                          type="text"
+                          placeholder="123 Main Street"
+                          value={formData.streetAddress}
+                          onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           required
                         />
@@ -908,7 +983,17 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Provinces Served *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Business Number</label>
+                        <input
+                          type="text"
+                          placeholder="123456789"
+                          value={formData.businessNumber}
+                          onChange={(e) => setFormData({ ...formData, businessNumber: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Provinces Served {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-3 gap-2 mt-2">
                           {CANADIAN_PROVINCES.map((p) => (
                             <label
@@ -931,7 +1016,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          Industries Served *
+                          Industries Served {!isGeneralSupplier && '*'}
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -1022,7 +1107,7 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Primary Processes *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Primary Processes {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
@@ -1055,7 +1140,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Materials *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Materials {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label
@@ -1149,7 +1234,7 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Job Size *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Job Size {!isGeneralSupplier && '*'}</label>
                         <div className="space-y-2">
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1225,7 +1310,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Lead Time *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Lead Time {!isGeneralSupplier && '*'}</label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input

@@ -117,7 +117,7 @@ export default function Sidebar() {
                         <div className="w-full glass-card p-4 rounded-xl flex items-center gap-4">
                             <div className="hidden lg:block text-center whitespace-nowrap">
                                 <span className="text-medium font-bold text-white text-center">
-                                    Welcome {user.firstName}!
+                                    {t('sidebar.welcomeUser').replace('{name}', user.firstName)}
                                 </span>
                             </div>
                         </div>
@@ -129,9 +129,9 @@ export default function Sidebar() {
                                 <i className="fa-solid fa-right-from-bracket"></i>
                             </div>
                             <div className="hidden lg:block text-left">
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sign Out</div>
+                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('sidebar.signOutLabel')}</div>
                                 <div className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">
-                                    Logout
+                                    {t('sidebar.logout')}
                                 </div>
                             </div>
                         </button>
@@ -145,9 +145,9 @@ export default function Sidebar() {
                             <i className="fa-solid fa-user-plus"></i>
                         </div>
                         <div className="hidden lg:block text-left">
-                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Join Marcan</div>
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('sidebar.joinMarcan')}</div>
                             <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
-                                Sign Up
+                                {t('sidebar.signUp')}
                             </div>
                         </div>
                     </Link>

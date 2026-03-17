@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       jobTitle,
       businessNumber,
       website,
+      streetAddress,
       city,
       province,
       aboutUs,
@@ -77,9 +78,9 @@ export async function POST(request: NextRequest) {
       minOrderQty,
     } = body;
 
-    if (!userId || !companyName) {
+    if (!userId || !companyName || !streetAddress) {
       return NextResponse.json({
-        error: 'userId and companyName are required'
+        error: 'userId, companyName, and streetAddress are required'
       }, {
         status: 400,
         headers: {
@@ -212,6 +213,7 @@ export async function POST(request: NextRequest) {
       jobTitle: jobTitle || null,
       businessNumber: businessNumber || null,
       website: website || null,
+      streetAddress,
       city: city || null,
       province: province || null,
       aboutUs: aboutUs || null,

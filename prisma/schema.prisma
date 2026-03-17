@@ -131,7 +131,7 @@ model SellerProfile {
   businessNumber String? @map("business_number") @db.Text
   website        String? @db.Text
   phone          String? @db.Text
-  streetAddress  String? @map("street_address") @db.Text
+  streetAddress  String  @map("street_address") @db.Text
   city           String? @db.Text
   province       String? @db.Text
   aboutUs        String? @map("about_us") @db.Text

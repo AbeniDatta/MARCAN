@@ -2,7 +2,8 @@
   "header": {
     "brand": "Marcan Platform",
     "breadcrumbHome": "Home",
-    "login": "Login"
+    "login": "Login",
+    "myAccount": "My Account"
   },
   "sidebar": {
     "home": "Home",
@@ -11,7 +12,12 @@
     "wishlist": "Sourcing Requests",
     "marketplace": "Supplier Listings",
     "contact": "Contact Us",
-    "help": "Help Center"
+    "help": "Help Center",
+    "welcomeUser": "Welcome {name}!",
+    "signOutLabel": "Sign Out",
+    "logout": "Logout",
+    "joinMarcan": "Join Marcan",
+    "signUp": "Sign Up"
   },
   "home": {
     "hero": {
@@ -32,5 +38,16 @@
       "freeTitle": "100% Free to Use",
       "freeBody": "No hidden fees, subscriptions, or paywalls. Access the network, source materials, and grow your business completely free."
     }
+  },
+  "marketplace": {
+    "breadcrumb": "Supplier Listings",
+    "exploreLabel": "Explore",
+    "title": "Supplier Listings",
+    "createListing": "Create Listing",
+    "loginToCreate": "Please log in or sign up to create a listing",
+    "onlySuppliersNotice": "Only supplier accounts can post supplier listings.",
+    "noListings": "No supplier listings available yet.",
+    "sellerLabel": "Seller",
+    "viewListing": "View Listing"
   }
 }
