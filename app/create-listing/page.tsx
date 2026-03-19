@@ -88,7 +88,12 @@ export default function CreateListingPage() {
           return res.json();
         })
         .then((profile) => {
-          if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+          if (
+            profile &&
+            (profile.primaryIntent === 'sell' ||
+              profile.primaryIntent === 'both' ||
+              profile.primaryIntent === 'storefront')
+          ) {
             setIsSeller(true);
           } else {
             setIsSeller(false);

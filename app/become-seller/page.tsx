@@ -345,7 +345,12 @@ export default function BecomeSellerPage() {
           return res.json();
         })
         .then((profile) => {
-          if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+          if (
+            profile &&
+            (profile.primaryIntent === 'sell' ||
+              profile.primaryIntent === 'both' ||
+              profile.primaryIntent === 'storefront')
+          ) {
             // User already has a seller profile, redirect to my account
             router.replace('/my-account');
           }
@@ -670,6 +675,8 @@ export default function BecomeSellerPage() {
       website: formData.website || null,
       companyType: formData.companyType,
       jobTitle: formData.role,
+      // Storefront signups should not appear in the Network Directory.
+      ...(wizardStep === 0 ? { primaryIntent: 'storefront' } : {}),
       // Normalized taxonomy selections (capability IDs)
       processes: formData.processes,
       materials: formData.materials,

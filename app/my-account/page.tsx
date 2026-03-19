@@ -152,7 +152,11 @@ export default function MyAccountPage() {
             setSupplierProfile(profile);
 
             // If the profile indicates seller intent, reflect that in read-only accountRole state
-            if (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both') {
+            if (
+              profile.primaryIntent === 'sell' ||
+              profile.primaryIntent === 'both' ||
+              profile.primaryIntent === 'storefront'
+            ) {
               setAccountRole('supplier');
             } else {
               setAccountRole('buyer');

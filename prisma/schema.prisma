@@ -198,9 +198,62 @@ model SellerProfile {
   @@map("seller_profiles")
 }
 
+// Storefront Profile - for industrial storefront owners who create listings
+// (Created from the standalone storefront signup in `app/become-seller` wizardStep === 0).
+model StorefrontProfile {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Auth identifier (Firebase email is used as userId throughout the app)
+  userId String @unique @map("user_id") @db.Text
+
+  // Required storefront signup fields
+  firstName     String? @map("first_name") @db.Text
+  lastName      String? @map("last_name") @db.Text
+  email         String? @db.Text
+  companyName   String  @map("company_name") @db.Text
+  role          String? @map("job_title") @db.Text
+  streetAddress String   @map("street_address") @db.Text
+  city          String? @db.Text
+  province      String? @db.Text
+
+  // Optional storefront enrichment (can be collected later)
+  businessNumber String? @map("business_number") @db.Text
+  website         String? @db.Text
+  phone           String? @db.Text
+  aboutUs         String? @map("about_us") @db.Text
+  logoUrl         String? @map("logo_url") @db.Text
+  selectedIcon    String? @map("selected_icon") @db.Text
+
+  // Verification status for filtering / directory enrichment
+  verified Boolean @default(false)
+
+  // Internal fields for eligibility + enrichment lifecycle
+  searchable               Boolean           @default(false)
+  profileCompletenessScore Int               @default(0) @map("profile_completeness_score")
+  onboardingMethod         OnboardingMethod? @map("onboarding_method")
+  taxonomyVersion          String            @default("v1") @map("taxonomy_version")
+  lastVerifiedAt           DateTime?         @map("last_verified_at") @db.Timestamptz(6)
+
+  // Account lifecycle / deactivation
+  deactivated         Boolean   @default(false)
+  deactivatedAt       DateTime? @map("deactivated_at") @db.Timestamptz(6)
+  scheduledDeletionAt DateTime? @map("scheduled_deletion_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  listings Listing[]
+
+  @@index([province])
+  @@index([verified])
+  @@index([createdAt(sort: Desc)])
+  @@map("storefront_profiles")
+}
+
 model Listing {
   id          String   @id @default(uuid()) @db.Uuid
   profileId   String   @map("profile_id") @db.Uuid
+  storefrontProfileId String? @map("storefront_profile_id") @db.Uuid
   title       String   @db.Text
   description String?  @db.Text
   price       String?  @db.Text
@@ -215,8 +268,10 @@ model Listing {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   sellerProfile SellerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  storefrontProfile StorefrontProfile? @relation(fields: [storefrontProfileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
+  @@index([storefrontProfileId])
   @@index([createdAt(sort: Desc)])
   @@map("listings")
 }

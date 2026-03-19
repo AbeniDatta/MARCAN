@@ -35,22 +35,13 @@ function ProfilePageContent() {
         // Fetch company from API
         const fetchCompany = async () => {
             try {
-                // Fetch all profiles and find the one matching the companyId
-                const response = await fetch('/api/profiles');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profiles');
-                }
-                const profiles = await response.json();
-                const foundCompany = profiles.find((c: CompanyProfile) => c.id === companyId);
+                // Fetch a single profile by id so storefront profiles can be viewed even if excluded from the Network Directory.
+                const response = await fetch(`/api/profiles?id=${encodeURIComponent(companyId)}`);
+                if (!response.ok) throw new Error('Failed to fetch profile');
 
-                if (foundCompany) {
-                    setCompany(foundCompany);
-                    // The API already returns all the profile data, so we can use it directly
-                    setUserData(foundCompany);
-                } else {
-                    // Company not found
-                    setCompany(null);
-                }
+                const foundCompany = await response.json();
+                setCompany(foundCompany);
+                setUserData(foundCompany);
             } catch (error) {
                 console.error('Error fetching company profile:', error);
                 setCompany(null);

@@ -369,6 +369,92 @@ export async function GET(request: NextRequest) {
     // Check if userId query parameter is provided (for single profile fetch)
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const profileId = searchParams.get('id');
+
+    // Fetch single profile by profile id (used by `/profile?id=...`).
+    // This bypasses directory eligibility filtering so storefront profiles can be viewed even if excluded from the Network Directory.
+    if (profileId) {
+      // Fetch single profile by id with capabilities for rich display
+      let profile: any = await prisma.sellerProfile.findUnique({
+        where: { id: profileId },
+      });
+
+      if (!profile) {
+        return NextResponse.json(
+          { error: 'Profile not found' },
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // Load capabilities separately to avoid relation errors
+      try {
+        const capabilities = await prisma.profileCapability.findMany({
+          where: { sellerProfileId: profile.id },
+          include: { capability: true },
+        });
+        profile.profileCapabilities = capabilities;
+      } catch (error: any) {
+        console.warn('Could not load profile capabilities:', error.message);
+        profile.profileCapabilities = [];
+      }
+
+      const capabilitiesByType: Record<string, string[]> = {
+        PROCESS: [],
+        MATERIAL: [],
+        FINISH: [],
+        CERTIFICATION: [],
+        INDUSTRY: [],
+        COMPANY_TYPE: [],
+      };
+
+      for (const pc of profile.profileCapabilities) {
+        const type = pc.capability.type as unknown as string;
+        if (!capabilitiesByType[type]) {
+          capabilitiesByType[type] = [];
+        }
+        capabilitiesByType[type].push(pc.capability.name);
+      }
+
+      // Shape the response to match the frontend expectations used by directory/cards.
+      const tags = Array.isArray(profile.capabilities) ? profile.capabilities.slice(0, 3) : [];
+      const locationParts: string[] = [];
+      if (profile.city) locationParts.push(profile.city);
+      if (profile.province) locationParts.push(profile.province);
+      const location = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
+
+      return NextResponse.json(
+        {
+          id: profile.id,
+          userId: profile.userId,
+          name: profile.companyName,
+          location,
+          description: profile.aboutUs || 'No description available.',
+          icon: profile.selectedIcon || 'fa-industry',
+          logoUrl: profile.logoUrl,
+          tags,
+          capabilities: profile.capabilities,
+          certifications: profile.certifications,
+          materials: profile.materials,
+          website: profile.website,
+          phone: profile.phone,
+          city: profile.city,
+          province: profile.province,
+          streetAddress: profile.streetAddress,
+          businessNumber: profile.businessNumber,
+          jobTitle: profile.jobTitle,
+          primaryIntent: profile.primaryIntent,
+          capabilitiesByType,
+          email: profile.userId, // expose email explicitly for convenience
+          aboutUs: profile.aboutUs,
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     if (userId) {
       // Fetch single profile by userId with capabilities for rich display in My Account
@@ -432,12 +518,23 @@ export async function GET(request: NextRequest) {
     }
 
     // Otherwise, return all profiles (existing behavior)
+    const includeStorefront = searchParams.get('includeStorefront') === 'true';
+
     const profiles = await prisma.sellerProfile.findMany({
       where: {
-        OR: [
-          { primaryIntent: { in: ['sell', 'both'] } },
-          { searchable: true }, // Also include searchable profiles (eligible sellers)
-        ],
+        ...(includeStorefront
+          ? {
+              deactivated: false,
+              primaryIntent: { in: ['sell', 'both', 'storefront'] },
+            }
+          : {
+              deactivated: false,
+              OR: [
+                { primaryIntent: { in: ['sell', 'both'] } },
+                // For Network Directory: include searchable suppliers only (exclude storefront profiles).
+                { searchable: true, primaryIntent: { not: 'storefront' } },
+              ],
+            }),
       },
       orderBy: {
         createdAt: 'desc',

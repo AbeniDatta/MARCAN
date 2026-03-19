@@ -36,7 +36,12 @@ export default function PostRequestPage() {
                 return res.json();
             })
             .then((profile) => {
-                if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
+                if (
+                    profile &&
+                    (profile.primaryIntent === 'sell' ||
+                        profile.primaryIntent === 'both' ||
+                        profile.primaryIntent === 'storefront')
+                ) {
                     setIsSupplier(true);
                 } else {
                     setIsSupplier(false);

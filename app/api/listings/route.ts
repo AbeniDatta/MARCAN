@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { itemName, listingType, condition, price, location, description, userId } = body;
 
-    if (!itemName || !listingType || !condition || !price || !location || !description || !userId) {
+    // `condition` is optional (UI no longer collects it for storefront listings).
+    if (!itemName || !listingType || !price || !location || !description || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
         profileId: profile.id,
         title: itemName,
         listingType,
-        condition,
+        condition: condition ?? null,
         price,
         location,
         description,
