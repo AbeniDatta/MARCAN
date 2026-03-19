@@ -25,7 +25,7 @@ const CANADIAN_PROVINCES = [
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile' | 'my-posts'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'buyer-profile' | 'my-posts'>('profile');
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
