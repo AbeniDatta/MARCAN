@@ -131,25 +131,13 @@ export default function WishlistPage() {
             <h2 className="font-heading text-3xl font-bold text-white uppercase">Sourcing Requests</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {isMounted && isAuthenticated && isBuyer ? (
+            {isMounted && isAuthenticated ? (
               <Link
                 href="/post-request"
                 className="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
               >
                 <i className="fa-solid fa-plus mr-2"></i> Post Request
               </Link>
-            ) : isMounted && isAuthenticated && !isBuyer ? (
-              <>
-                <button
-                  disabled
-                  className="bg-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
-                >
-                  <i className="fa-solid fa-plus mr-2"></i> Post Request
-                </button>
-                <p className="text-xs text-slate-500 text-right max-w-[220px]">
-                  Only <span className="text-slate-300 font-bold">buyer</span> accounts can post sourcing requests.
-                </p>
-              </>
             ) : (
               <>
                 <button

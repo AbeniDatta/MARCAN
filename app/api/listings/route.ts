@@ -58,6 +58,7 @@ export async function GET() {
 
       return {
         id: listing.id,
+        profileId: listing.profileId,
         title: listing.title,
         seller: listing.sellerProfile?.companyName || 'Unknown',
         price: listing.price || '',
@@ -161,6 +162,7 @@ export async function POST(request: NextRequest) {
     // Format the response
     const formattedListing = {
       id: listing.id,
+      profileId: listing.profileId,
       title: listing.title,
       seller: listing.sellerProfile?.companyName || 'Unknown',
       price: listing.price || '',

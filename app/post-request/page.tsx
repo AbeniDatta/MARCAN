@@ -100,13 +100,9 @@ export default function PostRequestPage() {
         }
     };
 
-    // Redirect if not authenticated or not a buyer
+    // Redirect if not authenticated
     if (isMounted && !isAuthenticated) {
         router.replace('/login');
-        return null;
-    }
-    if (isMounted && isAuthenticated && !isBuyer) {
-        router.replace('/my-account');
         return null;
     }
 
@@ -210,13 +206,6 @@ export default function PostRequestPage() {
                                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                                     />
                                 </div>
-                            </div>
-
-                            {/* Attachments */}
-                            <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-marcan-red/50 hover:bg-white/5 transition-all cursor-pointer">
-                                <i className="fa-solid fa-cloud-arrow-up text-3xl text-slate-500 mb-3"></i>
-                                <p className="text-sm text-white font-bold">Upload Blueprints or CAD Files</p>
-                                <p className="text-xs text-slate-500 mt-1">Supported formats: PDF, DWG, STP (Max 25MB)</p>
                             </div>
 
                             <div className="flex justify-end pt-4">

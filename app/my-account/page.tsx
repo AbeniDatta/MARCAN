@@ -773,7 +773,17 @@ export default function MyAccountPage() {
               >
                 {accountRole === 'supplier' ? 'My Supplier Company Profile' : 'My Buyer Profile'}
               </button>
-              {/* For supplier accounts, we don't show a separate buyer tab */}
+              {accountRole === 'supplier' && (
+                <button
+                  onClick={() => setActiveTab('buyer-profile')}
+                  className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'buyer-profile'
+                    ? 'bg-marcan-red/10 text-white border-marcan-red'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+                    }`}
+                >
+                  My Buyer Profile
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('my-posts')}
                 className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'my-posts'
@@ -788,7 +798,7 @@ export default function MyAccountPage() {
             {/* Settings Content Area */}
             <div className="lg:col-span-9 relative min-h-[500px]">
               {/* TAB: Buyer Profile */}
-              {activeTab === 'profile' && accountRole === 'buyer' && (
+              {((activeTab === 'profile' && accountRole === 'buyer') || activeTab === 'buyer-profile') && (
                 <div className="account-tab block animate-fade-in">
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
                     <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
@@ -1818,9 +1828,8 @@ export default function MyAccountPage() {
               {/* My Posts Tab */}
               {activeTab === 'my-posts' && (
                 <div className="space-y-8">
-                  {/* Wishlist Requests Section - buyers only */}
-                  {accountRole === 'buyer' && (
-                    <div className="glass-card p-8 rounded-2xl border border-white/5">
+                  {/* Wishlist Requests Section */}
+                  <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                         <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                         <Link
@@ -1881,8 +1890,7 @@ export default function MyAccountPage() {
                           ))}
                         </div>
                       )}
-                    </div>
-                  )}
+                  </div>
 
                   {/* Supplier Listings Section */}
                   {accountRole === 'supplier' && (

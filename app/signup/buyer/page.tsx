@@ -141,14 +141,16 @@ function BuyerSignupPageContent() {
 
                         <div>
                             <div className="relative mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => router.push('/signup')}
-                                    className="absolute left-0 top-0 text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
-                                >
-                                    <i className="fa-solid fa-arrow-left"></i>
-                                    Change Option
-                                </button>
+                                <div className="flex items-center justify-between">
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/signup')}
+                                        className="text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
+                                    >
+                                        <i className="fa-solid fa-arrow-left"></i>
+                                        Change Option
+                                    </button>
+                                </div>
                                 <div className="text-center mt-4">
                                     <h2 className="font-heading text-2xl md:text-2xl font-black text-white uppercase tracking-widest mb-2">
                                         Create Your Buyer Account

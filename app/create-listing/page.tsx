@@ -14,7 +14,6 @@ export default function CreateListingPage() {
   const [formData, setFormData] = useState({
     itemName: '',
     listingType: '',
-    condition: '',
     price: '',
     location: '',
     description: '',
@@ -50,7 +49,6 @@ export default function CreateListingPage() {
         body: JSON.stringify({
           itemName: formData.itemName,
           listingType: formData.listingType,
-          condition: formData.condition,
           price: formData.price,
           location: formData.location,
           description: formData.description,
@@ -63,7 +61,7 @@ export default function CreateListingPage() {
         throw new Error(error.error || 'Failed to create listing');
       }
 
-      router.push('/marketplace');
+      router.push('/shop');
     } catch (error: any) {
       console.error('Error creating listing:', error);
       alert(error.message || 'Failed to create listing. Please try again.');
@@ -126,22 +124,22 @@ export default function CreateListingPage() {
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="max-w-3xl mx-auto py-6">
           <Link
-            href="/marketplace"
+            href="/shop"
             className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
           >
-            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Exchange
+            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Industrial Storefront
           </Link>
 
           <div className="glass-card p-10 rounded-3xl border border-white/5">
             <div className="mb-8 border-b border-white/10 pb-6">
-              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Create Asset Listing</h2>
-              <p className="text-xs text-slate-500">Sell surplus equipment, materials, or capacity.</p>
+              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Create Listing</h2>
+              <p className="text-xs text-slate-500">Post equipment, materials, surplus parts, or production capacity.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Info */}
               <div>
-                <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Item Name</label>
+                <label className="text-[10px] font-bold text-orange-500 uppercase mb-2 block">Item Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Used Haas CNC Mill or Surplus Aluminum Sheet"
@@ -152,7 +150,7 @@ export default function CreateListingPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Listing Type</label>
                   <select
@@ -166,22 +164,6 @@ export default function CreateListingPage() {
                     <option value="Raw Materials">Raw Materials</option>
                     <option value="Surplus Parts">Surplus Parts</option>
                     <option value="Production Capacity">Production Capacity</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Condition</label>
-                  <select
-                    value={formData.condition}
-                    onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none"
-                    required
-                  >
-                    <option value="">Select Condition...</option>
-                    <option value="New">New</option>
-                    <option value="Used - Good">Used - Good</option>
-                    <option value="Used - Fair">Used - Fair</option>
-                    <option value="Refurbished">Refurbished</option>
-                    <option value="For Parts">For Parts</option>
                   </select>
                 </div>
               </div>
@@ -222,13 +204,6 @@ export default function CreateListingPage() {
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                   required
                 />
-              </div>
-
-              {/* Images */}
-              <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-marcan-red/50 hover:bg-white/5 transition-all cursor-pointer">
-                <i className="fa-solid fa-camera text-3xl text-slate-500 mb-3"></i>
-                <p className="text-sm text-white font-bold">Upload Photos</p>
-                <p className="text-xs text-slate-500 mt-1">Add up to 5 images (JPG, PNG)</p>
               </div>
 
               <div className="flex justify-end pt-4">

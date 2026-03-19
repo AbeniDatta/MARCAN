@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -26,19 +27,17 @@ interface Capability {
   name: string;
 }
 
-const INDUSTRY_HUB_NAMES = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
-
 const CANADIAN_PROVINCES = [
-  { code: 'ON', name: 'Ontario' },
-  { code: 'QC', name: 'Quebec' },
-  { code: 'BC', name: 'British Columbia' },
-  { code: 'AB', name: 'Alberta' },
-  { code: 'MB', name: 'Manitoba' },
-  { code: 'SK', name: 'Saskatchewan' },
-  { code: 'NS', name: 'Nova Scotia' },
-  { code: 'NB', name: 'New Brunswick' },
-  { code: 'NL', name: 'Newfoundland and Labrador' },
-  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'ON', name: 'Ontario', frName: 'Ontario' },
+  { code: 'QC', name: 'Quebec', frName: 'Québec' },
+  { code: 'BC', name: 'British Columbia', frName: 'Colombie-Britannique' },
+  { code: 'AB', name: 'Alberta', frName: 'Alberta' },
+  { code: 'MB', name: 'Manitoba', frName: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan', frName: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia', frName: 'Nouvelle-Écosse' },
+  { code: 'NB', name: 'New Brunswick', frName: 'Nouveau-Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador', frName: 'Terre-Neuve-et-Labrador' },
+  { code: 'PE', name: 'Prince Edward Island', frName: 'Île-du-Prince-Édouard' },
   { code: 'NT', name: 'Northwest Territories' },
   { code: 'YT', name: 'Yukon' },
   { code: 'NU', name: 'Nunavut' },
@@ -46,6 +45,8 @@ const CANADIAN_PROVINCES = [
 
 export default function BecomeSellerPage() {
   const router = useRouter();
+  const { t, lang } = useI18n();
+  const isFr = lang === 'fr';
   const { login, user: currentUser, isAuthenticated, isMounted } = useAuth();
   const [currentView, setCurrentView] = useState<View>('form');
   const [wizardStep, setWizardStep] = useState<WizardStep>(1);
@@ -58,6 +59,9 @@ export default function BecomeSellerPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
+  const INDUSTRY_HUB_NAMES = isFr
+    ? ['Usinage de précision', 'Fonderies et moulage', 'Finition de surface', 'Outillage et moules', 'Automatisation']
+    : ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];
@@ -235,6 +239,8 @@ export default function BecomeSellerPage() {
     const params = new URLSearchParams(window.location.search);
     const start = params.get('start');
     const urlFromQuery = params.get('url');
+    const requestedStepParam = params.get('step');
+    const requestedStep = requestedStepParam ? Number(requestedStepParam) : NaN;
 
     if (start === 'import' && urlFromQuery) {
       setCurrentView('form');
@@ -316,6 +322,11 @@ export default function BecomeSellerPage() {
         onboardingMethod: 'MANUAL',
       }));
       setHasProcessedQueryParams(true);
+    } else if (!Number.isNaN(requestedStep) && requestedStep >= 0 && requestedStep <= 6) {
+      // Deep-link into a specific wizard step (e.g., ?step=0 for Shop Profile)
+      setCurrentView('form');
+      setWizardStep(requestedStep as WizardStep);
+      setHasProcessedQueryParams(true);
     }
   }, [isMounted, hasProcessedQueryParams]);
 
@@ -348,7 +359,7 @@ export default function BecomeSellerPage() {
 
   const handleImportWebsite = async () => {
     if (!importUrl.trim()) {
-      setError('Please enter a website URL');
+      setError(t('becomeSeller.errors.enterWebsiteUrl'));
       return;
     }
 
@@ -450,28 +461,28 @@ export default function BecomeSellerPage() {
       case 0:
         // Step 0 validation is handled in the import flow
         if (formData.onboardingMethod === 'IMPORT' && !importUrl.trim()) {
-          setError('Please enter a website URL');
+          setError(t('becomeSeller.errors.enterWebsiteUrl'));
           return false;
         }
         if (!formData.onboardingMethod) {
-          setError('Please select an onboarding method');
+          setError(t('becomeSeller.errors.selectOnboardingMethod'));
           return false;
         }
         return true;
       case 1:
         // Always require basic company location info
         if (!formData.companyName || !formData.streetAddress || !formData.city || !formData.province) {
-          setError('Company name, street address, city, and province are required');
+          setError(t('becomeSeller.errors.basicCompanyRequired'));
           return false;
         }
         // Only enforce richer company profile fields on the standard listing
         if (!isGeneralSupplier) {
           if (formData.provincesServed.length === 0) {
-            setError('Please select at least one province served');
+            setError(t('becomeSeller.errors.selectProvinceServed'));
             return false;
           }
           if (!formData.industryHubs || formData.industryHubs.length === 0) {
-            setError('Please select at least one industry hub');
+            setError(t('becomeSeller.errors.selectIndustryHub'));
             return false;
           }
         }
@@ -483,7 +494,7 @@ export default function BecomeSellerPage() {
           const hasMaterials = formData.materials.length > 0 || (formData.otherMaterials && formData.otherMaterials.trim().length > 0);
 
           if (!hasProcesses || !hasMaterials) {
-            setError('Please select at least one process and one material, or enter them in the "Other" fields');
+            setError(t('becomeSeller.errors.selectProcessAndMaterial'));
             return false;
           }
         }
@@ -492,65 +503,65 @@ export default function BecomeSellerPage() {
         // Production profile is only required for the standard listing
         if (!isGeneralSupplier) {
           if (!formData.typicalJobSize || formData.typicalJobSize.length === 0) {
-            setError('Please select at least one typical job size');
+            setError(t('becomeSeller.errors.selectTypicalJobSize'));
             return false;
           }
           if (!formData.typicalLeadTime) {
-            setError('Please select a typical lead time');
+            setError(t('becomeSeller.errors.selectTypicalLeadTime'));
             return false;
           }
         }
         return true;
       case 5:
         if (!formData.rfqEmail) {
-          setError('RFQ email is required');
+          setError(t('becomeSeller.errors.rfqEmailRequired'));
           return false;
         }
         return true;
       case 6:
         if (!formData.firstName || !formData.lastName) {
-          setError('First name and last name are required');
+          setError(t('becomeSeller.errors.firstLastRequired'));
           return false;
         }
         if (!formData.role) {
-          setError('Role/position is required');
+          setError(t('becomeSeller.errors.roleRequired'));
           return false;
         }
         if (!formData.username) {
-          setError('Username is required');
+          setError(t('becomeSeller.errors.usernameRequired'));
           return false;
         }
         // Validate username is not an email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (emailRegex.test(formData.username)) {
-          setError('Username cannot be an email address. Please use a different username.');
+          setError(t('becomeSeller.errors.usernameNotEmail'));
           return false;
         }
         // Validate username format (alphanumeric, underscore, hyphen, 3-30 chars)
         const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
         if (!usernameRegex.test(formData.username)) {
-          setError('Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens');
+          setError(t('becomeSeller.errors.usernameFormat'));
           return false;
         }
         if (!formData.email) {
-          setError('Email address is required');
+          setError(t('becomeSeller.errors.emailRequired'));
           return false;
         }
         // Validate email format
         if (!emailRegex.test(formData.email)) {
-          setError('Please enter a valid email address');
+          setError(t('becomeSeller.errors.emailInvalid'));
           return false;
         }
         if (!formData.password) {
-          setError('Password is required');
+          setError(t('becomeSeller.errors.passwordRequired'));
           return false;
         }
         if (formData.password.length < 6) {
-          setError('Password must be at least 6 characters long');
+          setError(t('becomeSeller.errors.passwordLength'));
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
-          setError('Passwords do not match');
+          setError(t('becomeSeller.errors.passwordsNoMatch'));
           return false;
         }
         return true;
@@ -571,7 +582,7 @@ export default function BecomeSellerPage() {
       if (usernameCheckResponse.ok) {
         const checkResult = await usernameCheckResponse.json();
         if (checkResult.taken) {
-          setError('This username is already taken. Please choose a different one.');
+          setError(t('becomeSeller.errors.usernameTaken'));
           setIsLoading(false);
           return;
         }
@@ -617,7 +628,7 @@ export default function BecomeSellerPage() {
     }
 
     if (!userId) {
-      setError('Unable to determine user ID');
+      setError(t('becomeSeller.errors.unableDetermineUserId'));
       setIsLoading(false);
       return;
     }
@@ -833,22 +844,37 @@ export default function BecomeSellerPage() {
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
-      <Header breadcrumb="Become a Seller" />
+      <Header
+        breadcrumb={
+          wizardStep === 0 ? 'Industrial Storefront Profile Signup' : t('becomeSeller.breadcrumb')
+        }
+      />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="flex items-center justify-center py-10 relative">
-          <div className="glass-card p-10 rounded-3xl w-full max-w-4xl relative overflow-visible transition-all duration-500">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
+      <div
+        className={`flex-1 relative ${wizardStep === 0 ? 'overflow-hidden p-4' : 'overflow-y-auto p-8'}`}
+      >
+        <div className={`flex items-center justify-center relative ${wizardStep === 0 ? 'py-4' : 'py-10'}`}>
+          <div
+            className={`glass-card rounded-3xl w-full relative overflow-visible transition-all duration-500 ${wizardStep === 0 ? 'p-6 max-w-6xl' : 'p-10 max-w-4xl'
+              }`}
+          >
+            <div
+              className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent ${wizardStep === 0 ? 'via-orange-500' : 'via-marcan-red'
+                } to-transparent ${wizardStep === 0
+                  ? 'shadow-[0_0_10px_rgba(249,115,22,0.5)]'
+                  : 'shadow-neon'
+                }`}
+            />
 
             {/* Import Loading Overlay */}
             {isImporting && (
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-3xl">
                 <div className="w-14 h-14 rounded-full border-2 border-marcan-red/40 border-t-marcan-red animate-spin mb-4" />
                 <div className="text-sm font-bold text-white mb-1 uppercase tracking-widest">
-                  Analyzing your website
+                  {t('becomeSeller.import.analyzingTitle')}
                 </div>
                 <p className="text-[11px] text-slate-400 max-w-xs text-center">
-                  We&apos;re using our AI to read your site and pre-fill your supplier profile. This usually takes a minute or two.
+                  {t('becomeSeller.import.analyzingBody')}
                 </p>
               </div>
             )}
@@ -862,47 +888,50 @@ export default function BecomeSellerPage() {
             {/* WIZARD FORM */}
             {currentView === 'form' && (
               <div>
-                <div className="flex justify-between items-center mb-8">
-                  <button
-                    onClick={() => router.push('/signup')}
-                    className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
-                  >
-                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Change Option
-                  </button>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5, 6].map((step) => (
-                        <div
-                          key={step}
-                          className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
-                        ></div>
-                      ))}
+                {wizardStep !== 0 && (
+                  <div className="flex justify-between items-center mb-8">
+                    <button
+                      onClick={() => router.push('/signup')}
+                      className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
+                    >
+                      <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i>{' '}
+                      {t('becomeSeller.changeOption')}
+                    </button>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5, 6].map((step) => (
+                          <div
+                            key={step}
+                            className={`h-1 w-6 rounded-full transition-all ${wizardStep >= step ? 'bg-marcan-red' : 'bg-white/10'}`}
+                          ></div>
+                        ))}
+                      </div>
+                      {wizardStep >= 1 && (
+                        <button
+                          onClick={handleRestartRegistration}
+                          className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
+                          title={t('becomeSeller.restart')}
+                        >
+                          <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
+                          <span className="hidden sm:inline">{t('becomeSeller.restart')}</span>
+                        </button>
+                      )}
                     </div>
-                    {wizardStep >= 1 && (
-                      <button
-                        onClick={handleRestartRegistration}
-                        className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
-                        title="Restart Registration"
-                      >
-                        <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
-                        <span className="hidden sm:inline">Restart</span>
-                      </button>
-                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Step 1: Company Basics */}
                 {wizardStep === 1 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Company Basics</h2>
-                      <p className="text-xs text-slate-500">Step 1 of 6</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.companyBasics.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.companyBasics.step')}</p>
                     </div>
                     <div className="space-y-6">
                       {/* Form type selector */}
                       <div className="border border-white/10 rounded-lg p-4 bg-black/30">
                         <div className="text-[10px] font-bold text-slate-400 uppercase mb-3">
-                          Choose Supplier Form Type
+                          {t('becomeSeller.companyBasics.chooseFormType')}
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <button
@@ -913,9 +942,9 @@ export default function BecomeSellerPage() {
                               : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
                               }`}
                           >
-                            <div className="font-semibold uppercase text-[11px] mb-1">Standard Supplier Listing</div>
+                            <div className="font-semibold uppercase text-[11px] mb-1">{t('becomeSeller.companyBasics.standardTitle')}</div>
                             <p className="text-[11px] text-slate-300">
-                              Full listing with required fields so buyers (and our AI) can match you to the right RFQs more accurately.
+                              {t('becomeSeller.companyBasics.standardBody')}
                             </p>
                           </button>
                           <button
@@ -926,18 +955,18 @@ export default function BecomeSellerPage() {
                               : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
                               }`}
                           >
-                            <div className="font-semibold uppercase text-[11px] mb-1">General Supplier Form</div>
+                            <div className="font-semibold uppercase text-[11px] mb-1">{t('becomeSeller.companyBasics.generalTitle')}</div>
                             <p className="text-[11px] text-slate-300">
-                              Typically used by companies that don't fit into our standard categories just to create supplier listings and sourcing requests. Whatever data you provide, our AI will use that for matching.
+                              {t('becomeSeller.companyBasics.generalBody')}
                             </p>
                           </button>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Legal Company Name *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.legalCompanyName')} *</label>
                         <input
                           type="text"
-                          placeholder="NorthYork Precision Ltd."
+                          placeholder={isFr ? "NorthYork Précision Ltée." : "NorthYork Precision Ltd."}
                           value={formData.companyName}
                           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -945,10 +974,10 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Street Address *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.streetAddress')} *</label>
                         <input
                           type="text"
-                          placeholder="123 Main Street"
+                          placeholder={isFr ? "123, rue Principale" : "123 Main Street"}
                           value={formData.streetAddress}
                           onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -957,10 +986,10 @@ export default function BecomeSellerPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">City *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.city')} *</label>
                           <input
                             type="text"
-                            placeholder="Toronto"
+                            placeholder={isFr ? "Toronto" : "Toronto"}
                             value={formData.city}
                             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -968,22 +997,22 @@ export default function BecomeSellerPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Province *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.province')} *</label>
                           <select
                             value={formData.province}
                             onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
                             required
                           >
-                            <option value="">Select...</option>
+                            <option value="">{t('becomeSeller.companyBasics.select')}</option>
                             {CANADIAN_PROVINCES.map((p) => (
-                              <option key={p.code} value={p.code}>{p.name}</option>
+                              <option key={p.code} value={p.code}>{isFr ? (p as any).frName ?? p.name : p.name}</option>
                             ))}
                           </select>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Business Number</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.businessNumber')}</label>
                         <input
                           type="text"
                           placeholder="123456789"
@@ -993,7 +1022,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Provinces Served {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.provincesServed')} {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-3 gap-2 mt-2">
                           {CANADIAN_PROVINCES.map((p) => (
                             <label
@@ -1016,7 +1045,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          Industries Served {!isGeneralSupplier && '*'}
+                          {t('becomeSeller.companyBasics.industriesServed')} {!isGeneralSupplier && '*'}
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -1042,23 +1071,23 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <div className="mb-1 flex items-center gap-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Company Type</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">{t('becomeSeller.companyBasics.companyType')}</label>
                           <div className="relative group inline-flex items-center cursor-pointer">
                             <i className="fa-solid fa-circle-info text-[10px] text-slate-500 group-hover:text-white transition-colors"></i>
                             <div className="hidden group-hover:block absolute right-0 mt-2 w-80 bg-black/90 border border-white/10 rounded-lg p-3 text-[10px] text-slate-200 shadow-lg z-20">
-                              <div className="font-bold text-xs mb-2 text-white">How to choose your company type</div>
+                              <div className="font-bold text-xs mb-2 text-white">{t('becomeSeller.companyTypeHelp.title')}</div>
                               <ul className="space-y-1">
                                 <li>
-                                  <span className="font-semibold">1️⃣ Contract Manufacturer</span> — You manufacture parts or products for other companies based on their designs.
+                                  <span className="font-semibold">1️⃣ {isFr ? 'Fabricant sous contrat' : 'Contract Manufacturer'}</span> — {t('becomeSeller.companyTypeHelp.contractManufacturer').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.contractManufacturer')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">2️⃣ Distributor</span> — You resell parts, materials, or components made by other manufacturers.
+                                  <span className="font-semibold">2️⃣ {isFr ? 'Distributeur' : 'Distributor'}</span> — {t('becomeSeller.companyTypeHelp.distributor').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.distributor')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">3️⃣ Job Shop</span> — You focus on custom, small-batch, or one-off manufacturing work.
+                                  <span className="font-semibold">3️⃣ {isFr ? 'Atelier d’usinage' : 'Job Shop'}</span> — {t('becomeSeller.companyTypeHelp.jobShop').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.jobShop')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">4️⃣ OEM (Original Equipment Manufacturer)</span> — You design and manufacture your own products.
+                                  <span className="font-semibold">4️⃣ OEM</span> — {t('becomeSeller.companyTypeHelp.oem').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.oem')}
                                 </li>
                               </ul>
                             </div>
@@ -1069,17 +1098,17 @@ export default function BecomeSellerPage() {
                           onChange={(e) => setFormData({ ...formData, companyType: e.target.value || null })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
                         >
-                          <option value="">Select...</option>
+                          <option value="">{t('becomeSeller.companyBasics.select')}</option>
                           {Array.isArray(capabilities.COMPANY_TYPE) && capabilities.COMPANY_TYPE.map((cap) => (
                             <option key={cap.id} value={cap.id}>{cap.name}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Website</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.website')}</label>
                         <input
                           type="url"
-                          placeholder="https://www.company.com"
+                          placeholder={isFr ? "https://www.entreprise.com" : "https://www.company.com"}
                           value={formData.website}
                           onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1092,7 +1121,7 @@ export default function BecomeSellerPage() {
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1102,12 +1131,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 2 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Core Capabilities</h2>
-                      <p className="text-xs text-slate-500">Step 2 of 6: Select at least one process and one material</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.coreCapabilities.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.coreCapabilities.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Primary Processes {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.primaryProcesses')} {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
@@ -1128,7 +1157,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Processes (comma-separated)</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherProcesses')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Process 1, Custom Process 2"
@@ -1136,11 +1165,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherProcesses: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add processes not listed above.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addProcessesHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Materials {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.materials')} {!isGeneralSupplier && '*'}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label
@@ -1161,7 +1190,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Materials (comma-separated)</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherMaterials')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Material 1, Custom Material 2"
@@ -1169,11 +1198,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherMaterials: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add materials not listed above.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addMaterialsHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Finishes (Optional)</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.finishesOptional')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.FINISH) && capabilities.FINISH.map((cap) => (
                             <label
@@ -1194,7 +1223,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Finishes (comma-separated)</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherFinishes')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Finish 1, Custom Finish 2"
@@ -1202,7 +1231,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherFinishes: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add finishes not listed above.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addFinishesHelp')}</p>
                         </div>
                       </div>
                     </div>
@@ -1212,14 +1241,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        Back
+                        {t('becomeSeller.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1229,12 +1258,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 3 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Production Profile</h2>
-                      <p className="text-xs text-slate-500">Step 3 of 6</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.productionProfile.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.productionProfile.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Job Size {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalJobSize')} {!isGeneralSupplier && '*'}</label>
                         <div className="space-y-2">
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1249,8 +1278,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">Prototype</div>
-                              <div>One-offs, testing, early design — <span className="text-slate-400">1–10 parts</span></div>
+                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.prototype')}</div>
+                              <div>{t('becomeSeller.productionProfile.prototypeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1266,8 +1295,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">Low volume</div>
-                              <div>Small production runs — <span className="text-slate-400">10–500 parts</span></div>
+                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.lowVolume')}</div>
+                              <div>{t('becomeSeller.productionProfile.lowVolumeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1286,8 +1315,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">Medium volume</div>
-                              <div>Repeat production — <span className="text-slate-400">500–5,000 parts</span></div>
+                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.mediumVolume')}</div>
+                              <div>{t('becomeSeller.productionProfile.mediumVolumeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1303,14 +1332,14 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">High volume</div>
-                              <div>Mass production — <span className="text-slate-400">5,000+ parts</span></div>
+                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.highVolume')}</div>
+                              <div>{t('becomeSeller.productionProfile.highVolumeDesc')}</div>
                             </div>
                           </label>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Typical Lead Time {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalLeadTime')} {!isGeneralSupplier && '*'}</label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1327,7 +1356,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">1–2 weeks</span>
+                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.oneTwoWeeks')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1344,7 +1373,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">2–4 weeks</span>
+                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.twoFourWeeks')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1361,7 +1390,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">1–3 months</span>
+                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.oneThreeMonths')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1378,7 +1407,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">3+ months</span>
+                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.threePlusMonths')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1395,12 +1424,12 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">Depends on workload</span>
+                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.depends')}</span>
                           </label>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Max Part Size (mm) - Optional</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.productionProfile.maxPartSizeOptional')}</label>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
                             <label className="text-[8px] text-slate-500 mb-1 block">X</label>
@@ -1441,14 +1470,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        Back
+                        {t('becomeSeller.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1458,12 +1487,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 4 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Trust & Enrichment</h2>
-                      <p className="text-xs text-slate-500">Step 4 of 6: Optional</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.trustEnrichment.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.trustEnrichment.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Certifications</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.trustEnrichment.certifications')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.CERTIFICATION) && capabilities.CERTIFICATION.map((cap) => (
                             <label
@@ -1484,7 +1513,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Certifications (comma-separated)</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.otherCertifications')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Certification 1, Custom Certification 2"
@@ -1492,11 +1521,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherCertifications: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add certifications not listed above.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.trustEnrichment.addCertificationsHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">Industries Served</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.trustEnrichment.industriesServed')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.INDUSTRY) && capabilities.INDUSTRY.map((cap) => (
                             <label
@@ -1517,7 +1546,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Other Industries (comma-separated)</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.otherIndustries')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Industry 1, Custom Industry 2"
@@ -1525,11 +1554,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherIndustries: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">Add industries not listed above.</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.trustEnrichment.addIndustriesHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">About Us</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.aboutUs')}</label>
                         <textarea
                           rows={4}
                           placeholder="Describe your company history, mission, and specialization..."
@@ -1545,14 +1574,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        Back
+                        {t('becomeSeller.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1562,15 +1591,15 @@ export default function BecomeSellerPage() {
                 {wizardStep === 5 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Contact & RFQ Preferences</h2>
-                      <p className="text-xs text-slate-500">Step 5 of 6</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.contactRfq.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.contactRfq.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">RFQ Email *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.contactRfq.rfqEmail')} *</label>
                         <input
                           type="email"
-                          placeholder="rfq@company.com"
+                          placeholder={isFr ? "rfq@entreprise.com" : "rfq@company.com"}
                           value={formData.rfqEmail}
                           onChange={(e) => setFormData({ ...formData, rfqEmail: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1578,10 +1607,10 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Phone Number (Optional)</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.contactRfq.phoneOptional')}</label>
                         <input
                           type="tel"
-                          placeholder="+1 (555) 000-0000"
+                          placeholder={isFr ? "+1 (555) 000-0000" : "+1 (555) 000-0000"}
                           value={formData.phone || ''}
                           onChange={(e) => {
                             const phoneValue = e.target.value;
@@ -1598,7 +1627,7 @@ export default function BecomeSellerPage() {
                       {formData.phone?.trim() && (
                         <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                            Preferred Contact Method
+                            {t('becomeSeller.contactRfq.preferredContactMethod')}
                           </label>
                           <div className="grid grid-cols-2 gap-4">
                             <button
@@ -1609,7 +1638,7 @@ export default function BecomeSellerPage() {
                                 : 'border-white/10 hover:border-marcan-red/50'
                                 }`}
                             >
-                              <div className="text-white font-bold text-sm uppercase">Email</div>
+                              <div className="text-white font-bold text-sm uppercase">{t('becomeSeller.contactRfq.email')}</div>
                             </button>
                             <button
                               type="button"
@@ -1619,7 +1648,7 @@ export default function BecomeSellerPage() {
                                 : 'border-white/10 hover:border-marcan-red/50'
                                 }`}
                             >
-                              <div className="text-white font-bold text-sm uppercase">Phone</div>
+                              <div className="text-white font-bold text-sm uppercase">{t('becomeSeller.contactRfq.phone')}</div>
                             </button>
                           </div>
                         </div>
@@ -1631,16 +1660,268 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        Back
+                        {t('becomeSeller.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        Save and Next <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* Step 6: Shop Profile Sign Up (temporarily hidden; moved out of supplier step numbering) */}
+                {wizardStep === 0 && (
+                  <div className="max-w-5xl mx-auto py-0 pt-0">
+                    <div className="text-center mb-6">
+                      <h2 className="font-heading text-3xl font-black text-white uppercase tracking-tight mb-1">
+                        Create Your Storefront Profile
+                      </h2>
+                    </div>
+
+                    <form className="glass-card p-6 md:p-7 rounded-3xl border border-white/5 relative overflow-hidden">
+                      {/* Decorative glow */}
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/2" />
+
+                      <div className="grid md:grid-cols-2 gap-6 md:gap-8 relative z-10">
+                        {/* Column 1: Company Details */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                            <i className="fa-solid fa-building text-orange-400" />
+                            <h3 className="font-bold text-white uppercase tracking-wide text-sm">
+                              Company Details
+                            </h3>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                              Legal Company Name
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Acme Manufacturing Ltd."
+                              value={formData.companyName}
+                              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                              Street Address
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="123 Industrial Way"
+                              value={formData.streetAddress}
+                              onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                City
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Toronto"
+                                value={formData.city}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Province
+                              </label>
+                              <div className="relative">
+                                <select
+                                  value={formData.province}
+                                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-slate-400 focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all appearance-none cursor-pointer"
+                                >
+                                  <option value="" disabled>
+                                    Select
+                                  </option>
+                                  {CANADIAN_PROVINCES.map((p) => (
+                                    <option key={p.code} value={p.code}>
+                                      {isFr ? (p.frName || p.name) : p.name} ({p.code})
+                                    </option>
+                                  ))}
+                                </select>
+                                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-xs" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Column 2: Account Details */}
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                            <i className="fa-solid fa-user-shield text-orange-400" />
+                            <h3 className="font-bold text-white uppercase tracking-wide text-sm">
+                              Account Manager
+                            </h3>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                First Name
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Jane"
+                                value={formData.firstName}
+                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Last Name
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Doe"
+                                value={formData.lastName}
+                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Role in Company
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Owner / Manager"
+                                value={formData.role}
+                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Username
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="janedoe_acme"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                              Company Email
+                            </label>
+                            <input
+                              type="email"
+                              placeholder="jane@acmemfg.ca"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Password
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  value={formData.password}
+                                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                  aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                  <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                                Confirm Password
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type={showConfirmPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  value={formData.confirmPassword}
+                                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                >
+                                  <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:flex-nowrap items-center justify-between gap-4 relative z-10">
+                        <p className="text-[11px] text-slate-500 sm:whitespace-nowrap">
+                          By creating an industrial storefront profile, you agree to our{' '}
+                          <a href="#" className="text-orange-400 hover:text-orange-300">
+                            Terms of Service
+                          </a>
+                          .
+                        </p>
+
+                        <div className="flex w-full sm:w-auto gap-4">
+                          <button
+                            type="button"
+                            onClick={() => setWizardStep(1)}
+                            className="w-full sm:w-auto bg-black/30 border border-white/10 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-white/5 transition-all whitespace-nowrap"
+                          >
+                            Back
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setError('');
+                              if (!formData.companyName || !formData.streetAddress || !formData.city || !formData.province) {
+                                setError(t('becomeSeller.errors.basicCompanyRequired'));
+                                return;
+                              }
+                              if (!validateStep(6)) return;
+                              handleSubmit();
+                            }}
+                            className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:shadow-[0_0_25px_rgba(249,115,22,0.6)] hover:scale-[1.03] transition-all duration-300 whitespace-nowrap"
+                          >
+                            Create Profile <i className="fa-solid fa-arrow-right ml-2"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 )}
 
@@ -1648,16 +1929,16 @@ export default function BecomeSellerPage() {
                 {wizardStep === 6 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">Create Your Account</h2>
-                      <p className="text-xs text-slate-500">Step 6 of 6</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.account.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSeller.account.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">First Name *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.firstName')} *</label>
                           <input
                             type="text"
-                            placeholder="John"
+                            placeholder={isFr ? "Jean" : "John"}
                             value={formData.firstName}
                             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1665,10 +1946,10 @@ export default function BecomeSellerPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Last Name *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.lastName')} *</label>
                           <input
                             type="text"
-                            placeholder="Doe"
+                            placeholder={isFr ? "Dupont" : "Doe"}
                             value={formData.lastName}
                             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1677,10 +1958,10 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Role/Position in Company *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.role')} *</label>
                         <input
                           type="text"
-                          placeholder="e.g., Procurement Manager, Owner, Operations Director"
+                          placeholder={isFr ? "ex. : Responsable achats, Propriétaire, Directeur des opérations" : "e.g., Procurement Manager, Owner, Operations Director"}
                           value={formData.role}
                           onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1688,10 +1969,10 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Username *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.username')} *</label>
                         <input
                           type="text"
-                          placeholder="yourcompanyname_marcan"
+                          placeholder={isFr ? "nomdelentreprise_marcan" : "yourcompanyname_marcan"}
                           value={formData.username}
                           onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1700,10 +1981,10 @@ export default function BecomeSellerPage() {
                         <p className="text-xs text-slate-500 mt-1">3-30 characters, letters, numbers, underscores, or hyphens only. Cannot be an email address.</p>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Email Address *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.email')} *</label>
                         <input
                           type="email"
-                          placeholder="your.email@company.com"
+                          placeholder={isFr ? "votre.courriel@entreprise.com" : "your.email@company.com"}
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1713,11 +1994,11 @@ export default function BecomeSellerPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Create Password *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.createPassword')} *</label>
                           <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
-                              placeholder="Create Password"
+                              placeholder={isFr ? "Créer un mot de passe" : "Create Password"}
                               value={formData.password}
                               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1733,11 +2014,11 @@ export default function BecomeSellerPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.confirmPassword')} *</label>
                           <div className="relative">
                             <input
                               type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirm Password"
+                              placeholder={isFr ? "Confirmer le mot de passe" : "Confirm Password"}
                               value={formData.confirmPassword}
                               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -1760,7 +2041,7 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        Back
+                        {t('becomeSeller.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
@@ -1769,9 +2050,9 @@ export default function BecomeSellerPage() {
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoading ? (
-                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...</span>
+                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('becomeSeller.account.creatingAccount')}</span>
                         ) : (
-                          'Complete Setup'
+                          t('becomeSeller.account.completeSetup')
                         )}
                       </button>
                     </div>
@@ -1791,9 +2072,9 @@ export default function BecomeSellerPage() {
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                 <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
               </div>
-              <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">Restart Registration?</h3>
+              <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">{t('becomeSeller.restartModal.title')}</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Are you sure you want to restart registration? All your progress will be lost and you'll need to start from the beginning.
+                {t('becomeSeller.restartModal.body')}
               </p>
             </div>
             <div className="flex gap-4">
@@ -1801,13 +2082,13 @@ export default function BecomeSellerPage() {
                 onClick={() => setShowRestartConfirm(false)}
                 className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
               >
-                Cancel
+                {t('becomeSeller.restartModal.cancel')}
               </button>
               <button
                 onClick={confirmRestart}
                 className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
               >
-                Restart
+                {t('becomeSeller.restartModal.restart')}
               </button>
             </div>
           </div>

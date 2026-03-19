@@ -24,9 +24,9 @@ export default function Sidebar() {
         { href: '/about', label: t('sidebar.about'), icon: 'fa-shield-halved' },
         { href: '/directory', label: t('sidebar.directory'), icon: 'fa-address-book' },
         { href: '/wishlist', label: t('sidebar.wishlist'), icon: 'fa-bullhorn' },
-        { href: '/marketplace', label: t('sidebar.marketplace'), icon: 'fa-shop' },
         { href: '/contact', label: t('sidebar.contact'), icon: 'fa-envelope' },
         { href: '/help', label: t('sidebar.help'), icon: 'fa-circle-question' },
+        { href: '/shop', label: t('sidebar.shop'), icon: 'fa-store' },
     ];
 
     // Check if user has a seller profile in the database
@@ -63,7 +63,8 @@ export default function Sidebar() {
         if (href === '/') {
             return pathname === '/';
         }
-        return pathname.startsWith(href);
+        const hrefPath = href.split('?')[0];
+        return pathname.startsWith(hrefPath);
     };
 
     return (
@@ -86,25 +87,40 @@ export default function Sidebar() {
             <nav className="flex-grow space-y-2">
                 {navItems.map((item) => {
                     const active = isActive(item.href);
+                    const isShopTab = item.href === '/shop';
                     return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${active ? 'text-white' : 'text-slate-400'
-                                } hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
-                        >
-                            <div
-                                className={`absolute inset-0 bg-marcan-red/10 transition-transform duration-300 ${active ? 'translate-x-0' : 'translate-x-[-100%] group-hover:translate-x-0'
-                                    }`}
-                            />
-                            <i className={`fa-solid ${item.icon} text-xl w-6 text-center`}></i>
-                            <span className="hidden lg:block font-semibold text-sm tracking-wide">{item.label}</span>
-                            {item.badge && (
-                                <span className="hidden lg:flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">
-                                    {item.badge}
-                                </span>
+                        <div key={item.href}>
+                            <Link
+                                href={item.href}
+                                className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${isShopTab
+                                    ? 'text-orange-400 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 shadow-[inset_0_0_20px_rgba(249,115,22,0.10)]'
+                                    : active ? 'text-white' : 'text-slate-400'
+                                  } hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
+                            >
+                                <div
+                                    className={`absolute inset-0 ${isShopTab ? 'bg-orange-500/10' : 'bg-marcan-red/10'} transition-transform duration-300 ${
+                                      isShopTab
+                                        ? 'translate-x-0'
+                                        : active
+                                          ? 'translate-x-0'
+                                          : 'translate-x-[-100%] group-hover:translate-x-0'
+                                    }
+                                        }`}
+                                />
+                                <i className={`fa-solid ${item.icon} text-xl w-6 text-center`}></i>
+                                <span className="hidden lg:block font-semibold text-sm tracking-wide">{item.label}</span>
+                                {item.badge && (
+                                    <span className="hidden lg:flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </Link>
+
+                            {/* Separation between Help Center and the Shop tab */}
+                            {item.href === '/help' && (
+                                <div className="my-2 h-px bg-white/10" style={{ pageBreakAfter: 'always' }} />
                             )}
-                        </Link>
+                        </div>
                     );
                 })}
 
