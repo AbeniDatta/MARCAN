@@ -19,7 +19,7 @@ function formatPrice(rawPrice: string) {
 export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json([]);
     }
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    // Find user's seller profile
-    const profile = await prisma.sellerProfile.findUnique({
-      where: { userId },
+    // Find user's supplier profile
+    const profile = await prisma.supplierProfile.findUnique({
+      where: { email: String(userId).toLowerCase() },
     });
 
     if (!profile) {
@@ -46,11 +46,9 @@ export async function GET(request: NextRequest) {
         profileId: profile.id,
       },
       include: {
-        sellerProfile: {
+        supplierProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -87,7 +85,7 @@ export async function GET(request: NextRequest) {
       return {
         id: listing.id,
         title: listing.title,
-        seller: listing.sellerProfile.companyName,
+        supplier: listing.supplierProfile.companyName,
         price: formatPrice(listing.price || '') || listing.price || '',
         badge: listing.badge || badge,
         badgeColor,

@@ -11,12 +11,12 @@ type ShopListingCard = {
     listingId: string;
     profileId: string;
 
-    // company / seller profile display (enriched from /api/profiles)
-    sellerName: string;
-    sellerIcon: string;
-    sellerLogoUrl?: string | null;
-    sellerTags: string[];
-    sellerEmail?: string | null;
+    // company / supplier profile display (enriched from /api/profiles)
+    supplierName: string;
+    supplierIcon: string;
+    supplierLogoUrl?: string | null;
+    supplierTags: string[];
+    supplierEmail?: string | null;
 
     // fields entered on create listing
     title: string;
@@ -29,7 +29,6 @@ type ShopListingCard = {
     badge?: string;
     badgeColor?: string;
     icon?: string | null;
-    primaryIntent?: string;
 };
 
 type StoreCard = {
@@ -40,10 +39,9 @@ type StoreCard = {
     icon: string;
     logoUrl?: string | null;
     tags: string[];
-    industryHubs?: string[];
+    industriesServed?: string[];
     province?: string;
     certifications?: Array<string | { code?: string; name?: string }>;
-    primaryIntent?: string;
     email?: string | null;
 };
 
@@ -79,6 +77,8 @@ const CERTIFICATIONS = [
 
 export default function ShopPage() {
     const { isAuthenticated, user, isMounted } = useAuth();
+    // Backward compatibility: existing accounts may still have legacy "seller" role.
+    const hasSupplierRole = user?.role === 'supplier' || user?.role === 'seller';
 
     const [isShopOwner, setIsShopOwner] = useState(false);
     const [shops, setShops] = useState<ShopListingCard[]>([]);
@@ -95,7 +95,7 @@ export default function ShopPage() {
         certification: '',
     });
     const [isDomReady, setIsDomReady] = useState(false);
-    const isSupplierOrStorefront = !!(isAuthenticated && (isShopOwner || user?.role === 'supplier'));
+    const isSupplierOrStorefront = !!(isAuthenticated && (isShopOwner || hasSupplierRole));
 
     const listingCategories = useMemo(() => {
         const unique = Array.from(
@@ -127,7 +127,7 @@ export default function ShopPage() {
             const searchableText = [
                 shop.title,
                 shop.description,
-                shop.sellerName,
+                shop.supplierName,
                 shop.location,
                 shop.listingType,
             ]
@@ -156,8 +156,8 @@ export default function ShopPage() {
             }
 
             if (storeFilters.industry) {
-                const storeIndustries = Array.isArray(store.industryHubs) && store.industryHubs.length > 0
-                    ? store.industryHubs
+                const storeIndustries = Array.isArray(store.industriesServed) && store.industriesServed.length > 0
+                    ? store.industriesServed
                     : (Array.isArray(store.tags) ? store.tags : []);
                 const hasIndustry = storeIndustries.some(
                     (hub) => String(hub).toLowerCase() === storeFilters.industry.toLowerCase()
@@ -237,23 +237,21 @@ export default function ShopPage() {
             try {
                 const res = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
                 if (!res.ok) {
-                    setIsShopOwner(false);
+                    setIsShopOwner(hasSupplierRole);
                     return;
                 }
 
                 const profile = await res.json();
-                setIsShopOwner(
-                    profile?.primaryIntent === 'sell' ||
-                    profile?.primaryIntent === 'both' ||
-                    profile?.primaryIntent === 'storefront'
-                );
+                // If a supplier profile exists, allow direct listing creation.
+                const hasSupplierProfile = !!profile?.id;
+                setIsShopOwner(hasSupplierProfile);
             } catch {
-                setIsShopOwner(user?.role === 'supplier');
+                setIsShopOwner(hasSupplierRole);
             }
         };
 
         runChecks();
-    }, [isMounted, isAuthenticated, user?.email, user?.role]);
+    }, [isMounted, isAuthenticated, user?.email, hasSupplierRole]);
 
     useEffect(() => {
         // "Our Shop" should be a collection of shop postings (similar to supplier listings),
@@ -292,22 +290,15 @@ export default function ShopPage() {
                         const profile = profileById.get(l?.profileId);
                         if (!profile) return null;
 
-                        const primaryIntent = profile?.primaryIntent;
-                        const isSellerIntent =
-                            primaryIntent === 'sell' ||
-                            primaryIntent === 'both' ||
-                            primaryIntent === 'storefront';
-                        if (!isSellerIntent) return null;
-
                         return {
                             listingId: l?.id,
                             profileId: l?.profileId,
 
-                            sellerName: l?.seller || profile?.name || 'Unknown',
-                            sellerIcon: profile?.icon || 'fa-industry',
-                            sellerLogoUrl: profile?.logoUrl,
-                            sellerTags: profile?.tags || [],
-                            sellerEmail: profile?.email || null,
+                            supplierName: l?.supplier || profile?.name || 'Unknown',
+                            supplierIcon: profile?.icon || 'fa-industry',
+                            supplierLogoUrl: profile?.logoUrl,
+                            supplierTags: profile?.tags || [],
+                            supplierEmail: profile?.email || null,
 
                             title: l?.title || '',
                             listingType: l?.listingType || '',
@@ -318,7 +309,6 @@ export default function ShopPage() {
                             badge: l?.badge,
                             badgeColor: l?.badgeColor,
                             icon: l?.icon,
-                            primaryIntent,
                         } as ShopListingCard;
                     })
                     .filter(Boolean) as ShopListingCard[];
@@ -421,12 +411,12 @@ export default function ShopPage() {
                                         {selectedListing.price || 'Negotiable'}
                                     </div>
 
-                                    {selectedListing.sellerEmail ? (
+                                    {selectedListing.supplierEmail ? (
                                         <a
-                                            href={`mailto:${selectedListing.sellerEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (selectedListing.title || 'Listing'))}`}
+                                            href={`mailto:${selectedListing.supplierEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (selectedListing.title || 'Listing'))}`}
                                             className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mb-3"
                                         >
-                                            <i className="fa-solid fa-envelope"></i> Email Seller
+                                            <i className="fa-solid fa-envelope"></i> Email Supplier
                                         </a>
                                     ) : (
                                         <button
@@ -434,7 +424,7 @@ export default function ShopPage() {
                                             disabled
                                             className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-slate-500 text-sm font-bold uppercase tracking-wider mb-3 cursor-not-allowed"
                                         >
-                                            Email Seller
+                                            Email Supplier
                                         </button>
                                     )}
 
@@ -444,21 +434,21 @@ export default function ShopPage() {
                                     <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Listed By</h4>
 
                                     <div className="flex items-center gap-4 mb-5">
-                                        {selectedListing.sellerLogoUrl ? (
+                                        {selectedListing.supplierLogoUrl ? (
                                             <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10 shadow-inner">
                                                 <img
-                                                    src={selectedListing.sellerLogoUrl}
-                                                    alt={selectedListing.sellerName}
+                                                    src={selectedListing.supplierLogoUrl}
+                                                    alt={selectedListing.supplierName}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
                                         ) : (
                                             <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 border border-white/10 shadow-inner">
-                                                <i className={`fa-solid ${selectedListing.sellerIcon || 'fa-industry'} text-xl`}></i>
+                                                <i className={`fa-solid ${selectedListing.supplierIcon || 'fa-industry'} text-xl`}></i>
                                             </div>
                                         )}
                                         <div>
-                                            <div className="text-sm font-bold text-white mb-1">{selectedListing.sellerName || 'Unknown company'}</div>
+                                            <div className="text-sm font-bold text-white mb-1">{selectedListing.supplierName || 'Unknown company'}</div>
                                             <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
                                                 <i className="fa-solid fa-circle-check"></i> Platform Member
                                             </div>
@@ -507,7 +497,7 @@ export default function ShopPage() {
                                 </div>
                             ) : isMounted ? (
                                 <Link
-                                    href="/become-seller?step=0"
+                                    href="/become-supplier?step=0"
                                     className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
                                 >
                                     <i className="fa-solid fa-plus mr-2"></i> Create your industrial storefront profile
@@ -612,7 +602,7 @@ export default function ShopPage() {
                                                     </h3>
                                                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
                                                         <i className="fa-solid fa-store text-orange-400 mr-1"></i>
-                                                        {shop.sellerName}
+                                                        {shop.supplierName}
                                                     </p>
 
                                                     <p className="text-xs text-slate-400 line-clamp-1 mb-4">
@@ -637,12 +627,12 @@ export default function ShopPage() {
                                                         >
                                                             View Listing
                                                         </button>
-                                                        {shop.sellerEmail ? (
+                                                        {shop.supplierEmail ? (
                                                             <a
-                                                                href={`mailto:${shop.sellerEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (shop.title || 'Listing'))}`}
+                                                                href={`mailto:${shop.supplierEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (shop.title || 'Listing'))}`}
                                                                 className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
                                                             >
-                                                                <i className="fa-solid fa-envelope"></i> Email Seller
+                                                                <i className="fa-solid fa-envelope"></i> Email Supplier
                                                             </a>
                                                         ) : null}
                                                     </div>
@@ -752,8 +742,11 @@ export default function ShopPage() {
                                         {filteredStores.map((store) => (
                                             <div
                                                 key={store.id}
-                                                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col"
+                                                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col relative"
                                             >
+                                                <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                                                    Storefront
+                                                </span>
                                                 <div className="flex justify-between items-start mb-4">
                                                     {store.logoUrl ? (
                                                         <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">

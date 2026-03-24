@@ -14,7 +14,7 @@ const BodySchema = z.object({
 const IntentSchema = z.object({
   province: z.string().optional(),   // "ON", "Ontario", etc.
   city: z.string().optional(),
-  intent: z.enum(['buy', 'sell']).optional(), // maps to Profile.primaryIntent
+  intent: z.enum(['buy', 'sell']).optional(),
   capabilityHints: z.array(z.object({
     type: z.enum(['PROCESS', 'MATERIAL', 'FINISH', 'CERTIFICATION', 'INDUSTRY', 'SERVICE', 'COMPANY_TYPE']),
     keywords: z.array(z.string()).min(1),
@@ -168,9 +168,7 @@ export async function POST(req: NextRequest) {
     if (intent.city) {
       where.city = { equals: intent.city, mode: 'insensitive' };
     }
-    if (intent.intent) {
-      where.primaryIntent = intent.intent;
-    }
+    // Supplier profiles no longer store intent; keep intent for NL parsing only.
 
     // Capability filtering:
     // For each requested type, require profile has at least one capability in that type group.
@@ -197,7 +195,7 @@ export async function POST(req: NextRequest) {
     // 4) Query profiles + taxonomy relations
     let profiles: any[] = [];
     try {
-      profiles = await prisma.sellerProfile.findMany({
+      profiles = await prisma.supplierProfile.findMany({
         where,
         take: 25,
         orderBy: [
@@ -213,7 +211,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
       // Fallback: query without relations if include fails
       console.warn('Could not load profiles with capabilities, querying without:', error.message);
-      profiles = await prisma.sellerProfile.findMany({
+      profiles = await prisma.supplierProfile.findMany({
         where,
         take: 25,
         orderBy: [

@@ -11,7 +11,7 @@ export async function DELETE(
 ) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json(
         {
@@ -27,10 +27,11 @@ export async function DELETE(
     }
 
     const { userId } = params;
+    const email = String(userId || '').trim().toLowerCase();
 
-    if (!userId) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'userId is required' },
+        { error: 'email is required' },
         {
           status: 400,
           headers: {
@@ -40,9 +41,9 @@ export async function DELETE(
       );
     }
 
-    // Find the seller profile
-    const profile = await prisma.sellerProfile.findUnique({
-      where: { userId },
+    // Find the supplier profile
+    const profile = await prisma.supplierProfile.findUnique({
+      where: { email },
       include: {
         listings: true,
       },
@@ -50,7 +51,7 @@ export async function DELETE(
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'Seller profile not found' },
+        { error: 'Supplier profile not found' },
         {
           status: 404,
           headers: {
@@ -70,18 +71,18 @@ export async function DELETE(
       console.log(`Deleted ${listingsCount} listings for profile ${profile.id}`);
     }
 
-    // Delete the seller profile (this will also cascade delete any remaining related records)
-    await prisma.sellerProfile.delete({
-      where: { userId },
+    // Delete the supplier profile (this will also cascade delete any remaining related records)
+    await prisma.supplierProfile.delete({
+      where: { email },
     });
 
-    console.log(`Deleted seller profile for userId: ${userId}`);
+    console.log(`Deleted supplier profile for email: ${email}`);
     console.log(`Deleted ${listingsCount} listings`);
 
     return NextResponse.json(
       {
         success: true,
-        message: 'Seller profile and all associated listings have been deleted',
+        message: 'Supplier profile and all associated listings have been deleted',
         deletedListings: listingsCount,
       },
       {

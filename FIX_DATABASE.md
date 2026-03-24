@@ -3,7 +3,7 @@
 ## The Problem
 You're getting this error:
 ```
-Invalid `prisma.sellerProfile.findUnique()` invocation:
+Invalid `prisma.supplierProfile.findUnique()` invocation:
 The column `(not available)` does not exist in the current database.
 ```
 
@@ -18,7 +18,7 @@ npm run db:push
 ```
 
 This will:
-- ✅ Create missing tables (`seller_profiles`, `buyer_profiles`)
+- ✅ Create missing tables (`supplier_profiles`, `buyer_profiles`)
 - ✅ Add missing columns
 - ✅ Fix foreign key relationships
 - ✅ Create all necessary indexes
@@ -53,13 +53,13 @@ If you're deploying on Render or another platform:
 
 ## What Gets Fixed
 
-- Renames `profiles` → `seller_profiles` (if needed)
-- Fixes `profile_capabilities.profile_id` → `seller_profile_id`
+- Renames `profiles` → `supplier_profiles` (if needed)
+- Fixes `profile_capabilities.profile_id` → `supplier_profile_id`
 - Creates `buyer_profiles` table
-- Adds missing columns: `first_name`, `last_name`, `email`, `typical_lead_time`, `industry_hubs`, `verified`
+- Adds missing columns: `first_name`, `last_name`, `email`, `typical_lead_time`, `industries_served`, `verified`
 - Fixes all foreign key relationships
 - Creates all indexes
 
 ## After Running the Fix
 
-Once the schema is synced, seller account creation will work properly. The temporary workaround in the code will handle edge cases, but you should still run `db:push` for a permanent fix.
+Once the schema is synced, supplier account creation will work properly. The temporary workaround in the code will handle edge cases, but you should still run `db:push` for a permanent fix.

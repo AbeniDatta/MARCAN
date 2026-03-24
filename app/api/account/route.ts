@@ -38,9 +38,9 @@ export async function POST(request: NextRequest) {
                 },
             });
 
-            // Mark seller profile (if any) as deactivated
-            await prisma.sellerProfile.updateMany({
-                where: { userId },
+            // Mark supplier profile (if any) as deactivated
+            await prisma.supplierProfile.updateMany({
+                where: { email: String(userId).toLowerCase() },
                 data: {
                     deactivated: true,
                     deactivatedAt: now,
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
                 },
             });
 
-            await prisma.sellerProfile.updateMany({
-                where: { userId },
+            await prisma.supplierProfile.updateMany({
+                where: { email: String(userId).toLowerCase() },
                 data: {
                     deactivated: false,
                     deactivatedAt: null,

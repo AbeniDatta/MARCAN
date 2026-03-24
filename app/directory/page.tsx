@@ -1,8 +1,8 @@
 'use client';
 
-import { Suspense, useState, useEffect, useMemo } from 'react';
+import { Suspense, useRef, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
@@ -36,7 +36,10 @@ const CERTIFICATIONS = [
 ];
 
 function DirectoryPageContent() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const hasRestoredScrollRef = useRef(false);
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -67,14 +70,59 @@ function DirectoryPageContent() {
   }, []);
 
   useEffect(() => {
-    const industryFromUrl = (searchParams.get('industry') || '').trim();
-    if (!industryFromUrl) return;
-
-    setFilters((prev) => {
-      if (prev.industry === industryFromUrl) return prev;
-      return { ...prev, industry: industryFromUrl };
+    setFilters({
+      search: (searchParams.get('search') || '').trim(),
+      industry: (searchParams.get('industry') || '').trim(),
+      province: (searchParams.get('province') || '').trim(),
+      certification: (searchParams.get('certification') || '').trim(),
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    if (hasRestoredScrollRef.current) return;
+
+    const savedScrollTop = sessionStorage.getItem('directory-scroll-top');
+    if (!savedScrollTop) return;
+
+    const targetY = Number(savedScrollTop);
+    if (!Number.isFinite(targetY)) {
+      sessionStorage.removeItem('directory-scroll-top');
+      return;
+    }
+
+    let cancelled = false;
+    const maxAttempts = 30;
+
+    const tryRestore = (attempt: number) => {
+      if (cancelled) return;
+      const container = scrollContainerRef.current;
+      if (!container) {
+        if (attempt < maxAttempts) {
+          setTimeout(() => tryRestore(attempt + 1), 100);
+        }
+        return;
+      }
+
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+      const nextScrollTop = Math.min(targetY, maxScroll);
+      container.scrollTop = nextScrollTop;
+
+      // Retry while async content is still affecting container height.
+      if (attempt < maxAttempts && maxScroll < targetY) {
+        setTimeout(() => tryRestore(attempt + 1), 100);
+        return;
+      }
+
+      hasRestoredScrollRef.current = true;
+      sessionStorage.removeItem('directory-scroll-top');
+    };
+
+    tryRestore(0);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allCompanies.length, aiSearchResults.length, isSearching]);
 
   // AI-powered search
   useEffect(() => {
@@ -124,8 +172,8 @@ function DirectoryPageContent() {
 
       // Industry filter
       if (filters.industry) {
-        const companyIndustries = Array.isArray(company.industryHubs) && company.industryHubs.length > 0
-          ? company.industryHubs
+        const companyIndustries = Array.isArray(company.industriesServed) && company.industriesServed.length > 0
+          ? company.industriesServed
           : (Array.isArray(company.tags) ? company.tags : []);
         const hasIndustry = companyIndustries.some(
           (hub: string) => String(hub).toLowerCase() === filters.industry.toLowerCase()
@@ -182,7 +230,7 @@ function DirectoryPageContent() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Company Directory" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-8 relative">
         <div className="mb-6">
           <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Explore</div>
           <h2 className="font-heading text-3xl font-bold text-white uppercase mb-6">Company Directory</h2>
@@ -311,7 +359,7 @@ function DirectoryPageContent() {
             {filteredCompanies.map((company) => (
               <div
                 key={company.id}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col"
+                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col"
               >
                 <div className="flex justify-between items-start mb-4">
                   {(company as any).logoUrl ? (
@@ -345,7 +393,23 @@ function DirectoryPageContent() {
                 )}
 
                 <Link
-                  href={`/profile?id=${company.id}`}
+                  href={`/profile?id=${company.id}&from=${encodeURIComponent(
+                    `${pathname}${(() => {
+                      const params = new URLSearchParams();
+                      if (filters.search.trim()) params.set('search', filters.search.trim());
+                      if (filters.industry.trim()) params.set('industry', filters.industry.trim());
+                      if (filters.province.trim()) params.set('province', filters.province.trim());
+                      if (filters.certification.trim()) params.set('certification', filters.certification.trim());
+                      const query = params.toString();
+                      return query ? `?${query}` : '';
+                    })()}`
+                  )}`}
+                  onClick={() => {
+                    sessionStorage.setItem(
+                      'directory-scroll-top',
+                      String(scrollContainerRef.current?.scrollTop || 0)
+                    );
+                  }}
                   className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
                 >
                   View Profile

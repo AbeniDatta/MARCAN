@@ -52,7 +52,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      You can participate on both sides of the marketplace, but buyer accounts and supplier company profiles are created and managed separately. In practice, that means you&apos;ll have one account for posting sourcing requests as a buyer, and a separate seller profile (with its own onboarding) if you want your company to appear in the Company Directory and Supplier Listings.
+                      You can participate on both sides of the marketplace, but buyer accounts and supplier company profiles are created and managed separately. In practice, that means you&apos;ll have one account for posting sourcing requests as a buyer, and a separate supplier profile (with its own onboarding) if you want your company to appear in the Company Directory and Supplier Listings.
                     </p>
                   </details>
 
@@ -64,7 +64,7 @@ export default function HelpPage() {
                       </span>
                     </summary>
                     <p className="text-slate-400 text-sm mt-3 leading-relaxed">
-                      First, complete the <span className="font-semibold">"Become a Seller"</span> onboarding to set up your supplier company profile. You can start this from the main navigation or from prompts on the Supplier Listings page, and you can either import your existing website for a fast AI-powered setup or fill out the form manually. Once your profile is saved, go to the <span className="font-semibold">Supplier Listings</span> page and click <span className="font-semibold">"Create Listing"</span> to publish equipment, materials, surplus parts, or production capacity for sale.
+                      First, complete the <span className="font-semibold">"Become a Supplier"</span> onboarding to set up your supplier company profile. You can start this from the main navigation or from prompts on the Supplier Listings page, and you can either import your existing website for a fast AI-powered setup or fill out the form manually. Once your profile is saved, go to the <span className="font-semibold">Supplier Listings</span> page and click <span className="font-semibold">"Create Listing"</span> to publish equipment, materials, surplus parts, or production capacity for sale.
                     </p>
                   </details>
 

@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
+    const db = prisma as any;
+    if (!db || typeof db.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({
         error: 'Database connection not available',
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     let body;
     try {
       body = await request.json();
-      console.log('Received profile data:', { userId: body.userId, companyName: body.companyName });
+      console.log('Received profile data:', { email: body.email || body.userId, companyName: body.companyName });
     } catch (parseError) {
       console.error('Error parsing request body:', parseError);
       return NextResponse.json({
@@ -38,7 +39,6 @@ export async function POST(request: NextRequest) {
     }
 
     const {
-      userId,
       firstName,
       lastName,
       email,
@@ -52,9 +52,6 @@ export async function POST(request: NextRequest) {
       aboutUs,
       capabilities,
       certifications,
-      selectedIcon,
-      logoUrl,
-      primaryIntent,
       // New wizard fields
       onboardingMethod,
       provincesServed,
@@ -72,15 +69,16 @@ export async function POST(request: NextRequest) {
       rfqEmail,
       phone,
       preferredContactMethod,
-      industryHubs,
+      industriesServed,
       // Additional profile attributes
       shippingCapability,
       minOrderQty,
     } = body;
 
-    if (!userId || !companyName || !streetAddress) {
+    const profileEmail = String(email || body.userId || '').trim().toLowerCase();
+    if (!profileEmail || !companyName || !streetAddress) {
       return NextResponse.json({
-        error: 'userId, companyName, and streetAddress are required'
+        error: 'email, companyName, and streetAddress are required'
       }, {
         status: 400,
         headers: {
@@ -91,15 +89,15 @@ export async function POST(request: NextRequest) {
 
     // Check if profile already exists
     // Query without relations first to avoid schema mismatch errors
-    let existingProfile: any = await prisma.sellerProfile.findUnique({
-      where: { userId },
+    let existingProfile: any = await db.supplierProfile.findUnique({
+      where: { email: profileEmail },
     });
 
     // If profile exists, try to load capabilities separately
     if (existingProfile) {
       try {
-        const capabilities = await prisma.profileCapability.findMany({
-          where: { sellerProfileId: existingProfile.id },
+        const capabilities = await db.profileCapability.findMany({
+          where: { supplierProfileId: existingProfile.id },
           include: { capability: true },
         });
         existingProfile.profileCapabilities = capabilities;
@@ -208,7 +206,7 @@ export async function POST(request: NextRequest) {
     const profileData: any = {
       firstName: firstName || null,
       lastName: lastName || null,
-      email: email || userId || null, // Use userId as fallback for email
+      email: profileEmail,
       companyName,
       jobTitle: jobTitle || null,
       businessNumber: businessNumber || null,
@@ -225,14 +223,11 @@ export async function POST(request: NextRequest) {
       certifications: mapCapabilityNames(certifications, 'CERTIFICATION'),
       shippingCapability: shippingCapability || null,
       minOrderQty: normalizedMinOrderQty,
-      selectedIcon: selectedIcon || null,
-      logoUrl: logoUrl || null,
-      primaryIntent: primaryIntent || 'sell', // Default to 'sell' for seller signup
       // New fields
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
       typicalJobSize: typicalJobSize || null,
-      industryHubs: industryHubs || [],
+      industriesServed: industriesServed || [],
       leadTimeMinDays: normalizedLeadTimeMin,
       leadTimeMaxDays: normalizedLeadTimeMax,
       maxPartSizeMmX: normalizedMaxX,
@@ -252,23 +247,19 @@ export async function POST(request: NextRequest) {
     if (existingProfile) {
       // Delete existing profile capabilities before recreating
       if (existingProfile.profileCapabilities.length > 0) {
-        await prisma.profileCapability.deleteMany({
-          where: { sellerProfileId: existingProfile.id },
+        await db.profileCapability.deleteMany({
+          where: { supplierProfileId: existingProfile.id },
         });
       }
 
       // Update existing profile
-      profile = await prisma.sellerProfile.update({
-        where: { userId },
+      profile = await db.supplierProfile.update({
+        where: { email: profileEmail },
         data: profileData,
       });
     } else {
-      // Create new profile - userId is required for creation
-      profile = await prisma.sellerProfile.create({
-        data: {
-          ...profileData,
-          userId, // userId must be included in the data object for create
-        },
+      profile = await db.supplierProfile.create({
+        data: profileData,
       });
     }
 
@@ -293,9 +284,9 @@ export async function POST(request: NextRequest) {
         ...(finishes || []),
       ]);
 
-      await prisma.profileCapability.createMany({
+      await db.profileCapability.createMany({
         data: capabilityIds.map((capabilityId) => ({
-          sellerProfileId: profile.id,
+          supplierProfileId: profile.id,
           capabilityId,
           isCore: coreCapabilityIds.has(capabilityId),
           source: 'signup',
@@ -349,11 +340,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET all profiles (public - for directory) or single profile by userId
+// GET all profiles (public - for directory) or single profile by email
 export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
+    const db = prisma as any;
+    if (!db || typeof db.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({
         error: 'Database connection not available',
@@ -366,16 +358,17 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if userId query parameter is provided (for single profile fetch)
+    // Check if email query parameter is provided (legacy key userId is still accepted)
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
+    const email = (searchParams.get('email') || userId || '').trim().toLowerCase();
     const profileId = searchParams.get('id');
 
     // Fetch single profile by profile id (used by `/profile?id=...`).
     // This bypasses directory eligibility filtering so storefront profiles can be viewed even if excluded from the Network Directory.
     if (profileId) {
       // Fetch single profile by id with capabilities for rich display
-      let profile: any = await prisma.sellerProfile.findUnique({
+      let profile: any = await db.supplierProfile.findUnique({
         where: { id: profileId },
       });
 
@@ -391,8 +384,8 @@ export async function GET(request: NextRequest) {
 
       // Load capabilities separately to avoid relation errors
       try {
-        const capabilities = await prisma.profileCapability.findMany({
-          where: { sellerProfileId: profile.id },
+        const capabilities = await db.profileCapability.findMany({
+          where: { supplierProfileId: profile.id },
           include: { capability: true },
         });
         profile.profileCapabilities = capabilities;
@@ -428,12 +421,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           id: profile.id,
-          userId: profile.userId,
+          userId: profile.email,
           name: profile.companyName,
           location,
           description: profile.aboutUs || 'No description available.',
-          icon: profile.selectedIcon || 'fa-industry',
-          logoUrl: profile.logoUrl,
+          icon: 'fa-industry',
+          logoUrl: null,
           tags,
           capabilities: profile.capabilities,
           certifications: profile.certifications,
@@ -445,9 +438,8 @@ export async function GET(request: NextRequest) {
           streetAddress: profile.streetAddress,
           businessNumber: profile.businessNumber,
           jobTitle: profile.jobTitle,
-          primaryIntent: profile.primaryIntent,
           capabilitiesByType,
-          email: profile.userId, // expose email explicitly for convenience
+          email: profile.email,
           aboutUs: profile.aboutUs,
         },
         {
@@ -456,10 +448,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (userId) {
-      // Fetch single profile by userId with capabilities for rich display in My Account
-      let profile: any = await prisma.sellerProfile.findUnique({
-        where: { userId },
+    if (email) {
+      // Fetch single profile by email with capabilities for rich display in My Account
+      let profile: any = await db.supplierProfile.findUnique({
+        where: { email },
       });
 
       if (!profile) {
@@ -475,8 +467,8 @@ export async function GET(request: NextRequest) {
 
       // Load capabilities separately to avoid relation errors
       try {
-        const capabilities = await prisma.profileCapability.findMany({
-          where: { sellerProfileId: profile.id },
+        const capabilities = await db.profileCapability.findMany({
+          where: { supplierProfileId: profile.id },
           include: { capability: true },
         });
         profile.profileCapabilities = capabilities;
@@ -509,7 +501,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         ...profile,
         capabilitiesByType,
-        email: profile.userId, // expose email explicitly for convenience
+        email: profile.email,
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -520,19 +512,17 @@ export async function GET(request: NextRequest) {
     // Otherwise, return all profiles (existing behavior)
     const includeStorefront = searchParams.get('includeStorefront') === 'true';
 
-    const profiles = await prisma.sellerProfile.findMany({
+    const profiles = await db.supplierProfile.findMany({
       where: {
         ...(includeStorefront
           ? {
             deactivated: false,
-            primaryIntent: { in: ['sell', 'both', 'storefront'] },
+            searchable: true,
           }
           : {
             deactivated: false,
             OR: [
-              { primaryIntent: { in: ['sell', 'both'] } },
-              // For Network Directory: include searchable suppliers only (exclude storefront profiles).
-              { searchable: true, primaryIntent: { not: 'storefront' } },
+              { searchable: true },
             ],
           }),
       },
@@ -542,7 +532,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format the response to match the frontend expectations
-    const formattedProfiles = profiles.map((profile) => {
+    const formattedProfiles = profiles.map((profile: any) => {
       // Create tags from capabilities
       const tags = profile.capabilities.slice(0, 3);
 
@@ -554,12 +544,12 @@ export async function GET(request: NextRequest) {
 
       return {
         id: profile.id,
-        userId: profile.userId, // Include userId for matching user profiles
+        userId: profile.email, // Compatibility key used by frontend auth matching
         name: profile.companyName,
         location,
         description: profile.aboutUs || 'No description available.',
-        icon: profile.selectedIcon || 'fa-industry',
-        logoUrl: profile.logoUrl,
+        icon: 'fa-industry',
+        logoUrl: null,
         tags,
         capabilities: profile.capabilities,
         certifications: profile.certifications,
@@ -571,9 +561,8 @@ export async function GET(request: NextRequest) {
         streetAddress: profile.streetAddress,
         businessNumber: profile.businessNumber,
         jobTitle: profile.jobTitle,
-        industryHubs: profile.industryHubs,
+        industriesServed: profile.industriesServed,
         verified: profile.verified,
-        primaryIntent: profile.primaryIntent, // Include primaryIntent
       };
     });
 

@@ -56,4 +56,4 @@ Once you regenerate the Prisma client:
 
 ## Quick Test
 
-After regenerating, try creating a seller account again. The error should be resolved!
+After regenerating, try creating a supplier account again. The error should be resolved!

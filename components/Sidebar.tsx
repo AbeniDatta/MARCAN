@@ -16,7 +16,7 @@ interface NavItem {
 export default function Sidebar() {
     const pathname = usePathname();
     const { isAuthenticated, user, logout, isMounted } = useAuth();
-    const [hasSellerProfile, setHasSellerProfile] = useState(false);
+    const [hasSupplierProfile, setHasSupplierProfile] = useState(false);
     const { t } = useI18n();
 
     const navItems: NavItem[] = [
@@ -29,7 +29,7 @@ export default function Sidebar() {
         { href: '/shop', label: t('sidebar.shop'), icon: 'fa-store' },
     ];
 
-    // Check if user has a seller profile in the database
+    // Check if user has a supplier profile in the database
     useEffect(() => {
         if (isMounted && isAuthenticated && user?.email) {
             fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
@@ -43,19 +43,19 @@ export default function Sidebar() {
                     return res.json();
                 })
                 .then((profile) => {
-                    if (profile && (profile.primaryIntent === 'sell' || profile.primaryIntent === 'both')) {
-                        setHasSellerProfile(true);
+                    if (profile?.id) {
+                        setHasSupplierProfile(true);
                     } else {
-                        setHasSellerProfile(false);
+                        setHasSupplierProfile(false);
                     }
                 })
                 .catch((err) => {
-                    console.error('Error checking seller profile:', err);
+                    console.error('Error checking supplier profile:', err);
                     // Fallback to localStorage role check
-                    setHasSellerProfile(user?.role === 'supplier');
+                    setHasSupplierProfile(user?.role === 'supplier');
                 });
         } else {
-            setHasSellerProfile(false);
+            setHasSupplierProfile(false);
         }
     }, [isMounted, isAuthenticated, user?.email, user?.role]);
 

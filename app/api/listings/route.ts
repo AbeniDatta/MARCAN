@@ -29,11 +29,9 @@ export async function GET() {
         active: true,
       },
       include: {
-        sellerProfile: {
+        supplierProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -71,7 +69,7 @@ export async function GET() {
         id: listing.id,
         profileId: listing.profileId,
         title: listing.title,
-        seller: listing.sellerProfile?.companyName || 'Unknown',
+        supplier: listing.supplierProfile?.companyName || 'Unknown',
         price: formatPrice(listing.price || '') || listing.price || '',
         badge: listing.badge || badge,
         badgeColor,
@@ -98,7 +96,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.sellerProfile?.findUnique !== 'function') {
+    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -117,14 +115,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Enforce: only suppliers can create supplier listings
-    // (We use presence of a seller profile as the source of truth.)
-    const profile = await prisma.sellerProfile.findUnique({
-      where: { userId },
+    // (We use presence of a supplier profile as the source of truth.)
+    const profile = await prisma.supplierProfile.findUnique({
+      where: { email: String(userId).toLowerCase() },
     });
 
     if (!profile) {
       return NextResponse.json(
-        { error: 'Only supplier accounts can create supplier listings. Please complete your seller profile first.' },
+        { error: 'Only supplier accounts can create supplier listings. Please complete your supplier profile first.' },
         { status: 403 }
       );
     }
@@ -143,11 +141,9 @@ export async function POST(request: NextRequest) {
         active: true,
       },
       include: {
-        sellerProfile: {
+        supplierProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
           },
         },
       },
@@ -181,7 +177,7 @@ export async function POST(request: NextRequest) {
       id: listing.id,
       profileId: listing.profileId,
       title: listing.title,
-      seller: listing.sellerProfile?.companyName || 'Unknown',
+      supplier: listing.supplierProfile?.companyName || 'Unknown',
       price: formatPrice(listing.price || '') || listing.price || '',
       badge: listing.badge || badge,
       badgeColor,

@@ -240,7 +240,7 @@ export default function ShopLoginPage() {
                         <div className="text-center mt-6 text-xs text-slate-500">
                             Don't have an Industrial Storefront Profile?{' '}
                             <Link
-                                href="/become-seller?step=0"
+                                href="/become-supplier?step=0"
                                 className="text-orange-400 font-bold hover:text-orange-300"
                             >
                                 Create one now

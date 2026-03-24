@@ -9,10 +9,10 @@ import { useI18n } from '@/contexts/I18nContext';
 export default function MarketplacePage() {
   const { isAuthenticated, user, isMounted } = useAuth();
   const { t } = useI18n();
-  const [isSeller, setIsSeller] = useState(false);
+  const [isSupplier, setIsSupplier] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
 
-  // Check if user has a seller profile
+  // Check if user has a supplier profile
   useEffect(() => {
     if (isMounted && isAuthenticated && user?.email) {
       fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
@@ -28,22 +28,20 @@ export default function MarketplacePage() {
         .then((profile) => {
           if (
             profile &&
-            (profile.primaryIntent === 'sell' ||
-              profile.primaryIntent === 'both' ||
-              profile.primaryIntent === 'storefront')
+            true
           ) {
-            setIsSeller(true);
+            setIsSupplier(true);
           } else {
-            setIsSeller(false);
+            setIsSupplier(false);
           }
         })
         .catch((err) => {
-          console.error('Error checking seller profile:', err);
+          console.error('Error checking supplier profile:', err);
           // Fallback to localStorage role check
-          setIsSeller(user?.role === 'supplier');
+          setIsSupplier(user?.role === 'supplier');
         });
     } else {
-      setIsSeller(false);
+      setIsSupplier(false);
     }
   }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
@@ -81,14 +79,14 @@ export default function MarketplacePage() {
             </h2>
           </div>
           <div className="flex flex-col items-end gap-2">
-            {isMounted && isAuthenticated && isSeller ? (
+            {isMounted && isAuthenticated && isSupplier ? (
               <Link
                 href="/create-listing"
                 className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center"
               >
                 <i className="fa-solid fa-plus mr-2"></i> {t('marketplace.createListing')}
               </Link>
-            ) : isMounted && isAuthenticated && !isSeller ? (
+            ) : isMounted && isAuthenticated && !isSupplier ? (
               <>
                 <button
                   disabled
@@ -155,7 +153,7 @@ export default function MarketplacePage() {
                     <span className="font-bold text-marcan-red text-sm">{listing.price}</span>
                   </div>
                   <div className="text-[10px] text-slate-500 mb-2">
-                    {t('marketplace.sellerLabel')}: {listing.seller}
+                    {t('marketplace.supplierLabel')}: {listing.supplier}
                   </div>
                   {listing.location && (
                     <div className="text-[10px] text-slate-500 mb-4">

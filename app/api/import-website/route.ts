@@ -623,7 +623,7 @@ Common signals:
 
 • "distributor of"
 • "supplier of"
-• "reseller of"
+• "resupplier of"
 • "authorized distributor"
 
 DO NOT use Distributor if they manufacture parts.
@@ -892,7 +892,7 @@ JSON SCHEMA
   "finishes": array of strings,
   "certifications": array of strings,
   "industries": array of strings,
-  "industryHubs": array of strings (each MUST be exactly one of: "Precision Machining", "Foundries & Casting", "Surface Finishing", "Tooling & Molds", "Automation"),
+  "industriesServed": array of strings (each MUST be exactly one of: "Precision Machining", "Foundries & Casting", "Surface Finishing", "Tooling & Molds", "Automation"),
   "typicalJobSize": "PROTOTYPE" | "LOW_VOLUME" | "MEDIUM_VOLUME" | "HIGH_VOLUME" | null,
   "leadTimeMinDays": number or null,
   "leadTimeMaxDays": number or null,
@@ -1010,7 +1010,7 @@ Website text content from all pages:\n\n${extractedText}`,
         };
 
         // Normalize industry hubs to the fixed MARCAN list
-        const rawIndustryHubs: string[] = Array.isArray(extractedData.industryHubs) ? extractedData.industryHubs : [];
+        const rawIndustryHubs: string[] = Array.isArray(extractedData.industriesServed) ? extractedData.industriesServed : [];
         const normalizedIndustryHubs = Array.from(
             new Set(
                 rawIndustryHubs
@@ -1053,7 +1053,7 @@ Website text content from all pages:\n\n${extractedText}`,
             otherCertifications: certificationsMatch.unmatched.filter(isValidValue).join(', '),
             industries: industriesMatch.matched,
             otherIndustries: industriesMatch.unmatched.filter(isValidValue).join(', '),
-            industryHubs: normalizedIndustryHubs,
+            industriesServed: normalizedIndustryHubs,
             typicalJobSize: extractedData.typicalJobSize || null,
             leadTimeMinDays: extractedData.leadTimeMinDays ? extractedData.leadTimeMinDays.toString() : '',
             leadTimeMaxDays: extractedData.leadTimeMaxDays ? extractedData.leadTimeMaxDays.toString() : '',

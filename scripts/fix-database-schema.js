@@ -22,7 +22,7 @@ async function fixSchema() {
 
         // Read the migration SQL file
         const migrationSQL = fs.readFileSync(
-            path.join(__dirname, '../prisma/migrations/sync_seller_profiles_schema.sql'),
+            path.join(__dirname, '../prisma/migrations/sync_supplier_profiles_schema.sql'),
             'utf8'
         );
 

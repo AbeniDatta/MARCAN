@@ -25,8 +25,8 @@ const CANADIAN_PROVINCES = [
 export default function CreateListingPage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
-  const [isSeller, setIsSeller] = useState(false);
-  const [isCheckingSeller, setIsCheckingSeller] = useState(true);
+  const [isSupplier, setIsSupplier] = useState(false);
+  const [isCheckingSupplier, setIsCheckingSupplier] = useState(true);
   const [formData, setFormData] = useState({
     itemName: '',
     listingType: '',
@@ -87,7 +87,7 @@ export default function CreateListingPage() {
     }
   };
 
-  // Check if user has a seller profile
+  // Check if user has a supplier profile
   useEffect(() => {
     if (isMounted && !isAuthenticated) {
       router.replace('/login');
@@ -95,7 +95,7 @@ export default function CreateListingPage() {
     }
 
     if (isMounted && isAuthenticated && user?.email) {
-      setIsCheckingSeller(true);
+      setIsCheckingSupplier(true);
       fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
         .then((res) => {
           if (!res.ok) {
@@ -109,35 +109,33 @@ export default function CreateListingPage() {
         .then((profile) => {
           if (
             profile &&
-            (profile.primaryIntent === 'sell' ||
-              profile.primaryIntent === 'both' ||
-              profile.primaryIntent === 'storefront')
+            true
           ) {
-            setIsSeller(true);
+            setIsSupplier(true);
           } else {
-            setIsSeller(false);
-            // Redirect to my-account if not a seller
+            setIsSupplier(false);
+            // Redirect to my-account if not a supplier
             router.replace('/my-account');
           }
         })
         .catch((err) => {
-          console.error('Error checking seller profile:', err);
+          console.error('Error checking supplier profile:', err);
           // Fallback to localStorage role check
           const hasSupplierRole = user?.role === 'supplier';
-          setIsSeller(hasSupplierRole);
+          setIsSupplier(hasSupplierRole);
           if (!hasSupplierRole) {
             router.replace('/my-account');
           }
         })
         .finally(() => {
-          setIsCheckingSeller(false);
+          setIsCheckingSupplier(false);
         });
     } else {
-      setIsCheckingSeller(false);
+      setIsCheckingSupplier(false);
     }
   }, [isMounted, isAuthenticated, user?.email, user?.role, router]);
 
-  if (!isMounted || !isAuthenticated || isCheckingSeller || !isSeller) {
+  if (!isMounted || !isAuthenticated || isCheckingSupplier || !isSupplier) {
     return null;
   }
 

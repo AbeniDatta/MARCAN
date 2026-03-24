@@ -103,7 +103,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Option B: Supplier / Seller */}
+                {/* Option B: Supplier / Supplier */}
                 <div className="group glass-card border border-marcan-red/50 bg-marcan-red/5 hover:bg-marcan-red/10 rounded-3xl p-8 text-left transition-all duration-300 h-full flex flex-col">
                   <div className="flex items-center gap-5 mb-4">
                     <div className="w-20 h-20 rounded-full bg-marcan-red/20 flex items-center justify-center text-marcan-red">
@@ -136,7 +136,7 @@ export default function SignupPage() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            const base = '/become-seller?start=import';
+                            const base = '/become-supplier?start=import';
                             const urlParam = supplierWebsite.trim()
                               ? `&url=${encodeURIComponent(supplierWebsite.trim())}`
                               : '';
@@ -149,7 +149,7 @@ export default function SignupPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          const base = '/become-seller?start=import';
+                          const base = '/become-supplier?start=import';
                           const urlParam = supplierWebsite.trim()
                             ? `&url=${encodeURIComponent(supplierWebsite.trim())}`
                             : '';
@@ -165,7 +165,7 @@ export default function SignupPage() {
                       Don&apos;t have a website or prefer to fill it out manually?{' '}
                       <button
                         type="button"
-                        onClick={() => router.push('/become-seller?start=manual')}
+                        onClick={() => router.push('/become-supplier?start=manual')}
                         className="text-marcan-red font-bold hover:text-white underline underline-offset-4"
                       >
                         Click here

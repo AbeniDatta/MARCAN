@@ -113,7 +113,7 @@ function SearchPageContent() {
   const filteredCompanies = useMemo(() => {
     return results.companies.filter((company) => {
       if (filters.industry) {
-        const companyIndustries = Array.isArray(company.industryHubs) ? company.industryHubs : [];
+        const companyIndustries = Array.isArray(company.industriesServed) ? company.industriesServed : [];
         const hasIndustry = companyIndustries.some(
           (hub: string) => String(hub).toLowerCase() === filters.industry.toLowerCase()
         );
@@ -170,17 +170,17 @@ function SearchPageContent() {
         const targetCode = filters.province.toUpperCase();
         const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
         const locationSuffix = String(listing.location || '').split(',').pop()?.trim().toUpperCase() || '';
-        const sellerProvince = String(listing.sellerProvince || '').toUpperCase();
+        const supplierProvince = String(listing.supplierProvince || '').toUpperCase();
         const locationText = String(listing.location || '').toLowerCase();
         const provinceMatch =
           locationSuffix === targetCode ||
-          sellerProvince === targetCode ||
+          supplierProvince === targetCode ||
           locationText.includes(targetName);
         if (!provinceMatch) return false;
       }
 
       if (filters.certification) {
-        const certs = Array.isArray(listing.sellerCertifications) ? listing.sellerCertifications : [];
+        const certs = Array.isArray(listing.supplierCertifications) ? listing.supplierCertifications : [];
         const certMatch = certs.some((cert: any) => {
           if (typeof cert === 'string') return cert.toLowerCase() === filters.certification.toLowerCase();
           return (
@@ -503,7 +503,7 @@ function SearchPageContent() {
                                   )}
                                 </div>
                                 <div className="text-[10px] text-slate-500 mb-2">
-                                  Seller: {listing.seller}
+                                  Supplier: {listing.supplier}
                                 </div>
                                 {listing.location && (
                                   <div className="text-[10px] text-slate-500 mb-4">

@@ -26,6 +26,7 @@ interface CompanyProfile {
 function ProfilePageContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get('id');
+    const returnTo = searchParams.get('from') || '/directory';
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [userData, setUserData] = useState<any>(null);
 
@@ -58,7 +59,7 @@ function ProfilePageContent() {
                 <div className="flex-1 overflow-y-auto p-8 relative">
                     <div className="text-center py-12">
                         <p className="text-slate-400">Company not found.</p>
-                        <Link href="/directory" className="text-marcan-red hover:text-white mt-4 inline-block">
+                        <Link href={returnTo} className="text-marcan-red hover:text-white mt-4 inline-block">
                             Back to Directory
                         </Link>
                     </div>
@@ -95,7 +96,7 @@ function ProfilePageContent() {
 
             <div className="flex-1 overflow-y-auto p-8 relative">
                 <Link
-                    href="/directory"
+                    href={returnTo}
                     className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                 >
                     <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Directory

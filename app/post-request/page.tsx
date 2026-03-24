@@ -20,7 +20,7 @@ export default function PostRequestPage() {
         targetPrice: '',
     });
 
-    // Determine role from DB (source of truth): if seller profile exists -> supplier
+    // Determine role from DB (source of truth): if supplier profile exists -> supplier
     useEffect(() => {
         if (!isMounted || !isAuthenticated || !user?.email) {
             setIsSupplier(false);
@@ -38,9 +38,7 @@ export default function PostRequestPage() {
             .then((profile) => {
                 if (
                     profile &&
-                    (profile.primaryIntent === 'sell' ||
-                        profile.primaryIntent === 'both' ||
-                        profile.primaryIntent === 'storefront')
+                    true
                 ) {
                     setIsSupplier(true);
                 } else {
@@ -48,7 +46,7 @@ export default function PostRequestPage() {
                 }
             })
             .catch((err) => {
-                console.error('Error checking seller profile:', err);
+                console.error('Error checking supplier profile:', err);
                 // Fallback to local role snapshot
                 setIsSupplier(user?.role === 'supplier');
             });

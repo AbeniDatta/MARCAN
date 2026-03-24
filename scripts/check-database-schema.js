@@ -18,14 +18,14 @@ async function checkSchema() {
   try {
     console.log('🔍 Checking database schema...\n');
 
-    // Check if seller_profiles table exists
-    const sellerProfilesCheck = await client.query(`
+    // Check if supplier_profiles table exists
+    const supplierProfilesCheck = await client.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
-        WHERE table_name = 'seller_profiles'
+        WHERE table_name = 'supplier_profiles'
       );
     `);
-    console.log('✅ seller_profiles table exists:', sellerProfilesCheck.rows[0].exists);
+    console.log('✅ supplier_profiles table exists:', supplierProfilesCheck.rows[0].exists);
 
     // Check if profiles table exists (old name)
     const profilesCheck = await client.query(`
@@ -48,33 +48,33 @@ async function checkSchema() {
       console.log(`   - ${col.column_name} (${col.data_type})`);
     });
 
-    // Check if seller_profile_id exists
-    const hasSellerProfileId = profileCapabilitiesColumns.rows.some(
-      col => col.column_name === 'seller_profile_id'
+    // Check if supplier_profile_id exists
+    const hasSupplierProfileId = profileCapabilitiesColumns.rows.some(
+      col => col.column_name === 'supplier_profile_id'
     );
     const hasProfileId = profileCapabilitiesColumns.rows.some(
       col => col.column_name === 'profile_id'
     );
 
     console.log('\n🔑 Foreign Key Column Check:');
-    console.log('   seller_profile_id exists:', hasSellerProfileId);
+    console.log('   supplier_profile_id exists:', hasSupplierProfileId);
     console.log('   profile_id exists (old):', hasProfileId);
 
-    if (hasProfileId && !hasSellerProfileId) {
-      console.log('\n❌ PROBLEM FOUND: profile_capabilities has "profile_id" but needs "seller_profile_id"');
+    if (hasProfileId && !hasSupplierProfileId) {
+      console.log('\n❌ PROBLEM FOUND: profile_capabilities has "profile_id" but needs "supplier_profile_id"');
       console.log('   Run the migration script to fix this!');
     }
 
-    // Check seller_profiles columns
-    if (sellerProfilesCheck.rows[0].exists) {
-      const sellerProfilesColumns = await client.query(`
+    // Check supplier_profiles columns
+    if (supplierProfilesCheck.rows[0].exists) {
+      const supplierProfilesColumns = await client.query(`
         SELECT column_name, data_type, is_nullable
         FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles'
+        WHERE table_name = 'supplier_profiles'
         ORDER BY ordinal_position;
       `);
 
-      console.log('\n📋 seller_profiles columns:');
+      console.log('\n📋 supplier_profiles columns:');
       const requiredColumns = [
         'first_name', 'last_name', 'email', 'typical_lead_time',
         'industry_hubs', 'verified', 'searchable', 'profile_completeness_score',
@@ -82,7 +82,7 @@ async function checkSchema() {
         'rfq_email', 'preferred_contact_method'
       ];
 
-      const existingColumns = sellerProfilesColumns.rows.map(col => col.column_name);
+      const existingColumns = supplierProfilesColumns.rows.map(col => col.column_name);
       requiredColumns.forEach(col => {
         const exists = existingColumns.includes(col);
         const status = exists ? '✅' : '❌ MISSING';

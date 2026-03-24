@@ -183,7 +183,7 @@ export default function HomePage() {
                       <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
                       <div className="text-white text-sm font-bold tracking-wide">2. Request or List</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Sellers list surplus materials, equipment, or available capacity.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Suppliers list surplus materials, equipment, or available capacity.</div>
                   </div>
                 </div>
 

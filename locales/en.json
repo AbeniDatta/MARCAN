@@ -48,11 +48,11 @@
     "loginToCreate": "Please log in or sign up to create a listing",
     "onlySuppliersNotice": "Only supplier accounts can post supplier listings.",
     "noListings": "No supplier listings available yet.",
-    "sellerLabel": "Seller",
+    "supplierLabel": "Supplier",
     "viewListing": "View Listing"
   },
-  "becomeSeller": {
-    "breadcrumb": "Become a Seller",
+  "becomeSupplier": {
+    "breadcrumb": "Become a Supplier",
     "changeOption": "Change Option",
     "restart": "Restart",
     "companyBasics": {

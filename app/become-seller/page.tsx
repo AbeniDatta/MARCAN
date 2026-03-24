@@ -43,7 +43,7 @@ const CANADIAN_PROVINCES = [
   { code: 'NU', name: 'Nunavut' },
 ];
 
-export default function BecomeSellerPage() {
+export default function BecomeSupplierPage() {
   const router = useRouter();
   const { t, lang } = useI18n();
   const isFr = lang === 'fr';
@@ -109,7 +109,7 @@ export default function BecomeSellerPage() {
     // Step 4
     certifications: [] as string[], // capability IDs
     industries: [] as string[], // capability IDs
-    industryHubs: [] as string[],
+    industriesServed: [] as string[],
     otherCertifications: '', // custom certifications not in list
     otherIndustries: '', // custom industries not in list
     aboutUs: '',
@@ -121,7 +121,6 @@ export default function BecomeSellerPage() {
     firstName: '',
     lastName: '',
     role: '',
-    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -171,7 +170,7 @@ export default function BecomeSellerPage() {
   // Load saved form data from localStorage
   useEffect(() => {
     if (isMounted && currentUser?.email) {
-      const savedDataKey = `seller_registration_${currentUser.email}`;
+      const savedDataKey = `supplier_registration_${currentUser.email}`;
       const savedData = localStorage.getItem(savedDataKey);
       if (savedData) {
         try {
@@ -186,7 +185,7 @@ export default function BecomeSellerPage() {
               finishes: Array.isArray(parsed.formData.finishes) ? parsed.formData.finishes : [],
               certifications: Array.isArray(parsed.formData.certifications) ? parsed.formData.certifications : [],
               industries: Array.isArray(parsed.formData.industries) ? parsed.formData.industries : [],
-              industryHubs: Array.isArray(parsed.formData.industryHubs) ? parsed.formData.industryHubs : [],
+              industriesServed: Array.isArray(parsed.formData.industriesServed) ? parsed.formData.industriesServed : [],
               typicalJobSize: Array.isArray(parsed.formData.typicalJobSize)
                 ? parsed.formData.typicalJobSize
                 : parsed.formData.typicalJobSize
@@ -213,7 +212,7 @@ export default function BecomeSellerPage() {
   // Save form data to localStorage whenever it changes (debounced)
   useEffect(() => {
     if (isMounted && currentUser?.email) {
-      const savedDataKey = `seller_registration_${currentUser.email}`;
+      const savedDataKey = `supplier_registration_${currentUser.email}`;
       const dataToSave = {
         formData,
         lastCompletedStep,
@@ -302,7 +301,7 @@ export default function BecomeSellerPage() {
             rfqEmail: importedData.rfqEmail || prev.rfqEmail,
             phone: importedData.phone || prev.phone,
             preferredContactMethod: importedData.preferredContactMethod || prev.preferredContactMethod,
-            industryHubs: Array.isArray(importedData.industryHubs) ? importedData.industryHubs : prev.industryHubs,
+            industriesServed: Array.isArray(importedData.industriesServed) ? importedData.industriesServed : prev.industriesServed,
           }));
         } catch (err: any) {
           console.error('Auto-import error:', err);
@@ -329,7 +328,7 @@ export default function BecomeSellerPage() {
     }
   }, [isMounted, hasProcessedQueryParams]);
 
-  // Redirect if user already has a seller profile
+  // Redirect if user already has a supplier profile
   useEffect(() => {
     if (isMounted && isAuthenticated && currentUser?.email) {
       fetch(`/api/profiles?userId=${encodeURIComponent(currentUser.email)}`)
@@ -346,16 +345,14 @@ export default function BecomeSellerPage() {
         .then((profile) => {
           if (
             profile &&
-            (profile.primaryIntent === 'sell' ||
-              profile.primaryIntent === 'both' ||
-              profile.primaryIntent === 'storefront')
+            true
           ) {
-            // User already has a seller profile, redirect to my account
+            // User already has a supplier profile, redirect to my account
             router.replace('/my-account');
           }
         })
         .catch((err) => {
-          console.error('Error checking seller profile:', err);
+          console.error('Error checking supplier profile:', err);
           // On error, allow them to proceed (they might not have a profile yet)
         });
     }
@@ -363,7 +360,7 @@ export default function BecomeSellerPage() {
 
   const handleImportWebsite = async () => {
     if (!importUrl.trim()) {
-      setError(t('becomeSeller.errors.enterWebsiteUrl'));
+      setError(t('becomeSupplier.errors.enterWebsiteUrl'));
       return;
     }
 
@@ -465,28 +462,28 @@ export default function BecomeSellerPage() {
       case 0:
         // Step 0 validation is handled in the import flow
         if (formData.onboardingMethod === 'IMPORT' && !importUrl.trim()) {
-          setError(t('becomeSeller.errors.enterWebsiteUrl'));
+          setError(t('becomeSupplier.errors.enterWebsiteUrl'));
           return false;
         }
         if (!formData.onboardingMethod) {
-          setError(t('becomeSeller.errors.selectOnboardingMethod'));
+          setError(t('becomeSupplier.errors.selectOnboardingMethod'));
           return false;
         }
         return true;
       case 1:
         // Always require basic company location info
         if (!formData.companyName || !formData.streetAddress || !formData.city || !formData.province) {
-          setError(t('becomeSeller.errors.basicCompanyRequired'));
+          setError(t('becomeSupplier.errors.basicCompanyRequired'));
           return false;
         }
         // Only enforce richer company profile fields on the standard listing
         if (!isGeneralSupplier) {
           if (formData.provincesServed.length === 0) {
-            setError(t('becomeSeller.errors.selectProvinceServed'));
+            setError(t('becomeSupplier.errors.selectProvinceServed'));
             return false;
           }
-          if (!formData.industryHubs || formData.industryHubs.length === 0) {
-            setError(t('becomeSeller.errors.selectIndustryHub'));
+          if (!formData.industriesServed || formData.industriesServed.length === 0) {
+            setError(t('becomeSupplier.errors.selectIndustryHub'));
             return false;
           }
         }
@@ -498,7 +495,7 @@ export default function BecomeSellerPage() {
           const hasMaterials = formData.materials.length > 0 || (formData.otherMaterials && formData.otherMaterials.trim().length > 0);
 
           if (!hasProcesses || !hasMaterials) {
-            setError(t('becomeSeller.errors.selectProcessAndMaterial'));
+            setError(t('becomeSupplier.errors.selectProcessAndMaterial'));
             return false;
           }
         }
@@ -507,65 +504,50 @@ export default function BecomeSellerPage() {
         // Production profile is only required for the standard listing
         if (!isGeneralSupplier) {
           if (!formData.typicalJobSize || formData.typicalJobSize.length === 0) {
-            setError(t('becomeSeller.errors.selectTypicalJobSize'));
+            setError(t('becomeSupplier.errors.selectTypicalJobSize'));
             return false;
           }
           if (!formData.typicalLeadTime) {
-            setError(t('becomeSeller.errors.selectTypicalLeadTime'));
+            setError(t('becomeSupplier.errors.selectTypicalLeadTime'));
             return false;
           }
         }
         return true;
       case 5:
         if (!formData.rfqEmail) {
-          setError(t('becomeSeller.errors.rfqEmailRequired'));
+          setError(t('becomeSupplier.errors.rfqEmailRequired'));
           return false;
         }
         return true;
       case 6:
         if (!formData.firstName || !formData.lastName) {
-          setError(t('becomeSeller.errors.firstLastRequired'));
+          setError(t('becomeSupplier.errors.firstLastRequired'));
           return false;
         }
         if (!formData.role) {
-          setError(t('becomeSeller.errors.roleRequired'));
+          setError(t('becomeSupplier.errors.roleRequired'));
           return false;
         }
-        if (!formData.username) {
-          setError(t('becomeSeller.errors.usernameRequired'));
-          return false;
-        }
-        // Validate username is not an email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (emailRegex.test(formData.username)) {
-          setError(t('becomeSeller.errors.usernameNotEmail'));
-          return false;
-        }
-        // Validate username format (alphanumeric, underscore, hyphen, 3-30 chars)
-        const usernameRegex = /^[a-zA-Z0-9_-]{3,30}$/;
-        if (!usernameRegex.test(formData.username)) {
-          setError(t('becomeSeller.errors.usernameFormat'));
-          return false;
-        }
         if (!formData.email) {
-          setError(t('becomeSeller.errors.emailRequired'));
+          setError(t('becomeSupplier.errors.emailRequired'));
           return false;
         }
         // Validate email format
         if (!emailRegex.test(formData.email)) {
-          setError(t('becomeSeller.errors.emailInvalid'));
+          setError(t('becomeSupplier.errors.emailInvalid'));
           return false;
         }
         if (!formData.password) {
-          setError(t('becomeSeller.errors.passwordRequired'));
+          setError(t('becomeSupplier.errors.passwordRequired'));
           return false;
         }
         if (formData.password.length < 6) {
-          setError(t('becomeSeller.errors.passwordLength'));
+          setError(t('becomeSupplier.errors.passwordLength'));
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
-          setError(t('becomeSeller.errors.passwordsNoMatch'));
+          setError(t('becomeSupplier.errors.passwordsNoMatch'));
           return false;
         }
         return true;
@@ -579,22 +561,6 @@ export default function BecomeSellerPage() {
 
     setIsLoading(true);
     setError('');
-
-    // Check if username is already taken
-    try {
-      const usernameCheckResponse = await fetch(`/api/users?type=check-username&username=${encodeURIComponent(formData.username)}`);
-      if (usernameCheckResponse.ok) {
-        const checkResult = await usernameCheckResponse.json();
-        if (checkResult.taken) {
-          setError(t('becomeSeller.errors.usernameTaken'));
-          setIsLoading(false);
-          return;
-        }
-      }
-    } catch (err) {
-      console.error('Error checking username:', err);
-      // Continue anyway - we'll catch duplicates on creation
-    }
 
     // Create Firebase account if not already logged in
     let userId = currentUser?.email;
@@ -632,7 +598,7 @@ export default function BecomeSellerPage() {
     }
 
     if (!userId) {
-      setError(t('becomeSeller.errors.unableDetermineUserId'));
+      setError(t('becomeSupplier.errors.unableDetermineUserId'));
       setIsLoading(false);
       return;
     }
@@ -644,7 +610,7 @@ export default function BecomeSellerPage() {
       formData.otherFinishes && `Other Finishes: ${formData.otherFinishes}`,
       formData.otherCertifications && `Other Certifications: ${formData.otherCertifications}`,
       formData.otherIndustries && `Other Industries: ${formData.otherIndustries}`,
-      formData.industryHubs && formData.industryHubs.length > 0 && `Industry Hubs: ${formData.industryHubs.join(', ')}`,
+      formData.industriesServed && formData.industriesServed.length > 0 && `Industry Hubs: ${formData.industriesServed.join(', ')}`,
     ]
       .filter(Boolean)
       .join('; ');
@@ -675,8 +641,7 @@ export default function BecomeSellerPage() {
       companyType: formData.companyType,
       jobTitle: formData.role,
       // Storefront signups should not appear in the Network Directory.
-      ...(wizardStep === 0 ? { primaryIntent: 'storefront' } : {}),
-      // Normalized taxonomy selections (capability IDs)
+            // Normalized taxonomy selections (capability IDs)
       processes: formData.processes,
       materials: formData.materials,
       finishes: formData.finishes,
@@ -694,7 +659,7 @@ export default function BecomeSellerPage() {
       rfqEmail: formData.rfqEmail,
       phone: formData.phone || null,
       preferredContactMethod: formData.preferredContactMethod,
-      industryHubs: formData.industryHubs || [],
+      industriesServed: formData.industriesServed || [],
       otherComments: otherComments || null,
     };
 
@@ -728,7 +693,6 @@ export default function BecomeSellerPage() {
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
-            username: formData.username, // Store username separately
             companyName: formData.companyName,
             jobTitle: formData.role,
             phone: formData.phone || null,
@@ -747,7 +711,6 @@ export default function BecomeSellerPage() {
       // Update user auth state
       const updatedUser = {
         email: userId,
-        username: formData.username,
         displayName: `${formData.firstName} ${formData.lastName}`,
         role: 'supplier',
         companyName: formData.companyName,
@@ -766,7 +729,7 @@ export default function BecomeSellerPage() {
       login(updatedUser);
 
       // Clear saved registration data since registration is complete
-      const savedDataKey = `seller_registration_${userId}`;
+      const savedDataKey = `supplier_registration_${userId}`;
       localStorage.removeItem(savedDataKey);
 
       router.push('/');
@@ -818,11 +781,10 @@ export default function BecomeSellerPage() {
       rfqEmail: '',
       phone: '',
       preferredContactMethod: null,
-      industryHubs: [],
+      industriesServed: [],
       firstName: '',
       lastName: '',
       role: '',
-      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -837,7 +799,7 @@ export default function BecomeSellerPage() {
 
     // Clear localStorage
     if (currentUser?.email) {
-      const savedDataKey = `seller_registration_${currentUser.email}`;
+      const savedDataKey = `supplier_registration_${currentUser.email}`;
       localStorage.removeItem(savedDataKey);
     }
 
@@ -852,7 +814,7 @@ export default function BecomeSellerPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header
         breadcrumb={
-          wizardStep === 0 ? 'Industrial Storefront Profile Signup' : t('becomeSeller.breadcrumb')
+          wizardStep === 0 ? 'Industrial Storefront Profile Signup' : t('becomeSupplier.breadcrumb')
         }
       />
 
@@ -877,10 +839,10 @@ export default function BecomeSellerPage() {
               <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-3xl">
                 <div className="w-14 h-14 rounded-full border-2 border-marcan-red/40 border-t-marcan-red animate-spin mb-4" />
                 <div className="text-sm font-bold text-white mb-1 uppercase tracking-widest">
-                  {t('becomeSeller.import.analyzingTitle')}
+                  {t('becomeSupplier.import.analyzingTitle')}
                 </div>
                 <p className="text-[11px] text-slate-400 max-w-xs text-center">
-                  {t('becomeSeller.import.analyzingBody')}
+                  {t('becomeSupplier.import.analyzingBody')}
                 </p>
               </div>
             )}
@@ -901,7 +863,7 @@ export default function BecomeSellerPage() {
                       className="flex items-center text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                     >
                       <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i>{' '}
-                      {t('becomeSeller.changeOption')}
+                      {t('becomeSupplier.changeOption')}
                     </button>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
@@ -916,10 +878,10 @@ export default function BecomeSellerPage() {
                         <button
                           onClick={handleRestartRegistration}
                           className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors text-xs font-bold uppercase tracking-wider group"
-                          title={t('becomeSeller.restart')}
+                          title={t('becomeSupplier.restart')}
                         >
                           <i className="fa-solid fa-rotate-left group-hover:rotate-180 transition-transform duration-500"></i>
-                          <span className="hidden sm:inline">{t('becomeSeller.restart')}</span>
+                          <span className="hidden sm:inline">{t('becomeSupplier.restart')}</span>
                         </button>
                       )}
                     </div>
@@ -930,13 +892,13 @@ export default function BecomeSellerPage() {
                 {wizardStep === 1 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.companyBasics.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.companyBasics.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.companyBasics.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.companyBasics.step')}</p>
                     </div>
                     <div className="space-y-6">
                       {/* Form type selector removed: Standard supplier form only */}
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.legalCompanyName')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.legalCompanyName')} *</label>
                         <input
                           type="text"
                           placeholder={isFr ? "NorthYork Précision Ltée." : "NorthYork Precision Ltd."}
@@ -947,7 +909,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.streetAddress')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.streetAddress')} *</label>
                         <input
                           type="text"
                           placeholder={isFr ? "123, rue Principale" : "123 Main Street"}
@@ -959,7 +921,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.city')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.city')} *</label>
                           <input
                             type="text"
                             placeholder={isFr ? "Toronto" : "Toronto"}
@@ -970,14 +932,14 @@ export default function BecomeSellerPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.province')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.province')} *</label>
                           <select
                             value={formData.province}
                             onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
                             required
                           >
-                            <option value="">{t('becomeSeller.companyBasics.select')}</option>
+                            <option value="">{t('becomeSupplier.companyBasics.select')}</option>
                             {CANADIAN_PROVINCES.map((p) => (
                               <option key={p.code} value={p.code}>{isFr ? (p as any).frName ?? p.name : p.name}</option>
                             ))}
@@ -985,7 +947,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.businessNumber')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.businessNumber')}</label>
                         <input
                           type="text"
                           placeholder="123456789"
@@ -995,7 +957,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.provincesServed')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.provincesServed')} *</label>
                         <div className="grid grid-cols-3 gap-2 mt-2">
                           {CANADIAN_PROVINCES.map((p) => (
                             <label
@@ -1018,7 +980,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          {t('becomeSeller.companyBasics.industriesServed')} *
+                          {t('becomeSupplier.companyBasics.industriesServed')} *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -1028,11 +990,11 @@ export default function BecomeSellerPage() {
                             >
                               <input
                                 type="checkbox"
-                                checked={formData.industryHubs.includes(hub)}
+                                checked={formData.industriesServed.includes(hub)}
                                 onChange={() =>
                                   setFormData({
                                     ...formData,
-                                    industryHubs: toggleArrayItem(formData.industryHubs, hub),
+                                    industriesServed: toggleArrayItem(formData.industriesServed, hub),
                                   })
                                 }
                                 className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
@@ -1044,23 +1006,23 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <div className="mb-1 flex items-center gap-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">{t('becomeSeller.companyBasics.companyType')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">{t('becomeSupplier.companyBasics.companyType')}</label>
                           <div className="relative group inline-flex items-center cursor-pointer">
                             <i className="fa-solid fa-circle-info text-[10px] text-slate-500 group-hover:text-white transition-colors"></i>
                             <div className="hidden group-hover:block absolute right-0 mt-2 w-80 bg-black/90 border border-white/10 rounded-lg p-3 text-[10px] text-slate-200 shadow-lg z-20">
-                              <div className="font-bold text-xs mb-2 text-white">{t('becomeSeller.companyTypeHelp.title')}</div>
+                              <div className="font-bold text-xs mb-2 text-white">{t('becomeSupplier.companyTypeHelp.title')}</div>
                               <ul className="space-y-1">
                                 <li>
-                                  <span className="font-semibold">1️⃣ {isFr ? 'Fabricant sous contrat' : 'Contract Manufacturer'}</span> — {t('becomeSeller.companyTypeHelp.contractManufacturer').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.contractManufacturer')}
+                                  <span className="font-semibold">1️⃣ {isFr ? 'Fabricant sous contrat' : 'Contract Manufacturer'}</span> — {t('becomeSupplier.companyTypeHelp.contractManufacturer').split(' — ')[1] ?? t('becomeSupplier.companyTypeHelp.contractManufacturer')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">2️⃣ {isFr ? 'Distributeur' : 'Distributor'}</span> — {t('becomeSeller.companyTypeHelp.distributor').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.distributor')}
+                                  <span className="font-semibold">2️⃣ {isFr ? 'Distributeur' : 'Distributor'}</span> — {t('becomeSupplier.companyTypeHelp.distributor').split(' — ')[1] ?? t('becomeSupplier.companyTypeHelp.distributor')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">3️⃣ {isFr ? 'Atelier d’usinage' : 'Job Shop'}</span> — {t('becomeSeller.companyTypeHelp.jobShop').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.jobShop')}
+                                  <span className="font-semibold">3️⃣ {isFr ? 'Atelier d’usinage' : 'Job Shop'}</span> — {t('becomeSupplier.companyTypeHelp.jobShop').split(' — ')[1] ?? t('becomeSupplier.companyTypeHelp.jobShop')}
                                 </li>
                                 <li>
-                                  <span className="font-semibold">4️⃣ OEM</span> — {t('becomeSeller.companyTypeHelp.oem').split(' — ')[1] ?? t('becomeSeller.companyTypeHelp.oem')}
+                                  <span className="font-semibold">4️⃣ OEM</span> — {t('becomeSupplier.companyTypeHelp.oem').split(' — ')[1] ?? t('becomeSupplier.companyTypeHelp.oem')}
                                 </li>
                               </ul>
                             </div>
@@ -1071,14 +1033,14 @@ export default function BecomeSellerPage() {
                           onChange={(e) => setFormData({ ...formData, companyType: e.target.value || null })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-slate-400 focus:border-marcan-red outline-none"
                         >
-                          <option value="">{t('becomeSeller.companyBasics.select')}</option>
+                          <option value="">{t('becomeSupplier.companyBasics.select')}</option>
                           {Array.isArray(capabilities.COMPANY_TYPE) && capabilities.COMPANY_TYPE.map((cap) => (
                             <option key={cap.id} value={cap.id}>{cap.name}</option>
                           ))}
                         </select>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.website')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.website')}</label>
                         <input
                           type="url"
                           placeholder={isFr ? "https://www.entreprise.com" : "https://www.company.com"}
@@ -1094,7 +1056,7 @@ export default function BecomeSellerPage() {
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSupplier.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1104,12 +1066,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 2 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.coreCapabilities.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.coreCapabilities.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.coreCapabilities.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.coreCapabilities.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.primaryProcesses')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.coreCapabilities.primaryProcesses')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
@@ -1130,7 +1092,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherProcesses')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.coreCapabilities.otherProcesses')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Process 1, Custom Process 2"
@@ -1138,11 +1100,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherProcesses: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addProcessesHelp')}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSupplier.coreCapabilities.addProcessesHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.materials')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.coreCapabilities.materials')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label
@@ -1163,7 +1125,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherMaterials')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.coreCapabilities.otherMaterials')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Material 1, Custom Material 2"
@@ -1171,11 +1133,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherMaterials: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addMaterialsHelp')}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSupplier.coreCapabilities.addMaterialsHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.finishesOptional')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.coreCapabilities.finishesOptional')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.FINISH) && capabilities.FINISH.map((cap) => (
                             <label
@@ -1196,7 +1158,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.coreCapabilities.otherFinishes')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.coreCapabilities.otherFinishes')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Finish 1, Custom Finish 2"
@@ -1204,7 +1166,7 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherFinishes: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.coreCapabilities.addFinishesHelp')}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSupplier.coreCapabilities.addFinishesHelp')}</p>
                         </div>
                       </div>
                     </div>
@@ -1214,14 +1176,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        {t('becomeSeller.coreCapabilities.back')}
+                        {t('becomeSupplier.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSupplier.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1231,12 +1193,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 3 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.productionProfile.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.productionProfile.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.productionProfile.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.productionProfile.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalJobSize')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSupplier.productionProfile.typicalJobSize')} *</label>
                         <div className="space-y-2">
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1251,8 +1213,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.prototype')}</div>
-                              <div>{t('becomeSeller.productionProfile.prototypeDesc')}</div>
+                              <div className="font-semibold text-white">{t('becomeSupplier.productionProfile.prototype')}</div>
+                              <div>{t('becomeSupplier.productionProfile.prototypeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1268,8 +1230,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.lowVolume')}</div>
-                              <div>{t('becomeSeller.productionProfile.lowVolumeDesc')}</div>
+                              <div className="font-semibold text-white">{t('becomeSupplier.productionProfile.lowVolume')}</div>
+                              <div>{t('becomeSupplier.productionProfile.lowVolumeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1288,8 +1250,8 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.mediumVolume')}</div>
-                              <div>{t('becomeSeller.productionProfile.mediumVolumeDesc')}</div>
+                              <div className="font-semibold text-white">{t('becomeSupplier.productionProfile.mediumVolume')}</div>
+                              <div>{t('becomeSupplier.productionProfile.mediumVolumeDesc')}</div>
                             </div>
                           </label>
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
@@ -1305,14 +1267,14 @@ export default function BecomeSellerPage() {
                               className="mt-0.5 rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
                             <div className="text-xs text-slate-200">
-                              <div className="font-semibold text-white">{t('becomeSeller.productionProfile.highVolume')}</div>
-                              <div>{t('becomeSeller.productionProfile.highVolumeDesc')}</div>
+                              <div className="font-semibold text-white">{t('becomeSupplier.productionProfile.highVolume')}</div>
+                              <div>{t('becomeSupplier.productionProfile.highVolumeDesc')}</div>
                             </div>
                           </label>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalLeadTime')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSupplier.productionProfile.typicalLeadTime')} *</label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1329,7 +1291,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.oneTwoWeeks')}</span>
+                            <span className="text-xs text-slate-200">{t('becomeSupplier.productionProfile.oneTwoWeeks')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1346,7 +1308,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.twoFourWeeks')}</span>
+                            <span className="text-xs text-slate-200">{t('becomeSupplier.productionProfile.twoFourWeeks')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1363,7 +1325,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.oneThreeMonths')}</span>
+                            <span className="text-xs text-slate-200">{t('becomeSupplier.productionProfile.oneThreeMonths')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1380,7 +1342,7 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.threePlusMonths')}</span>
+                            <span className="text-xs text-slate-200">{t('becomeSupplier.productionProfile.threePlusMonths')}</span>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1397,12 +1359,12 @@ export default function BecomeSellerPage() {
                               }}
                               className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                             />
-                            <span className="text-xs text-slate-200">{t('becomeSeller.productionProfile.depends')}</span>
+                            <span className="text-xs text-slate-200">{t('becomeSupplier.productionProfile.depends')}</span>
                           </label>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.productionProfile.maxPartSizeOptional')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.productionProfile.maxPartSizeOptional')}</label>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
                             <label className="text-[8px] text-slate-500 mb-1 block">X</label>
@@ -1443,14 +1405,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        {t('becomeSeller.coreCapabilities.back')}
+                        {t('becomeSupplier.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSupplier.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1460,12 +1422,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 4 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.trustEnrichment.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.trustEnrichment.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.trustEnrichment.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.trustEnrichment.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.trustEnrichment.certifications')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.trustEnrichment.certifications')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.CERTIFICATION) && capabilities.CERTIFICATION.map((cap) => (
                             <label
@@ -1486,7 +1448,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.otherCertifications')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.trustEnrichment.otherCertifications')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Certification 1, Custom Certification 2"
@@ -1494,11 +1456,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherCertifications: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.trustEnrichment.addCertificationsHelp')}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSupplier.trustEnrichment.addCertificationsHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.trustEnrichment.industriesServed')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.trustEnrichment.industriesServed')}</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.INDUSTRY) && capabilities.INDUSTRY.map((cap) => (
                             <label
@@ -1519,7 +1481,7 @@ export default function BecomeSellerPage() {
                           ))}
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.otherIndustries')}</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.trustEnrichment.otherIndustries')}</label>
                           <input
                             type="text"
                             placeholder="e.g., Custom Industry 1, Custom Industry 2"
@@ -1527,11 +1489,11 @@ export default function BecomeSellerPage() {
                             onChange={(e) => setFormData({ ...formData, otherIndustries: e.target.value })}
                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           />
-                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSeller.trustEnrichment.addIndustriesHelp')}</p>
+                          <p className="text-[10px] text-slate-500 mt-1">{t('becomeSupplier.trustEnrichment.addIndustriesHelp')}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.trustEnrichment.aboutUs')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.trustEnrichment.aboutUs')}</label>
                         <textarea
                           rows={4}
                           placeholder="Describe your company history, mission, and specialization..."
@@ -1547,14 +1509,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        {t('becomeSeller.coreCapabilities.back')}
+                        {t('becomeSupplier.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSupplier.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1564,12 +1526,12 @@ export default function BecomeSellerPage() {
                 {wizardStep === 5 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.contactRfq.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.contactRfq.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.contactRfq.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.contactRfq.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.contactRfq.rfqEmail')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.contactRfq.rfqEmail')} *</label>
                         <input
                           type="email"
                           placeholder={isFr ? "rfq@entreprise.com" : "rfq@company.com"}
@@ -1580,7 +1542,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.contactRfq.phoneOptional')}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.contactRfq.phoneOptional')}</label>
                         <input
                           type="tel"
                           placeholder={isFr ? "+1 (555) 000-0000" : "+1 (555) 000-0000"}
@@ -1600,7 +1562,7 @@ export default function BecomeSellerPage() {
                       {formData.phone?.trim() && (
                         <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                            {t('becomeSeller.contactRfq.preferredContactMethod')}
+                            {t('becomeSupplier.contactRfq.preferredContactMethod')}
                           </label>
                           <div className="grid grid-cols-2 gap-4">
                             <button
@@ -1611,7 +1573,7 @@ export default function BecomeSellerPage() {
                                 : 'border-white/10 hover:border-marcan-red/50'
                                 }`}
                             >
-                              <div className="text-white font-bold text-sm uppercase">{t('becomeSeller.contactRfq.email')}</div>
+                              <div className="text-white font-bold text-sm uppercase">{t('becomeSupplier.contactRfq.email')}</div>
                             </button>
                             <button
                               type="button"
@@ -1621,7 +1583,7 @@ export default function BecomeSellerPage() {
                                 : 'border-white/10 hover:border-marcan-red/50'
                                 }`}
                             >
-                              <div className="text-white font-bold text-sm uppercase">{t('becomeSeller.contactRfq.phone')}</div>
+                              <div className="text-white font-bold text-sm uppercase">{t('becomeSupplier.contactRfq.phone')}</div>
                             </button>
                           </div>
                         </div>
@@ -1633,14 +1595,14 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        {t('becomeSeller.coreCapabilities.back')}
+                        {t('becomeSupplier.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
                         onClick={saveAndNextStep}
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all"
                       >
-                        {t('becomeSeller.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                        {t('becomeSupplier.companyBasics.saveAndNext')} <i className="fa-solid fa-arrow-right ml-2"></i>
                       </button>
                     </div>
                   </div>
@@ -1782,18 +1744,6 @@ export default function BecomeSellerPage() {
                                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
                               />
                             </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                                Username
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="janedoe_acme"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
-                              />
-                            </div>
                           </div>
 
                           <div>
@@ -1882,7 +1832,7 @@ export default function BecomeSellerPage() {
                             onClick={() => {
                               setError('');
                               if (!formData.companyName || !formData.streetAddress || !formData.city || !formData.province) {
-                                setError(t('becomeSeller.errors.basicCompanyRequired'));
+                                setError(t('becomeSupplier.errors.basicCompanyRequired'));
                                 return;
                               }
                               if (!validateStep(6)) return;
@@ -1902,13 +1852,13 @@ export default function BecomeSellerPage() {
                 {wizardStep === 6 && (
                   <div className="max-w-2xl mx-auto">
                     <div className="text-center mb-8">
-                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSeller.account.title')}</h2>
-                      <p className="text-xs text-slate-500">{t('becomeSeller.account.step')}</p>
+                      <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">{t('becomeSupplier.account.title')}</h2>
+                      <p className="text-xs text-slate-500">{t('becomeSupplier.account.step')}</p>
                     </div>
                     <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.firstName')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.firstName')} *</label>
                           <input
                             type="text"
                             placeholder={isFr ? "Jean" : "John"}
@@ -1919,7 +1869,7 @@ export default function BecomeSellerPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.lastName')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.lastName')} *</label>
                           <input
                             type="text"
                             placeholder={isFr ? "Dupont" : "Doe"}
@@ -1931,7 +1881,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.role')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.role')} *</label>
                         <input
                           type="text"
                           placeholder={isFr ? "ex. : Responsable achats, Propriétaire, Directeur des opérations" : "e.g., Procurement Manager, Owner, Operations Director"}
@@ -1942,19 +1892,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.username')} *</label>
-                        <input
-                          type="text"
-                          placeholder={isFr ? "nomdelentreprise_marcan" : "yourcompanyname_marcan"}
-                          value={formData.username}
-                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                          required
-                        />
-                        <p className="text-xs text-slate-500 mt-1">3-30 characters, letters, numbers, underscores, or hyphens only. Cannot be an email address.</p>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.email')} *</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.email')} *</label>
                         <input
                           type="email"
                           placeholder={isFr ? "votre.courriel@entreprise.com" : "your.email@company.com"}
@@ -1967,7 +1905,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.createPassword')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.createPassword')} *</label>
                           <div className="relative">
                             <input
                               type={showPassword ? "text" : "password"}
@@ -1987,7 +1925,7 @@ export default function BecomeSellerPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.account.confirmPassword')} *</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.confirmPassword')} *</label>
                           <div className="relative">
                             <input
                               type={showConfirmPassword ? "text" : "password"}
@@ -2014,7 +1952,7 @@ export default function BecomeSellerPage() {
                         onClick={prevStep}
                         className="text-slate-400 hover:text-white font-bold text-sm uppercase tracking-wider px-4"
                       >
-                        {t('becomeSeller.coreCapabilities.back')}
+                        {t('becomeSupplier.coreCapabilities.back')}
                       </button>
                       <button
                         type="button"
@@ -2023,9 +1961,9 @@ export default function BecomeSellerPage() {
                         className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isLoading ? (
-                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('becomeSeller.account.creatingAccount')}</span>
+                          <span><i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('becomeSupplier.account.creatingAccount')}</span>
                         ) : (
-                          t('becomeSeller.account.completeSetup')
+                          t('becomeSupplier.account.completeSetup')
                         )}
                       </button>
                     </div>
@@ -2045,9 +1983,9 @@ export default function BecomeSellerPage() {
               <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
                 <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
               </div>
-              <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">{t('becomeSeller.restartModal.title')}</h3>
+              <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">{t('becomeSupplier.restartModal.title')}</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                {t('becomeSeller.restartModal.body')}
+                {t('becomeSupplier.restartModal.body')}
               </p>
             </div>
             <div className="flex gap-4">
@@ -2055,13 +1993,13 @@ export default function BecomeSellerPage() {
                 onClick={() => setShowRestartConfirm(false)}
                 className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
               >
-                {t('becomeSeller.restartModal.cancel')}
+                {t('becomeSupplier.restartModal.cancel')}
               </button>
               <button
                 onClick={confirmRestart}
                 className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
               >
-                {t('becomeSeller.restartModal.restart')}
+                {t('becomeSupplier.restartModal.restart')}
               </button>
             </div>
           </div>

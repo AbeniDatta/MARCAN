@@ -48,10 +48,10 @@
     "loginToCreate": "Veuillez vous connecter ou vous inscrire pour créer une annonce",
     "onlySuppliersNotice": "Seuls les comptes fournisseurs peuvent publier des annonces.",
     "noListings": "Aucune annonce fournisseur disponible pour le moment.",
-    "sellerLabel": "Vendeur",
+    "supplierLabel": "Vendeur",
     "viewListing": "Voir l'annonce"
   },
-  "becomeSeller": {
+  "becomeSupplier": {
     "breadcrumb": "Devenir fournisseur",
     "changeOption": "Changer d’option",
     "restart": "Recommencer",

@@ -14,7 +14,7 @@ export default function WishlistPage() {
   const [filter, setFilter] = useState<FilterOption>('new-to-old');
   const [requests, setRequests] = useState<any[]>([]);
 
-  // Determine role from DB (source of truth): if seller profile exists -> supplier
+  // Determine role from DB (source of truth): if supplier profile exists -> supplier
   useEffect(() => {
     if (!isMounted || !isAuthenticated || !user?.email) {
       setIsSupplier(false);
@@ -32,9 +32,7 @@ export default function WishlistPage() {
       .then((profile) => {
         if (
           profile &&
-          (profile.primaryIntent === 'sell' ||
-            profile.primaryIntent === 'both' ||
-            profile.primaryIntent === 'storefront')
+          true
         ) {
           setIsSupplier(true);
         } else {
@@ -42,7 +40,7 @@ export default function WishlistPage() {
         }
       })
       .catch((err) => {
-        console.error('Error checking seller profile:', err);
+        console.error('Error checking supplier profile:', err);
         // Fallback to local role snapshot
         setIsSupplier(user?.role === 'supplier');
       });

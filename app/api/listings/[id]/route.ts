@@ -43,15 +43,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const existingListing = await prisma.listing.findUnique({
       where: { id },
       include: {
-        sellerProfile: true,
+        supplierProfile: true,
       },
     });
 
-    if (!existingListing || !existingListing.sellerProfile) {
+    if (!existingListing || !existingListing.supplierProfile) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
-    if (existingListing.sellerProfile.userId !== userId) {
+    if (String(existingListing.supplierProfile.email || '').toLowerCase() !== String(userId).toLowerCase()) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -67,11 +67,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         category: listingType,
       },
       include: {
-        sellerProfile: {
+        supplierProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
+            email: true,
           },
         },
       },
@@ -102,7 +101,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({
       id: updatedListing.id,
       title: updatedListing.title,
-      seller: updatedListing.sellerProfile?.companyName || 'Unknown',
+      supplier: updatedListing.supplierProfile?.companyName || 'Unknown',
       price: formatPrice(updatedListing.price || '') || updatedListing.price || '',
       badge: updatedListing.badge || badge,
       badgeColor,
@@ -138,20 +137,20 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Find the listing and verify ownership (via seller profile)
+    // Find the listing and verify ownership (via supplier profile)
     const listing = await prisma.listing.findUnique({
       where: { id },
       include: {
-        sellerProfile: true,
+        supplierProfile: true,
       },
     });
 
-    if (!listing || !listing.sellerProfile) {
+    if (!listing || !listing.supplierProfile) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
     }
 
-    // Ensure the authenticated user owns the seller profile for this listing
-    if (listing.sellerProfile.userId !== userId) {
+    // Ensure the authenticated user owns the supplier profile for this listing
+    if (String(listing.supplierProfile.email || '').toLowerCase() !== String(userId).toLowerCase()) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

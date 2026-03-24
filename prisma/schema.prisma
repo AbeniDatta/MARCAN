@@ -56,7 +56,7 @@ model Capability {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  sellerProfiles ProfileCapability[]
+  supplierProfiles ProfileCapability[]
 
   @@unique([type, slug])
   @@index([type])
@@ -66,7 +66,7 @@ model Capability {
 
 model ProfileCapability {
   id           String @id @default(uuid()) @db.Uuid
-  sellerProfileId String @map("seller_profile_id") @db.Uuid
+  supplierProfileId String @map("supplier_profile_id") @db.Uuid
   capabilityId String @map("capability_id") @db.Uuid
 
   // Optional fields for ranking / filtering later
@@ -81,13 +81,13 @@ model ProfileCapability {
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  sellerProfile SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  supplierProfile SupplierProfile @relation(fields: [supplierProfileId], references: [id], onDelete: Cascade)
   capability    Capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
 
-  @@unique([sellerProfileId, capabilityId])
-  @@index([sellerProfileId])
+  @@unique([supplierProfileId, capabilityId])
+  @@index([supplierProfileId])
   @@index([capabilityId])
-  @@index([sellerProfileId, isCore])
+  @@index([supplierProfileId, isCore])
   @@map("profile_capabilities")
   
 }
@@ -113,20 +113,19 @@ model BuyerProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  wishlistRequests WishlistRequest[]
+  sourcingRequests SourcingRequest[]
 
   @@index([province])
   @@index([createdAt(sort: Desc)])
   @@map("buyer_profiles")
 }
 
-// Seller Profile - for suppliers/manufacturers who offer services
-model SellerProfile {
+// Supplier Profile - for suppliers/manufacturers who offer services
+model SupplierProfile {
   id             String  @id @default(uuid()) @db.Uuid
-  userId         String  @unique @map("user_id") @db.Text
   firstName      String? @map("first_name") @db.Text
   lastName       String? @map("last_name") @db.Text
-  email          String? @db.Text
+  email          String  @unique @db.Text
   companyName    String  @map("company_name") @db.Text
   businessNumber String? @map("business_number") @db.Text
   website        String? @db.Text
@@ -135,12 +134,7 @@ model SellerProfile {
   city           String? @db.Text
   province       String? @db.Text
   aboutUs        String? @map("about_us") @db.Text
-  logoUrl        String? @map("logo_url") @db.Text
-  selectedIcon   String? @map("selected_icon") @db.Text
   jobTitle       String? @map("job_title") @db.Text
-
-  // Intent: whether this company primarily uses Marcan to sell, buy, or both
-  primaryIntent String? @map("primary_intent") @db.Text
 
   // Backward-compatible arrays (keep for now; migrate later to ProfileCapability)
   capabilities   String[] @default([]) @db.Text
@@ -161,8 +155,8 @@ model SellerProfile {
   typicalJobSize TypicalJobSize? @map("typical_job_size")
   typicalLeadTime TypicalLeadTime? @map("typical_lead_time")
 
-  // Industry hubs (fixed list: Precision Machining, Foundries & Casting, etc.)
-  industryHubs String[] @default([]) @map("industry_hubs") @db.Text
+  // Industries served (fixed list: Precision Machining, Foundries & Casting, etc.)
+  industriesServed String[] @default([]) @map("industries_served") @db.Text
 
   // Step 5: contact / RFQ preferences
   rfqEmail               String?                 @map("rfq_email") @db.Text
@@ -186,7 +180,7 @@ model SellerProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  listings Listing[]
+  storefrontListings StorefrontListing[]
 
   // Normalized taxonomy relations
   profileCapabilities ProfileCapability[]
@@ -195,11 +189,11 @@ model SellerProfile {
   @@index([province])
   @@index([verified])
   @@index([createdAt(sort: Desc)])
-  @@map("seller_profiles")
+  @@map("supplier_profiles")
 }
 
 // Storefront Profile - for industrial storefront owners who create listings
-// (Created from the standalone storefront signup in `app/become-seller` wizardStep === 0).
+// (Created from the standalone storefront signup in `app/become-supplier` wizardStep === 0).
 model StorefrontProfile {
   id String @id @default(uuid()) @db.Uuid
 
@@ -242,7 +236,7 @@ model StorefrontProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  listings Listing[]
+  storefrontListings StorefrontListing[]
 
   @@index([province])
   @@index([verified])
@@ -250,7 +244,7 @@ model StorefrontProfile {
   @@map("storefront_profiles")
 }
 
-model Listing {
+model StorefrontListing {
   id          String   @id @default(uuid()) @db.Uuid
   profileId   String   @map("profile_id") @db.Uuid
   storefrontProfileId String? @map("storefront_profile_id") @db.Uuid
@@ -267,16 +261,16 @@ model Listing {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  sellerProfile SellerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  supplierProfile SupplierProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   storefrontProfile StorefrontProfile? @relation(fields: [storefrontProfileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([storefrontProfileId])
   @@index([createdAt(sort: Desc)])
-  @@map("listings")
+  @@map("storefront_listings")
 }
 
-model WishlistRequest {
+model SourcingRequest {
   id          String    @id @default(uuid()) @db.Uuid
   buyerProfileId String    @map("buyer_profile_id") @db.Uuid
   title       String    @db.Text
@@ -294,5 +288,5 @@ model WishlistRequest {
 
   @@index([buyerProfileId])
   @@index([createdAt(sort: Desc)])
-  @@map("wishlist_requests")
+  @@map("sourcing_requests")
 }

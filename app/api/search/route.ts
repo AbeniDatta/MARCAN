@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    const db = prisma as any;
     const body = await req.json();
     const { query } = body;
 
@@ -174,7 +175,7 @@ Now process this query: {USER_QUERY}
     // Search Companies (Profiles)
     let companies: any[] = [];
     try {
-      companies = await prisma.sellerProfile.findMany({
+      companies = await db.supplierProfile.findMany({
         where: {
           AND: [
             { searchable: true },
@@ -196,7 +197,7 @@ Now process this query: {USER_QUERY}
     } catch (error: any) {
       // Fallback: query without relations if include fails
       console.warn('Could not load profiles with capabilities, querying without:', error.message);
-      companies = await prisma.sellerProfile.findMany({
+      companies = await db.supplierProfile.findMany({
         where: {
           AND: [
             { searchable: true },
@@ -226,7 +227,7 @@ Now process this query: {USER_QUERY}
       ],
     }));
 
-    const listings = await prisma.listing.findMany({
+    const listings = await db.listing.findMany({
       where: {
         AND: [
           { active: true },
@@ -236,11 +237,9 @@ Now process this query: {USER_QUERY}
       },
       //take: 20,
       include: {
-        sellerProfile: {
+        supplierProfile: {
           select: {
             companyName: true,
-            logoUrl: true,
-            selectedIcon: true,
             province: true,
             certifications: true,
           },
@@ -260,7 +259,7 @@ Now process this query: {USER_QUERY}
       ],
     }));
 
-    const requests = await prisma.wishlistRequest.findMany({
+    const requests = await db.wishlistRequest.findMany({
       where: {
         AND: [
           { active: true },
@@ -288,32 +287,32 @@ Now process this query: {USER_QUERY}
       location: `${p.city || ''}, ${p.province || ''}`.trim().replace(/^,/, ''),
       description: p.aboutUs || '',
       capabilities: p.profileCapabilities.map((pc: any) => pc.capability.name),
-      industryHubs: p.industryHubs || [],
+      industriesServed: p.industriesServed || [],
       province: p.province || '',
       city: p.city || '',
       certifications: p.certifications || [],
       website: p.website,
-      logoUrl: p.logoUrl,
-      selectedIcon: p.selectedIcon,
+      logoUrl: null,
+      selectedIcon: null,
     }));
 
-    const formattedListings = listings.map((l) => ({
+    const formattedListings = listings.map((l: any) => ({
       id: l.id,
       title: l.title,
-      seller: l.sellerProfile.companyName,
+      supplier: l.supplierProfile.companyName,
       price: l.price || '',
       listingType: l.listingType || '',
       condition: l.condition || '',
       location: l.location || '',
       description: l.description || '',
       createdAt: l.createdAt.toISOString(),
-      logoUrl: l.sellerProfile.logoUrl,
-      selectedIcon: l.sellerProfile.selectedIcon,
-      sellerProvince: l.sellerProfile.province || '',
-      sellerCertifications: l.sellerProfile.certifications || [],
+      logoUrl: null,
+      selectedIcon: null,
+      supplierProvince: l.supplierProfile.province || '',
+      supplierCertifications: l.supplierProfile.certifications || [],
     }));
 
-    const formattedRequests = requests.map((r) => ({
+    const formattedRequests = requests.map((r: any) => ({
       id: r.id,
       title: r.title,
       company: r.companyName,

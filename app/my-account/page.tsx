@@ -37,7 +37,7 @@ export default function MyAccountPage() {
     businessNumber: '',
     website: '',
     aboutUs: '',
-    // Seller-specific fields
+    // Supplier-specific fields
     city: '',
     province: '',
     provincesServed: [] as string[],
@@ -47,7 +47,7 @@ export default function MyAccountPage() {
     finishes: [] as string[], // capability IDs
     certifications: [] as string[], // capability IDs
     industries: [] as string[], // capability IDs
-    industryHubs: [] as string[],
+    industriesServed: [] as string[],
     otherProcesses: '',
     otherMaterials: '',
     otherFinishes: '',
@@ -141,7 +141,7 @@ export default function MyAccountPage() {
       if (user.certifications) {
         setCertifications(user.certifications);
       }
-      // Load account role from auth user; role is managed by signup / become-seller flows only
+      // Load account role from auth user; role is managed by signup / become-supplier flows only
       // Default to 'buyer' if not set
       setAccountRole(user.role === 'supplier' ? 'supplier' : 'buyer');
       // Keep active tab valid for the role
@@ -168,12 +168,8 @@ export default function MyAccountPage() {
 
             setSupplierProfile(profile);
 
-            // If the profile indicates seller intent, reflect that in read-only accountRole state
-            if (
-              profile.primaryIntent === 'sell' ||
-              profile.primaryIntent === 'both' ||
-              profile.primaryIntent === 'storefront'
-            ) {
+            // Supplier profile exists, so treat account as supplier.
+            if (profile?.id) {
               setAccountRole('supplier');
             } else {
               setAccountRole('buyer');
@@ -194,7 +190,7 @@ export default function MyAccountPage() {
               province: profile.province || prev.province,
               provincesServed: Array.isArray(profile.provincesServed) ? profile.provincesServed : prev.provincesServed,
               companyType: profile.companyType || prev.companyType,
-              industryHubs: Array.isArray(profile.industryHubs) ? profile.industryHubs : prev.industryHubs,
+              industriesServed: Array.isArray(profile.industriesServed) ? profile.industriesServed : prev.industriesServed,
               typicalJobSize: profile.typicalJobSize
                 ? (Array.isArray(profile.typicalJobSize) ? profile.typicalJobSize : [profile.typicalJobSize])
                 : prev.typicalJobSize,
@@ -292,7 +288,7 @@ export default function MyAccountPage() {
             setMyWishlistRequests([]);
           });
 
-        // Fetch user's own supplier listings (check if user has seller profile)
+        // Fetch user's own supplier listings (check if user has supplier profile)
         fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
           .then((res) => {
             if (!res.ok) {
@@ -402,7 +398,7 @@ export default function MyAccountPage() {
       // Update auth state
       login(updatedUser);
 
-      // Update profile in database (works for both buyer and seller profiles)
+      // Update profile in database (works for both buyer and supplier profiles)
       // First, check if profile exists
       const profileCheckResponse = await fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`);
 
@@ -441,7 +437,6 @@ export default function MyAccountPage() {
             rfqEmail: existingProfile.rfqEmail || formData.rfqEmail || null,
             phone: existingProfile.phone || formData.phone || null,
             preferredContactMethod: existingProfile.preferredContactMethod || formData.preferredContactMethod || null,
-            primaryIntent: existingProfile.primaryIntent || 'buy',
           }),
         });
 
@@ -693,7 +688,7 @@ export default function MyAccountPage() {
     }
   };
 
-  const handleDeleteSellerProfile = async () => {
+  const handleDeleteSupplierProfile = async () => {
     if (!user) return;
 
     setIsDeletingProfile(true);
@@ -710,16 +705,16 @@ export default function MyAccountPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Failed to delete seller profile');
+        throw new Error(errorData.details || errorData.error || 'Failed to delete supplier profile');
       }
 
       const result = await response.json();
       console.log('Profile deleted:', result);
 
-      // Remove all seller-related data from user profile
+      // Remove all supplier-related data from user profile
       const updatedUser = {
         ...user,
-        // Remove seller-specific fields
+        // Remove supplier-specific fields
         jobTitle: undefined,
         companyName: undefined,
         businessNumber: undefined,
@@ -768,7 +763,7 @@ export default function MyAccountPage() {
       setShowDeleteConfirm(false);
       setSaveMessage({
         type: 'success',
-        text: `Seller profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace and company from directory. Your account is now a buyer account.`
+        text: `Supplier profile deleted successfully. Removed ${result.deletedListings || 0} listing(s) from marketplace and company from directory. Your account is now a buyer account.`
       });
       setTimeout(() => setSaveMessage(null), 5000);
 
@@ -778,8 +773,8 @@ export default function MyAccountPage() {
         window.location.reload();
       }, 1000);
     } catch (err: any) {
-      console.error('Error deleting seller profile:', err);
-      setError(err.message || 'Failed to delete seller profile');
+      console.error('Error deleting supplier profile:', err);
+      setError(err.message || 'Failed to delete supplier profile');
       setShowDeleteConfirm(false);
     } finally {
       setIsDeletingProfile(false);
@@ -1117,8 +1112,8 @@ export default function MyAccountPage() {
                               {formData.firstName || supplierProfile?.firstName || user?.firstName || 'Not specified'}
                             </div>
                           )}
-                      </div>
-                      <div>
+                        </div>
+                        <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                             Last Name <span className="text-marcan-red">*</span>
                           </label>
@@ -1343,10 +1338,10 @@ export default function MyAccountPage() {
                               <label key={hub} className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                                 <input
                                   type="checkbox"
-                                  checked={formData.industryHubs.includes(hub)}
+                                  checked={formData.industriesServed.includes(hub)}
                                   onChange={() => setFormData({
                                     ...formData,
-                                    industryHubs: toggleArrayItem(formData.industryHubs, hub)
+                                    industriesServed: toggleArrayItem(formData.industriesServed, hub)
                                   })}
                                   className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                                 />
@@ -1356,10 +1351,10 @@ export default function MyAccountPage() {
                           </div>
                         ) : (
                           <div className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-slate-300">
-                            {Array.isArray(formData.industryHubs) && formData.industryHubs.length > 0
-                              ? formData.industryHubs.join(', ')
-                              : Array.isArray(supplierProfile?.industryHubs) && supplierProfile.industryHubs.length > 0
-                                ? supplierProfile.industryHubs.join(', ')
+                            {Array.isArray(formData.industriesServed) && formData.industriesServed.length > 0
+                              ? formData.industriesServed.join(', ')
+                              : Array.isArray(supplierProfile?.industriesServed) && supplierProfile.industriesServed.length > 0
+                                ? supplierProfile.industriesServed.join(', ')
                                 : 'Not specified'}
                           </div>
                         )}
@@ -1950,77 +1945,77 @@ export default function MyAccountPage() {
                 <div className="space-y-8">
                   {/* Wishlist Requests Section */}
                   <div className="glass-card p-8 rounded-2xl border border-white/5">
-                      <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
+                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
+                      <Link
+                        href="/post-request"
+                        className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
+                      >
+                        + Post New Request
+                      </Link>
+                    </div>
+
+                    {myWishlistRequests.length === 0 ? (
+                      <div className="text-center py-12">
+                        <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
+                        <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
                         <Link
                           href="/post-request"
-                          className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
+                          className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
                         >
-                          + Post New Request
+                          Post Your First Request
                         </Link>
                       </div>
-
-                      {myWishlistRequests.length === 0 ? (
-                        <div className="text-center py-12">
-                          <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
-                          <Link
-                            href="/post-request"
-                            className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                    ) : (
+                      <div className="space-y-4">
+                        {myWishlistRequests.slice(0, 3).map((request) => (
+                          <div
+                            key={request.id}
+                            className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
                           >
-                            Post Your First Request
-                          </Link>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {myWishlistRequests.slice(0, 3).map((request) => (
-                            <div
-                              key={request.id}
-                              className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
+                            <button
+                              onClick={() => handleDeleteWishlistRequest(request.id)}
+                              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                              title="Delete request"
                             >
-                              <button
-                                onClick={() => handleDeleteWishlistRequest(request.id)}
-                                className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
-                                title="Delete request"
-                              >
-                                <i className="fa-solid fa-trash text-xs"></i>
-                              </button>
-                              <div className="flex justify-between items-start mb-2 pr-10">
-                                <div>
-                                  <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
-                                  <div className="text-xs text-slate-500 mt-1">
-                                    {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
-                                  </div>
+                              <i className="fa-solid fa-trash text-xs"></i>
+                            </button>
+                            <div className="flex justify-between items-start mb-2 pr-10">
+                              <div>
+                                <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
+                                <div className="text-xs text-slate-500 mt-1">
+                                  {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
                                 </div>
-                                <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                                  {request.category}
-                                </span>
                               </div>
-                              <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
-                                {request.specifications || request.description}
-                              </p>
-                              <div className="flex gap-4 text-xs text-slate-500">
-                                {request.quantity && <span>Qty: {request.quantity}</span>}
-                                {request.targetPrice && <span>Price: {request.targetPrice}</span>}
-                                {request.deadline && (
-                                  <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
-                                )}
-                              </div>
+                              <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                                {request.category}
+                              </span>
                             </div>
-                          ))}
+                            <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
+                              {request.specifications || request.description}
+                            </p>
+                            <div className="flex gap-4 text-xs text-slate-500">
+                              {request.quantity && <span>Qty: {request.quantity}</span>}
+                              {request.targetPrice && <span>Price: {request.targetPrice}</span>}
+                              {request.deadline && (
+                                <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
 
-                          {myWishlistRequests.length > 3 && (
-                            <div className="pt-2">
-                              <Link
-                                href="/my-posts/requests"
-                                className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
-                              >
-                                See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                              </Link>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                        {myWishlistRequests.length > 3 && (
+                          <div className="pt-2">
+                            <Link
+                              href="/my-posts/requests"
+                              className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
+                            >
+                              See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Storefront Listings Section */}
@@ -2076,7 +2071,7 @@ export default function MyAccountPage() {
                                 </h3>
                                 <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
                                   <i className="fa-solid fa-store text-orange-400 mr-1"></i>
-                                  {listing.seller || formData.companyName || 'My Company'}
+                                  {listing.supplier || formData.companyName || 'My Company'}
                                 </p>
 
                                 <p className="text-xs text-slate-400 line-clamp-1 mb-4">

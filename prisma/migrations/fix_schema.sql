@@ -1,16 +1,16 @@
 -- Fix schema to match Prisma schema
 -- This migration fixes the table names and column references
 
--- Step 1: Rename profiles table to seller_profiles if it exists and is named profiles
+-- Step 1: Rename profiles table to supplier_profiles if it exists and is named profiles
 DO $$ 
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'profiles') 
-       AND NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'seller_profiles') THEN
-        ALTER TABLE "profiles" RENAME TO "seller_profiles";
+       AND NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'supplier_profiles') THEN
+        ALTER TABLE "profiles" RENAME TO "supplier_profiles";
     END IF;
 END $$;
 
--- Step 2: Fix profile_capabilities table - rename profile_id to seller_profile_id if needed
+-- Step 2: Fix profile_capabilities table - rename profile_id to supplier_profile_id if needed
 DO $$ 
 BEGIN
     IF EXISTS (
@@ -20,9 +20,9 @@ BEGIN
     ) AND NOT EXISTS (
         SELECT FROM information_schema.columns 
         WHERE table_name = 'profile_capabilities' 
-        AND column_name = 'seller_profile_id'
+        AND column_name = 'supplier_profile_id'
     ) THEN
-        ALTER TABLE "profile_capabilities" RENAME COLUMN "profile_id" TO "seller_profile_id";
+        ALTER TABLE "profile_capabilities" RENAME COLUMN "profile_id" TO "supplier_profile_id";
     END IF;
 END $$;
 
@@ -37,63 +37,63 @@ BEGIN
         DROP CONSTRAINT IF EXISTS "profile_capabilities_profile_id_fkey";
         
         ALTER TABLE "profile_capabilities" 
-        ADD CONSTRAINT "profile_capabilities_seller_profile_id_fkey" 
-        FOREIGN KEY ("seller_profile_id") 
-        REFERENCES "seller_profiles"("id") 
+        ADD CONSTRAINT "profile_capabilities_supplier_profile_id_fkey" 
+        FOREIGN KEY ("supplier_profile_id") 
+        REFERENCES "supplier_profiles"("id") 
         ON DELETE CASCADE;
     END IF;
 END $$;
 
--- Step 4: Add missing columns to seller_profiles if they don't exist
+-- Step 4: Add missing columns to supplier_profiles if they don't exist
 DO $$ 
 BEGIN
     -- Add first_name if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'first_name'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'first_name'
     ) THEN
-        ALTER TABLE "seller_profiles" ADD COLUMN "first_name" TEXT;
+        ALTER TABLE "supplier_profiles" ADD COLUMN "first_name" TEXT;
     END IF;
     
     -- Add last_name if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'last_name'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'last_name'
     ) THEN
-        ALTER TABLE "seller_profiles" ADD COLUMN "last_name" TEXT;
+        ALTER TABLE "supplier_profiles" ADD COLUMN "last_name" TEXT;
     END IF;
     
     -- Add email if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'email'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'email'
     ) THEN
-        ALTER TABLE "seller_profiles" ADD COLUMN "email" TEXT;
+        ALTER TABLE "supplier_profiles" ADD COLUMN "email" TEXT;
     END IF;
     
     -- Add typical_lead_time if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'typical_lead_time'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'typical_lead_time'
     ) THEN
         CREATE TYPE "TypicalLeadTime" AS ENUM ('ONE_TWO_WEEKS', 'TWO_FOUR_WEEKS', 'ONE_THREE_MONTHS', 'THREE_PLUS_MONTHS', 'DEPENDS_ON_WORKLOAD');
-        ALTER TABLE "seller_profiles" ADD COLUMN "typical_lead_time" "TypicalLeadTime";
+        ALTER TABLE "supplier_profiles" ADD COLUMN "typical_lead_time" "TypicalLeadTime";
     END IF;
     
-    -- Add industry_hubs if missing
+    -- Add industries_served if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'industry_hubs'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'industries_served'
     ) THEN
-        ALTER TABLE "seller_profiles" ADD COLUMN "industry_hubs" TEXT[] DEFAULT ARRAY[]::TEXT[];
+        ALTER TABLE "supplier_profiles" ADD COLUMN "industries_served" TEXT[] DEFAULT ARRAY[]::TEXT[];
     END IF;
     
     -- Add verified if missing
     IF NOT EXISTS (
         SELECT FROM information_schema.columns 
-        WHERE table_name = 'seller_profiles' AND column_name = 'verified'
+        WHERE table_name = 'supplier_profiles' AND column_name = 'verified'
     ) THEN
-        ALTER TABLE "seller_profiles" ADD COLUMN "verified" BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE "supplier_profiles" ADD COLUMN "verified" BOOLEAN NOT NULL DEFAULT false;
     END IF;
     
     -- Update PreferredContactMethod enum to include PHONE if missing
@@ -170,14 +170,14 @@ BEGIN
     END IF;
 END $$;
 
--- Step 8: Update indexes for seller_profiles if they don't exist
-CREATE INDEX IF NOT EXISTS "seller_profiles_searchable_idx" ON "seller_profiles"("searchable");
-CREATE INDEX IF NOT EXISTS "seller_profiles_province_idx" ON "seller_profiles"("province");
-CREATE INDEX IF NOT EXISTS "seller_profiles_verified_idx" ON "seller_profiles"("verified");
-CREATE INDEX IF NOT EXISTS "seller_profiles_created_at_idx" ON "seller_profiles"("created_at" DESC);
+-- Step 8: Update indexes for supplier_profiles if they don't exist
+CREATE INDEX IF NOT EXISTS "supplier_profiles_searchable_idx" ON "supplier_profiles"("searchable");
+CREATE INDEX IF NOT EXISTS "supplier_profiles_province_idx" ON "supplier_profiles"("province");
+CREATE INDEX IF NOT EXISTS "supplier_profiles_verified_idx" ON "supplier_profiles"("verified");
+CREATE INDEX IF NOT EXISTS "supplier_profiles_created_at_idx" ON "supplier_profiles"("created_at" DESC);
 
 -- Step 9: Update profile_capabilities indexes
-CREATE INDEX IF NOT EXISTS "profile_capabilities_seller_profile_id_idx" ON "profile_capabilities"("seller_profile_id");
+CREATE INDEX IF NOT EXISTS "profile_capabilities_supplier_profile_id_idx" ON "profile_capabilities"("supplier_profile_id");
 CREATE INDEX IF NOT EXISTS "profile_capabilities_capability_id_idx" ON "profile_capabilities"("capability_id");
-CREATE INDEX IF NOT EXISTS "profile_capabilities_seller_profile_id_is_core_idx" ON "profile_capabilities"("seller_profile_id", "is_core");
-CREATE UNIQUE INDEX IF NOT EXISTS "profile_capabilities_seller_profile_id_capability_id_key" ON "profile_capabilities"("seller_profile_id", "capability_id");
+CREATE INDEX IF NOT EXISTS "profile_capabilities_supplier_profile_id_is_core_idx" ON "profile_capabilities"("supplier_profile_id", "is_core");
+CREATE UNIQUE INDEX IF NOT EXISTS "profile_capabilities_supplier_profile_id_capability_id_key" ON "profile_capabilities"("supplier_profile_id", "capability_id");
