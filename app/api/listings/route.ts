@@ -41,7 +41,7 @@ export async function GET() {
     });
 
     // Format the response to match the frontend expectations
-    const formattedListings = listings.map((listing) => {
+    const formattedListings = listings.map((listing: any) => {
       // Determine badge and icon based on listing type
       let badge = 'Available';
       let badgeColor = 'green';
