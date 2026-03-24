@@ -125,7 +125,7 @@ export default function PostRequestPage() {
                         href="/wishlist"
                         className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                     >
-                        <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Wishlist
+                        <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Sourcing Requests
                     </Link>
 
                     <div className="glass-card p-10 rounded-3xl border border-white/5">
