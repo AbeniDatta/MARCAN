@@ -92,24 +92,24 @@ export default function HomePage() {
           <span className="uppercase tracking-widest font-bold text-slate-600 mr-2">Try asking:</span>
           <button
             type="button"
-            onClick={() => setSearchQuery('Aluminum anodizing in BC')}
+            onClick={() => setSearchQuery('Plastic injection molding shops')}
             className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
           >
-            &quot;Aluminum anodizing in BC&quot;
+            &quot;Plastic injection molding shops&quot;
           </button>
           <button
             type="button"
-            onClick={() => setSearchQuery('Who can cast steel parts?')}
+            onClick={() => setSearchQuery('Copper fabrication companies')}
             className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
           >
-            &quot;Who can cast steel parts?&quot;
+            &quot;Copper fabrication companies&quot;
           </button>
           <button
             type="button"
-            onClick={() => setSearchQuery('Find AS9100 certified suppliers')}
+            onClick={() => setSearchQuery('Titanium machining suppliers serving defense industry')}
             className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
           >
-            &quot;Find AS9100 certified suppliers&quot;
+            &quot;Titanium machining suppliers serving defense industry&quot;
           </button>
         </div>
 
@@ -212,7 +212,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
               {/* Industry Card 1 */}
               <Link
-                href="/directory"
+                href={`/directory?industry=${encodeURIComponent('Precision Machining')}`}
                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
               >
                 <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform">
@@ -229,7 +229,7 @@ export default function HomePage() {
 
               {/* Industry Card 2 */}
               <Link
-                href="/directory"
+                href={`/directory?industry=${encodeURIComponent('Foundries & Casting')}`}
                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
               >
                 <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
@@ -246,7 +246,7 @@ export default function HomePage() {
 
               {/* Industry Card 3 */}
               <Link
-                href="/directory"
+                href={`/directory?industry=${encodeURIComponent('Surface Finishing')}`}
                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
               >
                 <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">
@@ -263,7 +263,7 @@ export default function HomePage() {
 
               {/* Industry Card 4 */}
               <Link
-                href="/directory"
+                href={`/directory?industry=${encodeURIComponent('Tooling & Molds')}`}
                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
               >
                 <div className="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4 group-hover:scale-110 transition-transform">
@@ -280,7 +280,7 @@ export default function HomePage() {
 
               {/* Industry Card 5 */}
               <Link
-                href="/directory"
+                href={`/directory?industry=${encodeURIComponent('Automation')}`}
                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
               >
                 <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">

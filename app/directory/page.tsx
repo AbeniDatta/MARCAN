@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
@@ -35,6 +36,7 @@ const CERTIFICATIONS = [
 ];
 
 export default function DirectoryPage() {
+  const searchParams = useSearchParams();
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -63,6 +65,16 @@ export default function DirectoryPage() {
 
     fetchCompanies();
   }, []);
+
+  useEffect(() => {
+    const industryFromUrl = (searchParams.get('industry') || '').trim();
+    if (!industryFromUrl) return;
+
+    setFilters((prev) => {
+      if (prev.industry === industryFromUrl) return prev;
+      return { ...prev, industry: industryFromUrl };
+    });
+  }, [searchParams]);
 
   // AI-powered search
   useEffect(() => {

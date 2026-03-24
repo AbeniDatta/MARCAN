@@ -182,7 +182,7 @@ Now process this query: {USER_QUERY}
             ...(location ? [locationCondition] : []),
           ],
         },
-        take: 20,
+        //take: 20,
         include: {
           profileCapabilities: {
             include: { capability: true },
@@ -204,7 +204,7 @@ Now process this query: {USER_QUERY}
             ...(location ? [locationCondition] : []),
           ],
         },
-        take: 20,
+        //take: 20,
         orderBy: [
           { profileCompletenessScore: 'desc' },
           { updatedAt: 'desc' },
@@ -234,13 +234,15 @@ Now process this query: {USER_QUERY}
           ...(location ? [{ location: { contains: location, mode: 'insensitive' as const } }] : []),
         ],
       },
-      take: 20,
+      //take: 20,
       include: {
         sellerProfile: {
           select: {
             companyName: true,
             logoUrl: true,
             selectedIcon: true,
+            province: true,
+            certifications: true,
           },
         },
       },
@@ -265,11 +267,12 @@ Now process this query: {USER_QUERY}
           ...(requestSearchConditions.length > 0 ? [{ OR: requestSearchConditions }] : []),
         ],
       },
-      take: 20,
+      //take: 20,
       include: {
         buyerProfile: {
           select: {
             companyName: true,
+            province: true,
           },
         },
       },
@@ -306,12 +309,15 @@ Now process this query: {USER_QUERY}
       createdAt: l.createdAt.toISOString(),
       logoUrl: l.sellerProfile.logoUrl,
       selectedIcon: l.sellerProfile.selectedIcon,
+      sellerProvince: l.sellerProfile.province || '',
+      sellerCertifications: l.sellerProfile.certifications || [],
     }));
 
     const formattedRequests = requests.map((r) => ({
       id: r.id,
       title: r.title,
       company: r.companyName,
+      province: r.buyerProfile?.province || '',
       category: r.category || '',
       description: r.description || '',
       quantity: r.quantity || '',

@@ -1,11 +1,39 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
 type TabType = 'companies' | 'listings' | 'requests';
+
+const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+const CANADIAN_PROVINCES = [
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Quebec' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'AB', name: 'Alberta' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NU', name: 'Nunavut' },
+];
+const CERTIFICATIONS = [
+  { code: 'ISO 9001', label: 'ISO 9001' },
+  { code: 'AS9100', label: 'AS9100' },
+  { code: 'CGRP', label: 'CGRP' },
+  { code: 'NADCAP', label: 'NADCAP' },
+  { code: 'ISO 14001', label: 'ISO 14001' },
+  { code: 'ISO 45001', label: 'ISO 45001' },
+  { code: 'IATF 16949', label: 'IATF 16949' },
+  { code: 'ISO 13485', label: 'ISO 13485' },
+];
+const PROVINCE_NAME_BY_CODE = new Map(CANADIAN_PROVINCES.map((p) => [p.code, p.name.toLowerCase()]));
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -14,6 +42,11 @@ function SearchPageContent() {
   const [activeTab, setActiveTab] = useState<TabType>('companies');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
+  const [filters, setFilters] = useState({
+    industry: '',
+    province: '',
+    certification: '',
+  });
   const [results, setResults] = useState({
     companies: [] as any[],
     listings: [] as any[],
@@ -77,6 +110,125 @@ function SearchPageContent() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const filteredCompanies = useMemo(() => {
+    return results.companies.filter((company) => {
+      if (filters.industry) {
+        const companyIndustries = Array.isArray(company.industryHubs) ? company.industryHubs : [];
+        const hasIndustry = companyIndustries.some(
+          (hub: string) => String(hub).toLowerCase() === filters.industry.toLowerCase()
+        );
+        if (!hasIndustry) return false;
+      }
+
+      if (filters.province) {
+        const companyProvinceRaw = String(company.province || '').trim();
+        const provinceFromField = companyProvinceRaw.toUpperCase();
+        const provinceFromLocation = String(company.location || '')
+          .split(',')
+          .pop()
+          ?.trim()
+          .toUpperCase() || '';
+        const targetCode = filters.province.toUpperCase();
+        const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
+        const companyProvinceName = companyProvinceRaw.toLowerCase();
+        const locationProvinceName = String(company.location || '').toLowerCase();
+
+        const isMatch =
+          provinceFromField === targetCode ||
+          provinceFromLocation === targetCode ||
+          companyProvinceName === targetName ||
+          locationProvinceName.includes(targetName);
+        if (!isMatch) return false;
+      }
+
+      if (filters.certification) {
+        const companyCerts = Array.isArray(company.certifications) ? company.certifications : [];
+        const certMatches = companyCerts.some((cert: any) => {
+          if (typeof cert === 'string') {
+            return cert.toLowerCase() === filters.certification.toLowerCase();
+          }
+          return (
+            String(cert.code || '').toLowerCase() === filters.certification.toLowerCase() ||
+            String(cert.name || '').toLowerCase() === filters.certification.toLowerCase()
+          );
+        });
+        if (!certMatches) return false;
+      }
+
+      return true;
+    });
+  }, [results.companies, filters]);
+
+  const filteredListings = useMemo(() => {
+    return results.listings.filter((listing) => {
+      if (filters.industry) {
+        const haystack = `${listing.listingType || ''} ${listing.title || ''} ${listing.description || ''}`.toLowerCase();
+        if (!haystack.includes(filters.industry.toLowerCase())) return false;
+      }
+
+      if (filters.province) {
+        const targetCode = filters.province.toUpperCase();
+        const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
+        const locationSuffix = String(listing.location || '').split(',').pop()?.trim().toUpperCase() || '';
+        const sellerProvince = String(listing.sellerProvince || '').toUpperCase();
+        const locationText = String(listing.location || '').toLowerCase();
+        const provinceMatch =
+          locationSuffix === targetCode ||
+          sellerProvince === targetCode ||
+          locationText.includes(targetName);
+        if (!provinceMatch) return false;
+      }
+
+      if (filters.certification) {
+        const certs = Array.isArray(listing.sellerCertifications) ? listing.sellerCertifications : [];
+        const certMatch = certs.some((cert: any) => {
+          if (typeof cert === 'string') return cert.toLowerCase() === filters.certification.toLowerCase();
+          return (
+            String(cert.code || '').toLowerCase() === filters.certification.toLowerCase() ||
+            String(cert.name || '').toLowerCase() === filters.certification.toLowerCase()
+          );
+        });
+        if (!certMatch) return false;
+      }
+
+      return true;
+    });
+  }, [results.listings, filters]);
+
+  const filteredRequests = useMemo(() => {
+    return results.requests.filter((request) => {
+      if (filters.industry) {
+        const haystack = `${request.category || ''} ${request.title || ''} ${request.description || ''}`.toLowerCase();
+        if (!haystack.includes(filters.industry.toLowerCase())) return false;
+      }
+
+      if (filters.province) {
+        const targetCode = filters.province.toUpperCase();
+        const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
+        const requestProvince = String(request.province || '').toUpperCase();
+        const haystack = `${request.title || ''} ${request.description || ''} ${request.category || ''}`.toLowerCase();
+        if (!(requestProvince === targetCode || haystack.includes(targetName))) return false;
+      }
+
+      if (filters.certification) {
+        const haystack = `${request.title || ''} ${request.description || ''} ${request.category || ''}`.toLowerCase();
+        if (!haystack.includes(filters.certification.toLowerCase())) return false;
+      }
+
+      return true;
+    });
+  }, [results.requests, filters]);
+
+  const filteredCounts = useMemo(
+    () => ({
+      companies: filteredCompanies.length,
+      listings: filteredListings.length,
+      requests: filteredRequests.length,
+      total: filteredCompanies.length + filteredListings.length + filteredRequests.length,
+    }),
+    [filteredCompanies.length, filteredListings.length, filteredRequests.length]
+  );
+
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Search" />
@@ -126,10 +278,69 @@ function SearchPageContent() {
                 <p className="text-slate-400 text-sm">
                   Found{' '}
                   <span className="text-white font-bold">
-                    {results.counts.companies + results.counts.listings + results.counts.requests}
+                    {filteredCounts.total}
                   </span>{' '}
                   results for "{query}"
                 </p>
+              </div>
+
+              {/* Global Filters */}
+              <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="min-w-[180px]">
+                    <select
+                      value={filters.industry}
+                      onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">All Industries</option>
+                      {INDUSTRY_HUBS.map((hub) => (
+                        <option key={hub} value={hub}>
+                          {hub}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="min-w-[140px]">
+                    <select
+                      value={filters.province}
+                      onChange={(e) => setFilters({ ...filters, province: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">All Provinces</option>
+                      {CANADIAN_PROVINCES.map((province) => (
+                        <option key={province.code} value={province.code}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="min-w-[160px]">
+                    <select
+                      value={filters.certification}
+                      onChange={(e) => setFilters({ ...filters, certification: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">All Certifications</option>
+                      {CERTIFICATIONS.map((cert) => (
+                        <option key={cert.code} value={cert.code}>
+                          {cert.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(filters.industry || filters.province || filters.certification) && (
+                    <button
+                      onClick={() => setFilters({ industry: '', province: '', certification: '' })}
+                      className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Tabs */}
@@ -141,7 +352,7 @@ function SearchPageContent() {
                     : 'text-slate-400 hover:text-white'
                     }`}
                 >
-                  Companies ({results.counts.companies})
+                  Companies ({filteredCounts.companies})
                   {activeTab === 'companies' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-marcan-red"></div>
                   )}
@@ -153,7 +364,7 @@ function SearchPageContent() {
                     : 'text-slate-400 hover:text-white'
                     }`}
                 >
-                  Supplier Listings ({results.counts.listings})
+                  Storefront Listings ({filteredCounts.listings})
                   {activeTab === 'listings' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-marcan-red"></div>
                   )}
@@ -165,7 +376,7 @@ function SearchPageContent() {
                     : 'text-slate-400 hover:text-white'
                     }`}
                 >
-                  Sourcing Requests ({results.counts.requests})
+                  Sourcing Requests ({filteredCounts.requests})
                   {activeTab === 'requests' && (
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-marcan-red"></div>
                   )}
@@ -183,14 +394,16 @@ function SearchPageContent() {
                   {/* Companies Tab */}
                   {activeTab === 'companies' && (
                     <div className="space-y-4">
-                      {results.companies.length === 0 ? (
+                      {filteredCompanies.length === 0 ? (
                         <div className="text-center py-12">
                           <i className="fa-solid fa-building text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400">No companies found.</p>
+                          <p className="text-slate-400">
+                            {results.companies.length === 0 ? 'No companies found.' : 'No companies match your filters.'}
+                          </p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {results.companies.map((company) => (
+                          {filteredCompanies.map((company) => (
                             <Link
                               key={company.id}
                               href={`/profile?id=${company.id}`}
@@ -251,14 +464,16 @@ function SearchPageContent() {
                   {/* Listings Tab */}
                   {activeTab === 'listings' && (
                     <div className="space-y-4">
-                      {results.listings.length === 0 ? (
+                      {filteredListings.length === 0 ? (
                         <div className="text-center py-12">
                           <i className="fa-solid fa-shop text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400">No supplier listings found.</p>
+                          <p className="text-slate-400">
+                            {results.listings.length === 0 ? 'No supplier listings found.' : 'No supplier listings match your filters.'}
+                          </p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                          {results.listings.map((listing) => (
+                          {filteredListings.map((listing) => (
                             <div
                               key={listing.id}
                               className="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all"
@@ -314,14 +529,16 @@ function SearchPageContent() {
                   {/* Requests Tab */}
                   {activeTab === 'requests' && (
                     <div className="space-y-4">
-                      {results.requests.length === 0 ? (
+                      {filteredRequests.length === 0 ? (
                         <div className="text-center py-12">
                           <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400">No sourcing requests found.</p>
+                          <p className="text-slate-400">
+                            {results.requests.length === 0 ? 'No sourcing requests found.' : 'No sourcing requests match your filters.'}
+                          </p>
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {results.requests.map((request) => (
+                          {filteredRequests.map((request) => (
                             <div
                               key={request.id}
                               className="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
