@@ -8,7 +8,8 @@ export const dynamic = 'force-dynamic';
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.wishlistRequest?.findUnique !== 'function') {
+    const db = prisma as any;
+    if (!db || typeof db.sourcingRequest?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -21,7 +22,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Find the request and verify ownership (via buyer profile)
-    const wishlistRequest = await prisma.wishlistRequest.findUnique({
+    const wishlistRequest = await db.sourcingRequest.findUnique({
       where: { id },
       include: {
         buyerProfile: true,
@@ -38,7 +39,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete the request
-    await prisma.wishlistRequest.delete({
+    await db.sourcingRequest.delete({
       where: { id },
     });
 
