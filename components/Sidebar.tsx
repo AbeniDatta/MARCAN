@@ -99,10 +99,10 @@ export default function Sidebar() {
                             >
                                 <div
                                     className={`absolute inset-0 ${isShopTab ? 'bg-orange-500/10' : 'bg-marcan-red/10'} transition-transform duration-300 ${isShopTab
+                                        ? 'translate-x-0'
+                                        : active
                                             ? 'translate-x-0'
-                                            : active
-                                                ? 'translate-x-0'
-                                                : 'translate-x-[-100%] group-hover:translate-x-0'
+                                            : 'translate-x-[-100%] group-hover:translate-x-0'
                                         }
                                         }`}
                                 />

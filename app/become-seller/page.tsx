@@ -641,7 +641,7 @@ export default function BecomeSupplierPage() {
       companyType: formData.companyType,
       jobTitle: formData.role,
       // Storefront signups should not appear in the Network Directory.
-            // Normalized taxonomy selections (capability IDs)
+      // Normalized taxonomy selections (capability IDs)
       processes: formData.processes,
       materials: formData.materials,
       finishes: formData.finishes,

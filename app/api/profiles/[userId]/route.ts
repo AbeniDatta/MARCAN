@@ -11,7 +11,8 @@ export async function DELETE(
 ) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
+    const db = prisma as any;
+    if (!db || typeof db.supplierProfile?.findUnique !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json(
         {
@@ -42,10 +43,10 @@ export async function DELETE(
     }
 
     // Find the supplier profile
-    const profile = await prisma.supplierProfile.findUnique({
+    const profile = await (db as any).supplierProfile.findUnique({
       where: { email },
       include: {
-        listings: true,
+        storefrontListings: true,
       },
     });
 
@@ -61,18 +62,18 @@ export async function DELETE(
       );
     }
 
-    const listingsCount = profile.listings.length;
+    const listingsCount = (profile as any).storefrontListings.length;
 
     // Explicitly delete listings first (even though cascade should handle it, this ensures it works)
     if (listingsCount > 0) {
-      await prisma.listing.deleteMany({
+      await (prisma as any).storefrontListing.deleteMany({
         where: { profileId: profile.id },
       });
       console.log(`Deleted ${listingsCount} listings for profile ${profile.id}`);
     }
 
     // Delete the supplier profile (this will also cascade delete any remaining related records)
-    await prisma.supplierProfile.delete({
+    await (db as any).supplierProfile.delete({
       where: { email },
     });
 
