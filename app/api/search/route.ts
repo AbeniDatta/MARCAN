@@ -227,7 +227,7 @@ Now process this query: {USER_QUERY}
       ],
     }));
 
-    const listings = await db.listing.findMany({
+    const listings = await db.storefrontListing.findMany({
       where: {
         AND: [
           { active: true },

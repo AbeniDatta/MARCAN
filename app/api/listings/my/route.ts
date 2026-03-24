@@ -19,7 +19,11 @@ function formatPrice(rawPrice: string) {
 export async function GET(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
+    if (
+      !prisma ||
+      typeof prisma.supplierProfile?.findUnique !== 'function' ||
+      typeof (prisma as any).storefrontListing?.findMany !== 'function'
+    ) {
       console.error('Prisma client not properly initialized');
       return NextResponse.json([]);
     }
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's listings
-    const listings = await prisma.listing.findMany({
+    const listings = await (prisma as any).storefrontListing.findMany({
       where: {
         profileId: profile.id,
       },

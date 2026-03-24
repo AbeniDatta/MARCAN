@@ -33,6 +33,7 @@ type ShopListingCard = {
 
 type StoreCard = {
     id: string;
+    profileType?: 'supplier' | 'storefront';
     name: string;
     location: string;
     description: string;
@@ -264,7 +265,11 @@ export default function ShopPage() {
                 const listingsData = await listingsRes.json();
 
                 const listings = Array.isArray(listingsData) ? listingsData : [];
-                const profileIds = new Set(listings.map((l: any) => l?.profileId).filter(Boolean));
+                const profileIds = new Set(
+                    listings
+                        .flatMap((l: any) => [l?.profileId, l?.storefrontProfileId])
+                        .filter(Boolean)
+                );
                 const profileIdList = Array.from(profileIds);
 
                 // Fetch each referenced profile by id (directory filtering may exclude storefront profiles).
@@ -287,18 +292,28 @@ export default function ShopPage() {
                 // Build one card per listing (so title/price/location/description come from the listing form).
                 const cards: ShopListingCard[] = listings
                     .map((l: any) => {
-                        const profile = profileById.get(l?.profileId);
-                        if (!profile) return null;
+                        const supplierProfile = l?.profileId ? profileById.get(l.profileId) : null;
+                        const storefrontProfile = l?.storefrontProfileId ? profileById.get(l.storefrontProfileId) : null;
+                        if (!supplierProfile && !storefrontProfile) return null;
+
+                        // Merge data: prefer storefront visuals; enrich with supplier tags/email if present
+                        const displayProfile = storefrontProfile || supplierProfile;
+                        const mergedName = l?.supplier || displayProfile?.name || supplierProfile?.name || storefrontProfile?.name || 'Unknown';
+                        const mergedIcon = (storefrontProfile?.icon || supplierProfile?.icon || 'fa-industry');
+                        const mergedLogo = storefrontProfile?.logoUrl ?? supplierProfile?.logoUrl ?? null;
+                        const mergedTags = Array.isArray(supplierProfile?.tags) ? supplierProfile.tags : (Array.isArray(displayProfile?.tags) ? displayProfile.tags : []);
+                        const mergedEmail = supplierProfile?.email ?? storefrontProfile?.email ?? null;
+                        const linkProfileId = supplierProfile?.id || storefrontProfile?.id;
 
                         return {
                             listingId: l?.id,
-                            profileId: l?.profileId,
+                            profileId: linkProfileId,
 
-                            supplierName: l?.supplier || profile?.name || 'Unknown',
-                            supplierIcon: profile?.icon || 'fa-industry',
-                            supplierLogoUrl: profile?.logoUrl,
-                            supplierTags: profile?.tags || [],
-                            supplierEmail: profile?.email || null,
+                            supplierName: mergedName,
+                            supplierIcon: mergedIcon,
+                            supplierLogoUrl: mergedLogo,
+                            supplierTags: mergedTags,
+                            supplierEmail: mergedEmail,
 
                             title: l?.title || '',
                             listingType: l?.listingType || '',
@@ -744,9 +759,11 @@ export default function ShopPage() {
                                                 key={store.id}
                                                 className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col relative"
                                             >
-                                                <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                                                    Storefront
-                                                </span>
+                                                {store.profileType === 'storefront' ? (
+                                                    <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                                                        Storefront
+                                                    </span>
+                                                ) : null}
                                                 <div className="flex justify-between items-start mb-4">
                                                     {store.logoUrl ? (
                                                         <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">

@@ -367,12 +367,85 @@ export async function GET(request: NextRequest) {
     // Fetch single profile by profile id (used by `/profile?id=...`).
     // This bypasses directory eligibility filtering so storefront profiles can be viewed even if excluded from the Network Directory.
     if (profileId) {
-      // Fetch single profile by id with capabilities for rich display
+      // Fetch single supplier profile by id with capabilities for rich display.
       let profile: any = await db.supplierProfile.findUnique({
         where: { id: profileId },
       });
 
-      if (!profile) {
+      if (profile) {
+        // Load capabilities separately to avoid relation errors
+        try {
+          const capabilities = await db.profileCapability.findMany({
+            where: { supplierProfileId: profile.id },
+            include: { capability: true },
+          });
+          profile.profileCapabilities = capabilities;
+        } catch (error: any) {
+          console.warn('Could not load profile capabilities:', error.message);
+          profile.profileCapabilities = [];
+        }
+
+        const capabilitiesByType: Record<string, string[]> = {
+          PROCESS: [],
+          MATERIAL: [],
+          FINISH: [],
+          CERTIFICATION: [],
+          INDUSTRY: [],
+          COMPANY_TYPE: [],
+        };
+
+        for (const pc of profile.profileCapabilities) {
+          const type = pc.capability.type as unknown as string;
+          if (!capabilitiesByType[type]) {
+            capabilitiesByType[type] = [];
+          }
+          capabilitiesByType[type].push(pc.capability.name);
+        }
+
+        // Shape the response to match the frontend expectations used by directory/cards.
+        const tags = Array.isArray(profile.capabilities) ? profile.capabilities.slice(0, 3) : [];
+        const locationParts: string[] = [];
+        if (profile.city) locationParts.push(profile.city);
+        if (profile.province) locationParts.push(profile.province);
+        const location = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
+
+        return NextResponse.json(
+          {
+            id: profile.id,
+            userId: profile.email,
+            profileType: 'supplier',
+            name: profile.companyName,
+            location,
+            description: profile.aboutUs || 'No description available.',
+            icon: 'fa-industry',
+            logoUrl: null,
+            tags,
+            capabilities: profile.capabilities,
+            certifications: profile.certifications,
+            materials: profile.materials,
+            website: profile.website,
+            phone: profile.phone,
+            city: profile.city,
+            province: profile.province,
+            streetAddress: profile.streetAddress,
+            businessNumber: profile.businessNumber,
+            jobTitle: profile.jobTitle,
+            capabilitiesByType,
+            email: profile.email,
+            aboutUs: profile.aboutUs,
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // If not a supplier profile, attempt storefront profile by id.
+      const storefrontProfile = await db.storefrontProfile.findUnique({
+        where: { id: profileId },
+      });
+
+      if (!storefrontProfile) {
         return NextResponse.json(
           { error: 'Profile not found' },
           {
@@ -382,65 +455,43 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Load capabilities separately to avoid relation errors
-      try {
-        const capabilities = await db.profileCapability.findMany({
-          where: { supplierProfileId: profile.id },
-          include: { capability: true },
-        });
-        profile.profileCapabilities = capabilities;
-      } catch (error: any) {
-        console.warn('Could not load profile capabilities:', error.message);
-        profile.profileCapabilities = [];
-      }
-
-      const capabilitiesByType: Record<string, string[]> = {
-        PROCESS: [],
-        MATERIAL: [],
-        FINISH: [],
-        CERTIFICATION: [],
-        INDUSTRY: [],
-        COMPANY_TYPE: [],
-      };
-
-      for (const pc of profile.profileCapabilities) {
-        const type = pc.capability.type as unknown as string;
-        if (!capabilitiesByType[type]) {
-          capabilitiesByType[type] = [];
-        }
-        capabilitiesByType[type].push(pc.capability.name);
-      }
-
-      // Shape the response to match the frontend expectations used by directory/cards.
-      const tags = Array.isArray(profile.capabilities) ? profile.capabilities.slice(0, 3) : [];
-      const locationParts: string[] = [];
-      if (profile.city) locationParts.push(profile.city);
-      if (profile.province) locationParts.push(profile.province);
-      const location = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
+      const storefrontLocationParts: string[] = [];
+      if (storefrontProfile.city) storefrontLocationParts.push(storefrontProfile.city);
+      if (storefrontProfile.province) storefrontLocationParts.push(storefrontProfile.province);
+      const storefrontLocation =
+        storefrontLocationParts.length > 0 ? storefrontLocationParts.join(', ') : 'Location not specified';
 
       return NextResponse.json(
         {
-          id: profile.id,
-          userId: profile.email,
-          name: profile.companyName,
-          location,
-          description: profile.aboutUs || 'No description available.',
-          icon: 'fa-industry',
-          logoUrl: null,
-          tags,
-          capabilities: profile.capabilities,
-          certifications: profile.certifications,
-          materials: profile.materials,
-          website: profile.website,
-          phone: profile.phone,
-          city: profile.city,
-          province: profile.province,
-          streetAddress: profile.streetAddress,
-          businessNumber: profile.businessNumber,
-          jobTitle: profile.jobTitle,
-          capabilitiesByType,
-          email: profile.email,
-          aboutUs: profile.aboutUs,
+          id: storefrontProfile.id,
+          userId: storefrontProfile.userId,
+          profileType: 'storefront',
+          name: storefrontProfile.companyName,
+          location: storefrontLocation,
+          description: storefrontProfile.aboutUs || 'No description available.',
+          icon: storefrontProfile.selectedIcon || 'fa-shop',
+          logoUrl: storefrontProfile.logoUrl || null,
+          tags: [],
+          capabilities: [],
+          certifications: [],
+          materials: [],
+          website: storefrontProfile.website,
+          phone: storefrontProfile.phone,
+          city: storefrontProfile.city,
+          province: storefrontProfile.province,
+          streetAddress: storefrontProfile.streetAddress,
+          businessNumber: storefrontProfile.businessNumber,
+          jobTitle: storefrontProfile.role,
+          capabilitiesByType: {
+            PROCESS: [],
+            MATERIAL: [],
+            FINISH: [],
+            CERTIFICATION: [],
+            INDUSTRY: [],
+            COMPANY_TYPE: [],
+          },
+          email: storefrontProfile.email,
+          aboutUs: storefrontProfile.aboutUs,
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -512,27 +563,29 @@ export async function GET(request: NextRequest) {
     // Otherwise, return all profiles (existing behavior)
     const includeStorefront = searchParams.get('includeStorefront') === 'true';
 
-    const profiles = await db.supplierProfile.findMany({
+    const supplierProfiles = await db.supplierProfile.findMany({
       where: {
-        ...(includeStorefront
-          ? {
-            deactivated: false,
-            searchable: true,
-          }
-          : {
-            deactivated: false,
-            OR: [
-              { searchable: true },
-            ],
-          }),
+        deactivated: false,
+        searchable: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    // Format the response to match the frontend expectations
-    const formattedProfiles = profiles.map((profile: any) => {
+    const storefrontProfiles = includeStorefront
+      ? await db.storefrontProfile.findMany({
+        where: {
+          deactivated: false,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+      : [];
+
+    // Format supplier profiles to match frontend expectations.
+    const formattedSupplierProfiles = supplierProfiles.map((profile: any) => {
       // Create tags from capabilities
       const tags = profile.capabilities.slice(0, 3);
 
@@ -545,6 +598,7 @@ export async function GET(request: NextRequest) {
       return {
         id: profile.id,
         userId: profile.email, // Compatibility key used by frontend auth matching
+        profileType: 'supplier',
         name: profile.companyName,
         location,
         description: profile.aboutUs || 'No description available.',
@@ -565,6 +619,42 @@ export async function GET(request: NextRequest) {
         verified: profile.verified,
       };
     });
+
+    // Format storefront profiles for storefront cards.
+    const formattedStorefrontProfiles = storefrontProfiles.map((profile: any) => {
+      const locationParts = [];
+      if (profile.city) locationParts.push(profile.city);
+      if (profile.province) locationParts.push(profile.province);
+      const location = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
+
+      return {
+        id: profile.id,
+        userId: profile.userId,
+        profileType: 'storefront',
+        name: profile.companyName,
+        location,
+        description: profile.aboutUs || 'No description available.',
+        icon: profile.selectedIcon || 'fa-shop',
+        logoUrl: profile.logoUrl || null,
+        tags: [],
+        capabilities: [],
+        certifications: [],
+        materials: [],
+        website: profile.website,
+        phone: profile.phone,
+        city: profile.city,
+        province: profile.province,
+        streetAddress: profile.streetAddress,
+        businessNumber: profile.businessNumber,
+        jobTitle: profile.role,
+        industriesServed: [],
+        verified: profile.verified,
+      };
+    });
+
+    const formattedProfiles = includeStorefront
+      ? [...formattedStorefrontProfiles, ...formattedSupplierProfiles]
+      : formattedSupplierProfiles;
 
     return NextResponse.json(formattedProfiles, {
       headers: {

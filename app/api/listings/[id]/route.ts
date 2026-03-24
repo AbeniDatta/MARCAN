@@ -18,7 +18,11 @@ function formatPrice(rawPrice: string) {
 // PUT update listing (authenticated, owner only)
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    if (!prisma || typeof prisma.listing?.findUnique !== 'function') {
+    if (
+      !prisma ||
+      typeof (prisma as any).storefrontListing?.findUnique !== 'function' ||
+      typeof (prisma as any).storefrontListing?.update !== 'function'
+    ) {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -40,7 +44,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Price must be a valid numeric value' }, { status: 400 });
     }
 
-    const existingListing = await prisma.listing.findUnique({
+    const existingListing = await (prisma as any).storefrontListing.findUnique({
       where: { id },
       include: {
         supplierProfile: true,
@@ -55,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const updatedListing = await prisma.listing.update({
+    const updatedListing = await (prisma as any).storefrontListing.update({
       where: { id },
       data: {
         title,
@@ -125,7 +129,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.listing?.findUnique !== 'function') {
+    if (
+      !prisma ||
+      typeof (prisma as any).storefrontListing?.findUnique !== 'function' ||
+      typeof (prisma as any).storefrontListing?.delete !== 'function'
+    ) {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -138,7 +146,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Find the listing and verify ownership (via supplier profile)
-    const listing = await prisma.listing.findUnique({
+    const listing = await (prisma as any).storefrontListing.findUnique({
       where: { id },
       include: {
         supplierProfile: true,
@@ -155,7 +163,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 
     // Delete the listing
-    await prisma.listing.delete({
+    await (prisma as any).storefrontListing.delete({
       where: { id },
     });
 

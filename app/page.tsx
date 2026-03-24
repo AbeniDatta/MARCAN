@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -9,6 +9,10 @@ import { useI18n } from '@/contexts/I18nContext';
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [companyNames, setCompanyNames] = useState<string[]>([]);
+  const [shouldScroll, setShouldScroll] = useState(false);
+  const marqueeContainerRef = useRef<HTMLDivElement | null>(null);
+  const marqueeTrackRef = useRef<HTMLDivElement | null>(null);
   const { t } = useI18n();
 
   const certifications = [
@@ -38,6 +42,50 @@ export default function HomePage() {
   const prevGroup = () => {
     setCurrentGroup((prev) => (prev - 1 + totalGroups) % totalGroups);
   };
+
+  useEffect(() => {
+    const loadCompanies = async () => {
+      try {
+        const response = await fetch('/api/profiles');
+        if (!response.ok) throw new Error('Failed to fetch company directory');
+        const data = await response.json();
+        const names = Array.isArray(data)
+          ? data
+            .map((company: any) => String(company?.name || '').trim())
+            .filter((name: string) => name.length > 0)
+          : [];
+        setCompanyNames(names);
+      } catch (error) {
+        console.error('Error loading company names for homepage widget:', error);
+        setCompanyNames([]);
+      }
+    };
+
+    loadCompanies();
+  }, []);
+
+  // Decide whether we need to animate (only when content exceeds container)
+  useEffect(() => {
+    const measure = () => {
+      const container = marqueeContainerRef.current;
+      const track = marqueeTrackRef.current;
+      if (!container || !track) {
+        setShouldScroll(false);
+        return;
+      }
+      // If a duplicated list is used, its width will be 2x. We still only care if any overflow exists.
+      const hasOverflow = track.scrollWidth > container.clientWidth + 4; // small tolerance
+      setShouldScroll(hasOverflow);
+    };
+    // Measure after layout
+    const raf = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(raf);
+  }, [companyNames]);
+
+  const marqueeNames = useMemo(() => {
+    if (companyNames.length === 0) return [];
+    return shouldScroll ? [...companyNames, ...companyNames] : companyNames;
+  }, [companyNames, shouldScroll]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,19 +401,60 @@ export default function HomePage() {
           {/* Trusted Partners Section */}
           <div className="lg:col-span-12">
             <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Manufacturers</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {['TechFab', 'MapleCNC', 'IronWorks', 'CanCast', 'PrecisionQC', 'AutoParts CA'].map((partner) => (
-                <div
-                  key={partner}
-                  className="glass-card h-16 rounded-xl flex items-center justify-center opacity-60 hover:opacity-100 hover:border-marcan-red/30 hover:bg-white/5 transition-all duration-300 cursor-default"
-                >
-                  <span className="font-heading font-bold text-white text-sm tracking-wide">{partner}</span>
+            <div className="glass-card rounded-2xl border border-white/5 p-4 overflow-hidden">
+              {marqueeNames.length === 0 ? (
+                <div className="h-16 flex items-center justify-center text-sm text-slate-500">
+                  No manufacturers found in the directory yet.
                 </div>
-              ))}
+              ) : (
+                <div className="manufacturer-marquee" ref={marqueeContainerRef}>
+                  <div
+                    className={`manufacturer-track${shouldScroll ? ' animate' : ''}`}
+                    ref={marqueeTrackRef}
+                  >
+                    {marqueeNames.map((name, index) => (
+                      <div
+                        key={`${name}-${index}`}
+                        className="h-14 px-6 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center shrink-0"
+                      >
+                        <span className="font-heading font-bold text-white text-sm tracking-wide whitespace-nowrap">
+                          {name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+      <style jsx>{`
+        .manufacturer-marquee {
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .manufacturer-track {
+          display: flex;
+          gap: 0.75rem;
+          width: max-content;
+          /* No animation by default; enabled only when overflow is present */
+          animation: none;
+        }
+        .manufacturer-track.animate {
+          animation: manufacturer-scroll 700s linear infinite;
+        }
+
+        @keyframes manufacturer-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </main>
   );
 }

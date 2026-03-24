@@ -19,12 +19,12 @@ function formatPrice(rawPrice: string) {
 export async function GET() {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.listing?.findMany !== 'function') {
+    if (!prisma || typeof (prisma as any).storefrontListing?.findMany !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json([]);
     }
 
-    const listings = await prisma.listing.findMany({
+    const listings = await (prisma as any).storefrontListing.findMany({
       where: {
         active: true,
       },
@@ -68,6 +68,7 @@ export async function GET() {
       return {
         id: listing.id,
         profileId: listing.profileId,
+        storefrontProfileId: listing.storefrontProfileId || null,
         title: listing.title,
         supplier: listing.supplierProfile?.companyName || 'Unknown',
         price: formatPrice(listing.price || '') || listing.price || '',
@@ -96,7 +97,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.supplierProfile?.findUnique !== 'function') {
+    if (
+      !prisma ||
+      typeof prisma.supplierProfile?.findUnique !== 'function' ||
+      typeof (prisma as any).storefrontListing?.create !== 'function'
+    ) {
       console.error('Prisma client not properly initialized');
       return NextResponse.json({ error: 'Database connection not available' }, { status: 503 });
     }
@@ -128,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the listing
-    const listing = await prisma.listing.create({
+    const listing = await (prisma as any).storefrontListing.create({
       data: {
         profileId: profile.id,
         title: itemName,
@@ -176,6 +181,7 @@ export async function POST(request: NextRequest) {
     const formattedListing = {
       id: listing.id,
       profileId: listing.profileId,
+      storefrontProfileId: listing.storefrontProfileId || null,
       title: listing.title,
       supplier: listing.supplierProfile?.companyName || 'Unknown',
       price: formatPrice(listing.price || '') || listing.price || '',
