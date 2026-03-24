@@ -10,6 +10,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username');
     const checkType = searchParams.get('type'); // 'check-username' or null
+    const userId = searchParams.get('userId');
+
+    if (userId) {
+      const buyerProfile = await prisma.buyerProfile.findUnique({
+        where: { userId },
+      });
+
+      if (!buyerProfile) {
+        return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      }
+
+      return NextResponse.json(buyerProfile);
+    }
 
     if (checkType === 'check-username' && username) {
       // Check if username is already taken

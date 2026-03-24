@@ -154,11 +154,12 @@ export default function HomePage() {
             </div>
 
             <div className="relative z-10">
+              {/*}
               <div className="flex items-center gap-2 mb-5">
                 <i className="fa-solid fa-route text-marcan-red"></i>
-                <h3 className="text-slate-300 text-xs font-bold uppercase tracking-widest">Platform Overview</h3>
+                <span className="text-slate-300 text-xs font-bold uppercase tracking-widest">How Marcan Works</span>
               </div>
-
+              */}
               <h4 className="font-heading font-black text-2xl text-white mb-6">How Marcan Works</h4>
 
               {/* Ecosystem Timeline/Node Flow */}

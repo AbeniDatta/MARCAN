@@ -201,9 +201,8 @@ export default function BecomeSellerPage() {
           if (parsed.lastCompletedStep !== undefined && parsed.lastCompletedStep !== null) {
             setLastCompletedStep(parsed.lastCompletedStep);
           }
-          if (parsed.isGeneralSupplier !== undefined) {
-            setIsGeneralSupplier(parsed.isGeneralSupplier);
-          }
+          // Always use the standard supplier form
+          setIsGeneralSupplier(false);
         } catch (err) {
           console.error('Error loading saved form data:', err);
         }
@@ -935,40 +934,7 @@ export default function BecomeSellerPage() {
                       <p className="text-xs text-slate-500">{t('becomeSeller.companyBasics.step')}</p>
                     </div>
                     <div className="space-y-6">
-                      {/* Form type selector */}
-                      <div className="border border-white/10 rounded-lg p-4 bg-black/30">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-3">
-                          {t('becomeSeller.companyBasics.chooseFormType')}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setIsGeneralSupplier(false)}
-                            className={`text-left p-3 rounded-lg border text-xs transition-all ${!isGeneralSupplier
-                              ? 'border-marcan-red bg-marcan-red/10 text-white shadow-neon'
-                              : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
-                              }`}
-                          >
-                            <div className="font-semibold uppercase text-[11px] mb-1">{t('becomeSeller.companyBasics.standardTitle')}</div>
-                            <p className="text-[11px] text-slate-300">
-                              {t('becomeSeller.companyBasics.standardBody')}
-                            </p>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIsGeneralSupplier(true)}
-                            className={`text-left p-3 rounded-lg border text-xs transition-all ${isGeneralSupplier
-                              ? 'border-marcan-red bg-marcan-red/10 text-white shadow-neon'
-                              : 'border-white/10 bg-black/40 text-slate-300 hover:border-marcan-red/60'
-                              }`}
-                          >
-                            <div className="font-semibold uppercase text-[11px] mb-1">{t('becomeSeller.companyBasics.generalTitle')}</div>
-                            <p className="text-[11px] text-slate-300">
-                              {t('becomeSeller.companyBasics.generalBody')}
-                            </p>
-                          </button>
-                        </div>
-                      </div>
+                      {/* Form type selector removed: Standard supplier form only */}
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.legalCompanyName')} *</label>
                         <input
@@ -1029,7 +995,7 @@ export default function BecomeSellerPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.provincesServed')} {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSeller.companyBasics.provincesServed')} *</label>
                         <div className="grid grid-cols-3 gap-2 mt-2">
                           {CANADIAN_PROVINCES.map((p) => (
                             <label
@@ -1052,7 +1018,7 @@ export default function BecomeSellerPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          {t('becomeSeller.companyBasics.industriesServed')} {!isGeneralSupplier && '*'}
+                          {t('becomeSeller.companyBasics.industriesServed')} *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {INDUSTRY_HUB_NAMES.map((hub) => (
@@ -1143,7 +1109,7 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.primaryProcesses')} {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.primaryProcesses')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
                             <label
@@ -1176,7 +1142,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.materials')} {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSeller.coreCapabilities.materials')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                           {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
                             <label
@@ -1270,7 +1236,7 @@ export default function BecomeSellerPage() {
                     </div>
                     <div className="space-y-6">
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalJobSize')} {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalJobSize')} *</label>
                         <div className="space-y-2">
                           <label className="flex items-start gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input
@@ -1346,7 +1312,7 @@ export default function BecomeSellerPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalLeadTime')} {!isGeneralSupplier && '*'}</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('becomeSeller.productionProfile.typicalLeadTime')} *</label>
                         <div className="space-y-2">
                           <label className="flex items-center gap-3 p-3 rounded-lg bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50">
                             <input

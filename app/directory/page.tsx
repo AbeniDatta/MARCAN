@@ -42,7 +42,6 @@ export default function DirectoryPage() {
     industry: '',
     province: '',
     certification: '',
-    verifiedOnly: false,
   });
 
   useEffect(() => {
@@ -134,9 +133,6 @@ export default function DirectoryPage() {
         if (!certMatches) return false;
       }
 
-      // Verified status filter
-      if (filters.verifiedOnly && !company.verified) return false;
-
       return true;
     });
   }, [companies, filters, aiSearchResults]);
@@ -224,25 +220,10 @@ export default function DirectoryPage() {
                 </select>
               </div>
 
-              {/* Verified Toggle */}
-              <div className="flex items-center gap-2">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={filters.verifiedOnly}
-                    onChange={(e) => setFilters({ ...filters, verifiedOnly: e.target.checked })}
-                    className="w-4 h-4 rounded bg-black/40 border border-white/10 text-marcan-red focus:ring-marcan-red focus:ring-2 cursor-pointer"
-                  />
-                  <span className="text-sm font-semibold text-white group-hover:text-marcan-red transition-colors">
-                    Verified Only
-                  </span>
-                </label>
-              </div>
-
               {/* Clear Filters */}
-              {(filters.search || filters.industry || filters.province || filters.certification || filters.verifiedOnly) && (
+              {(filters.search || filters.industry || filters.province || filters.certification) && (
                 <button
-                  onClick={() => setFilters({ search: '', industry: '', province: '', certification: '', verifiedOnly: false })}
+                  onClick={() => setFilters({ search: '', industry: '', province: '', certification: '' })}
                   className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                 >
                   Clear
@@ -278,7 +259,7 @@ export default function DirectoryPage() {
             <i className="fa-solid fa-filter text-4xl text-slate-600 mb-4"></i>
             <p className="text-slate-400 text-sm">No companies match your filters.</p>
             <button
-              onClick={() => setFilters({ search: '', industry: '', province: '', certification: '', verifiedOnly: false })}
+              onClick={() => setFilters({ search: '', industry: '', province: '', certification: '' })}
               className="mt-4 px-4 py-2 rounded-lg bg-marcan-red text-white text-xs font-bold uppercase tracking-wider hover:shadow-neon transition-all"
             >
               Clear Filters

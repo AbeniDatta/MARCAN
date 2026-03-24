@@ -95,16 +95,15 @@ export default function Sidebar() {
                                 className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${isShopTab
                                     ? 'text-orange-400 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 shadow-[inset_0_0_20px_rgba(249,115,22,0.10)]'
                                     : active ? 'text-white' : 'text-slate-400'
-                                  } hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
+                                    } hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
                             >
                                 <div
-                                    className={`absolute inset-0 ${isShopTab ? 'bg-orange-500/10' : 'bg-marcan-red/10'} transition-transform duration-300 ${
-                                      isShopTab
-                                        ? 'translate-x-0'
-                                        : active
-                                          ? 'translate-x-0'
-                                          : 'translate-x-[-100%] group-hover:translate-x-0'
-                                    }
+                                    className={`absolute inset-0 ${isShopTab ? 'bg-orange-500/10' : 'bg-marcan-red/10'} transition-transform duration-300 ${isShopTab
+                                            ? 'translate-x-0'
+                                            : active
+                                                ? 'translate-x-0'
+                                                : 'translate-x-[-100%] group-hover:translate-x-0'
+                                        }
                                         }`}
                                 />
                                 <i className={`fa-solid ${item.icon} text-xl w-6 text-center`}></i>

@@ -6,6 +6,22 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
+const CANADIAN_PROVINCES = [
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Quebec' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'AB', name: 'Alberta' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NU', name: 'Nunavut' },
+];
+
 export default function CreateListingPage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
@@ -15,7 +31,8 @@ export default function CreateListingPage() {
     itemName: '',
     listingType: '',
     price: '',
-    location: '',
+    city: '',
+    province: '',
     description: '',
   });
 
@@ -39,6 +56,8 @@ export default function CreateListingPage() {
       return;
     }
 
+    const location = `${formData.city.trim()}, ${formData.province}`.trim();
+
     try {
       // Create listing via API
       const response = await fetch('/api/listings', {
@@ -50,7 +69,7 @@ export default function CreateListingPage() {
           itemName: formData.itemName,
           listingType: formData.listingType,
           price: formData.price,
-          location: formData.location,
+          location,
           description: formData.description,
           userId: user.email,
         }),
@@ -107,8 +126,8 @@ export default function CreateListingPage() {
           const hasSupplierRole = user?.role === 'supplier';
           setIsSeller(hasSupplierRole);
           if (!hasSupplierRole) {
-      router.replace('/my-account');
-    }
+            router.replace('/my-account');
+          }
         })
         .finally(() => {
           setIsCheckingSeller(false);
@@ -144,7 +163,7 @@ export default function CreateListingPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Info */}
               <div>
-                <label className="text-[10px] font-bold text-orange-500 uppercase mb-2 block">Item Name</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Item Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Used Haas CNC Mill or Surplus Aluminum Sheet"
@@ -168,7 +187,7 @@ export default function CreateListingPage() {
                     <option value="Equipment / Machinery">Equipment / Machinery</option>
                     <option value="Raw Materials">Raw Materials</option>
                     <option value="Surplus Parts">Surplus Parts</option>
-                    <option value="Production Capacity">Production Capacity</option>
+                    <option value="Extra Space">Extra Space</option>
                   </select>
                 </div>
               </div>
@@ -178,24 +197,47 @@ export default function CreateListingPage() {
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Price ($ CAD)</label>
                   <input
                     type="text"
+                    inputMode="decimal"
                     placeholder="0.00"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9.]/g, '');
+                      if (/^\d*\.?\d{0,2}$/.test(value)) {
+                        setFormData({ ...formData, price: value });
+                      }
+                    }}
                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Location</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">City</label>
                   <input
                     type="text"
-                    placeholder="City, Province"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="e.g. Toronto"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Province</label>
+                <select
+                  value={formData.province}
+                  onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none"
+                  required
+                >
+                  <option value="">Select Province...</option>
+                  {CANADIAN_PROVINCES.map((province) => (
+                    <option key={province.code} value={province.code}>
+                      {province.name} ({province.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Details */}
@@ -214,7 +256,7 @@ export default function CreateListingPage() {
               <div className="flex justify-end pt-4">
                 <button
                   type="submit"
-                  className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon hover:scale-105 transition-all"
+                  className="bg-orange-500 text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon hover:scale-105 transition-all"
                 >
                   Post Listing
                 </button>

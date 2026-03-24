@@ -4,6 +4,17 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
+function formatPrice(rawPrice: string) {
+  const numeric = String(rawPrice ?? '').replace(/[^0-9.]/g, '');
+  const parsed = Number.parseFloat(numeric);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  const normalized = Number.isInteger(parsed) ? parsed.toString() : parsed.toFixed(2);
+  return `$${normalized}`;
+}
+
 // GET user's own listings (authenticated)
 export async function GET(request: NextRequest) {
   try {
@@ -77,7 +88,7 @@ export async function GET(request: NextRequest) {
         id: listing.id,
         title: listing.title,
         seller: listing.sellerProfile.companyName,
-        price: listing.price || '',
+        price: formatPrice(listing.price || '') || listing.price || '',
         badge: listing.badge || badge,
         badgeColor,
         icon: listing.imageUrl ? null : icon,

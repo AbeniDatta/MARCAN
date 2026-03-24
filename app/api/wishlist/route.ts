@@ -4,6 +4,17 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
+function formatPrice(rawPrice: string) {
+  const numeric = String(rawPrice ?? '').replace(/[^0-9.]/g, '');
+  const parsed = Number.parseFloat(numeric);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  const normalized = Number.isInteger(parsed) ? parsed.toString() : parsed.toFixed(2);
+  return `$${normalized}`;
+}
+
 // GET all wishlist requests (public)
 export async function GET() {
   try {
@@ -45,7 +56,7 @@ export async function GET() {
       description: req.description,
       specifications: req.description,
       quantity: req.quantity || '',
-      targetPrice: req.targetPrice || '',
+      targetPrice: req.targetPrice ? (formatPrice(req.targetPrice) || req.targetPrice) : '',
       deadline: req.deadline ? req.deadline.toISOString() : null,
       active: req.active,
       createdAt: req.createdAt.toISOString(),
@@ -72,6 +83,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { title, category, quantity, specifications, deadline, targetPrice, userId } = body;
+    const normalizedTargetPrice = targetPrice
+      ? formatPrice(targetPrice)
+      : null;
+
+    if (targetPrice && !normalizedTargetPrice) {
+      return NextResponse.json({ error: 'Target price must be a valid numeric value' }, { status: 400 });
+    }
+
 
     if (!title || !specifications || !userId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -101,7 +120,7 @@ export async function POST(request: NextRequest) {
         category: category || null,
         description: specifications,
         quantity: quantity || null,
-        targetPrice: targetPrice || null,
+        targetPrice: normalizedTargetPrice,
         deadline: deadline ? new Date(deadline) : null,
         active: true,
       },
@@ -130,7 +149,7 @@ export async function POST(request: NextRequest) {
       description: wishlistRequest.description,
       specifications: wishlistRequest.description,
       quantity: wishlistRequest.quantity || '',
-      targetPrice: wishlistRequest.targetPrice || '',
+      targetPrice: wishlistRequest.targetPrice ? (formatPrice(wishlistRequest.targetPrice) || wishlistRequest.targetPrice) : '',
       deadline: wishlistRequest.deadline ? wishlistRequest.deadline.toISOString() : null,
       active: wishlistRequest.active,
       createdAt: wishlistRequest.createdAt.toISOString(),

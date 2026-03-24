@@ -137,7 +137,7 @@ export default function PostRequestPage() {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Basic Info */}
                             <div>
-                                <label className="text-[10px] font-bold text-marcan-red uppercase mb-2 block">Request Title</label>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Request Title</label>
                                 <input
                                     type="text"
                                     placeholder="e.g. 500 Units of Aluminum Casings"
@@ -205,9 +205,15 @@ export default function PostRequestPage() {
                                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Target Price (Optional)</label>
                                     <input
                                         type="text"
-                                        placeholder="$ CAD"
+                                        inputMode="decimal"
+                                        placeholder="0.00"
                                         value={formData.targetPrice}
-                                        onChange={(e) => setFormData({ ...formData, targetPrice: e.target.value })}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9.]/g, '');
+                                            if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                                setFormData({ ...formData, targetPrice: value });
+                                            }
+                                        }}
                                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                                     />
                                 </div>

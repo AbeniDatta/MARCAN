@@ -4,6 +4,17 @@ import { prisma } from '@/lib/prisma';
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
+function formatPrice(rawPrice: string) {
+  const numeric = String(rawPrice ?? '').replace(/[^0-9.]/g, '');
+  const parsed = Number.parseFloat(numeric);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  const normalized = Number.isInteger(parsed) ? parsed.toString() : parsed.toFixed(2);
+  return `$${normalized}`;
+}
+
 // GET all listings (public)
 export async function GET() {
   try {
@@ -61,7 +72,7 @@ export async function GET() {
         profileId: listing.profileId,
         title: listing.title,
         seller: listing.sellerProfile?.companyName || 'Unknown',
-        price: listing.price || '',
+        price: formatPrice(listing.price || '') || listing.price || '',
         badge: listing.badge || badge,
         badgeColor,
         icon: listing.imageUrl ? null : icon,
@@ -100,6 +111,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const formattedPrice = formatPrice(price);
+    if (!formattedPrice) {
+      return NextResponse.json({ error: 'Price must be a valid numeric value' }, { status: 400 });
+    }
+
     // Enforce: only suppliers can create supplier listings
     // (We use presence of a seller profile as the source of truth.)
     const profile = await prisma.sellerProfile.findUnique({
@@ -120,7 +136,7 @@ export async function POST(request: NextRequest) {
         title: itemName,
         listingType,
         condition: condition ?? null,
-        price,
+        price: formattedPrice,
         location,
         description,
         category: listingType,
@@ -166,7 +182,7 @@ export async function POST(request: NextRequest) {
       profileId: listing.profileId,
       title: listing.title,
       seller: listing.sellerProfile?.companyName || 'Unknown',
-      price: listing.price || '',
+      price: formatPrice(listing.price || '') || listing.price || '',
       badge: listing.badge || badge,
       badgeColor,
       icon: listing.imageUrl ? null : icon,

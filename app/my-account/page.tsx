@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -80,14 +81,30 @@ export default function MyAccountPage() {
     COMPANY_TYPE: [],
   });
   const [supplierProfile, setSupplierProfile] = useState<any | null>(null);
+  const [buyerProfile, setBuyerProfile] = useState<any | null>(null);
   const [accountRole, setAccountRole] = useState<'buyer' | 'supplier'>('buyer');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
   const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
+  const [viewingListing, setViewingListing] = useState<any | null>(null);
+  const [editingListing, setEditingListing] = useState<any | null>(null);
+  const [listingFormData, setListingFormData] = useState({
+    title: '',
+    listingType: '',
+    condition: '',
+    price: '',
+    location: '',
+    description: '',
+  });
   const [isDeletingProfile, setIsDeletingProfile] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isDomReady, setIsDomReady] = useState(false);
+
+  useEffect(() => {
+    setIsDomReady(true);
+  }, []);
 
   useEffect(() => {
     // Only check authentication after component has mounted (client-side)
@@ -233,6 +250,26 @@ export default function MyAccountPage() {
             console.error('Error fetching user profile:', err);
           });
 
+        // Fetch buyer profile so we can show the real "last updated" timestamp.
+        fetch(`/api/users?userId=${encodeURIComponent(user.email)}`)
+          .then((res) => {
+            if (!res.ok) {
+              if (res.status === 404) return null;
+              throw new Error('Failed to fetch buyer profile');
+            }
+            return res.json();
+          })
+          .then((profile) => {
+            if (!profile) {
+              setBuyerProfile(null);
+              return;
+            }
+            setBuyerProfile(profile);
+          })
+          .catch((err) => {
+            console.error('Error fetching buyer profile:', err);
+          });
+
         // Fetch user's own wishlist requests
         fetch(`/api/wishlist/my?userId=${encodeURIComponent(user.email)}`)
           .then((res) => {
@@ -330,6 +367,19 @@ export default function MyAccountPage() {
     return [...array, item];
   };
 
+  const getLastUpdatedText = (updatedAt?: string | Date | null) => {
+    if (!updatedAt) return 'Last updated: --';
+
+    const parsedDate = new Date(updatedAt);
+    if (Number.isNaN(parsedDate.getTime())) return 'Last updated: --';
+    const formattedDate = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(parsedDate);
+    return `Last updated: ${formattedDate}`;
+  };
+
   const handleSaveProfile = async () => {
     if (!user || !user.email) return;
 
@@ -423,6 +473,11 @@ export default function MyAccountPage() {
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to save profile');
+        }
+
+        const buyerSaveResult = await response.json();
+        if (buyerSaveResult?.profile) {
+          setBuyerProfile(buyerSaveResult.profile);
         }
       } else {
         throw new Error('Failed to check profile status');
@@ -580,6 +635,61 @@ export default function MyAccountPage() {
       console.error('Error deleting listing:', error);
       setSaveMessage({ type: 'error', text: error.message || 'Failed to delete listing' });
       setTimeout(() => setSaveMessage(null), 3000);
+    }
+  };
+
+  const handleStartEditListing = (listing: any) => {
+    setViewingListing(null);
+    setEditingListing(listing);
+    setListingFormData({
+      title: listing.title || '',
+      listingType: listing.listingType || '',
+      condition: listing.condition || '',
+      price: listing.price || '',
+      location: listing.location || '',
+      description: listing.description || '',
+    });
+  };
+
+  const handleSaveListingEdit = async () => {
+    if (!user?.email || !editingListing) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/listings/${editingListing.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.email,
+          title: listingFormData.title.trim(),
+          listingType: listingFormData.listingType,
+          condition: listingFormData.condition.trim() || null,
+          price: listingFormData.price.trim(),
+          location: listingFormData.location.trim(),
+          description: listingFormData.description.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update listing');
+      }
+
+      const updatedListing = await response.json();
+      setMySupplierListings((prev) =>
+        prev.map((listing) => (listing.id === updatedListing.id ? { ...listing, ...updatedListing } : listing))
+      );
+      setEditingListing(null);
+      setSaveMessage({ type: 'success', text: 'Listing updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error updating listing:', err);
+      setSaveMessage({ type: 'error', text: err.message || 'Failed to update listing' });
+      setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -805,11 +915,15 @@ export default function MyAccountPage() {
               {((activeTab === 'profile' && accountRole === 'buyer') || activeTab === 'buyer-profile') && (
                 <div className="account-tab block animate-fade-in">
                   <div className="glass-card p-8 rounded-3xl border border-white/5">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                    <div className="mb-6 border-b border-white/5 pb-4">
                       <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
                         My Buyer Profile Information
                       </h3>
-                      <span className="text-[10px] text-slate-500 uppercase font-bold">Last updated: Today</span>
+                      <span className="mt-1 block text-[10px] text-slate-500 uppercase font-bold">
+                        {getLastUpdatedText(
+                          supplierProfile?.updatedAt || buyerProfile?.updatedAt || null
+                        )}
+                      </span>
                     </div>
 
                     {/* Account Role - read only */}
@@ -965,6 +1079,9 @@ export default function MyAccountPage() {
                       <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
                         My Supplier Company Profile Information
                       </h3>
+                      <span className="mt-1 block text-[10px] text-slate-500 uppercase font-bold">
+                        {getLastUpdatedText(supplierProfile?.updatedAt || null)}
+                      </span>
                     </div>
 
                     {/* Account Role - read only */}
@@ -982,7 +1099,6 @@ export default function MyAccountPage() {
 
                     {/* Personal Account Information */}
                     <div className="mb-8 border-b border-white/5 pb-6">
-                      <h4 className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-4">Account Information</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
@@ -1857,7 +1973,7 @@ export default function MyAccountPage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {myWishlistRequests.map((request) => (
+                          {myWishlistRequests.slice(0, 3).map((request) => (
                             <div
                               key={request.id}
                               className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
@@ -1892,15 +2008,26 @@ export default function MyAccountPage() {
                               </div>
                             </div>
                           ))}
+
+                          {myWishlistRequests.length > 3 && (
+                            <div className="pt-2">
+                              <Link
+                                href="/my-posts/requests"
+                                className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
+                              >
+                                See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       )}
                   </div>
 
-                  {/* Supplier Listings Section */}
+                  {/* Storefront Listings Section */}
                   {accountRole === 'supplier' && (
                     <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Supplier Listings</h3>
+                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Storefront Listings</h3>
                         <Link
                           href="/create-listing"
                           className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
@@ -1912,7 +2039,7 @@ export default function MyAccountPage() {
                       {mySupplierListings.length === 0 ? (
                         <div className="text-center py-12">
                           <i className="fa-solid fa-shop text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400 text-sm mb-4">No supplier listings created yet.</p>
+                          <p className="text-slate-400 text-sm mb-4">No storefront listings created yet.</p>
                           <Link
                             href="/create-listing"
                             className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
@@ -1921,41 +2048,246 @@ export default function MyAccountPage() {
                           </Link>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {mySupplierListings.map((listing) => (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {mySupplierListings.slice(0, 3).map((listing) => (
                             <div
                               key={listing.id}
-                              className="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all relative"
+                              className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden relative"
                             >
                               <button
                                 onClick={() => handleDeleteSupplierListing(listing.id)}
-                                className="absolute top-2 right-2 z-10 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                className="absolute top-3 right-3 z-20 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
                                 title="Delete listing"
                               >
                                 <i className="fa-solid fa-trash text-xs"></i>
                               </button>
-                              <div className="h-32 bg-black/40 flex items-center justify-center text-slate-600 relative">
-                                <i className="fa-solid fa-box text-3xl group-hover:text-white transition-colors"></i>
-                              </div>
-                              <div className="p-4 border-t border-white/5">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h3 className="font-bold text-white text-sm uppercase truncate pr-8">{listing.title}</h3>
-                                  <span className="font-bold text-marcan-red text-sm">{listing.price}</span>
+
+                              <div className="p-5 flex flex-col flex-grow">
+                                {listing.listingType ? (
+                                  <div className="mb-3">
+                                    <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                      {listing.listingType}
+                                    </span>
+                                  </div>
+                                ) : null}
+
+                                <h3 className="font-heading font-bold text-white mb-1 line-clamp-1 pr-10">
+                                  {listing.title || 'Untitled listing'}
+                                </h3>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
+                                  <i className="fa-solid fa-store text-orange-400 mr-1"></i>
+                                  {listing.seller || formData.companyName || 'My Company'}
+                                </p>
+
+                                <p className="text-xs text-slate-400 line-clamp-1 mb-4">
+                                  {listing.description || 'No description available.'}
+                                </p>
+
+                                <div className="mt-auto flex items-end justify-between mb-4 gap-3">
+                                  <span className="text-xl font-black text-white truncate">
+                                    {listing.price || 'Negotiable'}
+                                  </span>
+                                  <span className="text-xs text-slate-400 shrink-0">
+                                    <i className="fa-solid fa-location-dot mr-1"></i>
+                                    {listing.location || 'N/A'}
+                                  </span>
                                 </div>
-                                <div className="text-[10px] text-slate-500 mb-2">
-                                  {listing.listingType} • {listing.condition}
-                                </div>
-                                <p className="text-slate-400 text-xs mb-3 line-clamp-2">{listing.description}</p>
-                                <div className="text-[10px] text-slate-500">
-                                  {new Date(listing.createdAt || listing.timestamp).toLocaleDateString()}
+
+                                <div className="flex flex-col gap-2">
+                                  <button
+                                    onClick={() => setViewingListing(listing)}
+                                    className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                  >
+                                    View Listing
+                                  </button>
+                                  <button
+                                    onClick={() => handleStartEditListing(listing)}
+                                    className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                  >
+                                    Edit Listing
+                                  </button>
                                 </div>
                               </div>
                             </div>
                           ))}
                         </div>
                       )}
+
+                      {mySupplierListings.length > 3 && (
+                        <div className="pt-6">
+                          <Link
+                            href="/my-posts/listings"
+                            className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
+                          >
+                            View all listings <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   )}
+                </div>
+              )}
+
+              {isDomReady && viewingListing &&
+                createPortal(
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <button
+                      type="button"
+                      className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
+                      onClick={() => setViewingListing(null)}
+                      aria-label="Close view listing modal"
+                    />
+                    <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
+                      <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
+                            {viewingListing.listingType || 'Listing'}
+                          </span>
+                          <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
+                            {viewingListing.title || 'Untitled listing'}
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => setViewingListing(null)}
+                          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
+                          aria-label="Close view listing modal"
+                        >
+                          <i className="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                      </div>
+                      <div className="p-6 md:p-8 space-y-8 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                          <div className="lg:col-span-2 space-y-8">
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-align-left text-orange-400"></i> Description
+                              </h4>
+                              <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                <p>{viewingListing.description || 'No description available for this listing.'}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-list-check text-orange-400"></i> Listing Details
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Type</span>
+                                  <span className="text-sm font-semibold text-white">{viewingListing.listingType || 'Not specified'}</span>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</span>
+                                  <span className="text-sm font-semibold text-white">{viewingListing.price || 'Negotiable'}</span>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</span>
+                                  <span className="text-sm font-semibold text-white">{viewingListing.location || 'Not specified'}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-6">
+                            <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
+                              <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Asking Price</div>
+                              <div className="text-4xl font-black text-white tracking-tight mb-6">
+                                {viewingListing.price || 'Negotiable'}
+                              </div>
+                              <button
+                                onClick={() => handleStartEditListing(viewingListing)}
+                                className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                              >
+                                <i className="fa-solid fa-pen"></i> Edit Listing
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )
+              }
+
+              {editingListing && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                  <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl">
+                    <div className="flex justify-between items-center mb-5">
+                      <h3 className="font-heading text-xl font-bold text-white uppercase">Edit Listing</h3>
+                      <button
+                        onClick={() => setEditingListing(null)}
+                        className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300"
+                        aria-label="Close edit listing modal"
+                      >
+                        <i className="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Listing Title</label>
+                        <input
+                          value={listingFormData.title}
+                          onChange={(e) => setListingFormData((prev) => ({ ...prev, title: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Category</label>
+                        <select
+                          value={listingFormData.listingType}
+                          onChange={(e) => setListingFormData((prev) => ({ ...prev, listingType: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500 outline-none"
+                        >
+                          <option value="Equipment / Machinery">Equipment / Machinery</option>
+                          <option value="Raw Materials">Raw Materials</option>
+                          <option value="Surplus Parts">Surplus Parts</option>
+                          <option value="Extra Space">Extra Space</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Price</label>
+                        <input
+                          value={listingFormData.price}
+                          onChange={(e) => setListingFormData((prev) => ({ ...prev, price: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Location</label>
+                        <input
+                          value={listingFormData.location}
+                          onChange={(e) => setListingFormData((prev) => ({ ...prev, location: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Description</label>
+                      <textarea
+                        value={listingFormData.description}
+                        onChange={(e) => setListingFormData((prev) => ({ ...prev, description: e.target.value }))}
+                        rows={4}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-orange-500 outline-none"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => setEditingListing(null)}
+                        className="bg-white/5 border border-white/10 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveListingEdit}
+                        disabled={isSaving}
+                        className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? 'Saving...' : 'Save Listing'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
