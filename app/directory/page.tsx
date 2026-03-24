@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
@@ -35,7 +35,7 @@ const CERTIFICATIONS = [
   { code: 'ISO 13485', label: 'ISO 13485' },
 ];
 
-export default function DirectoryPage() {
+function DirectoryPageContent() {
   const searchParams = useSearchParams();
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
@@ -356,5 +356,22 @@ export default function DirectoryPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function DirectoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
+          <Header breadcrumb="Company Directory" />
+          <div className="flex-1 overflow-y-auto p-8 relative">
+            <div className="text-slate-400 text-sm">Loading directory...</div>
+          </div>
+        </main>
+      }
+    >
+      <DirectoryPageContent />
+    </Suspense>
   );
 }
