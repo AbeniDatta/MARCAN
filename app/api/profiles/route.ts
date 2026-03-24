@@ -524,17 +524,17 @@ export async function GET(request: NextRequest) {
       where: {
         ...(includeStorefront
           ? {
-              deactivated: false,
-              primaryIntent: { in: ['sell', 'both', 'storefront'] },
-            }
+            deactivated: false,
+            primaryIntent: { in: ['sell', 'both', 'storefront'] },
+          }
           : {
-              deactivated: false,
-              OR: [
-                { primaryIntent: { in: ['sell', 'both'] } },
-                // For Network Directory: include searchable suppliers only (exclude storefront profiles).
-                { searchable: true, primaryIntent: { not: 'storefront' } },
-              ],
-            }),
+            deactivated: false,
+            OR: [
+              { primaryIntent: { in: ['sell', 'both'] } },
+              // For Network Directory: include searchable suppliers only (exclude storefront profiles).
+              { searchable: true, primaryIntent: { not: 'storefront' } },
+            ],
+          }),
       },
       orderBy: {
         createdAt: 'desc',
@@ -571,6 +571,8 @@ export async function GET(request: NextRequest) {
         streetAddress: profile.streetAddress,
         businessNumber: profile.businessNumber,
         jobTitle: profile.jobTitle,
+        industryHubs: profile.industryHubs,
+        verified: profile.verified,
         primaryIntent: profile.primaryIntent, // Include primaryIntent
       };
     });

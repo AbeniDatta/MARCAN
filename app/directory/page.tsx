@@ -21,6 +21,7 @@ const CANADIAN_PROVINCES = [
   { code: 'YT', name: 'Yukon' },
   { code: 'NU', name: 'Nunavut' },
 ];
+const PROVINCE_NAME_BY_CODE = new Map(CANADIAN_PROVINCES.map((p) => [p.code, p.name.toLowerCase()]));
 
 const CERTIFICATIONS = [
   { code: 'ISO 9001', label: 'ISO 9001' },
@@ -111,14 +112,37 @@ export default function DirectoryPage() {
 
       // Industry filter
       if (filters.industry) {
-        const companyIndustries = company.industryHubs || [];
-        if (!companyIndustries.includes(filters.industry)) return false;
+        const companyIndustries = Array.isArray(company.industryHubs) && company.industryHubs.length > 0
+          ? company.industryHubs
+          : (Array.isArray(company.tags) ? company.tags : []);
+        const hasIndustry = companyIndustries.some(
+          (hub: string) => String(hub).toLowerCase() === filters.industry.toLowerCase()
+        );
+        if (!hasIndustry) return false;
       }
 
-      // Province filter (only if not using AI search, as AI handles location)
-      if (filters.province && (filters.search.trim().length < 2 || aiSearchResults.length === 0)) {
-        const companyProvince = company.province || '';
-        if (companyProvince !== filters.province) return false;
+      // Province filter
+      if (filters.province) {
+        const companyProvinceRaw = String(company.province || '').trim();
+        const provinceFromField = companyProvinceRaw.toUpperCase();
+        const provinceFromLocation = String(company.location || '')
+          .split(',')
+          .pop()
+          ?.trim()
+          .toUpperCase() || '';
+        const targetCode = filters.province.toUpperCase();
+        const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
+
+        const companyProvinceName = companyProvinceRaw.toLowerCase();
+        const locationProvinceName = String(company.location || '').toLowerCase();
+
+        const isMatch =
+          provinceFromField === targetCode ||
+          provinceFromLocation === targetCode ||
+          companyProvinceName === targetName ||
+          locationProvinceName.includes(targetName);
+
+        if (!isMatch) return false;
       }
 
       // Certification filter
@@ -126,8 +150,13 @@ export default function DirectoryPage() {
         const companyCerts = company.certifications || [];
         const certMatches = Array.isArray(companyCerts)
           ? companyCerts.some((cert: any) => {
-            if (typeof cert === 'string') return cert === filters.certification;
-            return cert.code === filters.certification || cert.name === filters.certification;
+            if (typeof cert === 'string') {
+              return cert.toLowerCase() === filters.certification.toLowerCase();
+            }
+            return (
+              String(cert.code || '').toLowerCase() === filters.certification.toLowerCase() ||
+              String(cert.name || '').toLowerCase() === filters.certification.toLowerCase()
+            );
           })
           : false;
         if (!certMatches) return false;
