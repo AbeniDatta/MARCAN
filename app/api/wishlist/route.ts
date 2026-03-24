@@ -19,12 +19,12 @@ function formatPrice(rawPrice: string) {
 export async function GET() {
   try {
     // Check if prisma is properly initialized
-    if (!prisma || typeof prisma.wishlistRequest?.findMany !== 'function') {
+    if (!prisma || typeof prisma.sourcingRequest?.findMany !== 'function') {
       console.error('Prisma client not properly initialized');
       return NextResponse.json([]);
     }
 
-    const requests = await prisma.wishlistRequest.findMany({
+    const requests = await prisma.sourcingRequest.findMany({
       where: {
         active: true,
       },
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the wishlist request
-    const wishlistRequest = await prisma.wishlistRequest.create({
+    const wishlistRequest = await prisma.sourcingRequest.create({
       data: {
         buyerProfileId: profile.id,
         title,

@@ -19,7 +19,7 @@ async function cleanDatabase() {
 
     // Delete in order to respect foreign key constraints
     // Delete wishlist requests first (has foreign key to Profile)
-    const deletedWishlist = await prisma.wishlistRequest.deleteMany({});
+    const deletedWishlist = await prisma.sourcingRequest.deleteMany({});
     console.log(`✅ Deleted ${deletedWishlist.count} wishlist requests`);
 
     // Delete listings (has foreign key to Profile)

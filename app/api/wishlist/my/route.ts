@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's wishlist requests
-    const requests = await prisma.wishlistRequest.findMany({
+    const requests = await prisma.sourcingRequest.findMany({
       where: {
         buyerProfileId: profile.id,
       },

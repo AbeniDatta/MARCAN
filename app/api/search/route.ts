@@ -259,7 +259,7 @@ Now process this query: {USER_QUERY}
       ],
     }));
 
-    const requests = await db.wishlistRequest.findMany({
+    const requests = await db.sourcingRequest.findMany({
       where: {
         AND: [
           { active: true },
