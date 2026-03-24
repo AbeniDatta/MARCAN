@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format the response
-    const formattedListings = listings.map((listing) => {
+    const formattedListings = listings.map((listing: any) => {
       // Determine badge and icon based on listing type
       let badge = 'Available';
       let badgeColor = 'green';
