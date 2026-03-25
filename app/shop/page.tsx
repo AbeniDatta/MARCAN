@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -86,7 +86,7 @@ const CERTIFICATIONS = [
     { code: 'ISO 13485', label: 'ISO 13485' },
 ];
 
-export default function ShopPage() {
+function ShopPageContent() {
     const searchParams = useSearchParams();
     const { isAuthenticated, user, isMounted } = useAuth();
     // Backward compatibility: existing accounts may still have legacy "seller" role.
@@ -956,6 +956,14 @@ export default function ShopPage() {
             </main>
             {listingModal}
         </>
+    );
+}
+
+export default function ShopPage() {
+    return (
+        <Suspense fallback={null}>
+            <ShopPageContent />
+        </Suspense>
     );
 }
 
