@@ -42,7 +42,7 @@ export async function GET() {
       companyName: req.companyName,
       initials: req.companyName
         .split(' ')
-        .map((w) => w[0])
+        .map((w: string) => w[0])
         .join('')
         .substring(0, 2)
         .toUpperCase(),
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       companyName: wishlistRequest.companyName,
       initials: wishlistRequest.companyName
         .split(' ')
-        .map((w) => w[0])
+        .map((w: string) => w[0])
         .join('')
         .substring(0, 2)
         .toUpperCase(),
