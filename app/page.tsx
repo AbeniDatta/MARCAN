@@ -220,7 +220,7 @@ export default function HomePage() {
                       <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
                       <div className="text-white text-sm font-bold tracking-wide">1. Instant Onboarding</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers set up in seconds. Suppliers can auto-generate a full profile using our 2-minute AI website importer.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers and storefront accounts set up in seconds. Suppliers can auto-generate a full profile using our 2-minute AI website importer.</div>
                   </div>
                 </div>
 
@@ -231,7 +231,7 @@ export default function HomePage() {
                       <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
                       <div className="text-white text-sm font-bold tracking-wide">2. Request or List</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Suppliers list surplus materials, equipment, or available capacity.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Suppliers and storefront accounts list surplus materials, equipment, or available capacity.</div>
                   </div>
                 </div>
 

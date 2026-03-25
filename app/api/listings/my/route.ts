@@ -35,22 +35,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    // Find user's supplier profile
+    // Prefer supplier profile for legacy supplier listings
     const profile = await prisma.supplierProfile.findUnique({
       where: { email: String(userId).toLowerCase() },
     });
 
-    if (!profile) {
+    // If no supplier profile, fallback to storefront profile listings
+    const storefrontProfile = !profile
+      ? await (prisma as any).storefrontProfile.findUnique({ where: { userId } })
+      : null;
+
+    if (!profile && !storefrontProfile) {
       return NextResponse.json([]);
     }
 
+    const where = profile
+      ? { profileId: profile.id }
+      : { storefrontProfileId: storefrontProfile.id };
+
     // Get user's listings
     const listings = await (prisma as any).storefrontListing.findMany({
-      where: {
-        profileId: profile.id,
-      },
+      where,
       include: {
         supplierProfile: {
+          select: {
+            companyName: true,
+          },
+        },
+        storefrontProfile: {
           select: {
             companyName: true,
           },
@@ -89,7 +101,7 @@ export async function GET(request: NextRequest) {
       return {
         id: listing.id,
         title: listing.title,
-        supplier: listing.supplierProfile.companyName,
+        supplier: listing.supplierProfile?.companyName || listing.storefrontProfile?.companyName || 'Unknown',
         price: formatPrice(listing.price || '') || listing.price || '',
         badge: listing.badge || badge,
         badgeColor,

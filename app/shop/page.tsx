@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -86,6 +87,7 @@ const CERTIFICATIONS = [
 ];
 
 export default function ShopPage() {
+    const searchParams = useSearchParams();
     const { isAuthenticated, user, isMounted } = useAuth();
     // Backward compatibility: existing accounts may still have legacy "seller" role.
     const hasSupplierRole = user?.role === 'supplier' || user?.role === 'seller';
@@ -106,6 +108,7 @@ export default function ShopPage() {
         certification: '',
     });
     const [isDomReady, setIsDomReady] = useState(false);
+    const storesScrollRef = useRef<HTMLDivElement | null>(null);
     const isSupplierOrStorefront = !!(isAuthenticated && (isShopOwner || hasSupplierRole));
 
     const listingCategories = useMemo(() => {
@@ -178,7 +181,7 @@ export default function ShopPage() {
     }, [shops, searchQuery, selectedCategory, selectedProvince, listingSort]);
 
     const filteredStores = useMemo(() => {
-        return stores.filter((store) => {
+        const filtered = stores.filter((store) => {
             if (storeFilters.search.trim()) {
                 const normalizedSearch = storeFilters.search.trim().toLowerCase();
                 const searchableText = [
@@ -244,6 +247,7 @@ export default function ShopPage() {
 
             return true;
         });
+        return filtered.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
     }, [stores, storeFilters]);
 
     const getIndustryLogoForStore = (store: StoreCard) => {
@@ -266,6 +270,47 @@ export default function ShopPage() {
     useEffect(() => {
         setIsDomReady(true);
     }, []);
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'stores') {
+            setActiveTab('stores');
+        } else if (tab === 'listings') {
+            setActiveTab('listings');
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (searchParams.get('restoreStores') !== '1' || activeTab !== 'stores') return;
+        const scrollY = sessionStorage.getItem('shopStoresScrollTop');
+        if (!scrollY) return;
+        const nextTop = Number(scrollY);
+        if (Number.isNaN(nextTop)) return;
+
+        let frameId = 0;
+        let attempts = 0;
+        const maxAttempts = 30;
+
+        const restore = () => {
+            const scrollContainer = storesScrollRef.current;
+            if (!scrollContainer) return;
+
+            const maxScrollTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+            const isContentReady = maxScrollTop >= Math.min(nextTop, maxScrollTop);
+
+            if (isContentReady || attempts >= maxAttempts) {
+                scrollContainer.scrollTop = Math.min(nextTop, maxScrollTop);
+                sessionStorage.removeItem('shopStoresScrollTop');
+                return;
+            }
+
+            attempts += 1;
+            frameId = window.requestAnimationFrame(restore);
+        };
+
+        frameId = window.requestAnimationFrame(restore);
+        return () => window.cancelAnimationFrame(frameId);
+    }, [activeTab, searchParams, filteredStores.length]);
 
     useEffect(() => {
         if (!selectedListing) return;
@@ -547,7 +592,7 @@ export default function ShopPage() {
             <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
                 <Header breadcrumb="Industrial Storefront" />
 
-                <div className="flex-1 overflow-y-auto p-8 relative">
+                <div ref={storesScrollRef} className="flex-1 overflow-y-auto p-8 relative">
                     <div className="flex justify-between items-end mb-8">
                         <div>
                             <div className="text-orange-500 text-xs font-bold uppercase tracking-widest mb-1">
@@ -835,58 +880,68 @@ export default function ShopPage() {
                                                         key={store.id}
                                                         className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col relative"
                                                     >
-                                                        {store.profileType === 'storefront' ? (
-                                                            <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                                                                Storefront
-                                                            </span>
-                                                        ) : null}
-                                                        <div className="flex justify-between items-start mb-4">
-                                                            {store.logoUrl ? (
-                                                                <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
-                                                                    <img src={store.logoUrl} alt={store.name} className="w-full h-full object-cover" />
-                                                                </div>
-                                                            ) : !isStorefrontProfile && industryLogo ? (
-                                                                <div className={`w-12 h-12 rounded-lg ${industryLogo.bgClass} flex items-center justify-center`}>
-                                                                    <i className={`fa-solid ${industryLogo.icon} ${industryLogo.iconClass}`}></i>
-                                                                </div>
-                                                            ) : isStorefrontProfile ? (
-                                                                <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+                                                        <div className="flex items-start gap-4 mb-3">
+                                                            {isStorefrontProfile ? (
+                                                                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
                                                                     <i className={`fa-solid ${store.icon || 'fa-shop'}`}></i>
                                                                 </div>
+                                                            ) : industryLogo ? (
+                                                                <div className={`w-10 h-10 rounded-lg ${industryLogo.bgClass} flex items-center justify-center`}>
+                                                                    <i className={`fa-solid ${industryLogo.icon} ${industryLogo.iconClass}`}></i>
+                                                                </div>
                                                             ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                                                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-slate-300">
                                                                     <i className={`fa-solid ${store.icon || 'fa-industry'}`}></i>
                                                                 </div>
                                                             )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <h3 className="font-heading font-bold text-lg text-white truncate">{store.name}</h3>
+                                                                <p className="text-xs text-slate-500 uppercase mt-1 truncate">
+                                                                    <i className="fa-solid fa-location-dot mr-1"></i>
+                                                                    {(() => {
+                                                                        const raw = String(store.location || '').trim();
+                                                                        const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+                                                                        const city = parts.length > 0 ? parts[0] : '';
+                                                                        const provinceCode = String(store.province || (parts.length > 1 ? parts[parts.length - 1] : '')).toUpperCase();
+                                                                        const code = provinceCode.length === 2 ? provinceCode : (provinceCode.slice(0, 2) || '');
+                                                                        return city && code ? `${city}, ${code}` : (raw || 'N/A');
+                                                                    })()}
+                                                                </p>
+                                                            </div>
                                                         </div>
 
-                                                        <h3 className="font-heading font-bold text-lg text-white mb-1">{store.name}</h3>
-                                                        <p className="text-xs text-slate-500 uppercase mb-4">
-                                                            <i className="fa-solid fa-location-dot"></i> {store.location}
-                                                        </p>
-                                                        <p className="text-slate-400 text-xs mb-6 leading-relaxed">
-                                                            {store.description || 'No description available.'}
-                                                        </p>
-
-                                                        {(store.tags && store.tags.length > 0) && (
-                                                            <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                                                                {store.tags.map((tag: string) => (
-                                                                    <span
-                                                                        key={tag}
-                                                                        className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                                                                    >
-                                                                        {tag}
-                                                                    </span>
-                                                                ))}
+                                                        <div className="mt-auto flex flex-wrap gap-2">
+                                                            {isStorefrontProfile ? (
+                                                                <span className="px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                                                                    Storefront
+                                                                </span>
+                                                            ) : (
+                                                                (store.tags && store.tags.length > 0) ? (
+                                                                    store.tags.map((tag: string) => (
+                                                                        <span
+                                                                            key={tag}
+                                                                            className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                                                                        >
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))
+                                                                ) : null
+                                                            )}
+                                                        </div>
+                                                        {!isStorefrontProfile && (
+                                                            <div className="mt-3">
+                                                                <Link
+                                                                    href={`/store-profile?id=${encodeURIComponent(store.id)}`}
+                                                                    onClick={() => {
+                                                                        const currentTop = storesScrollRef.current?.scrollTop ?? 0;
+                                                                        sessionStorage.setItem('shopStoresScrollTop', String(currentTop));
+                                                                    }}
+                                                                    className="text-[11px] font-bold uppercase tracking-wider text-slate-300 hover:text-white"
+                                                                >
+                                                                    view in company directory ->
+                                                                </Link>
                                                             </div>
                                                         )}
-
-                                                        <Link
-                                                            href={`/profile?id=${encodeURIComponent(store.id)}`}
-                                                            className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
-                                                        >
-                                                            View Profile
-                                                        </Link>
                                                     </div>
                                                 );
                                             })()

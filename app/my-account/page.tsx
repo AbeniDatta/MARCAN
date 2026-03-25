@@ -34,6 +34,7 @@ export default function MyAccountPage() {
     jobTitle: '',
     email: '',
     companyName: '',
+    streetAddress: '',
     businessNumber: '',
     website: '',
     aboutUs: '',
@@ -81,8 +82,9 @@ export default function MyAccountPage() {
     COMPANY_TYPE: [],
   });
   const [supplierProfile, setSupplierProfile] = useState<any | null>(null);
+  const [storefrontProfile, setStorefrontProfile] = useState<any | null>(null);
   const [buyerProfile, setBuyerProfile] = useState<any | null>(null);
-  const [accountRole, setAccountRole] = useState<'buyer' | 'supplier'>('buyer');
+  const [accountRole, setAccountRole] = useState<'buyer' | 'supplier' | 'storefront'>('buyer');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ type: 'wishlist' | 'listing'; id: string } | null>(null);
@@ -169,6 +171,7 @@ export default function MyAccountPage() {
         jobTitle: user.jobTitle || '',
         email: user.email || '',
         companyName: user.companyName || '',
+        streetAddress: user.streetAddress || '',
         businessNumber: user.businessNumber || '',
         website: user.website || '',
         aboutUs: user.aboutUs || '',
@@ -182,14 +185,43 @@ export default function MyAccountPage() {
       }
       // Load account role from auth user; role is managed by signup / become-supplier flows only
       // Default to 'buyer' if not set
-      setAccountRole(user.role === 'supplier' ? 'supplier' : 'buyer');
+      setAccountRole(user.role === 'supplier' ? 'supplier' : user.role === 'seller' ? 'storefront' : 'buyer');
       // Keep active tab valid for the role
       setActiveTab('profile');
 
       // Load user's wishlist requests, listings, and rich supplier profile from API
       if (typeof window !== 'undefined' && user.email) {
+        const normalizedUserId = String(user.email).toLowerCase();
+        const hydrateStorefrontProfile = (sfProfile: any) => {
+          setStorefrontProfile(sfProfile);
+          setAccountRole('storefront');
+          setFormData((prev) => ({
+            ...prev,
+            firstName: sfProfile.firstName || prev.firstName,
+            lastName: sfProfile.lastName || prev.lastName,
+            email: sfProfile.email || prev.email,
+            companyName: sfProfile.companyName || prev.companyName,
+            streetAddress: sfProfile.streetAddress || prev.streetAddress,
+            jobTitle: sfProfile.role || prev.jobTitle,
+            businessNumber: sfProfile.businessNumber || prev.businessNumber,
+            website: sfProfile.website || prev.website,
+            aboutUs: sfProfile.aboutUs || prev.aboutUs,
+            city: sfProfile.city || prev.city,
+            province: sfProfile.province || prev.province,
+            phone: sfProfile.phone || prev.phone,
+          }));
+        };
+
+        // Storefront profile is authoritative for storefront accounts.
+        const storefrontProfilePromise = fetch(`/api/storefront-profile?userId=${encodeURIComponent(normalizedUserId)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .catch((err) => {
+            console.error('Error fetching storefront profile:', err);
+            return null;
+          });
+
         // Fetch the supplier profile for this user (if it exists)
-        fetch(`/api/profiles?userId=${encodeURIComponent(user.email)}`)
+        fetch(`/api/profiles?userId=${encodeURIComponent(normalizedUserId)}`)
           .then((res) => {
             if (!res.ok) {
               if (res.status === 404) {
@@ -199,7 +231,14 @@ export default function MyAccountPage() {
             }
             return res.json();
           })
-          .then((profile) => {
+          .then(async (profile) => {
+            const sfProfile = await storefrontProfilePromise;
+            if (sfProfile) {
+              setSupplierProfile(null);
+              hydrateStorefrontProfile(sfProfile);
+              return;
+            }
+
             if (!profile) {
               setSupplierProfile(null);
               return;
@@ -286,7 +325,7 @@ export default function MyAccountPage() {
           });
 
         // Fetch buyer profile so we can show the real "last updated" timestamp.
-        fetch(`/api/users?userId=${encodeURIComponent(user.email)}`)
+        fetch(`/api/users?userId=${encodeURIComponent(normalizedUserId)}`)
           .then((res) => {
             if (!res.ok) {
               if (res.status === 404) return null;
@@ -306,7 +345,7 @@ export default function MyAccountPage() {
           });
 
         // Fetch user's own wishlist requests
-        fetch(`/api/wishlist/my?userId=${encodeURIComponent(user.email)}`)
+        fetch(`/api/wishlist/my?userId=${encodeURIComponent(normalizedUserId)}`)
           .then((res) => {
             if (!res.ok) {
               throw new Error('Failed to fetch wishlist requests');
@@ -328,7 +367,7 @@ export default function MyAccountPage() {
           });
 
         // Fetch user's own supplier listings (check if user has supplier profile)
-        fetch(`/api/listings/my?userId=${encodeURIComponent(user.email)}`)
+        fetch(`/api/listings/my?userId=${encodeURIComponent(normalizedUserId)}`)
           .then((res) => {
             if (!res.ok) {
               throw new Error('Failed to fetch listings');
@@ -609,6 +648,44 @@ export default function MyAccountPage() {
       setError(err.message || 'Failed to update profile');
       setSaveMessage({ type: 'error', text: err.message || 'Failed to update profile' });
       setTimeout(() => setSaveMessage(null), 5000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateStorefrontProfile = async () => {
+    if (!user || !user.email) return;
+    setIsSaving(true);
+    setError('');
+    try {
+      const response = await fetch('/api/storefront-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.email,
+          firstName: formData.firstName || null,
+          lastName: formData.lastName || null,
+          email: formData.email || null,
+          companyName: formData.companyName || 'Unnamed Company',
+          role: formData.jobTitle || null,
+          city: formData.city || null,
+          province: formData.province || null,
+          businessNumber: formData.businessNumber || null,
+          streetAddress: formData.streetAddress || '',
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update storefront profile');
+      }
+      const updated = await response.json();
+      setStorefrontProfile(updated);
+      setIsEditMode(false);
+      setSaveMessage({ type: 'success', text: 'Storefront profile updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err: any) {
+      setSaveMessage({ type: 'error', text: err.message || 'Failed to update storefront profile' });
+      setTimeout(() => setSaveMessage(null), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -972,7 +1049,11 @@ export default function MyAccountPage() {
                   : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                   }`}
               >
-                {accountRole === 'supplier' ? 'My Supplier Company Profile' : 'My Buyer Profile'}
+                {accountRole === 'supplier'
+                  ? 'My Supplier Company Profile'
+                  : accountRole === 'storefront'
+                    ? 'My Storefront Profile'
+                    : 'My Buyer Profile'}
               </button>
               {accountRole === 'supplier' && (
                 <button
@@ -1152,6 +1233,171 @@ export default function MyAccountPage() {
                             {isSaving ? 'Saving...' : 'Save Changes'}
                           </button>
                         </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: Storefront Profile */}
+              {activeTab === 'profile' && accountRole === 'storefront' && (
+                <div className="account-tab block animate-fade-in">
+                  <div className="glass-card p-8 rounded-3xl border border-white/5">
+                    <div className="mb-6 border-b border-white/5 pb-4">
+                      <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
+                        My Storefront Profile Information
+                      </h3>
+                      <span className="mt-1 block text-[10px] text-slate-500 uppercase font-bold">
+                        {getLastUpdatedText(storefrontProfile?.updatedAt || null)}
+                      </span>
+                    </div>
+
+                    <div className="mb-6 p-5 rounded-xl border border-white/5 bg-black/20 flex justify-between items-center">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">
+                          Account Role
+                        </label>
+                        <div className="text-white font-bold text-sm">
+                          Storefront
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">First Name</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.firstName || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Last Name</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.lastName || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Email</label>
+                        {isEditMode ? (
+                          <input
+                            type="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.email || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Company Name</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.companyName}
+                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.companyName || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Job Title</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.jobTitle}
+                            onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.jobTitle || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Street Address</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.streetAddress}
+                            onChange={(e) => setFormData({ ...formData, streetAddress: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.streetAddress || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">City</label>
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          />
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.city || 'Not specified'}</div>
+                        )}
+                      </div>
+                      <div className="p-4 rounded-xl border border-white/5 bg-black/20">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Province</label>
+                        {isEditMode ? (
+                          <select
+                            value={formData.province}
+                            onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                          >
+                            <option value="">Select province</option>
+                            {CANADIAN_PROVINCES.map((p) => (
+                              <option key={p.code} value={p.code}>{p.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-sm text-white font-semibold">{formData.province || 'Not specified'}</div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                      {!isEditMode ? (
+                        <button
+                          onClick={() => setIsEditMode(true)}
+                          className="bg-white/5 border border-white/10 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-marcan-red hover:border-marcan-red hover:shadow-neon transition-all"
+                        >
+                          <i className="fa-solid fa-pencil mr-2"></i> Edit Profile
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setIsEditMode(false)}
+                            className="bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:bg-slate-600 transition-all"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleUpdateStorefrontProfile}
+                            disabled={isSaving}
+                            className="bg-marcan-red border border-marcan-red text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -2077,89 +2323,91 @@ export default function MyAccountPage() {
               {activeTab === 'my-posts' && (
                 <div className="space-y-8">
                   {/* Wishlist Requests Section */}
-                  <div className="glass-card p-8 rounded-2xl border border-white/5">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
-                      <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
-                      <Link
-                        href="/post-request"
-                        className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
-                      >
-                        + Post New Request
-                      </Link>
-                    </div>
-
-                    {myWishlistRequests.length === 0 ? (
-                      <div className="text-center py-12">
-                        <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                        <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
+                  {accountRole !== 'storefront' && (
+                    <div className="glass-card p-8 rounded-2xl border border-white/5">
+                      <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+                        <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                         <Link
                           href="/post-request"
-                          className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                          className="text-xs text-marcan-red font-bold uppercase hover:text-white transition"
                         >
-                          Post Your First Request
+                          + Post New Request
                         </Link>
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {myWishlistRequests.slice(0, 3).map((request) => (
-                          <div
-                            key={request.id}
-                            className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
-                          >
-                            <div className="absolute top-3 right-3">
-                              <button
-                                onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
-                                className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
-                                title="Delete request"
-                              >
-                                <i className="fa-solid fa-trash text-xs"></i>
-                              </button>
-                            </div>
-                            <div className="flex justify-between items-start mb-2 pr-10">
-                              <div>
-                                <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
-                                <div className="text-xs text-slate-500 mt-1">
-                                  {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
-                                </div>
-                              </div>
-                              <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                                {request.category}
-                              </span>
-                            </div>
-                            <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
-                              {request.specifications || request.description}
-                            </p>
-                            <div className="flex gap-4 text-xs text-slate-500">
-                              {request.quantity && <span>Qty: {request.quantity}</span>}
-                              {request.targetPrice && <span>Price: {request.targetPrice}</span>}
-                              {request.deadline && (
-                                <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
-                              )}
-                            </div>
-                            <div className="mt-3 flex justify-end">
-                              <button
-                                onClick={() => handleStartEditRequest(request)}
-                                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition"
-                              >
-                                Edit Request
-                              </button>
-                            </div>
-                          </div>
-                        ))}
 
-                        {myWishlistRequests.length > 3 && (
-                          <div className="pt-2">
-                            <Link
-                              href="/my-posts/requests"
-                              className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
+                      {myWishlistRequests.length === 0 ? (
+                        <div className="text-center py-12">
+                          <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
+                          <p className="text-slate-400 text-sm mb-4">No sourcing requests posted yet.</p>
+                          <Link
+                            href="/post-request"
+                            className="text-marcan-red hover:text-white text-sm font-bold uppercase transition"
+                          >
+                            Post Your First Request
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {myWishlistRequests.slice(0, 3).map((request) => (
+                            <div
+                              key={request.id}
+                              className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
                             >
-                              See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                              <div className="absolute top-3 right-3">
+                                <button
+                                  onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
+                                  className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                  title="Delete request"
+                                >
+                                  <i className="fa-solid fa-trash text-xs"></i>
+                                </button>
+                              </div>
+                              <div className="flex justify-between items-start mb-2 pr-10">
+                                <div>
+                                  <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
+                                  <div className="text-xs text-slate-500 mt-1">
+                                    {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                                  {request.category}
+                                </span>
+                              </div>
+                              <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
+                                {request.specifications || request.description}
+                              </p>
+                              <div className="flex gap-4 text-xs text-slate-500">
+                                {request.quantity && <span>Qty: {request.quantity}</span>}
+                                {request.targetPrice && <span>Price: {request.targetPrice}</span>}
+                                {request.deadline && (
+                                  <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                              <div className="mt-3 flex justify-end">
+                                <button
+                                  onClick={() => handleStartEditRequest(request)}
+                                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition"
+                                >
+                                  Edit Request
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+
+                          {myWishlistRequests.length > 3 && (
+                            <div className="pt-2">
+                              <Link
+                                href="/my-posts/requests"
+                                className="inline-flex items-center gap-2 text-xs text-slate-400 hover:text-white font-bold uppercase tracking-wider transition"
+                              >
+                                See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Edit RFQ Modal */}
                   {editingRequest && (
@@ -2318,7 +2566,7 @@ export default function MyAccountPage() {
                     </div>
                   )}
                   {/* Storefront Listings Section */}
-                  {accountRole === 'supplier' && (
+                  {(accountRole === 'supplier' || accountRole === 'storefront') && (
                     <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                         <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Storefront Listings</h3>

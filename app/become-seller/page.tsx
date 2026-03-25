@@ -558,6 +558,7 @@ export default function BecomeSupplierPage() {
 
   const handleSubmit = async () => {
     if (!validateStep(6)) return;
+    const isStorefrontSignup = wizardStep === 0;
 
     setIsLoading(true);
     setError('');
@@ -666,10 +667,29 @@ export default function BecomeSupplierPage() {
     console.log('Submitting profile data:', { userId: submitData.userId, companyName: submitData.companyName });
 
     try {
-      const response = await fetch('/api/profiles', {
+      const profileEndpoint = isStorefrontSignup ? '/api/storefront-profile' : '/api/profiles';
+      const response = await fetch(profileEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData),
+        body: JSON.stringify(
+          isStorefrontSignup
+            ? {
+                userId,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                companyName: formData.companyName,
+                role: formData.role,
+                streetAddress: formData.streetAddress,
+                city: formData.city,
+                province: formData.province,
+                businessNumber: formData.businessNumber || null,
+                website: formData.website || null,
+                phone: formData.phone || null,
+                aboutUs: formData.aboutUs || null,
+              }
+            : submitData
+        ),
       });
 
       if (!response.ok) {
@@ -712,7 +732,7 @@ export default function BecomeSupplierPage() {
       const updatedUser = {
         email: userId,
         displayName: `${formData.firstName} ${formData.lastName}`,
-        role: 'supplier',
+        role: isStorefrontSignup ? 'seller' : 'supplier',
         companyName: formData.companyName,
         city: formData.city,
         province: formData.province,
