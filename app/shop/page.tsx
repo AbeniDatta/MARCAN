@@ -938,7 +938,7 @@ export default function ShopPage() {
                                                                     }}
                                                                     className="text-[11px] font-bold uppercase tracking-wider text-slate-300 hover:text-white"
                                                                 >
-                                                                    view in company directory ->
+                                                                    view in company directory {'->'}
                                                                 </Link>
                                                             </div>
                                                         )}
