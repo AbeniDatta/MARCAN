@@ -5,8 +5,37 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
+const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
+    'Precision Machining': {
+        icon: 'fa-microchip',
+        bgClass: 'bg-blue-500/10',
+        iconClass: 'text-blue-400',
+    },
+    'Foundries & Casting': {
+        icon: 'fa-fire',
+        bgClass: 'bg-orange-500/10',
+        iconClass: 'text-orange-400',
+    },
+    'Surface Finishing': {
+        icon: 'fa-spray-can-sparkles',
+        bgClass: 'bg-purple-500/10',
+        iconClass: 'text-purple-400',
+    },
+    'Tooling & Molds': {
+        icon: 'fa-screwdriver-wrench',
+        bgClass: 'bg-green-500/10',
+        iconClass: 'text-green-400',
+    },
+    'Automation': {
+        icon: 'fa-robot',
+        bgClass: 'bg-cyan-500/10',
+        iconClass: 'text-cyan-400',
+    },
+};
+
 interface CompanyProfile {
     id: string;
+    profileType?: 'supplier' | 'storefront';
     name: string;
     location: string;
     description: string;
@@ -20,6 +49,10 @@ interface CompanyProfile {
     aboutUs?: string;
     capabilities?: string[];
     certifications?: string[];
+    industriesServed?: string[];
+    capabilitiesByType?: {
+        INDUSTRY?: string[];
+    };
     businessNumber?: string;
 }
 
@@ -86,9 +119,34 @@ function ProfilePageContent() {
     const displayAboutUs = userData?.aboutUs || company.aboutUs || company.description;
     const displayCapabilities = userData?.capabilities || company.capabilities || [];
     const displayCertifications = userData?.certifications || company.certifications || [];
+    const displayIndustries = (
+        userData?.industriesServed ||
+        userData?.capabilitiesByType?.INDUSTRY ||
+        company.industriesServed ||
+        company.capabilitiesByType?.INDUSTRY ||
+        []
+    ).filter(Boolean);
     const displayTags = company.tags || [];
     const displayIcon = userData?.selectedIcon || company.icon || 'fa-industry';
     const displayLogoUrl = userData?.logoUrl || company.logoUrl;
+    const displayProfileType = userData?.profileType || company.profileType;
+    const isStorefrontProfile = displayProfileType === 'storefront';
+    const normalizedWebsiteUrl = displayWebsite
+        ? (/^https?:\/\//i.test(displayWebsite) ? displayWebsite : `https://${displayWebsite}`)
+        : '';
+    const getIndustryLogo = (industries: string[], seed: string) => {
+        const valid = Array.isArray(industries) ? industries.filter((i) => INDUSTRY_LOGOS[i]) : [];
+        if (valid.length === 0) return null;
+        if (valid.length === 1) return INDUSTRY_LOGOS[valid[0]];
+        const seedString = `${seed}:${valid.join('|')}`;
+        let hash = 0;
+        for (let i = 0; i < seedString.length; i += 1) {
+            hash = (hash * 31 + seedString.charCodeAt(i)) >>> 0;
+        }
+        const idx = hash % valid.length;
+        return INDUSTRY_LOGOS[valid[idx]];
+    };
+    const headerIndustryLogo = isStorefrontProfile ? null : getIndustryLogo(displayIndustries, company.id || displayName || '');
 
     return (
         <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -113,13 +171,13 @@ function ProfilePageContent() {
                             <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center overflow-hidden shadow-neon shrink-0">
                                 <img src={displayLogoUrl} alt={displayName} className="w-full h-full object-cover" />
                             </div>
+                        ) : headerIndustryLogo ? (
+                            <div className={`w-24 h-24 rounded-2xl ${headerIndustryLogo.bgClass} flex items-center justify-center shadow-neon shrink-0`}>
+                                <i className={`fa-solid ${headerIndustryLogo.icon} ${headerIndustryLogo.iconClass} text-4xl`}></i>
+                            </div>
                         ) : (
-                            <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center text-3xl font-black text-marcan-dark shadow-neon shrink-0">
-                                {displayLogoUrl ? (
-                                    <img src={displayLogoUrl} alt={displayName} className="w-full h-full object-cover" />
-                                ) : (
-                                    <i className={`fa-solid ${displayIcon} text-marcan-red`}></i>
-                                )}
+                            <div className={`w-24 h-24 rounded-2xl flex items-center justify-center text-3xl shadow-neon shrink-0 ${isStorefrontProfile ? 'bg-orange-500/10 border border-orange-500/20' : 'bg-white text-marcan-dark'}`}>
+                                <i className={`fa-solid ${displayIcon} ${isStorefrontProfile ? 'text-orange-400' : 'text-marcan-red'}`}></i>
                             </div>
                         )}
                         <div className="flex-grow">
@@ -137,7 +195,15 @@ function ProfilePageContent() {
                                 )}
                                 {displayWebsite && (
                                     <span>
-                                        <i className="fa-solid fa-globe mr-1 text-slate-500"></i> {displayWebsite}
+                                        <i className="fa-solid fa-globe mr-1 text-slate-500"></i>{' '}
+                                        <a
+                                            href={normalizedWebsiteUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-slate-300 hover:text-marcan-red underline underline-offset-2 transition-colors"
+                                        >
+                                            {displayWebsite}
+                                        </a>
                                     </span>
                                 )}
                             </p>
@@ -234,6 +300,35 @@ function ProfilePageContent() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Industries Served */}
+                        {displayIndustries.length > 0 && (
+                            <div className="glass-card p-6 rounded-2xl border border-white/5">
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries Served</h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {displayIndustries.map((industry: string) => {
+                                        const map = INDUSTRY_LOGOS[industry];
+                                        return (
+                                            <div
+                                                key={industry}
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10"
+                                            >
+                                                {map ? (
+                                                    <div className={`w-7 h-7 rounded-md ${map.bgClass} flex items-center justify-center`}>
+                                                        <i className={`fa-solid ${map.icon} ${map.iconClass} text-sm`}></i>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-7 h-7 rounded-md bg-white/5 flex items-center justify-center text-slate-400">
+                                                        <i className="fa-solid fa-industry text-sm"></i>
+                                                    </div>
+                                                )}
+                                                <span className="text-slate-300 text-xs font-semibold">{industry}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

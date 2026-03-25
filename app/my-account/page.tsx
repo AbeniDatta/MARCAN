@@ -85,6 +85,7 @@ export default function MyAccountPage() {
   const [accountRole, setAccountRole] = useState<'buyer' | 'supplier'>('buyer');
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ type: 'wishlist' | 'listing'; id: string } | null>(null);
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
   const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
   const [viewingListing, setViewingListing] = useState<any | null>(null);
@@ -101,6 +102,44 @@ export default function MyAccountPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [isDomReady, setIsDomReady] = useState(false);
+
+  // Edit RFQ state
+  const [editingRequest, setEditingRequest] = useState<any | null>(null);
+  const [requestFormData, setRequestFormData] = useState({
+    title: '',
+    categories: [] as string[],
+    quantity: '',
+    specifications: '',
+    deadline: '',
+    asap: false,
+    targetPrice: '',
+    city: '',
+    province: '',
+  });
+
+  const INDUSTRY_HUBS = [
+    'Precision Machining',
+    'Foundries & Casting',
+    'Surface Finishing',
+    'Tooling & Molds',
+    'Automation',
+  ];
+
+  const CANADIAN_PROVINCES = [
+    { code: 'ON', name: 'Ontario' },
+    { code: 'QC', name: 'Quebec' },
+    { code: 'BC', name: 'British Columbia' },
+    { code: 'AB', name: 'Alberta' },
+    { code: 'MB', name: 'Manitoba' },
+    { code: 'SK', name: 'Saskatchewan' },
+    { code: 'NS', name: 'Nova Scotia' },
+    { code: 'NB', name: 'New Brunswick' },
+    { code: 'NL', name: 'Newfoundland and Labrador' },
+    { code: 'PE', name: 'Prince Edward Island' },
+    { code: 'NT', name: 'Northwest Territories' },
+    { code: 'YT', name: 'Yukon' },
+    { code: 'NU', name: 'Nunavut' },
+  ];
 
   useEffect(() => {
     setIsDomReady(true);
@@ -604,6 +643,59 @@ export default function MyAccountPage() {
     }
   };
 
+  const handleStartEditRequest = (request: any) => {
+    setEditingRequest(request);
+    setRequestFormData({
+      title: request.title || '',
+      categories: request.category ? [request.category] : [],
+      quantity: request.quantity || '',
+      specifications: request.specifications || request.description || '',
+      deadline: request.deadline ? String(request.deadline).slice(0, 10) : '',
+      asap: !request.deadline,
+      targetPrice: (request.targetPrice || '').replace(/[^0-9.]/g, ''),
+      city: request.city || '',
+      province: request.province || '',
+    });
+  };
+
+  const handleSaveRequestEdit = async () => {
+    if (!user?.email || !editingRequest) return;
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/wishlist/${editingRequest.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.email,
+          title: requestFormData.title.trim(),
+          category: requestFormData.categories[0] || null,
+          quantity: requestFormData.quantity || null,
+          specifications: requestFormData.specifications.trim(),
+          deadline: requestFormData.asap ? null : (requestFormData.deadline || null),
+          targetPrice: requestFormData.targetPrice || '',
+          targetCity: requestFormData.city || null,
+          targetProvince: requestFormData.province || null,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to update request');
+      }
+      const updated = await response.json();
+      setMyWishlistRequests((prev) =>
+        prev.map((r) => (r.id === editingRequest.id ? { ...r, ...updated, time: r.time } : r))
+      );
+      setEditingRequest(null);
+      setSaveMessage({ type: 'success', text: 'Request updated successfully!' });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (e: any) {
+      setSaveMessage({ type: 'error', text: e.message || 'Failed to update request' });
+      setTimeout(() => setSaveMessage(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleDeleteSupplierListing = async (listingId: string) => {
     if (!user?.email) return;
 
@@ -937,7 +1029,7 @@ export default function MyAccountPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          First Name <span className="text-marcan-red">*</span>
+                          First Name *<span className="text-marcan-red">*</span>
                         </label>
                         {isEditMode ? (
                           <input
@@ -955,7 +1047,7 @@ export default function MyAccountPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Last Name <span className="text-marcan-red">*</span>
+                          Last Name *<span className="text-marcan-red">*</span>
                         </label>
                         {isEditMode ? (
                           <input
@@ -974,7 +1066,7 @@ export default function MyAccountPage() {
                     </div>
                     <div className="mb-6">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                        Email Address <span className="text-marcan-red">*</span>
+                        Email Address *<span className="text-marcan-red">*</span>
                       </label>
                       {isEditMode ? (
                         <input
@@ -1011,7 +1103,7 @@ export default function MyAccountPage() {
                     {formData.companyName.trim() && (
                       <div className="mb-6">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Role in Company <span className="text-marcan-red">*</span>
+                          Role in Company *<span className="text-marcan-red">*</span>
                         </label>
                         {isEditMode ? (
                           <input
@@ -1940,6 +2032,47 @@ export default function MyAccountPage() {
                 </div>
               )}
 
+              {/* Delete Item Confirmation Modal (wishlist request or listing) */}
+              {pendingDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                  <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+                      </div>
+                      <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">
+                        {pendingDelete.type === 'wishlist' ? 'Delete Request?' : 'Delete Listing?'}
+                      </h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        This action cannot be undone. Are you sure you want to permanently delete this {pendingDelete.type === 'wishlist' ? 'sourcing request' : 'storefront listing'}?
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => setPendingDelete(null)}
+                        className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const target = pendingDelete;
+                          setPendingDelete(null);
+                          if (!target) return;
+                          if (target.type === 'wishlist') {
+                            await handleDeleteWishlistRequest(target.id);
+                          } else {
+                            await handleDeleteSupplierListing(target.id);
+                          }
+                        }}
+                        className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* My Posts Tab */}
               {activeTab === 'my-posts' && (
                 <div className="space-y-8">
@@ -1973,13 +2106,15 @@ export default function MyAccountPage() {
                             key={request.id}
                             className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
                           >
-                            <button
-                              onClick={() => handleDeleteWishlistRequest(request.id)}
-                              className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
-                              title="Delete request"
-                            >
-                              <i className="fa-solid fa-trash text-xs"></i>
-                            </button>
+                            <div className="absolute top-3 right-3">
+                              <button
+                                onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
+                                className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                title="Delete request"
+                              >
+                                <i className="fa-solid fa-trash text-xs"></i>
+                              </button>
+                            </div>
                             <div className="flex justify-between items-start mb-2 pr-10">
                               <div>
                                 <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
@@ -2001,6 +2136,14 @@ export default function MyAccountPage() {
                                 <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
                               )}
                             </div>
+                            <div className="mt-3 flex justify-end">
+                              <button
+                                onClick={() => handleStartEditRequest(request)}
+                                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition"
+                              >
+                                Edit Request
+                              </button>
+                            </div>
                           </div>
                         ))}
 
@@ -2018,6 +2161,162 @@ export default function MyAccountPage() {
                     )}
                   </div>
 
+                  {/* Edit RFQ Modal */}
+                  {editingRequest && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                      <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-white font-bold uppercase text-sm tracking-wider">Edit Request</h4>
+                          <button
+                            onClick={() => setEditingRequest(null)}
+                            className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition"
+                          >
+                            <i className="fa-solid fa-xmark"></i>
+                          </button>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Title</label>
+                            <input
+                              type="text"
+                              value={requestFormData.title}
+                              onChange={(e) => setRequestFormData({ ...requestFormData, title: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="sm:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                                Industry Categories
+                              </label>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {INDUSTRY_HUBS.map((hub) => {
+                                  const checked = requestFormData.categories.includes(hub);
+                                  return (
+                                    <label key={hub} className="flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg px-3 py-2 cursor-pointer hover:bg-black/40 transition-colors">
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setRequestFormData({ ...requestFormData, categories: [...requestFormData.categories, hub] });
+                                          } else {
+                                            setRequestFormData({ ...requestFormData, categories: requestFormData.categories.filter((c) => c !== hub) });
+                                          }
+                                        }}
+                                        className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0 cursor-pointer"
+                                      />
+                                      <span className="text-xs text-slate-300 font-semibold">{hub}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Quantity</label>
+                              <input
+                                type="text"
+                                value={requestFormData.quantity}
+                                onChange={(e) => setRequestFormData({ ...requestFormData, quantity: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Specifications</label>
+                            <textarea
+                              rows={4}
+                              value={requestFormData.specifications}
+                              onChange={(e) => setRequestFormData({ ...requestFormData, specifications: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                            />
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Deadline</label>
+                                <label className="flex items-center gap-2 text-[11px] text-slate-400">
+                                  <input
+                                    type="checkbox"
+                                    checked={requestFormData.asap}
+                                    onChange={(e) => setRequestFormData({ ...requestFormData, asap: e.target.checked, deadline: e.target.checked ? '' : requestFormData.deadline })}
+                                    className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0 cursor-pointer"
+                                  />
+                                  ASAP
+                                </label>
+                              </div>
+                              <input
+                                type="date"
+                                value={requestFormData.deadline}
+                                onChange={(e) => setRequestFormData({ ...requestFormData, deadline: e.target.value })}
+                                disabled={requestFormData.asap}
+                                className={`w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm ${requestFormData.asap ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400'} focus:border-marcan-red outline-none`}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Target Price</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={requestFormData.targetPrice}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                                    if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                      setRequestFormData({ ...requestFormData, targetPrice: value });
+                                    }
+                                  }}
+                                  className="w-full bg-black/40 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">City</label>
+                              <input
+                                type="text"
+                                value={requestFormData.city}
+                                onChange={(e) => setRequestFormData({ ...requestFormData, city: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Province</label>
+                              <select
+                                value={requestFormData.province}
+                                onChange={(e) => setRequestFormData({ ...requestFormData, province: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                              >
+                                <option value="">Province</option>
+                                {CANADIAN_PROVINCES.map((p) => (
+                                  <option key={p.code} value={p.code}>
+                                    {p.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-3 pt-2">
+                            <button
+                              onClick={() => setEditingRequest(null)}
+                              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              disabled={isSaving}
+                              onClick={handleSaveRequestEdit}
+                              className="px-5 py-2 rounded-lg bg-marcan-red text-white text-xs font-bold uppercase tracking-wider hover:shadow-neon transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {/* Storefront Listings Section */}
                   {accountRole === 'supplier' && (
                     <div className="glass-card p-8 rounded-2xl border border-white/5">
@@ -2050,7 +2349,7 @@ export default function MyAccountPage() {
                               className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden relative"
                             >
                               <button
-                                onClick={() => handleDeleteSupplierListing(listing.id)}
+                                onClick={() => setPendingDelete({ type: 'listing', id: listing.id })}
                                 className="absolute top-3 right-3 z-20 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
                                 title="Delete listing"
                               >

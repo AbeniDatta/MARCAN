@@ -28,20 +28,14 @@ export async function GET() {
       where: {
         active: true,
       },
-      include: {
-        buyerProfile: {
-          select: {
-            companyName: true,
-          },
-        },
-      },
+      // buyerProfile kept out of include to prioritize request-level target location
       orderBy: {
         createdAt: 'desc',
       },
     });
 
     // Format the response to match the frontend expectations
-    const formattedRequests = requests.map((req) => ({
+    const formattedRequests = requests.map((req: any) => ({
       id: req.id,
       title: req.title,
       company: req.companyName,
@@ -61,6 +55,9 @@ export async function GET() {
       active: req.active,
       createdAt: req.createdAt.toISOString(),
       timestamp: req.createdAt.getTime(),
+      city: req.targetCity || null,
+      province: req.targetProvince || null,
+      location: [req.targetCity, req.targetProvince].filter(Boolean).join(', ') || null,
       logoUrl: null,
       selectedIcon: null,
     }));
@@ -82,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, category, quantity, specifications, deadline, targetPrice, userId } = body;
+    const { title, category, quantity, specifications, deadline, targetPrice, userId, targetCity, targetProvince } = body;
     const normalizedTargetPrice = targetPrice
       ? formatPrice(targetPrice)
       : null;
@@ -122,6 +119,8 @@ export async function POST(request: NextRequest) {
         quantity: quantity || null,
         targetPrice: normalizedTargetPrice,
         deadline: deadline ? new Date(deadline) : null,
+        targetCity: targetCity || null,
+        targetProvince: targetProvince || null,
         active: true,
       },
       include: {

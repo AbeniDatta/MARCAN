@@ -280,6 +280,8 @@ model SourcingRequest {
   quantity    String?   @db.Text
   targetPrice String?   @map("target_price") @db.Text
   deadline    DateTime? @db.Timestamptz(6)
+  targetCity     String?   @map("target_city") @db.Text
+  targetProvince String?   @map("target_province") @db.Text
   active      Boolean   @default(true)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

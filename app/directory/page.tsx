@@ -6,6 +6,33 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
+  'Precision Machining': {
+    icon: 'fa-microchip',
+    bgClass: 'bg-blue-500/10',
+    iconClass: 'text-blue-400',
+  },
+  'Foundries & Casting': {
+    icon: 'fa-fire',
+    bgClass: 'bg-orange-500/10',
+    iconClass: 'text-orange-400',
+  },
+  'Surface Finishing': {
+    icon: 'fa-spray-can-sparkles',
+    bgClass: 'bg-purple-500/10',
+    iconClass: 'text-purple-400',
+  },
+  'Tooling & Molds': {
+    icon: 'fa-screwdriver-wrench',
+    bgClass: 'bg-green-500/10',
+    iconClass: 'text-green-400',
+  },
+  Automation: {
+    icon: 'fa-robot',
+    bgClass: 'bg-cyan-500/10',
+    iconClass: 'text-cyan-400',
+  },
+};
 
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
@@ -226,6 +253,24 @@ function DirectoryPageContent() {
     });
   }, [companies, filters, aiSearchResults]);
 
+  const getIndustryLogoForCompany = (company: any) => {
+    const selectedIndustries = Array.isArray(company.industriesServed)
+      ? company.industriesServed.filter((industry: string) => INDUSTRY_LOGOS[industry])
+      : [];
+
+    if (selectedIndustries.length === 0) return null;
+    if (selectedIndustries.length === 1) return INDUSTRY_LOGOS[selectedIndustries[0]];
+
+    // Randomize logo choice across selected industries while keeping it stable per company.
+    const seedString = `${company.id || company.name || ''}:${selectedIndustries.join('|')}`;
+    let hash = 0;
+    for (let i = 0; i < seedString.length; i += 1) {
+      hash = (hash * 31 + seedString.charCodeAt(i)) >>> 0;
+    }
+    const selectedIndex = hash % selectedIndustries.length;
+    return INDUSTRY_LOGOS[selectedIndustries[selectedIndex]];
+  };
+
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Company Directory" />
@@ -357,64 +402,73 @@ function DirectoryPageContent() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCompanies.map((company) => (
-              <div
-                key={company.id}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  {(company as any).logoUrl ? (
-                    <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
-                      <img src={(company as any).logoUrl} alt={company.name} className="w-full h-full object-cover" />
+              (() => {
+                const industryLogo = getIndustryLogoForCompany(company);
+                return (
+                  <div
+                    key={company.id}
+                    className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      {(company as any).logoUrl ? (
+                        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
+                          <img src={(company as any).logoUrl} alt={company.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : industryLogo ? (
+                        <div className={`w-12 h-12 rounded-lg ${industryLogo.bgClass} flex items-center justify-center`}>
+                          <i className={`fa-solid ${industryLogo.icon} ${industryLogo.iconClass}`}></i>
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                          <i className={`fa-solid ${company.icon || 'fa-industry'}`}></i>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
-                      <i className={`fa-solid ${company.icon || 'fa-industry'}`}></i>
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-heading font-bold text-lg text-white mb-1">{company.name}</h3>
-                <p className="text-xs text-slate-500 uppercase mb-4">
-                  <i className="fa-solid fa-location-dot"></i> {company.location}
-                </p>
-                <p className="text-slate-400 text-xs mb-6 leading-relaxed">{company.description}</p>
+                    <h3 className="font-heading font-bold text-lg text-white mb-1">{company.name}</h3>
+                    <p className="text-xs text-slate-500 uppercase mb-4">
+                      <i className="fa-solid fa-location-dot"></i> {company.location}
+                    </p>
+                    <p className="text-slate-400 text-xs mb-6 leading-relaxed">{company.description}</p>
 
-                {/* Industry Tags */}
-                {(company.tags && company.tags.length > 0) && (
-                  <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                    {company.tags.map((tag: string) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                    {/* Industry Tags */}
+                    {(company.tags && company.tags.length > 0) && (
+                      <div className="mt-auto flex flex-wrap gap-2 mb-4">
+                        {company.tags.map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <Link
+                      href={`/profile?id=${company.id}&from=${encodeURIComponent(
+                        `${pathname}${(() => {
+                          const params = new URLSearchParams();
+                          if (filters.search.trim()) params.set('search', filters.search.trim());
+                          if (filters.industry.trim()) params.set('industry', filters.industry.trim());
+                          if (filters.province.trim()) params.set('province', filters.province.trim());
+                          if (filters.certification.trim()) params.set('certification', filters.certification.trim());
+                          const query = params.toString();
+                          return query ? `?${query}` : '';
+                        })()}`
+                      )}`}
+                      onClick={() => {
+                        sessionStorage.setItem(
+                          'directory-scroll-top',
+                          String(scrollContainerRef.current?.scrollTop || 0)
+                        );
+                      }}
+                      className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
+                    >
+                      View Profile
+                    </Link>
                   </div>
-                )}
-
-                <Link
-                  href={`/profile?id=${company.id}&from=${encodeURIComponent(
-                    `${pathname}${(() => {
-                      const params = new URLSearchParams();
-                      if (filters.search.trim()) params.set('search', filters.search.trim());
-                      if (filters.industry.trim()) params.set('industry', filters.industry.trim());
-                      if (filters.province.trim()) params.set('province', filters.province.trim());
-                      if (filters.certification.trim()) params.set('certification', filters.certification.trim());
-                      const query = params.toString();
-                      return query ? `?${query}` : '';
-                    })()}`
-                  )}`}
-                  onClick={() => {
-                    sessionStorage.setItem(
-                      'directory-scroll-top',
-                      String(scrollContainerRef.current?.scrollTop || 0)
-                    );
-                  }}
-                  className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
-                >
-                  View Profile
-                </Link>
-              </div>
+                );
+              })()
             ))}
           </div>
         )}

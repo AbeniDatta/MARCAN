@@ -281,7 +281,7 @@ Now process this query: {USER_QUERY}
     });
 
     // Format results
-    const formattedCompanies = companies.map((p) => ({
+    const formattedCompanies = companies.map((p: any) => ({
       id: p.id,
       name: p.companyName,
       location: `${p.city || ''}, ${p.province || ''}`.trim().replace(/^,/, ''),

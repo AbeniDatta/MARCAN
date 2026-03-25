@@ -10,6 +10,8 @@ type ShopListingCard = {
     // listing identifiers
     listingId: string;
     profileId: string;
+    createdAt?: string;
+    timestamp?: number;
 
     // company / supplier profile display (enriched from /api/profiles)
     supplierName: string;
@@ -47,6 +49,13 @@ type StoreCard = {
 };
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
+    'Precision Machining': { icon: 'fa-microchip', bgClass: 'bg-blue-500/10', iconClass: 'text-blue-400' },
+    'Foundries & Casting': { icon: 'fa-fire', bgClass: 'bg-orange-500/10', iconClass: 'text-orange-400' },
+    'Surface Finishing': { icon: 'fa-spray-can-sparkles', bgClass: 'bg-purple-500/10', iconClass: 'text-purple-400' },
+    'Tooling & Molds': { icon: 'fa-screwdriver-wrench', bgClass: 'bg-green-500/10', iconClass: 'text-green-400' },
+    Automation: { icon: 'fa-robot', bgClass: 'bg-cyan-500/10', iconClass: 'text-cyan-400' },
+};
 
 const CANADIAN_PROVINCES = [
     { code: 'ON', name: 'Ontario' },
@@ -89,6 +98,7 @@ export default function ShopPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedProvince, setSelectedProvince] = useState<string>('');
+    const [listingSort, setListingSort] = useState<'new-to-old' | 'old-to-new' | 'price-high-low' | 'price-low-high'>('new-to-old');
     const [storeFilters, setStoreFilters] = useState({
         search: '',
         industry: '',
@@ -117,7 +127,7 @@ export default function ShopPage() {
             return match ? match[1].toUpperCase() : '';
         };
 
-        return shops.filter((shop) => {
+        const filtered = shops.filter((shop) => {
             const categoryMatches = !selectedCategory || shop.listingType === selectedCategory;
             const provinceCode = extractProvince(shop.location);
             const locationMatches =
@@ -138,7 +148,34 @@ export default function ShopPage() {
 
             return categoryMatches && locationMatches && searchableText.includes(normalizedSearch);
         });
-    }, [shops, searchQuery, selectedCategory, selectedProvince]);
+
+        // Apply sorting similar to sourcing requests
+        const sorted = [...filtered];
+        switch (listingSort) {
+            case 'new-to-old':
+                sorted.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                break;
+            case 'old-to-new':
+                sorted.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                break;
+            case 'price-high-low':
+                sorted.sort((a, b) => {
+                    const priceA = parseFloat(String(a.price || '0').replace(/[^0-9.]/g, '')) || 0;
+                    const priceB = parseFloat(String(b.price || '0').replace(/[^0-9.]/g, '')) || 0;
+                    return priceB - priceA;
+                });
+                break;
+            case 'price-low-high':
+                sorted.sort((a, b) => {
+                    const priceA = parseFloat(String(a.price || '0').replace(/[^0-9.]/g, '')) || 0;
+                    const priceB = parseFloat(String(b.price || '0').replace(/[^0-9.]/g, '')) || 0;
+                    return priceA - priceB;
+                });
+                break;
+        }
+
+        return sorted;
+    }, [shops, searchQuery, selectedCategory, selectedProvince, listingSort]);
 
     const filteredStores = useMemo(() => {
         return stores.filter((store) => {
@@ -208,6 +245,23 @@ export default function ShopPage() {
             return true;
         });
     }, [stores, storeFilters]);
+
+    const getIndustryLogoForStore = (store: StoreCard) => {
+        const selectedIndustries = Array.isArray(store.industriesServed)
+            ? store.industriesServed.filter((industry) => INDUSTRY_LOGOS[industry])
+            : [];
+
+        if (selectedIndustries.length === 0) return null;
+        if (selectedIndustries.length === 1) return INDUSTRY_LOGOS[selectedIndustries[0]];
+
+        const seedString = `${store.id || store.name || ''}:${selectedIndustries.join('|')}`;
+        let hash = 0;
+        for (let i = 0; i < seedString.length; i += 1) {
+            hash = (hash * 31 + seedString.charCodeAt(i)) >>> 0;
+        }
+        const selectedIndex = hash % selectedIndustries.length;
+        return INDUSTRY_LOGOS[selectedIndustries[selectedIndex]];
+    };
 
     useEffect(() => {
         setIsDomReady(true);
@@ -308,6 +362,8 @@ export default function ShopPage() {
                         return {
                             listingId: l?.id,
                             profileId: linkProfileId,
+                            createdAt: l?.createdAt,
+                            timestamp: l?.timestamp,
 
                             supplierName: mergedName,
                             supplierIcon: mergedIcon,
@@ -565,9 +621,19 @@ export default function ShopPage() {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <select
+                                            value={listingSort}
+                                            onChange={(e) => setListingSort(e.target.value as any)}
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                                        >
+                                            <option value="new-to-old">Newest first</option>
+                                            <option value="old-to-new">Oldest first</option>
+                                            <option value="price-high-low">Price: High to Low</option>
+                                            <option value="price-low-high">Price: Low to High</option>
+                                        </select>
+                                        <select
                                             value={selectedCategory}
                                             onChange={(e) => setSelectedCategory(e.target.value)}
-                                            className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-slate-300 focus:border-orange-500 outline-none cursor-pointer"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                         >
                                             <option value="">All Categories</option>
                                             {listingCategories.map((category) => (
@@ -579,9 +645,9 @@ export default function ShopPage() {
                                         <select
                                             value={selectedProvince}
                                             onChange={(e) => setSelectedProvince(e.target.value)}
-                                            className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-slate-300 focus:border-orange-500 outline-none cursor-pointer"
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                         >
-                                            <option value="">All Locations</option>
+                                            <option value="">All Provinces</option>
                                             {CANADIAN_PROVINCES.map((prov) => (
                                                 <option key={prov.code} value={prov.code}>
                                                     {prov.name} ({prov.code})
@@ -589,6 +655,12 @@ export default function ShopPage() {
                                             ))}
                                         </select>
                                     </div>
+                                </div>
+
+                                {/* Results Count */}
+                                <div className="mb-4 text-sm text-slate-400">
+                                    Showing <span className="text-white font-bold">{filteredShops.length}</span> of{' '}
+                                    <span className="text-white font-bold">{shops.length}</span> listings
                                 </div>
 
                                 {filteredShops.length === 0 ? (
@@ -755,55 +827,69 @@ export default function ShopPage() {
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {filteredStores.map((store) => (
-                                            <div
-                                                key={store.id}
-                                                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col relative"
-                                            >
-                                                {store.profileType === 'storefront' ? (
-                                                    <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                                                        Storefront
-                                                    </span>
-                                                ) : null}
-                                                <div className="flex justify-between items-start mb-4">
-                                                    {store.logoUrl ? (
-                                                        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
-                                                            <img src={store.logoUrl} alt={store.name} className="w-full h-full object-cover" />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
-                                                            <i className={`fa-solid ${store.icon || 'fa-industry'}`}></i>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <h3 className="font-heading font-bold text-lg text-white mb-1">{store.name}</h3>
-                                                <p className="text-xs text-slate-500 uppercase mb-4">
-                                                    <i className="fa-solid fa-location-dot"></i> {store.location}
-                                                </p>
-                                                <p className="text-slate-400 text-xs mb-6 leading-relaxed">
-                                                    {store.description || 'No description available.'}
-                                                </p>
-
-                                                {(store.tags && store.tags.length > 0) && (
-                                                    <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                                                        {store.tags.map((tag: string) => (
-                                                            <span
-                                                                key={tag}
-                                                                className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                                                            >
-                                                                {tag}
+                                            (() => {
+                                                const industryLogo = getIndustryLogoForStore(store);
+                                                const isStorefrontProfile = store.profileType === 'storefront';
+                                                return (
+                                                    <div
+                                                        key={store.id}
+                                                        className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col relative"
+                                                    >
+                                                        {store.profileType === 'storefront' ? (
+                                                            <span className="absolute top-4 right-4 px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                                                                Storefront
                                                             </span>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                        ) : null}
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            {store.logoUrl ? (
+                                                                <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
+                                                                    <img src={store.logoUrl} alt={store.name} className="w-full h-full object-cover" />
+                                                                </div>
+                                                            ) : !isStorefrontProfile && industryLogo ? (
+                                                                <div className={`w-12 h-12 rounded-lg ${industryLogo.bgClass} flex items-center justify-center`}>
+                                                                    <i className={`fa-solid ${industryLogo.icon} ${industryLogo.iconClass}`}></i>
+                                                                </div>
+                                                            ) : isStorefrontProfile ? (
+                                                                <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+                                                                    <i className={`fa-solid ${store.icon || 'fa-shop'}`}></i>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
+                                                                    <i className={`fa-solid ${store.icon || 'fa-industry'}`}></i>
+                                                                </div>
+                                                            )}
+                                                        </div>
 
-                                                <Link
-                                                    href={`/profile?id=${encodeURIComponent(store.id)}`}
-                                                    className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
-                                                >
-                                                    View Profile
-                                                </Link>
-                                            </div>
+                                                        <h3 className="font-heading font-bold text-lg text-white mb-1">{store.name}</h3>
+                                                        <p className="text-xs text-slate-500 uppercase mb-4">
+                                                            <i className="fa-solid fa-location-dot"></i> {store.location}
+                                                        </p>
+                                                        <p className="text-slate-400 text-xs mb-6 leading-relaxed">
+                                                            {store.description || 'No description available.'}
+                                                        </p>
+
+                                                        {(store.tags && store.tags.length > 0) && (
+                                                            <div className="mt-auto flex flex-wrap gap-2 mb-4">
+                                                                {store.tags.map((tag: string) => (
+                                                                    <span
+                                                                        key={tag}
+                                                                        className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                                                                    >
+                                                                        {tag}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        <Link
+                                                            href={`/profile?id=${encodeURIComponent(store.id)}`}
+                                                            className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
+                                                        >
+                                                            View Profile
+                                                        </Link>
+                                                    </div>
+                                                );
+                                            })()
                                         ))}
                                     </div>
                                 )}

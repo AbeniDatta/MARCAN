@@ -8,6 +8,33 @@ import Header from '@/components/Header';
 type TabType = 'companies' | 'listings' | 'requests';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
+  'Precision Machining': {
+    icon: 'fa-microchip',
+    bgClass: 'bg-blue-500/10',
+    iconClass: 'text-blue-400',
+  },
+  'Foundries & Casting': {
+    icon: 'fa-fire',
+    bgClass: 'bg-orange-500/10',
+    iconClass: 'text-orange-400',
+  },
+  'Surface Finishing': {
+    icon: 'fa-spray-can-sparkles',
+    bgClass: 'bg-purple-500/10',
+    iconClass: 'text-purple-400',
+  },
+  'Tooling & Molds': {
+    icon: 'fa-screwdriver-wrench',
+    bgClass: 'bg-green-500/10',
+    iconClass: 'text-green-400',
+  },
+  Automation: {
+    icon: 'fa-robot',
+    bgClass: 'bg-cyan-500/10',
+    iconClass: 'text-cyan-400',
+  },
+};
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
   { code: 'QC', name: 'Quebec' },
@@ -52,6 +79,18 @@ function SearchPageContent() {
     listings: [] as any[],
     requests: [] as any[],
     counts: { companies: 0, listings: 0, requests: 0 },
+  });
+
+  // Tab-specific filter bars to mirror dedicated pages
+  const [listingsFilters, setListingsFilters] = useState({
+    search: '',
+    category: '',
+    province: '',
+  });
+  const [requestsFilters, setRequestsFilters] = useState({
+    search: '',
+    industry: '',
+    province: '',
   });
 
   useEffect(() => {
@@ -160,14 +199,15 @@ function SearchPageContent() {
   }, [results.companies, filters]);
 
   const filteredListings = useMemo(() => {
+    const normalizedSearch = listingsFilters.search.trim().toLowerCase();
     return results.listings.filter((listing) => {
-      if (filters.industry) {
-        const haystack = `${listing.listingType || ''} ${listing.title || ''} ${listing.description || ''}`.toLowerCase();
-        if (!haystack.includes(filters.industry.toLowerCase())) return false;
+      // Category (listingType) filter
+      if (listingsFilters.category) {
+        if (String(listing.listingType || '') !== listingsFilters.category) return false;
       }
-
-      if (filters.province) {
-        const targetCode = filters.province.toUpperCase();
+      // Province filter - match code or name in location/supplierProvince
+      if (listingsFilters.province) {
+        const targetCode = listingsFilters.province.toUpperCase();
         const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
         const locationSuffix = String(listing.location || '').split(',').pop()?.trim().toUpperCase() || '';
         const supplierProvince = String(listing.supplierProvince || '').toUpperCase();
@@ -179,45 +219,58 @@ function SearchPageContent() {
         if (!provinceMatch) return false;
       }
 
-      if (filters.certification) {
-        const certs = Array.isArray(listing.supplierCertifications) ? listing.supplierCertifications : [];
-        const certMatch = certs.some((cert: any) => {
-          if (typeof cert === 'string') return cert.toLowerCase() === filters.certification.toLowerCase();
-          return (
-            String(cert.code || '').toLowerCase() === filters.certification.toLowerCase() ||
-            String(cert.name || '').toLowerCase() === filters.certification.toLowerCase()
-          );
-        });
-        if (!certMatch) return false;
+      // Search within several fields
+      if (normalizedSearch) {
+        const haystack = [
+          listing.title,
+          listing.description,
+          listing.listingType,
+          listing.supplier,
+          listing.location,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(normalizedSearch)) return false;
       }
-
       return true;
     });
-  }, [results.listings, filters]);
+  }, [results.listings, listingsFilters]);
 
   const filteredRequests = useMemo(() => {
+    const normalizedSearch = requestsFilters.search.trim().toLowerCase();
     return results.requests.filter((request) => {
-      if (filters.industry) {
+      // Industry (category keyword) filter
+      if (requestsFilters.industry) {
         const haystack = `${request.category || ''} ${request.title || ''} ${request.description || ''}`.toLowerCase();
-        if (!haystack.includes(filters.industry.toLowerCase())) return false;
+        if (!haystack.includes(requestsFilters.industry.toLowerCase())) return false;
       }
-
-      if (filters.province) {
-        const targetCode = filters.province.toUpperCase();
+      // Province filter
+      if (requestsFilters.province) {
+        const targetCode = requestsFilters.province.toUpperCase();
         const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
         const requestProvince = String(request.province || '').toUpperCase();
         const haystack = `${request.title || ''} ${request.description || ''} ${request.category || ''}`.toLowerCase();
         if (!(requestProvince === targetCode || haystack.includes(targetName))) return false;
       }
-
-      if (filters.certification) {
-        const haystack = `${request.title || ''} ${request.description || ''} ${request.category || ''}`.toLowerCase();
-        if (!haystack.includes(filters.certification.toLowerCase())) return false;
+      // Search
+      if (normalizedSearch) {
+        const searchable = [
+          request.title,
+          request.company,
+          request.category,
+          request.description,
+          request.quantity,
+          request.location,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!searchable.includes(normalizedSearch)) return false;
       }
-
       return true;
     });
-  }, [results.requests, filters]);
+  }, [results.requests, requestsFilters]);
 
   const filteredCounts = useMemo(
     () => ({
@@ -228,6 +281,23 @@ function SearchPageContent() {
     }),
     [filteredCompanies.length, filteredListings.length, filteredRequests.length]
   );
+
+  const getIndustryLogoForCompany = (company: any) => {
+    const selectedIndustries = Array.isArray(company.industriesServed)
+      ? company.industriesServed.filter((industry: string) => INDUSTRY_LOGOS[industry])
+      : [];
+
+    if (selectedIndustries.length === 0) return null;
+    if (selectedIndustries.length === 1) return INDUSTRY_LOGOS[selectedIndustries[0]];
+
+    const seedString = `${company.id || company.name || ''}:${selectedIndustries.join('|')}`;
+    let hash = 0;
+    for (let i = 0; i < seedString.length; i += 1) {
+      hash = (hash * 31 + seedString.charCodeAt(i)) >>> 0;
+    }
+    const selectedIndex = hash % selectedIndustries.length;
+    return INDUSTRY_LOGOS[selectedIndustries[selectedIndex]];
+  };
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -284,13 +354,131 @@ function SearchPageContent() {
                 </p>
               </div>
 
-              {/* Global Filters */}
-              <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
-                <div className="flex flex-wrap items-center gap-3">
+              {/* Tab-specific Filter Bars */}
+              {activeTab === 'companies' && (
+                <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-[180px]">
+                      <select
+                        value={filters.industry}
+                        onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">All Industries</option>
+                        {INDUSTRY_HUBS.map((hub) => (
+                          <option key={hub} value={hub}>
+                            {hub}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="min-w-[140px]">
+                      <select
+                        value={filters.province}
+                        onChange={(e) => setFilters({ ...filters, province: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">All Provinces</option>
+                        {CANADIAN_PROVINCES.map((province) => (
+                          <option key={province.code} value={province.code}>
+                            {province.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="min-w-[160px]">
+                      <select
+                        value={filters.certification}
+                        onChange={(e) => setFilters({ ...filters, certification: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">All Certifications</option>
+                        {CERTIFICATIONS.map((cert) => (
+                          <option key={cert.code} value={cert.code}>
+                            {cert.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {(filters.industry || filters.province || filters.certification) && (
+                      <button
+                        onClick={() => setFilters({ industry: '', province: '', certification: '' })}
+                        className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'listings' && (
+                <div className="glass-card p-4 rounded-2xl flex flex-wrap items-center gap-4 mb-6">
+                  <div className="relative flex-[2] min-w-[220px] max-w-[520px]">
+                    <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input
+                      type="text"
+                      value={listingsFilters.search}
+                      onChange={(e) => setListingsFilters({ ...listingsFilters, search: e.target.value })}
+                      placeholder="Search for parts, materials, or capacity..."
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={listingsFilters.category}
+                      onChange={(e) => setListingsFilters({ ...listingsFilters, category: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">All Categories</option>
+                      {/* Derive categories from listings data */}
+                      {Array.from(new Set(results.listings.map((l: any) => l.listingType).filter(Boolean))).map((c: string) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={listingsFilters.province}
+                      onChange={(e) => setListingsFilters({ ...listingsFilters, province: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">All Provinces</option>
+                      {CANADIAN_PROVINCES.map((province) => (
+                        <option key={province.code} value={province.code}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </select>
+                    {(listingsFilters.search || listingsFilters.category || listingsFilters.province) && (
+                      <button
+                        onClick={() => setListingsFilters({ search: '', category: '', province: '' })}
+                        className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'requests' && (
+                <div className="glass-card p-4 rounded-2xl flex flex-wrap items-center gap-4 mb-6">
+                  <div className="relative flex-[2] min-w-[220px] max-w-[520px]">
+                    <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input
+                      type="text"
+                      value={requestsFilters.search}
+                      onChange={(e) => setRequestsFilters({ ...requestsFilters, search: e.target.value })}
+                      placeholder="Search requests by title, category, or details..."
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-marcan-red outline-none transition-all placeholder:text-slate-500"
+                    />
+                  </div>
                   <div className="min-w-[180px]">
                     <select
-                      value={filters.industry}
-                      onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
+                      value={requestsFilters.industry}
+                      onChange={(e) => setRequestsFilters({ ...requestsFilters, industry: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                     >
                       <option value="">All Industries</option>
@@ -301,11 +489,10 @@ function SearchPageContent() {
                       ))}
                     </select>
                   </div>
-
                   <div className="min-w-[140px]">
                     <select
-                      value={filters.province}
-                      onChange={(e) => setFilters({ ...filters, province: e.target.value })}
+                      value={requestsFilters.province}
+                      onChange={(e) => setRequestsFilters({ ...requestsFilters, province: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                     >
                       <option value="">All Provinces</option>
@@ -316,32 +503,16 @@ function SearchPageContent() {
                       ))}
                     </select>
                   </div>
-
-                  <div className="min-w-[160px]">
-                    <select
-                      value={filters.certification}
-                      onChange={(e) => setFilters({ ...filters, certification: e.target.value })}
-                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
-                    >
-                      <option value="">All Certifications</option>
-                      {CERTIFICATIONS.map((cert) => (
-                        <option key={cert.code} value={cert.code}>
-                          {cert.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {(filters.industry || filters.province || filters.certification) && (
+                  {(requestsFilters.search || requestsFilters.industry || requestsFilters.province) && (
                     <button
-                      onClick={() => setFilters({ industry: '', province: '', certification: '' })}
+                      onClick={() => setRequestsFilters({ search: '', industry: '', province: '' })}
                       className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                     >
                       Clear
                     </button>
                   )}
                 </div>
-              </div>
+              )}
 
               {/* Tabs */}
               <div className="flex gap-2 mb-6 border-b border-white/10">
@@ -404,10 +575,13 @@ function SearchPageContent() {
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {filteredCompanies.map((company) => (
+                            (() => {
+                              const industryLogo = getIndustryLogoForCompany(company);
+                              return (
                             <Link
                               key={company.id}
                               href={`/profile?id=${company.id}`}
-                              className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 transition-all duration-300 flex flex-col"
+                              className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col"
                             >
                               <div className="flex justify-between items-start mb-4">
                                 {company.logoUrl ? (
@@ -417,6 +591,10 @@ function SearchPageContent() {
                                       alt={company.name}
                                       className="w-full h-full object-cover"
                                     />
+                                  </div>
+                                ) : industryLogo ? (
+                                  <div className={`w-12 h-12 rounded-lg ${industryLogo.bgClass} flex items-center justify-center`}>
+                                    <i className={`fa-solid ${industryLogo.icon} ${industryLogo.iconClass}`}></i>
                                   </div>
                                 ) : (
                                   <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-marcan-red transition-colors">
@@ -435,13 +613,13 @@ function SearchPageContent() {
                                 </p>
                               )}
                               {company.description && (
-                                <p className="text-slate-400 text-xs mb-4 leading-relaxed line-clamp-2">
+                                <p className="text-slate-400 text-xs mb-6 leading-relaxed">
                                   {company.description}
                                 </p>
                               )}
-                              {company.capabilities && company.capabilities.length > 0 && (
+                              {((company.tags && company.tags.length > 0) || (company.capabilities && company.capabilities.length > 0)) && (
                                 <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                                  {company.capabilities.slice(0, 3).map((cap: string, idx: number) => (
+                                  {(company.tags?.length ? company.tags : company.capabilities).slice(0, 3).map((cap: string, idx: number) => (
                                     <span
                                       key={idx}
                                       className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
@@ -455,6 +633,8 @@ function SearchPageContent() {
                                 View Profile
                               </div>
                             </Link>
+                              );
+                            })()
                           ))}
                         </div>
                       )}
@@ -476,46 +656,40 @@ function SearchPageContent() {
                           {filteredListings.map((listing) => (
                             <div
                               key={listing.id}
-                              className="glass-card rounded-xl overflow-hidden group hover:border-marcan-red/50 transition-all"
+                              className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden"
                             >
-                              <div className="h-40 bg-black/40 flex items-center justify-center text-slate-600 relative">
-                                {listing.logoUrl ? (
-                                  <img
-                                    src={listing.logoUrl}
-                                    alt={listing.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <i
-                                    className={`fa-solid ${listing.selectedIcon || 'fa-box'} text-4xl group-hover:text-white transition-colors group-hover:scale-110 duration-500`}
-                                  ></i>
-                                )}
-                              </div>
-                              <div className="p-4 border-t border-white/5">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h3 className="font-bold text-white text-sm uppercase truncate">
-                                    {listing.title}
-                                  </h3>
-                                  {listing.price && (
-                                    <span className="font-bold text-marcan-red text-sm ml-2">
-                                      {listing.price}
+                              <div className="p-5 flex flex-col flex-grow">
+                                {listing.listingType ? (
+                                  <div className="mb-3">
+                                    <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                      {listing.listingType}
                                     </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-slate-500 mb-2">
-                                  Supplier: {listing.supplier}
-                                </div>
-                                {listing.location && (
-                                  <div className="text-[10px] text-slate-500 mb-4">
-                                    <i className="fa-solid fa-location-dot mr-1"></i> {listing.location}
                                   </div>
-                                )}
-                                {listing.description && (
-                                  <p className="text-slate-400 text-xs mb-4 line-clamp-2">
-                                    {listing.description}
-                                  </p>
-                                )}
-                                <button className="w-full py-2 bg-white/5 text-slate-300 text-[10px] font-bold uppercase tracking-wider rounded hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
+                                ) : null}
+
+                                <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
+                                  {listing.title || 'Untitled listing'}
+                                </h3>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
+                                  <i className="fa-solid fa-store text-orange-400 mr-1"></i>
+                                  {listing.supplier || 'Unknown'}
+                                </p>
+
+                                <p className="text-xs text-slate-400 line-clamp-1 mb-4">
+                                  {listing.description || 'No description available.'}
+                                </p>
+
+                                <div className="mt-auto flex items-end justify-between mb-4 gap-3">
+                                  <span className="text-xl font-black text-white truncate">
+                                    {listing.price || 'Negotiable'}
+                                  </span>
+                                  <span className="text-xs text-slate-400 shrink-0">
+                                    <i className="fa-solid fa-location-dot mr-1"></i>
+                                    {listing.location || 'N/A'}
+                                  </span>
+                                </div>
+
+                                <button className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5">
                                   View Listing
                                 </button>
                               </div>
@@ -541,13 +715,13 @@ function SearchPageContent() {
                           {filteredRequests.map((request) => (
                             <div
                               key={request.id}
-                              className="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
+                              className="glass-card p-6 md:p-8 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
                             >
-                              <div className="absolute left-0 top-0 bottom-0 w-1 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity"></div>
 
-                              <div className="flex-shrink-0">
+                              <div className="hidden md:flex flex-shrink-0">
                                 {request.logoUrl ? (
-                                  <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
+                                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center overflow-hidden">
                                     <img
                                       src={request.logoUrl}
                                       alt={request.company}
@@ -555,49 +729,50 @@ function SearchPageContent() {
                                     />
                                   </div>
                                 ) : (
-                                  <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
-                                    {getInitials(request.company)}
+                                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center font-heading font-black text-white text-xl shadow-lg">
+                                    {getInitials(request.company || 'U')}
                                   </div>
                                 )}
                               </div>
                               <div className="flex-grow">
-                                <div className="flex justify-between items-start mb-2">
+                                <div className="flex flex-wrap justify-between items-start gap-4 mb-2">
                                   <div>
-                                    <h4 className="text-white font-bold text-sm uppercase tracking-wide">
+                                    <h4 className="text-white font-bold text-lg mb-1 group-hover:text-marcan-red transition-colors">
                                       {request.title}
                                     </h4>
-                                    <div className="text-xs text-slate-500">
-                                      by {request.company}
+                                    <div className="text-xs text-slate-500 font-medium">
+                                      {request.company ? <>by <span className="text-slate-300">{request.company}</span></> : null}
                                     </div>
                                   </div>
                                   {request.category && (
-                                    <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
+                                    <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300 shadow-sm">
                                       {request.category}
                                     </span>
                                   )}
                                 </div>
                                 {request.description && (
-                                  <p className="text-slate-400 text-sm leading-relaxed mb-2">
+                                  <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-2 md:pr-24">
                                     {request.description}
                                   </p>
                                 )}
-                                <div className="flex gap-4 text-xs text-slate-500">
-                                  {request.quantity && <span>Quantity: {request.quantity}</span>}
-                                  {request.targetPrice && (
-                                    <span className="text-marcan-red font-bold">
-                                      Target: {request.targetPrice}
-                                    </span>
+                                <div className="flex flex-wrap items-center gap-6">
+                                  {request.quantity && (
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                      <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red"><i className="fa-solid fa-cubes"></i></div>
+                                      Quantity: {request.quantity}
+                                    </div>
                                   )}
                                   {request.deadline && (
-                                    <span>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                      <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red"><i className="fa-solid fa-calendar-day"></i></div>
                                       Deadline: {new Date(request.deadline).toLocaleDateString()}
-                                    </span>
+                                    </div>
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center">
-                                <button className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
-                                  <i className="fa-solid fa-envelope"></i>
+                              <div className="md:absolute md:right-8 md:top-1/2 md:-translate-y-1/2 flex items-center justify-end mt-2 md:mt-0 opacity-100 md:opacity-0 group-hover:opacity-100 md:translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                                <button className="bg-marcan-red text-white px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:shadow-neon transition-all flex items-center gap-2 border border-marcan-red">
+                                  View Details <i className="fa-solid fa-arrow-right"></i>
                                 </button>
                               </div>
                             </div>

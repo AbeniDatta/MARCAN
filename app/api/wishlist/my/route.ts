@@ -45,20 +45,14 @@ export async function GET(request: NextRequest) {
       where: {
         buyerProfileId: profile.id,
       },
-      include: {
-        buyerProfile: {
-          select: {
-            companyName: true,
-          },
-        },
-      },
+      // No need to include buyerProfile; use request-level target location
       orderBy: {
         createdAt: 'desc',
       },
     });
 
     // Format the response
-    const formattedRequests = requests.map((req) => ({
+    const formattedRequests = requests.map((req: any) => ({
       id: req.id,
       title: req.title,
       company: req.companyName,
@@ -78,6 +72,9 @@ export async function GET(request: NextRequest) {
       active: req.active,
       createdAt: req.createdAt.toISOString(),
       timestamp: req.createdAt.getTime(),
+      city: req.targetCity || null,
+      province: req.targetProvince || null,
+      location: [req.targetCity, req.targetProvince].filter(Boolean).join(', ') || null,
       logoUrl: null,
       selectedIcon: null,
     }));

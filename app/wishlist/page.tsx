@@ -1,11 +1,29 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 
 type FilterOption = 'new-to-old' | 'old-to-new' | 'price-high-low' | 'price-low-high' | 'category';
+const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+const CANADIAN_PROVINCES = [
+  { code: 'ON', name: 'Ontario' },
+  { code: 'QC', name: 'Quebec' },
+  { code: 'BC', name: 'British Columbia' },
+  { code: 'AB', name: 'Alberta' },
+  { code: 'MB', name: 'Manitoba' },
+  { code: 'SK', name: 'Saskatchewan' },
+  { code: 'NS', name: 'Nova Scotia' },
+  { code: 'NB', name: 'New Brunswick' },
+  { code: 'NL', name: 'Newfoundland and Labrador' },
+  { code: 'PE', name: 'Prince Edward Island' },
+  { code: 'NT', name: 'Northwest Territories' },
+  { code: 'YT', name: 'Yukon' },
+  { code: 'NU', name: 'Nunavut' },
+];
+const PROVINCE_NAME_BY_CODE = new Map(CANADIAN_PROVINCES.map((p) => [p.code, p.name.toLowerCase()]));
 
 export default function WishlistPage() {
   const { isAuthenticated, isMounted, user } = useAuth();
@@ -13,6 +31,15 @@ export default function WishlistPage() {
   const isBuyer = !isSupplier;
   const [filter, setFilter] = useState<FilterOption>('new-to-old');
   const [requests, setRequests] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIndustry, setSelectedIndustry] = useState('');
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [viewingRequest, setViewingRequest] = useState<any | null>(null);
+  const [isDomReady, setIsDomReady] = useState(false);
+
+  useEffect(() => {
+    setIsDomReady(true);
+  }, []);
 
   // Determine role from DB (source of truth): if supplier profile exists -> supplier
   useEffect(() => {
@@ -90,9 +117,52 @@ export default function WishlistPage() {
     return `${days} ${days === 1 ? 'day' : 'days'} ago`;
   };
 
-  // Filter and sort requests
+  // Filter and sort requests (with storefront-style filters)
   const filteredRequests = useMemo(() => {
-    let sorted = [...requests];
+    // Text search + category + province filters
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const filtered = (requests || []).filter((r) => {
+      const industryMatches =
+        !selectedIndustry ||
+        String(r.category || '').toLowerCase() === selectedIndustry.toLowerCase() ||
+        `${r.title || ''} ${r.description || ''}`.toLowerCase().includes(selectedIndustry.toLowerCase());
+      const provinceMatches = (() => {
+        if (!selectedProvince) return true;
+        const targetCode = selectedProvince.toUpperCase();
+        const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
+        const requestProvinceRaw = String(r.province || '').trim();
+        const requestProvinceCode = requestProvinceRaw.toUpperCase();
+        const requestProvinceName = requestProvinceRaw.toLowerCase();
+        const locationText = String(r.location || '').toLowerCase();
+        return (
+          requestProvinceCode === targetCode ||
+          requestProvinceName === targetName ||
+          locationText.includes(targetCode.toLowerCase()) ||
+          locationText.includes(targetName)
+        );
+      })();
+
+      if (!normalizedSearch) return industryMatches && provinceMatches;
+
+      const searchable = [
+        r.title,
+        r.company,
+        r.category,
+        r.specifications,
+        r.description,
+        r.quantity,
+        r.targetPrice,
+        r.location,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return industryMatches && provinceMatches && searchable.includes(normalizedSearch);
+    });
+
+    // Sorting (same options retained)
+    let sorted = [...filtered];
 
     switch (filter) {
       case 'new-to-old':
@@ -121,9 +191,139 @@ export default function WishlistPage() {
     }
 
     return sorted;
-  }, [requests, filter]);
+  }, [requests, filter, searchQuery, selectedIndustry, selectedProvince]);
+
+  const requestModal = viewingRequest && isDomReady
+    ? createPortal(
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        {/* Backdrop */}
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={() => setViewingRequest(null)}
+          className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
+        />
+
+        {/* Modal Content */}
+        <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
+          {/* Sticky Header */}
+          <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
+            <div className="flex items-center gap-3 min-w-0">
+              {viewingRequest.category && (
+                <span className="bg-marcan-red/20 text-marcan-red border border-marcan-red/30 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0">
+                  {viewingRequest.category}
+                </span>
+              )}
+              <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
+                {viewingRequest.title || 'Sourcing Request'}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setViewingRequest(null)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
+              aria-label="Close request details"
+            >
+              <i className="fa-solid fa-xmark text-lg"></i>
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 md:p-8 space-y-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Description */}
+                {viewingRequest.description && (
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <i className="fa-solid fa-align-left text-marcan-red"></i> Request Description
+                    </h4>
+                    <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                      <p className="mb-4 whitespace-pre-wrap">{viewingRequest.description}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Specs */}
+                <div>
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i className="fa-solid fa-list-check text-marcan-red"></i> Sourcing Requirements
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Quantity</span>
+                      <span className="text-sm font-semibold text-white">{viewingRequest.quantity || 'N/A'}</span>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Location</span>
+                      <span className="text-sm font-semibold text-white">
+                        {(viewingRequest.location && String(viewingRequest.location).trim()) ||
+                          [viewingRequest.city, viewingRequest.province].filter(Boolean).join(', ') || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Price</span>
+                      <span className="text-sm font-semibold text-white">{viewingRequest.targetPrice || 'None Specified'}</span>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Deadline</span>
+                      <span className="text-sm font-semibold text-white">
+                        {viewingRequest.deadline ? new Date(viewingRequest.deadline).toLocaleDateString() : 'ASAP'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attachments removed per requirements */}
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                <div className="glass-card p-6 rounded-2xl border border-marcan-red/20 bg-gradient-to-b from-marcan-red/5 to-transparent shadow-[0_0_30px_rgba(239,68,68,0.05)]">
+                  <div className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-4 text-center">
+                    Interested in this RFQ?
+                  </div>
+                  <button
+                    type="button"
+                    className="w-full py-4 rounded-xl bg-marcan-red text-white text-sm font-bold uppercase tracking-wider hover:shadow-neon hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                  >
+                    <i className="fa-solid fa-envelope"></i> Email Buyer
+                  </button>
+                </div>
+
+                <div className="glass-card p-6 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Posted By</h4>
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center font-heading font-black text-white text-xl border border-white/10 shadow-inner">
+                      {(viewingRequest.initials || 'U').substring(0, 2)}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white mb-1">{viewingRequest.company || 'Anonymous Buyer'}</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Posted {viewingRequest.time || 'recently'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Industry Category box below Posted By */}
+                <div className="glass-card p-6 rounded-2xl border border-white/5">
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Industry Category</h4>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                    <i className="fa-solid fa-tags text-slate-400"></i>
+                    {viewingRequest.category || 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )
+    : null;
 
   return (
+    <>
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Sourcing Requests" />
 
@@ -159,24 +359,73 @@ export default function WishlistPage() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-400 font-bold uppercase">Filter:</label>
+        {/* Filter Bar (mirrors Industrial Storefront stores) */}
+        <div className="glass-card p-4 rounded-2xl flex flex-wrap items-center gap-4 mb-6">
+          <div className="relative flex-[2] min-w-[220px] max-w-[520px]">
+            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search requests by title, category, or details..."
+              className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-marcan-red outline-none transition-all placeholder:text-slate-500"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={selectedIndustry}
+              onChange={(e) => setSelectedIndustry(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+            >
+              <option value="">All Industries</option>
+              {INDUSTRY_HUBS.map((hub) => (
+                <option key={hub} value={hub}>
+                  {hub}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedProvince}
+              onChange={(e) => setSelectedProvince(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+            >
+              <option value="">All Provinces</option>
+              {CANADIAN_PROVINCES.map((province) => (
+                <option key={province.code} value={province.code}>
+                  {province.name}
+                </option>
+              ))}
+            </select>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as FilterOption)}
-              className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-marcan-red outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
             >
-              <option value="new-to-old">New to Old</option>
-              <option value="old-to-new">Old to New</option>
+              <option value="new-to-old">Newest first</option>
+              <option value="old-to-new">Oldest first</option>
               <option value="price-high-low">Price: High to Low</option>
               <option value="price-low-high">Price: Low to High</option>
               <option value="category">By Category</option>
             </select>
           </div>
-          <div className="text-xs text-slate-500">
-            {filteredRequests.length} {filteredRequests.length === 1 ? 'request' : 'requests'}
+          {(searchQuery || selectedIndustry || selectedProvince) && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedIndustry('');
+                setSelectedProvince('');
+              }}
+              className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+            >
+              Clear
+            </button>
+          )}
           </div>
+
+        {/* Results Count */}
+        <div className="mb-4 text-sm text-slate-400">
+          Showing <span className="text-white font-bold">{filteredRequests.length}</span> of{' '}
+          <span className="text-white font-bold">{requests.length}</span> requests
         </div>
 
         {filteredRequests.length === 0 ? (
@@ -189,58 +438,89 @@ export default function WishlistPage() {
             {filteredRequests.map((request, index) => (
               <div
                 key={index}
-                className="glass-card p-6 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
+                className="glass-card p-6 md:p-8 rounded-2xl border border-white/5 hover:border-marcan-red/50 transition-all duration-300 relative overflow-hidden group"
               >
-                <div
-                  className={`absolute left-0 top-0 bottom-0 w-1 shadow-neon opacity-50 group-hover:opacity-100 transition-opacity ${request.active ? 'bg-marcan-red' : 'bg-slate-600 group-hover:bg-marcan-red'
-                    }`}
-                ></div>
-
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center font-heading font-bold text-white border border-white/10">
-                    {request.initials}
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Avatar (desktop) */}
+                  <div className="hidden md:flex flex-shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center font-heading font-black text-white text-xl shadow-lg group-hover:scale-105 transition-transform">
+                      {request.initials || 'U'}
+                    </div>
                   </div>
-                </div>
+
+                  {/* Content */}
                 <div className="flex-grow">
-                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex flex-wrap justify-between items-start gap-4 mb-2">
                     <div>
-                      <h4 className="text-white font-bold text-sm uppercase tracking-wide">{request.title || request.company}</h4>
-                      <div className="text-xs text-slate-500">{request.time || 'Recently posted'}</div>
-                      {request.company && request.company !== request.title && (
-                        <div className="text-xs text-slate-400 mt-1">by {request.company}</div>
+                        <h3 className="text-white font-bold text-lg mb-1 group-hover:text-marcan-red transition-colors">
+                          {request.title || request.company || 'Sourcing Request'}
+                        </h3>
+                        <div className="text-xs text-slate-500 font-medium">
+                          {request.company ? (
+                            <>
+                              by <span className="text-slate-300">{request.company}</span> • {request.time || 'Recently posted'}
+                            </>
+                          ) : (
+                            <>{request.time || 'Recently posted'}</>
+                          )}
+                        </div>
+                      </div>
+                      {request.category && (
+                        <span className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-300 shadow-sm">
+                          {request.category}
+                        </span>
                       )}
                     </div>
-                    <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                      {request.category}
-                    </span>
+
+                    {request.description && (
+                      <p className="text-sm text-slate-400 leading-relaxed mb-6 line-clamp-2 md:pr-24">
+                        {request.description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-6">
+                      {request.quantity && (
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                          <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red">
+                            <i className="fa-solid fa-cubes"></i>
                   </div>
-                  <p className="text-slate-400 text-sm leading-relaxed">{request.description || request.specifications}</p>
-                  {request.quantity && (
-                    <div className="mt-2 text-xs text-slate-500">
                       Quantity: {request.quantity}
                     </div>
                   )}
-                  {request.targetPrice && (
-                    <div className="mt-2 text-xs text-marcan-red font-bold">
-                      Target Price: {request.targetPrice}
+                      {(request.location || request.city || request.province) && (
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                          <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red">
+                            <i className="fa-solid fa-location-dot"></i>
+                          </div>
+                          {(request.location && String(request.location).trim()) ||
+                            [request.city, request.province].filter(Boolean).join(', ')}
                     </div>
                   )}
-                  {request.deadline && (
-                    <div className="mt-1 text-xs text-slate-500">
-                      Deadline: {new Date(request.deadline).toLocaleDateString()}
                     </div>
-                  )}
                 </div>
-                <div className="flex items-center">
-                  <button className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-marcan-red hover:bg-marcan-red hover:text-white hover:shadow-neon transition-all">
-                    <i className="fa-solid fa-envelope"></i>
+
+                  {/* Action (right on desktop) */}
+                  <div className="md:absolute md:right-8 md:top-1/2 md:-translate-y-1/2 flex items-center justify-end mt-2 md:mt-0 opacity-100 md:opacity-0 group-hover:opacity-100 md:translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                    <button
+                      onClick={() => setViewingRequest(request)}
+                      className="bg-marcan-red text-white px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:shadow-neon transition-all flex items-center gap-2 border border-marcan-red"
+                    >
+                      View Details <i className="fa-solid fa-arrow-right"></i>
                   </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
+
       </div>
     </main>
+      {requestModal}
+    </>
   );
 }
+
+
+
