@@ -7,10 +7,12 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function SignupPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { t } = useI18n();
   const [error, setError] = useState('');
   const [choiceEmail, setChoiceEmail] = useState('');
   const [supplierWebsite, setSupplierWebsite] = useState('');
@@ -33,10 +35,10 @@ export default function SignupPage() {
 
             <div className="text-center mb-2">
               <h2 className="font-heading text-2xl md:text-3xl font-black text-white uppercase tracking-widest mb-2">
-                How do you want to use Marcan?
+                {t('signup.title')}
               </h2>
               <p className="text-sm text-slate-500 mb-4 max-w-xl mx-auto">
-                Choose the path that fits you best. You can always create another type of profile later.
+                {t('signup.subtitle')}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[95rem] mx-auto mb-4 items-stretch px-4">
@@ -48,22 +50,21 @@ export default function SignupPage() {
                     </div>
                     <div>
                       <h3 className="text-white font-heading font-bold text-2xl">
-                        Join as a Buyer
+                        {t('signup.joinBuyer.title')}
                       </h3>
                     </div>
                   </div>
                   <p className="text-base text-slate-300 leading-relaxed mb-3">
-                    Post requirements and receive competitive quotes from{' '}
-                    <span className="text-white font-bold">vetted Canadian suppliers.</span>
+                    {t('signup.joinBuyer.desc1')}
                   </p>
                   <p className="text-sm text-slate-400 mb-5">
-                    Manage RFQs, track quotes, and connect directly with manufacturers - all in one place.
+                    {t('signup.joinBuyer.desc2')}
                   </p>
 
                   {/* Email field under Option A */}
                   <div className="mt-4">
                     <label className="text-sm font-bold text-slate-400 uppercase mb-2 block text-left">
-                      Work Email
+                      {t('signup.joinBuyer.workEmailLabel')}
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch">
                       <input
@@ -74,20 +75,20 @@ export default function SignupPage() {
                           if (e.key === 'Enter') {
                             e.preventDefault();
                             if (!choiceEmail.trim()) {
-                              setError('Please enter your email to continue as a buyer.');
+                              setError(t('signup.joinBuyer.errorEmailRequired'));
                               return;
                             }
                             router.push(`/signup/buyer?email=${encodeURIComponent(choiceEmail.trim())}`);
                           }
                         }}
-                        placeholder="you@company.com"
+                        placeholder={t('signup.joinBuyer.workEmailPlaceholder')}
                         className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
                       />
                       <button
                         type="button"
                         onClick={() => {
                           if (!choiceEmail.trim()) {
-                            setError('Please enter your email to continue as a buyer.');
+                            setError(t('signup.joinBuyer.errorEmailRequired'));
                             return;
                           }
                           router.push(`/signup/buyer?email=${encodeURIComponent(choiceEmail.trim())}`);
@@ -98,7 +99,7 @@ export default function SignupPage() {
                       </button>
                     </div>
                     <p className="mt-2 text-xs text-slate-500 text-left">
-                      We&apos;ll pre-fill your account with this email on the next step.
+                      {t('signup.joinBuyer.prefillText')}
                     </p>
                   </div>
                 </div>
@@ -111,22 +112,21 @@ export default function SignupPage() {
                     </div>
                     <div>
                       <h3 className="text-white font-heading font-bold text-2xl">
-                        Join as a Supplier
+                        {t('signup.joinSupplier.title')}
                       </h3>
                     </div>
                   </div>
                   <p className="text-base text-slate-300 leading-relaxed mb-3">
-                    Showcase your shop with an{' '}
-                    <span className="text-white font-bold">AI-powered 2-minute setup via your website URL.</span>
+                    {t('signup.joinSupplier.desc1')}
                   </p>
                   <p className="text-sm text-slate-400 mb-5">
-                    Paste your existing website and let Marcan's AI scraper build a comprehensive supplier profile for you.
+                    {t('signup.joinSupplier.desc2')}
                   </p>
 
                   {/* Website URL under Supplier option */}
                   <div className="mt-4">
                     <label className="text-sm font-bold text-slate-300 uppercase mb-2 block text-left">
-                      Website URL
+                      {t('signup.joinSupplier.websiteUrlLabel')}
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch">
                       <input
@@ -143,7 +143,7 @@ export default function SignupPage() {
                             router.push(`${base}${urlParam}`);
                           }
                         }}
-                        placeholder="https://www.yourcompany.com"
+                        placeholder={t('signup.joinSupplier.websiteUrlPlaceholder')}
                         className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-marcan-red focus:shadow-neon"
                       />
                       <button
@@ -162,13 +162,13 @@ export default function SignupPage() {
                       </button>
                     </div>
                     <p className="mt-2 text-xs text-slate-400 text-left mb-2">
-                      Don&apos;t have a website or prefer to fill it out manually?{' '}
+                      {t('signup.joinSupplier.manualFillTextPrefix')}
                       <button
                         type="button"
                         onClick={() => router.push('/become-supplier?start=manual')}
                         className="text-marcan-red font-bold hover:text-white underline underline-offset-4"
                       >
-                        Click here
+                        {t('signup.joinSupplier.manualFillTextLink')}
                       </button>
                       .
                     </p>
@@ -177,9 +177,9 @@ export default function SignupPage() {
               </div>
 
               <p className="text-sm text-slate-500 mt-2">
-                Already a member?{' '}
+                {t('signup.joinSupplier.alreadyMemberPrefix')}{' '}
                 <Link href="/login" className="text-marcan-red font-bold hover:text-white transition-colors ml-1">
-                  Login
+                  {t('signup.joinSupplier.loginLinkText')}
                 </Link>
               </p>
             </div>

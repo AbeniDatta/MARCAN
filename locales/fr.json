@@ -3,7 +3,17 @@
     "brand": "Plateforme Marcan",
     "breadcrumbHome": "Maison",
     "login": "Connexion",
-    "myAccount": "Mon compte"
+    "myAccount": "Mon compte",
+    "breadcrumbSearch": "Recherche",
+    "breadcrumbCompanyProfile": "Profil d’entreprise",
+    "breadcrumbIndustrialStorefrontLogin": "Connexion à la vitrine industrielle",
+    "breadcrumbPostRequest": "Publier une demande",
+    "breadcrumbCreateListing": "Créer une annonce",
+    "breadcrumbSupport": "Centre d'aide",
+    "breadcrumbBecomeBuyer": "Devenir acheteur",
+    "breadcrumbMyPostsSourcingRequests": "Mes publications / Demandes d’approvisionnement",
+    "breadcrumbMyPostsStorefrontListings": "Mes publications / Annonces de vitrine",
+    "breadcrumbTermsOfService": "Conditions d’utilisation"
   },
   "sidebar": {
     "home": "Maison",
@@ -28,6 +38,34 @@
       "joinNetwork": "Rejoignez notre réseau"
     },
     "industriesTitle": "Industries",
+    "howMarcanWorks": {
+      "title": "Comment Marcan fonctionne",
+      "node1": {
+        "title": "1. Onboarding instantané",
+        "body": "Les acheteurs et les comptes vitrines se configurent en quelques secondes. Les fournisseurs peuvent générer automatiquement un profil complet grâce à notre importateur de site web IA (2 minutes)."
+      },
+      "node2": {
+        "title": "2. Demander ou répertorier",
+        "body": "Les acheteurs publient des RFQ ciblées au réseau. Les fournisseurs et les comptes vitrines listent des matériaux excédentaires, des équipements ou des capacités disponibles."
+      },
+      "node3": {
+        "title": "3. Associer et collaborer",
+        "body": "Accédez à des coordonnées directes pour établir des connexions. Négociez vos propres conditions et développez des relations d’affaires durables entre entreprises."
+      }
+    },
+    "industries": {
+      "exploreIndustry": "Explorer l’industrie",
+      "precisionMachining": "Precision Machining",
+      "foundriesCasting": "Foundries & Casting",
+      "surfaceFinishing": "Surface Finishing",
+      "toolingMolds": "Tooling & Molds",
+      "automation": "Automation",
+      "precisionMachiningDescription": "Usinage CNC, tournage et EDM. Capacités à haute tolérance pour l’aérospatiale et le médical.",
+      "foundriesCastingDescription": "Fonderie au sable, moulage sous pression et moulage par investissement. Alliages de fer, d’acier et d’aluminium.",
+      "surfaceFinishingDescription": "Anodisation, peinture en poudre, placage et traitements thermiques.",
+      "toolingMoldsDescription": "Moules d’injection, matrices et solutions d’outillage sur mesure pour la production de masse.",
+      "automationDescription": "Robotique, programmation PLC et systèmes de fabrication automatisés pour une efficacité accrue."
+    },
     "marcanStandardTitle": "La norme Marcan",
     "marcanStandard": {
       "aiSetupTitle": "Configuration IA en 2 minutes",
@@ -38,6 +76,294 @@
       "directContactBody": "Aucun intermédiaire ni frais cachés. Communiquez directement avec l'atelier pour les soumissions et les délais.",
       "freeTitle": "100 % gratuit à utiliser",
       "freeBody": "Aucun frais caché, abonnement ou mur payant. Accédez au réseau, sourcer des matériaux et développez votre entreprise entièrement gratuitement."
+    }
+  },
+  "directory": {
+    "explore": "Explorer",
+    "title": "Annuaire du réseau",
+    "searchPlaceholder": "Trouvez des fabricants, des équipements ou des opportunités d’approvisionnement...",
+    "allIndustries": "Toutes les industries",
+    "allProvinces": "Toutes les provinces",
+    "allCertifications": "Toutes les certifications",
+    "clear": "Effacer",
+    "aiLabel": "IA",
+    "results": {
+      "aiMatched": "Affichage de {count} résultats correspondant grâce à l’IA",
+      "filteredFrom": "(filtré à partir de {total} correspondances)",
+      "ofAllCompanies": "Affichage de {count} sur {total} entreprises"
+    },
+    "empty": {
+      "noCompanies": "Aucune entreprise disponible pour le moment.",
+      "noMatches": "Aucune entreprise ne correspond à vos filtres.",
+      "clearFilters": "Effacer les filtres"
+    },
+    "viewProfile": "Voir le profil"
+  },
+  "wishlist": {
+    "explore": "Explorer",
+    "title": "Demandes d’approvisionnement",
+    "postRequest": "Publier une demande",
+    "searchPlaceholder": "Rechercher des demandes par titre, catégorie ou détails...",
+    "allIndustries": "Toutes les industries",
+    "allProvinces": "Toutes les provinces",
+    "sort": {
+      "newestFirst": "Les plus récentes",
+      "oldestFirst": "Les plus anciennes",
+      "priceHighToLow": "Prix : Du plus élevé au plus bas",
+      "priceLowToHigh": "Prix : Du plus bas au plus élevé",
+      "byCategory": "Par catégorie"
+    },
+    "clear": "Effacer",
+    "resultsCount": "Affichage de {count} sur {total} demandes",
+    "empty": {
+      "noRequests": "Aucune demande d’approvisionnement disponible pour le moment."
+    },
+    "loginPrompt": {
+      "prefix": "Veuillez",
+      "login": "vous connecter",
+      "or": "ou",
+      "signUp": "vous inscrire",
+      "suffix": "pour publier une demande"
+    },
+    "companyFallback": "Acheteur anonyme",
+    "recentlyPosted": "Récemment",
+    "posted": "Publié",
+    "industryCategory": "Catégorie d’industrie",
+    "quantityLabel": "Quantité :",
+    "by": "par",
+    "viewDetails": "Voir les détails",
+    "sourcingRequestFallback": "Demande d’approvisionnement",
+    "requestDescription": "Description de la demande",
+    "sourcingRequirements": "Exigences de la demande",
+    "targetQuantity": "Quantité cible",
+    "targetLocation": "Lieu cible",
+    "targetPrice": "Prix cible",
+    "noneSpecified": "Aucune information",
+    "deadline": "Date limite",
+    "asap": "Dès que possible",
+    "interestedInRfq": "Intéressé par cette RFQ ?",
+    "emailBuyer": "Courriel à l’acheteur",
+    "postedBy": "Publié par",
+    "notAvailable": "N/D",
+    "closeRequestDetailsAria": "Fermer les détails de la demande",
+    "time": {
+      "justNow": "À l’instant",
+      "minute": "minute",
+      "minutes": "minutes",
+      "hour": "heure",
+      "hours": "heures",
+      "day": "jour",
+      "days": "jours"
+    }
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Vous avez des questions sur la façon de rejoindre le réseau ? Besoin d’aide pour un métier ? Notre équipe est prête à aider les fabricants canadiens à réussir.",
+    "sendMessage": "Envoyez-nous un message",
+    "form": {
+      "namePlaceholder": "Nom",
+      "emailPlaceholder": "Courriel",
+      "subjectPlaceholder": "Sujet",
+      "messagePlaceholder": "Comment pouvons-nous vous aider ?"
+    },
+    "status": {
+      "missingFields": "Veuillez remplir votre nom, votre courriel et votre message.",
+      "success": "Message envoyé ! Nous vous répondrons sous peu.",
+      "sending": "Envoi…",
+      "sendMessage": "Envoyer un message",
+      "genericError": "Échec de l’envoi du message. Veuillez réessayer."
+    },
+    "headquarters": "Siège social",
+    "emailUs": "Nous écrire"
+  },
+  "storefront": {
+    "explore": "Explorer",
+    "title": "Vitrine industrielle",
+    "createListing": "Créer une annonce",
+    "createProfile": "Créez votre profil de vitrine industrielle",
+    "tabs": {
+      "listings": "Annonces",
+      "stores": "Vendeurs"
+    },
+    "noPostings": "Aucune annonce de vitrine industrielle pour le moment.",
+    "noListingsMatch": "Aucune annonce ne correspond à votre recherche ou catégorie.",
+    "noStores": "Aucun vendeur disponible pour le moment.",
+    "noStoresMatch": "Aucun vendeur ne correspond à vos filtres.",
+    "searchListingsPlaceholder": "Rechercher des pièces, des matériaux ou des capacités...",
+    "searchStoresPlaceholder": "Trouvez des fabricants, des équipements ou des opportunités d’approvisionnement...",
+    "sort": {
+      "newestFirst": "Les plus récentes",
+      "oldestFirst": "Les plus anciennes",
+      "priceHighToLow": "Prix : Du plus élevé au plus bas",
+      "priceLowToHigh": "Prix : Du plus bas au plus élevé"
+    },
+    "allCategories": "Toutes les catégories",
+    "allProvinces": "Toutes les provinces",
+    "allIndustries": "Toutes les industries",
+    "allCertifications": "Toutes les certifications",
+    "clear": "Effacer",
+    "clearFilters": "Effacer les filtres",
+    "resultsCountListings": "Affichage de {count} sur {total} annonces",
+    "resultsCountStores": "Affichage de {count} sur {total} vendeurs",
+    "storefrontTag": "Vitrine",
+    "viewInDirectory": "voir dans l’annuaire des entreprises",
+    "viewListing": "Voir l’annonce",
+    "listingCard": {
+      "untitledListing": "Annonce sans titre",
+      "noDescription": "Aucune description disponible.",
+      "negotiable": "Négociable",
+      "notAvailable": "N/D"
+    },
+    "modal": {
+      "type": "Type",
+      "price": "Prix",
+      "location": "Lieu",
+      "descriptionLabel": "Description",
+      "listingDetailsLabel": "Détails de l’annonce",
+      "askingPrice": "Prix demandé",
+      "listedBy": "Annoncé par",
+      "notSpecified": "Non précisé",
+      "unknownCompany": "Entreprise inconnue",
+      "platformMember": "Membre de la plateforme",
+      "viewFullProfile": "Voir le profil complet",
+      "descriptionFallback": "Aucune description disponible pour cette annonce.",
+      "emailSupplier": "Courriel au fournisseur",
+      "emailSubjectPrefix": "Demande via vitrine industrielle : "
+    }
+  },
+  "storefrontProfile": {
+    "companyNotFound": "Entreprise introuvable.",
+    "backToStores": "Retour aux vendeurs",
+    "verifiedSupplier": "Fournisseur vérifié",
+    "aboutUs": "À propos de nous",
+    "coreCapabilities": "Capacités essentielles",
+    "contactInformation": "Coordonnées",
+    "certifications": "Certifications",
+    "industriesServed": "Industries desservies"
+  },
+  "storefrontLogin": {
+    "title": "Se connecter à votre profil de vitrine industrielle",
+    "credentialsLabel": "Identifiants",
+    "emailPlaceholder": "COURRIEL PROFESSIONNEL",
+    "passwordPlaceholder": "MOT DE PASSE",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loginButton": "Se connecter",
+    "loggingIn": "Connexion en cours...",
+    "resetPasswordTitle": "Réinitialiser le mot de passe",
+    "resetPasswordBody": "Entrez votre adresse courriel et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "emailAddressPlaceholder": "Adresse courriel",
+    "sendResetLink": "Envoyer le lien",
+    "createProfilePromptPrefix": "Vous n’avez pas de profil de vitrine industrielle ?",
+    "createProfilePromptLink": "Créez-le maintenant",
+    "errors": {
+      "invalidCredential": "Courriel ou mot de passe invalide. Veuillez vérifier vos informations et réessayer.",
+      "userNotFound": "Aucun compte trouvé pour cette adresse courriel.",
+      "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
+      "invalidEmail": "Adresse courriel invalide.",
+      "userDisabled": "Ce compte a été désactivé.",
+      "tooManyRequests": "Trop de tentatives de connexion échouées. Veuillez réessayer plus tard.",
+      "networkRequestFailed": "Erreur réseau. Veuillez vérifier votre connexion Internet.",
+      "generic": "Une erreur est survenue pendant la connexion."
+    },
+    "forgotPasswordErrors": {
+      "failedToSend": "Échec de l’envoi du courriel de réinitialisation.",
+      "userNotFound": "Aucun compte trouvé pour cette adresse courriel.",
+      "invalidEmail": "Adresse courriel invalide.",
+      "generic": "Échec de l’envoi du courriel de réinitialisation."
+    },
+    "forgotPasswordSentAlert": "Courriel de réinitialisation envoyé ! Veuillez vérifier votre boîte de réception."
+  },
+  "signup": {
+    "title": "Comment souhaitez-vous utiliser Marcan ?",
+    "subtitle": "Choisissez la voie qui vous convient le mieux. Vous pourrez toujours créer un autre type de profil plus tard.",
+    "joinBuyer": {
+      "title": "Rejoindre comme acheteur",
+      "desc1": "Publiez vos besoins et recevez des soumissions concurrentielles auprès de fournisseurs canadiens vérifiés.",
+      "desc2": "Gérez les RFQ, suivez les soumissions et connectez-vous directement avec les fabricants - le tout au même endroit.",
+      "workEmailLabel": "Courriel professionnel",
+      "workEmailPlaceholder": "vous@entreprise.com",
+      "prefillText": "Nous préremplirons votre compte avec ce courriel à l’étape suivante.",
+      "errorEmailRequired": "Veuillez saisir votre courriel pour continuer en tant qu’acheteur."
+    },
+    "joinSupplier": {
+      "title": "Rejoindre comme fournisseur",
+      "desc1": "Mettez en valeur votre entreprise grâce à une configuration en 2 minutes propulsée par l’IA via votre URL de site web.",
+      "desc2": "Collez votre site web existant et laissez l’extracteur IA de Marcan créer un profil fournisseur complet pour vous.",
+      "websiteUrlLabel": "URL du site web",
+      "websiteUrlPlaceholder": "https://www.votreentreprise.com",
+      "manualFillTextPrefix": "Vous n’avez pas de site web ou préférez le remplir manuellement ? ",
+      "manualFillTextLink": "Cliquez ici",
+      "alreadyMemberPrefix": "Déjà membre ?",
+      "loginLinkText": "Connexion"
+    }
+  },
+  "buyerSignup": {
+    "changeOption": "Changer d’option",
+    "title": "Créer votre compte acheteur",
+    "subtitle": "Créez votre profil d’approvisionnement afin de commencer à trouver des fabricants.",
+    "labels": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "emailAddress": "Adresse courriel",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "companyOptional": "Entreprise (optionnel)",
+      "roleInCompany": "Rôle dans l’entreprise *"
+    },
+    "placeholders": {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "emailAddress": "jane.doe@example.com",
+      "password": "Créer un mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "companyOptional": "Organisation que vous représentez",
+      "roleInCompany": "p. ex., Gestionnaire des achats, Acheteur, Directeur"
+    },
+    "actions": {
+      "createAccount": "Créer votre compte",
+      "creatingAccount": "Création du compte..."
+    },
+    "errors": {
+      "missingFields": "Veuillez remplir tous les champs requis.",
+      "roleRequired": "Veuillez saisir votre rôle dans l’entreprise.",
+      "passwordsNoMatch": "Les mots de passe ne correspondent pas.",
+      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères.",
+      "generic": "Une erreur est survenue pendant l’inscription.",
+      "emailAlreadyInUse": "Un compte avec cette adresse courriel existe déjà. Veuillez plutôt vous connecter.",
+      "invalidEmail": "Adresse courriel invalide.",
+      "weakPassword": "Le mot de passe est trop faible. Veuillez choisir un mot de passe plus solide."
+    },
+    "alreadyMemberPrefix": "Déjà membre ?",
+    "loginLinkText": "Connexion"
+  },
+  "storefrontCreateListing": {
+    "backToIndustrialStorefront": "Retour à la vitrine industrielle",
+    "title": "Créer une annonce",
+    "description": "Publiez de l’équipement, des matériaux, des pièces excédentaires ou des capacités de production.",
+    "itemNameLabel": "Nom de l’élément",
+    "itemNamePlaceholder": "par ex. Mill CNC Haas d’occasion ou feuille d’aluminium excédentaire",
+    "listingTypeLabel": "Type d’annonce",
+    "selectTypePlaceholder": "Sélectionner le type...",
+    "listingTypes": {
+      "equipmentMachinery": "Équipement / Machines",
+      "rawMaterials": "Matières premières",
+      "surplusParts": "Pièces excédentaires",
+      "extraSpace": "Espace supplémentaire"
+    },
+    "priceLabel": "Prix ($ CA)",
+    "pricePlaceholder": "0,00",
+    "cityLabel": "Ville",
+    "cityPlaceholder": "par ex. Toronto",
+    "provinceLabel": "Province",
+    "selectProvincePlaceholder": "Sélectionner la province...",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Fournissez des détails sur l’article, les spécifications techniques, l’âge et la raison de la vente...",
+    "postListingButton": "Publier l’annonce",
+    "alerts": {
+      "loginRequired": "Veuillez vous connecter pour créer une annonce",
+      "failedToCreate": "Échec de la création de l’annonce",
+      "failedToCreateTryAgain": "Échec de la création de l’annonce. Veuillez réessayer."
     }
   },
   "marketplace": {

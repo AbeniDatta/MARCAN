@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 type FilterOption = 'new-to-old' | 'old-to-new' | 'price-high-low' | 'price-low-high' | 'category';
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
@@ -27,6 +28,7 @@ const PROVINCE_NAME_BY_CODE = new Map(CANADIAN_PROVINCES.map((p) => [p.code, p.n
 
 export default function WishlistPage() {
   const { isAuthenticated, isMounted, user } = useAuth();
+  const { t, lang } = useI18n();
   const [isSupplier, setIsSupplier] = useState(false);
   const isBuyer = !isSupplier;
   const [filter, setFilter] = useState<FilterOption>('new-to-old');
@@ -111,10 +113,19 @@ export default function WishlistPage() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes} ${minutes === 1 ? 'min' : 'mins'} ago`;
-    if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-    return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+    if (minutes < 1) return t('wishlist.time.justNow');
+    if (minutes < 60) {
+      const unit = minutes === 1 ? t('wishlist.time.minute') : t('wishlist.time.minutes');
+      return lang === 'fr' ? `Il y a ${minutes} ${unit}` : `${minutes} ${unit} ago`;
+    }
+    if (hours < 24) {
+      const unit = hours === 1 ? t('wishlist.time.hour') : t('wishlist.time.hours');
+      return lang === 'fr' ? `Il y a ${hours} ${unit}` : `${hours} ${unit} ago`;
+    }
+    {
+      const unit = days === 1 ? t('wishlist.time.day') : t('wishlist.time.days');
+      return lang === 'fr' ? `Il y a ${days} ${unit}` : `${days} ${unit} ago`;
+    }
   };
 
   // Filter and sort requests (with storefront-style filters)
@@ -199,7 +210,7 @@ export default function WishlistPage() {
         {/* Backdrop */}
         <button
           type="button"
-          aria-label="Close"
+              aria-label={t('wishlist.closeRequestDetailsAria')}
           onClick={() => setViewingRequest(null)}
           className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
         />
@@ -215,7 +226,7 @@ export default function WishlistPage() {
                 </span>
               )}
               <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
-                {viewingRequest.title || 'Sourcing Request'}
+                {viewingRequest.title || t('wishlist.sourcingRequestFallback')}
               </h3>
             </div>
             <button
@@ -237,7 +248,7 @@ export default function WishlistPage() {
                 {viewingRequest.description && (
                   <div>
                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <i className="fa-solid fa-align-left text-marcan-red"></i> Request Description
+                      <i className="fa-solid fa-align-left text-marcan-red"></i> {t('wishlist.requestDescription')}
                     </h4>
                     <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
                       <p className="mb-4 whitespace-pre-wrap">{viewingRequest.description}</p>
@@ -248,28 +259,28 @@ export default function WishlistPage() {
                 {/* Specs */}
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <i className="fa-solid fa-list-check text-marcan-red"></i> Sourcing Requirements
+                    <i className="fa-solid fa-list-check text-marcan-red"></i> {t('wishlist.sourcingRequirements')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Quantity</span>
-                      <span className="text-sm font-semibold text-white">{viewingRequest.quantity || 'N/A'}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetQuantity')}</span>
+                      <span className="text-sm font-semibold text-white">{viewingRequest.quantity || t('wishlist.notAvailable')}</span>
                     </div>
                     <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Location</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetLocation')}</span>
                       <span className="text-sm font-semibold text-white">
                         {(viewingRequest.location && String(viewingRequest.location).trim()) ||
-                          [viewingRequest.city, viewingRequest.province].filter(Boolean).join(', ') || 'N/A'}
+                          [viewingRequest.city, viewingRequest.province].filter(Boolean).join(', ') || t('wishlist.notAvailable')}
                       </span>
                     </div>
                     <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Target Price</span>
-                      <span className="text-sm font-semibold text-white">{viewingRequest.targetPrice || 'None Specified'}</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetPrice')}</span>
+                      <span className="text-sm font-semibold text-white">{viewingRequest.targetPrice || t('wishlist.noneSpecified')}</span>
                     </div>
                     <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Deadline</span>
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.deadline')}</span>
                       <span className="text-sm font-semibold text-white">
-                        {viewingRequest.deadline ? new Date(viewingRequest.deadline).toLocaleDateString() : 'ASAP'}
+                        {viewingRequest.deadline ? new Date(viewingRequest.deadline).toLocaleDateString() : t('wishlist.asap')}
                       </span>
                     </div>
                   </div>
@@ -282,35 +293,37 @@ export default function WishlistPage() {
               <div className="space-y-6">
                 <div className="glass-card p-6 rounded-2xl border border-marcan-red/20 bg-gradient-to-b from-marcan-red/5 to-transparent shadow-[0_0_30px_rgba(239,68,68,0.05)]">
                   <div className="text-[10px] font-bold text-marcan-red uppercase tracking-widest mb-4 text-center">
-                    Interested in this RFQ?
+                    {t('wishlist.interestedInRfq')}
                   </div>
                   <button
                     type="button"
                     className="w-full py-4 rounded-xl bg-marcan-red text-white text-sm font-bold uppercase tracking-wider hover:shadow-neon hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
                   >
-                    <i className="fa-solid fa-envelope"></i> Email Buyer
+                    <i className="fa-solid fa-envelope"></i> {t('wishlist.emailBuyer')}
                   </button>
                 </div>
 
                 <div className="glass-card p-6 rounded-2xl border border-white/5">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Posted By</h4>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">{t('wishlist.postedBy')}</h4>
                   <div className="flex items-center gap-4 mb-5">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center font-heading font-black text-white text-xl border border-white/10 shadow-inner">
                       {(viewingRequest.initials || 'U').substring(0, 2)}
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-white mb-1">{viewingRequest.company || 'Anonymous Buyer'}</div>
-                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">Posted {viewingRequest.time || 'recently'}</div>
+                      <div className="text-sm font-bold text-white mb-1">{viewingRequest.company || t('wishlist.companyFallback')}</div>
+                      <div className="text-[10px] text-slate-500 uppercase tracking-wider">
+                        {t('wishlist.posted')} {viewingRequest.time || t('wishlist.recentlyPosted')}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Industry Category box below Posted By */}
                 <div className="glass-card p-6 rounded-2xl border border-white/5">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Industry Category</h4>
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{t('wishlist.industryCategory')}</h4>
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[11px] font-bold uppercase tracking-wider text-slate-300">
                     <i className="fa-solid fa-tags text-slate-400"></i>
-                    {viewingRequest.category || 'N/A'}
+                    {viewingRequest.category || t('wishlist.notAvailable')}
                   </div>
                 </div>
               </div>
@@ -330,8 +343,8 @@ export default function WishlistPage() {
       <div className="flex-1 overflow-y-auto p-8 relative">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Explore</div>
-            <h2 className="font-heading text-3xl font-bold text-white uppercase">Sourcing Requests</h2>
+            <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">{t('wishlist.explore')}</div>
+            <h2 className="font-heading text-3xl font-bold text-white uppercase">{t('wishlist.title')}</h2>
           </div>
           <div className="flex flex-col items-end gap-2">
             {isMounted && isAuthenticated ? (
@@ -339,7 +352,7 @@ export default function WishlistPage() {
                 href="/post-request"
                 className="bg-marcan-red text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
               >
-                <i className="fa-solid fa-plus mr-2"></i> Post Request
+                <i className="fa-solid fa-plus mr-2"></i> {t('wishlist.postRequest')}
               </Link>
             ) : (
               <>
@@ -347,11 +360,19 @@ export default function WishlistPage() {
                   disabled
                   className="bg-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
                 >
-                  <i className="fa-solid fa-plus mr-2"></i> Post Request
+                  <i className="fa-solid fa-plus mr-2"></i> {t('wishlist.postRequest')}
                 </button>
                 {isMounted && (
                   <p className="text-xs text-slate-500 text-right max-w-[200px]">
-                    Please <Link href="/login" className="text-marcan-red hover:text-marcan-red/80 underline">log in</Link> or <Link href="/signup" className="text-marcan-red hover:text-marcan-red/80 underline">sign up</Link> to post a request
+                    {t('wishlist.loginPrompt.prefix')}{' '}
+                    <Link href="/login" className="text-marcan-red hover:text-marcan-red/80 underline">
+                      {t('wishlist.loginPrompt.login')}
+                    </Link>{' '}
+                    {t('wishlist.loginPrompt.or')}{' '}
+                    <Link href="/signup" className="text-marcan-red hover:text-marcan-red/80 underline">
+                      {t('wishlist.loginPrompt.signUp')}
+                    </Link>{' '}
+                    {t('wishlist.loginPrompt.suffix')}
                   </p>
                 )}
               </>
@@ -367,7 +388,7 @@ export default function WishlistPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search requests by title, category, or details..."
+              placeholder={t('wishlist.searchPlaceholder')}
               className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-marcan-red outline-none transition-all placeholder:text-slate-500"
             />
           </div>
@@ -377,7 +398,7 @@ export default function WishlistPage() {
               onChange={(e) => setSelectedIndustry(e.target.value)}
               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
             >
-              <option value="">All Industries</option>
+              <option value="">{t('wishlist.allIndustries')}</option>
               {INDUSTRY_HUBS.map((hub) => (
                 <option key={hub} value={hub}>
                   {hub}
@@ -389,7 +410,7 @@ export default function WishlistPage() {
               onChange={(e) => setSelectedProvince(e.target.value)}
               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
             >
-              <option value="">All Provinces</option>
+              <option value="">{t('wishlist.allProvinces')}</option>
               {CANADIAN_PROVINCES.map((province) => (
                 <option key={province.code} value={province.code}>
                   {province.name}
@@ -401,11 +422,11 @@ export default function WishlistPage() {
               onChange={(e) => setFilter(e.target.value as FilterOption)}
               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
             >
-              <option value="new-to-old">Newest first</option>
-              <option value="old-to-new">Oldest first</option>
-              <option value="price-high-low">Price: High to Low</option>
-              <option value="price-low-high">Price: Low to High</option>
-              <option value="category">By Category</option>
+              <option value="new-to-old">{t('wishlist.sort.newestFirst')}</option>
+              <option value="old-to-new">{t('wishlist.sort.oldestFirst')}</option>
+              <option value="price-high-low">{t('wishlist.sort.priceHighToLow')}</option>
+              <option value="price-low-high">{t('wishlist.sort.priceLowToHigh')}</option>
+              <option value="category">{t('wishlist.sort.byCategory')}</option>
             </select>
           </div>
           {(searchQuery || selectedIndustry || selectedProvince) && (
@@ -417,21 +438,22 @@ export default function WishlistPage() {
               }}
               className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
             >
-              Clear
+              {t('wishlist.clear')}
             </button>
           )}
           </div>
 
         {/* Results Count */}
         <div className="mb-4 text-sm text-slate-400">
-          Showing <span className="text-white font-bold">{filteredRequests.length}</span> of{' '}
-          <span className="text-white font-bold">{requests.length}</span> requests
+          {t('wishlist.resultsCount')
+            .replace('{count}', String(filteredRequests.length))
+            .replace('{total}', String(requests.length))}
         </div>
 
         {filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-            <p className="text-slate-400 text-sm">No sourcing requests available yet.</p>
+            <p className="text-slate-400 text-sm">{t('wishlist.empty.noRequests')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -454,15 +476,16 @@ export default function WishlistPage() {
                     <div className="flex flex-wrap justify-between items-start gap-4 mb-2">
                     <div>
                         <h3 className="text-white font-bold text-lg mb-1 group-hover:text-marcan-red transition-colors">
-                          {request.title || request.company || 'Sourcing Request'}
+                          {request.title || request.company || t('wishlist.sourcingRequestFallback')}
                         </h3>
                         <div className="text-xs text-slate-500 font-medium">
                           {request.company ? (
                             <>
-                              by <span className="text-slate-300">{request.company}</span> • {request.time || 'Recently posted'}
+                              {t('wishlist.by')}{' '}
+                              <span className="text-slate-300">{request.company}</span> • {request.time || t('wishlist.recentlyPosted')}
                             </>
                           ) : (
-                            <>{request.time || 'Recently posted'}</>
+                            <>{request.time || t('wishlist.recentlyPosted')}</>
                           )}
                         </div>
                       </div>
@@ -485,7 +508,7 @@ export default function WishlistPage() {
                           <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red">
                             <i className="fa-solid fa-cubes"></i>
                   </div>
-                      Quantity: {request.quantity}
+                      {t('wishlist.quantityLabel')} {request.quantity}
                     </div>
                   )}
                       {(request.location || request.city || request.province) && (
@@ -506,7 +529,7 @@ export default function WishlistPage() {
                       onClick={() => setViewingRequest(request)}
                       className="bg-marcan-red text-white px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:shadow-neon transition-all flex items-center gap-2 border border-marcan-red"
                     >
-                      View Details <i className="fa-solid fa-arrow-right"></i>
+                      {t('wishlist.viewDetails')} <i className="fa-solid fa-arrow-right"></i>
                   </button>
                   </div>
                 </div>

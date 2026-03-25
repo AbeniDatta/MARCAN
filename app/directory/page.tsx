@@ -4,6 +4,7 @@ import { Suspense, useRef, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
@@ -65,6 +66,7 @@ const CERTIFICATIONS = [
 function DirectoryPageContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const hasRestoredScrollRef = useRef(false);
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
@@ -277,8 +279,8 @@ function DirectoryPageContent() {
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-8 relative">
         <div className="mb-6">
-          <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">Explore</div>
-          <h2 className="font-heading text-3xl font-bold text-white uppercase mb-6">Company Directory</h2>
+          <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">{t('directory.explore')}</div>
+          <h2 className="font-heading text-3xl font-bold text-white uppercase mb-6">{t('directory.title')}</h2>
 
           {/* Horizontal Filter Bar */}
           <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
@@ -287,7 +289,7 @@ function DirectoryPageContent() {
               <div className="flex-1 min-w-[200px] relative">
                 <input
                   type="text"
-                  placeholder="Find manufacturers, equipment, or sourcing opportunities..."
+                  placeholder={t('directory.searchPlaceholder')}
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 pl-10 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-marcan-red focus:shadow-neon outline-none transition-all"
@@ -301,7 +303,7 @@ function DirectoryPageContent() {
                 </div>
                 {filters.search.trim().length >= 2 && aiSearchResults.length > 0 && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <span className="text-xs text-marcan-red font-bold">AI</span>
+                    <span className="text-xs text-marcan-red font-bold">{t('directory.aiLabel')}</span>
                   </div>
                 )}
               </div>
@@ -313,7 +315,7 @@ function DirectoryPageContent() {
                   onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                 >
-                  <option value="">All Industries</option>
+                  <option value="">{t('directory.allIndustries')}</option>
                   {INDUSTRY_HUBS.map((hub) => (
                     <option key={hub} value={hub}>
                       {hub}
@@ -329,7 +331,7 @@ function DirectoryPageContent() {
                   onChange={(e) => setFilters({ ...filters, province: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                 >
-                  <option value="">All Provinces</option>
+                  <option value="">{t('directory.allProvinces')}</option>
                   {CANADIAN_PROVINCES.map((province) => (
                     <option key={province.code} value={province.code}>
                       {province.name}
@@ -345,7 +347,7 @@ function DirectoryPageContent() {
                   onChange={(e) => setFilters({ ...filters, certification: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                 >
-                  <option value="">All Certifications</option>
+                  <option value="">{t('directory.allCertifications')}</option>
                   {CERTIFICATIONS.map((cert) => (
                     <option key={cert.code} value={cert.code}>
                       {cert.label}
@@ -360,7 +362,7 @@ function DirectoryPageContent() {
                   onClick={() => setFilters({ search: '', industry: '', province: '', certification: '' })}
                   className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                 >
-                  Clear
+                  {t('directory.clear')}
                 </button>
               )}
             </div>
@@ -371,14 +373,18 @@ function DirectoryPageContent() {
         <div className="mb-4 text-sm text-slate-400">
           {filters.search.trim().length >= 2 && aiSearchResults.length > 0 ? (
             <>
-              Showing <span className="text-white font-bold">{filteredCompanies.length}</span> AI-matched results
+              {t('directory.results.aiMatched').replace('{count}', String(filteredCompanies.length))}
               {filteredCompanies.length < aiSearchResults.length && (
-                <span className="ml-2 text-xs">(filtered from {aiSearchResults.length} matches)</span>
+                <span className="ml-2 text-xs">
+                  {t('directory.results.filteredFrom').replace('{total}', String(aiSearchResults.length))}
+                </span>
               )}
             </>
           ) : (
             <>
-              Showing <span className="text-white font-bold">{filteredCompanies.length}</span> of <span className="text-white font-bold">{allCompanies.length}</span> companies
+              {t('directory.results.ofAllCompanies')
+                .replace('{count}', String(filteredCompanies.length))
+                .replace('{total}', String(allCompanies.length))}
             </>
           )}
         </div>
@@ -386,17 +392,17 @@ function DirectoryPageContent() {
         {companies.length === 0 ? (
           <div className="text-center py-12">
             <i className="fa-solid fa-building text-4xl text-slate-600 mb-4"></i>
-            <p className="text-slate-400 text-sm">No companies available yet.</p>
+            <p className="text-slate-400 text-sm">{t('directory.empty.noCompanies')}</p>
           </div>
         ) : filteredCompanies.length === 0 ? (
           <div className="text-center py-12">
             <i className="fa-solid fa-filter text-4xl text-slate-600 mb-4"></i>
-            <p className="text-slate-400 text-sm">No companies match your filters.</p>
+            <p className="text-slate-400 text-sm">{t('directory.empty.noMatches')}</p>
             <button
               onClick={() => setFilters({ search: '', industry: '', province: '', certification: '' })}
               className="mt-4 px-4 py-2 rounded-lg bg-marcan-red text-white text-xs font-bold uppercase tracking-wider hover:shadow-neon transition-all"
             >
-              Clear Filters
+              {t('directory.empty.clearFilters')}
             </button>
           </div>
         ) : (
@@ -464,7 +470,7 @@ function DirectoryPageContent() {
                       }}
                       className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
                     >
-                      View Profile
+                      {t('directory.viewProfile')}
                     </Link>
                   </div>
                 );

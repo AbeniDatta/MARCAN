@@ -208,7 +208,7 @@ export default function HomePage() {
                 <span className="text-slate-300 text-xs font-bold uppercase tracking-widest">How Marcan Works</span>
               </div>
               */}
-              <h4 className="font-heading font-black text-2xl text-white mb-6">How Marcan Works</h4>
+              <h4 className="font-heading font-black text-2xl text-white mb-6">{t('home.howMarcanWorks.title')}</h4>
 
               {/* Ecosystem Timeline/Node Flow */}
               <div className="relative mt-2 space-y-7">
@@ -218,9 +218,9 @@ export default function HomePage() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">1. Instant Onboarding</div>
+                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node1.title')}</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers and storefront accounts set up in seconds. Suppliers can auto-generate a full profile using our 2-minute AI website importer.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node1.body')}</div>
                   </div>
                 </div>
 
@@ -229,9 +229,9 @@ export default function HomePage() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">2. Request or List</div>
+                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node2.title')}</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Buyers post targeted RFQs to the network. Suppliers and storefront accounts list surplus materials, equipment, or available capacity.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node2.body')}</div>
                   </div>
                 </div>
 
@@ -240,9 +240,9 @@ export default function HomePage() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
                       <i className="fa-solid fa-handshake-simple text-marcan-red text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">3. Match & Collaborate</div>
+                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node3.title')}</div>
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">Access direct contact details to make connections. Negotiate your own terms and build long-lasting business-to-business relationships.</div>
+                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node3.body')}</div>
                   </div>
                 </div>
 
@@ -267,11 +267,9 @@ export default function HomePage() {
                   <i className="fa-solid fa-microchip text-2xl"></i>
                 </div>
                 <h4 className="font-heading font-bold text-lg text-white mb-2">Precision Machining</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  CNC milling, turning, and EDM. High tolerance capabilities for aerospace & medical.
-                </p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.precisionMachiningDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
+                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -284,11 +282,9 @@ export default function HomePage() {
                   <i className="fa-solid fa-fire text-2xl"></i>
                 </div>
                 <h4 className="font-heading font-bold text-lg text-white mb-2">Foundries & Casting</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Sand casting, die casting, and investment casting. Iron, steel, and aluminum alloys.
-                </p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.foundriesCastingDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-orange-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
+                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -301,11 +297,9 @@ export default function HomePage() {
                   <i className="fa-solid fa-spray-can-sparkles text-2xl"></i>
                 </div>
                 <h4 className="font-heading font-bold text-lg text-white mb-2">Surface Finishing</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Anodizing, powder coating, plating, and heat treatment services.
-                </p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.surfaceFinishingDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-purple-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
+                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -318,11 +312,9 @@ export default function HomePage() {
                   <i className="fa-solid fa-screwdriver-wrench text-2xl"></i>
                 </div>
                 <h4 className="font-heading font-bold text-lg text-white mb-2">Tooling & Molds</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Injection molds, dies, and custom tooling solutions for mass production.
-                </p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.toolingMoldsDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-green-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
+                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
 
@@ -335,11 +327,9 @@ export default function HomePage() {
                   <i className="fa-solid fa-robot text-2xl"></i>
                 </div>
                 <h4 className="font-heading font-bold text-lg text-white mb-2">Automation</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  Robotics, PLC programming, and automated manufacturing systems for increased efficiency.
-                </p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.automationDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  Explore Industry <i className="fa-solid fa-arrow-right ml-2"></i>
+                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                 </div>
               </Link>
             </div>

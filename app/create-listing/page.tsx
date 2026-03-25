@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
@@ -25,6 +26,7 @@ const CANADIAN_PROVINCES = [
 export default function CreateListingPage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
+  const { t } = useI18n();
   const [isSupplier, setIsSupplier] = useState(false);
   const [isCheckingSupplier, setIsCheckingSupplier] = useState(true);
   const [formData, setFormData] = useState({
@@ -51,7 +53,7 @@ export default function CreateListingPage() {
     }
 
     if (!user?.email) {
-      alert('Please log in to create a listing');
+      alert(t('storefrontCreateListing.alerts.loginRequired'));
       router.push('/login');
       return;
     }
@@ -77,13 +79,13 @@ export default function CreateListingPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create listing');
+        throw new Error(error.error || t('storefrontCreateListing.alerts.failedToCreate'));
       }
 
       router.push('/shop');
     } catch (error: any) {
       console.error('Error creating listing:', error);
-      alert(error.message || 'Failed to create listing. Please try again.');
+    alert(error.message || t('storefrontCreateListing.alerts.failedToCreateTryAgain'));
     }
   };
 
@@ -149,22 +151,22 @@ export default function CreateListingPage() {
             href="/shop"
             className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
           >
-            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Industrial Storefront
+            <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> {t('storefrontCreateListing.backToIndustrialStorefront')}
           </Link>
 
           <div className="glass-card p-10 rounded-3xl border border-white/5">
             <div className="mb-8 border-b border-white/10 pb-6">
-              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Create Listing</h2>
-              <p className="text-xs text-slate-500">Post equipment, materials, surplus parts, or production capacity.</p>
+              <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">{t('storefrontCreateListing.title')}</h2>
+              <p className="text-xs text-slate-500">{t('storefrontCreateListing.description')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Info */}
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Item Name</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.itemNameLabel')}</label>
                 <input
                   type="text"
-                  placeholder="e.g. Used Haas CNC Mill or Surplus Aluminum Sheet"
+                  placeholder={t('storefrontCreateListing.itemNamePlaceholder')}
                   value={formData.itemName}
                   onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -174,29 +176,29 @@ export default function CreateListingPage() {
 
               <div className="grid grid-cols-1 gap-6">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Listing Type</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.listingTypeLabel')}</label>
                   <select
                     value={formData.listingType}
                     onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none"
                     required
                   >
-                    <option value="">Select Type...</option>
-                    <option value="Equipment / Machinery">Equipment / Machinery</option>
-                    <option value="Raw Materials">Raw Materials</option>
-                    <option value="Surplus Parts">Surplus Parts</option>
-                    <option value="Extra Space">Extra Space</option>
+                    <option value="">{t('storefrontCreateListing.selectTypePlaceholder')}</option>
+                    <option value="Equipment / Machinery">{t('storefrontCreateListing.listingTypes.equipmentMachinery')}</option>
+                    <option value="Raw Materials">{t('storefrontCreateListing.listingTypes.rawMaterials')}</option>
+                    <option value="Surplus Parts">{t('storefrontCreateListing.listingTypes.surplusParts')}</option>
+                    <option value="Extra Space">{t('storefrontCreateListing.listingTypes.extraSpace')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Price ($ CAD)</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.priceLabel')}</label>
                   <input
                     type="text"
                     inputMode="decimal"
-                    placeholder="0.00"
+                    placeholder={t('storefrontCreateListing.pricePlaceholder')}
                     value={formData.price}
                     onChange={(e) => {
                       const value = e.target.value.replace(/[^0-9.]/g, '');
@@ -209,10 +211,10 @@ export default function CreateListingPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">City</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.cityLabel')}</label>
                   <input
                     type="text"
-                    placeholder="e.g. Toronto"
+                    placeholder={t('storefrontCreateListing.cityPlaceholder')}
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -222,14 +224,14 @@ export default function CreateListingPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Province</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.provinceLabel')}</label>
                 <select
                   value={formData.province}
                   onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none"
                   required
                 >
-                  <option value="">Select Province...</option>
+                  <option value="">{t('storefrontCreateListing.selectProvincePlaceholder')}</option>
                   {CANADIAN_PROVINCES.map((province) => (
                     <option key={province.code} value={province.code}>
                       {province.name} ({province.code})
@@ -240,10 +242,10 @@ export default function CreateListingPage() {
 
               {/* Details */}
               <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Description</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block">{t('storefrontCreateListing.descriptionLabel')}</label>
                 <textarea
                   rows={5}
-                  placeholder="Provide details about the item, technical specs, age, and reason for selling..."
+                  placeholder={t('storefrontCreateListing.descriptionPlaceholder')}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
@@ -256,7 +258,7 @@ export default function CreateListingPage() {
                   type="submit"
                   className="bg-orange-500 text-white px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider hover:shadow-neon hover:scale-105 transition-all"
                 >
-                  Post Listing
+                  {t('storefrontCreateListing.postListingButton')}
                 </button>
               </div>
             </form>

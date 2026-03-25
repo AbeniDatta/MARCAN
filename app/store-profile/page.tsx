@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
     'Precision Machining': {
@@ -58,6 +59,7 @@ interface CompanyProfile {
 function StoreProfilePageContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get('id');
+    const { t } = useI18n();
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [userData, setUserData] = useState<any>(null);
 
@@ -87,9 +89,9 @@ function StoreProfilePageContent() {
                 <Header breadcrumb="Company Profile" />
                 <div className="flex-1 overflow-y-auto p-8 relative">
                     <div className="text-center py-12">
-                        <p className="text-slate-400">Company not found.</p>
+                        <p className="text-slate-400">{t('storefrontProfile.companyNotFound')}</p>
                         <Link href="/shop?tab=stores&restoreStores=1" className="text-marcan-red hover:text-white mt-4 inline-block">
-                            &lt;- Back to Stores
+                            {'<-'} {t('storefrontProfile.backToStores')}
                         </Link>
                     </div>
                 </div>
@@ -143,7 +145,7 @@ function StoreProfilePageContent() {
                     href="/shop?tab=stores&restoreStores=1"
                     className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                 >
-                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Stores
+                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> {t('storefrontProfile.backToStores')}
                 </Link>
 
                 <div className="glass-card rounded-3xl p-8 mb-8 relative overflow-hidden">
@@ -170,7 +172,7 @@ function StoreProfilePageContent() {
                             <div className="flex items-center gap-3 mb-2">
                                 <h1 className="font-heading text-3xl font-bold text-white">{displayName}</h1>
                                 <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1">
-                                    <i className="fa-solid fa-check-circle"></i> Verified Supplier
+                                    <i className="fa-solid fa-check-circle"></i> {t('storefrontProfile.verifiedSupplier')}
                                 </span>
                             </div>
                             <p className="text-slate-400 text-sm mb-4 flex items-center gap-4 flex-wrap">
@@ -211,7 +213,7 @@ function StoreProfilePageContent() {
                         {displayAboutUs && (
                             <div className="glass-card p-8 rounded-2xl border border-white/5">
                                 <h3 className="font-bold text-lg text-white mb-4 uppercase tracking-wide border-b border-white/5 pb-2">
-                                    About Us
+                                    {t('storefrontProfile.aboutUs')}
                                 </h3>
                                 <p className="text-slate-400 text-sm leading-relaxed">{displayAboutUs}</p>
                             </div>
@@ -220,7 +222,7 @@ function StoreProfilePageContent() {
                         {displayCapabilities.length > 0 && (
                             <div className="glass-card p-8 rounded-2xl border border-white/5">
                                 <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-2">
-                                    Core Capabilities
+                                    {t('storefrontProfile.coreCapabilities')}
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {displayCapabilities.map((capability: string, index: number) => (
@@ -239,7 +241,7 @@ function StoreProfilePageContent() {
                     <div className="space-y-6">
                         {(displayPhone || displayEmail || displayLocation) && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Contact Information</h3>
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">{t('storefrontProfile.contactInformation')}</h3>
                                 <div className="space-y-4">
                                     {displayPhone && (
                                         <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -271,7 +273,7 @@ function StoreProfilePageContent() {
 
                         {displayCertifications.length > 0 && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Certifications</h3>
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">{t('storefrontProfile.certifications')}</h3>
                                 <div className="space-y-3">
                                     {displayCertifications.map((cert: string, index: number) => (
                                         <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5">
@@ -287,7 +289,7 @@ function StoreProfilePageContent() {
 
                         {displayIndustries.length > 0 && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries Served</h3>
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">{t('storefrontProfile.industriesServed')}</h3>
                                 <div className="flex flex-wrap gap-3">
                                     {displayIndustries.map((industry: string) => {
                                         const map = INDUSTRY_LOGOS[industry];

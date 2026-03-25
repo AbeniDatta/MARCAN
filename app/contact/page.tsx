@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function ContactPage() {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
@@ -16,7 +18,7 @@ export default function ContactPage() {
     setStatus(null);
 
     if (!name.trim() || !email.trim() || !message.trim()) {
-      setStatus({ type: 'error', text: 'Please fill in your name, email, and message.' });
+      setStatus({ type: 'error', text: t('contact.status.missingFields') });
       return;
     }
 
@@ -35,14 +37,14 @@ export default function ContactPage() {
         throw new Error(data.error || 'Failed to send message. Please try again.');
       }
 
-      setStatus({ type: 'success', text: 'Message sent! We’ll get back to you shortly.' });
+      setStatus({ type: 'success', text: t('contact.status.success') });
       setName('');
       setEmail('');
       setSubject('');
       setMessage('');
     } catch (err: any) {
       console.error('Error sending contact message:', err);
-      setStatus({ type: 'error', text: err.message || 'Failed to send message. Please try again.' });
+      setStatus({ type: 'error', text: err.message || t('contact.status.genericError') });
     } finally {
       setIsSubmitting(false);
     }
@@ -57,18 +59,17 @@ export default function ContactPage() {
           <div className="text-center mb-8">
             <i className="fa-solid fa-paper-plane text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
             <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">
-              Get in Touch
+              {t('contact.title')}
             </h2>
             <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-              Have questions about joining the network? Need support with a trade? Our team is ready to help Canadian
-              manufacturers succeed.
+              {t('contact.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-stretch">
             {/* Contact Form */}
             <div className="glass-card p-8 rounded-2xl flex flex-col h-full">
-              <h3 className="font-bold text-xl text-white mb-4 uppercase text-center">Send us a message</h3>
+              <h3 className="font-bold text-xl text-white mb-4 uppercase text-center">{t('contact.sendMessage')}</h3>
               {status && (
                 <div
                   className={`mb-4 p-3 rounded-lg text-xs font-bold uppercase tracking-wider ${status.type === 'success'
@@ -83,14 +84,14 @@ export default function ContactPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Name"
+                    placeholder={t('contact.form.namePlaceholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                   />
                   <input
                     type="email"
-                    placeholder="Email"
+                    placeholder={t('contact.form.emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
@@ -98,13 +99,13 @@ export default function ContactPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Subject"
+                  placeholder={t('contact.form.subjectPlaceholder')}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                 />
                 <textarea
-                  placeholder="How can we help?"
+                  placeholder={t('contact.form.messagePlaceholder')}
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -115,7 +116,7 @@ export default function ContactPage() {
                   disabled={isSubmitting}
                   className="w-full bg-marcan-red text-white py-2 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon hover:scale-[1.02] transition-all duration-300 mt-auto disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {isSubmitting ? t('contact.status.sending') : t('contact.status.sendMessage')}
                 </button>
               </form>
             </div>
@@ -127,7 +128,7 @@ export default function ContactPage() {
                   <i className="fa-solid fa-location-dot"></i>
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase mb-2 text-sm">Headquarters</h4>
+                  <h4 className="text-white font-bold uppercase mb-2 text-sm">{t('contact.headquarters')}</h4>
                   <p className="text-slate-400 text-sm">
                     200 University Avenue West
                     <br />
@@ -143,7 +144,7 @@ export default function ContactPage() {
                   <i className="fa-solid fa-envelope"></i>
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase mb-2 text-sm">Email Us</h4>
+                  <h4 className="text-white font-bold uppercase mb-2 text-sm">{t('contact.emailUs')}</h4>
                   <p className="text-slate-400 text-sm">
                     marcan.initiative@gmail.com
                   </p>

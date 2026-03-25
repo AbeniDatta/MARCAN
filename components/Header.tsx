@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
     const { isAuthenticated, user, isMounted } = useAuth();
-    const { lang, setLang, t } = useI18n();
+    const { lang, setLang, t, translateText } = useI18n();
 
     return (
         <header className="h-20 px-8 flex justify-between items-center border-b border-white/5 bg-marcan-dark/30 backdrop-blur-sm z-30">
@@ -21,7 +21,7 @@ export default function Header({ breadcrumb = 'Overview' }: HeaderProps) {
                 </Link>
                 <span className="text-slate-600 text-lg">/</span>
                 <span className="text-slate-400 text-sm font-medium">
-                    {breadcrumb === 'Home' ? t('header.breadcrumbHome') : breadcrumb}
+                    {translateText(breadcrumb)}
                 </span>
             </div>
 

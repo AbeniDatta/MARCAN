@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 type ShopListingCard = {
     // listing identifiers
@@ -89,6 +90,7 @@ const CERTIFICATIONS = [
 function ShopPageContent() {
     const searchParams = useSearchParams();
     const { isAuthenticated, user, isMounted } = useAuth();
+    const { t } = useI18n();
     // Backward compatibility: existing accounts may still have legacy "seller" role.
     const hasSupplierRole = user?.role === 'supplier' || user?.role === 'seller';
 
@@ -469,10 +471,10 @@ function ShopPageContent() {
                     <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
                         <div className="flex items-center gap-3 min-w-0">
                             <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
-                                {selectedListing.listingType || 'Listing'}
+                                {selectedListing.listingType || t('storefront.modal.notSpecified')}
                             </span>
                             <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
-                                {selectedListing.title || 'Untitled listing'}
+                                {selectedListing.title || t('storefront.listingCard.untitledListing')}
                             </h3>
                         </div>
                         <button
@@ -490,31 +492,31 @@ function ShopPageContent() {
                             <div className="lg:col-span-2 space-y-8">
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <i className="fa-solid fa-align-left text-orange-400"></i> Description
+                                        <i className="fa-solid fa-align-left text-orange-400"></i> {t('storefront.modal.descriptionLabel')}
                                     </h4>
                                     <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
                                         <p>
-                                            {selectedListing.description || 'No description available for this listing.'}
+                                            {selectedListing.description || t('storefront.modal.descriptionFallback')}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <i className="fa-solid fa-list-check text-orange-400"></i> Listing Details
+                                        <i className="fa-solid fa-list-check text-orange-400"></i> {t('storefront.modal.listingDetailsLabel')}
                                     </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Type</span>
-                                            <span className="text-sm font-semibold text-white">{selectedListing.listingType || 'Not specified'}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('storefront.modal.type')}</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.listingType || t('storefront.modal.notSpecified')}</span>
                                         </div>
                                         <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</span>
-                                            <span className="text-sm font-semibold text-white">{selectedListing.price || 'Negotiable'}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('storefront.modal.price')}</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.price || t('storefront.listingCard.negotiable')}</span>
                                         </div>
                                         <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</span>
-                                            <span className="text-sm font-semibold text-white">{selectedListing.location || 'Not specified'}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('storefront.modal.location')}</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.location || t('storefront.modal.notSpecified')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -522,17 +524,20 @@ function ShopPageContent() {
 
                             <div className="space-y-6">
                                 <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
-                                    <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Asking Price</div>
+                                    <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">{t('storefront.modal.askingPrice')}</div>
                                     <div className="text-4xl font-black text-white tracking-tight mb-6">
-                                        {selectedListing.price || 'Negotiable'}
+                                        {selectedListing.price || t('storefront.listingCard.negotiable')}
                                     </div>
 
                                     {selectedListing.supplierEmail ? (
                                         <a
-                                            href={`mailto:${selectedListing.supplierEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (selectedListing.title || 'Listing'))}`}
+                                            href={`mailto:${selectedListing.supplierEmail}?subject=${encodeURIComponent(
+                                                t('storefront.modal.emailSubjectPrefix') +
+                                                (selectedListing.title || t('storefront.listingCard.untitledListing'))
+                                            )}`}
                                             className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mb-3"
                                         >
-                                            <i className="fa-solid fa-envelope"></i> Email Supplier
+                                            <i className="fa-solid fa-envelope"></i> {t('storefront.modal.emailSupplier')}
                                         </a>
                                     ) : (
                                         <button
@@ -540,14 +545,14 @@ function ShopPageContent() {
                                             disabled
                                             className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-slate-500 text-sm font-bold uppercase tracking-wider mb-3 cursor-not-allowed"
                                         >
-                                            Email Supplier
+                                            {t('storefront.modal.emailSupplier')}
                                         </button>
                                     )}
 
                                 </div>
 
                                 <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Listed By</h4>
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">{t('storefront.modal.listedBy')}</h4>
 
                                     <div className="flex items-center gap-4 mb-5">
                                         {selectedListing.supplierLogoUrl ? (
@@ -564,9 +569,9 @@ function ShopPageContent() {
                                             </div>
                                         )}
                                         <div>
-                                            <div className="text-sm font-bold text-white mb-1">{selectedListing.supplierName || 'Unknown company'}</div>
+                                            <div className="text-sm font-bold text-white mb-1">{selectedListing.supplierName || t('storefront.modal.unknownCompany')}</div>
                                             <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
-                                                <i className="fa-solid fa-circle-check"></i> Platform Member
+                                                <i className="fa-solid fa-circle-check"></i> {t('storefront.modal.platformMember')}
                                             </div>
                                         </div>
                                     </div>
@@ -575,7 +580,7 @@ function ShopPageContent() {
                                         href={`/profile?id=${encodeURIComponent(selectedListing.profileId)}`}
                                         className="w-full py-2.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/5 hover:text-white transition-all text-center block"
                                     >
-                                        View Full Profile
+                                        {t('storefront.modal.viewFullProfile')}
                                     </Link>
                                 </div>
                             </div>
@@ -596,9 +601,9 @@ function ShopPageContent() {
                     <div className="flex justify-between items-end mb-8">
                         <div>
                             <div className="text-orange-500 text-xs font-bold uppercase tracking-widest mb-1">
-                                Explore
+                                {t('storefront.explore')}
                             </div>
-                            <h2 className="font-heading text-3xl font-bold text-white uppercase">Industrial Storefront</h2>
+                            <h2 className="font-heading text-3xl font-bold text-white uppercase">{t('storefront.title')}</h2>
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
@@ -608,7 +613,7 @@ function ShopPageContent() {
                                         href="/create-listing"
                                         className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center"
                                     >
-                                        <i className="fa-solid fa-plus mr-2"></i> Create Listing
+                                        <i className="fa-solid fa-plus mr-2"></i> {t('storefront.createListing')}
                                     </Link>
                                 </div>
                             ) : isMounted ? (
@@ -616,7 +621,7 @@ function ShopPageContent() {
                                     href="/become-supplier?step=0"
                                     className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
                                 >
-                                    <i className="fa-solid fa-plus mr-2"></i> Create your industrial storefront profile
+                                    <i className="fa-solid fa-plus mr-2"></i> {t('storefront.createProfile')}
                                 </Link>
                             ) : null}
                         </div>
@@ -631,7 +636,7 @@ function ShopPageContent() {
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
-                            <i className="fa-solid fa-cubes"></i> Listings
+                            <i className="fa-solid fa-cubes"></i> {t('storefront.tabs.listings')}
                         </button>
                         <button
                             type="button"
@@ -641,7 +646,7 @@ function ShopPageContent() {
                                 : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
-                            <i className="fa-solid fa-industry"></i> Stores
+                            <i className="fa-solid fa-industry"></i> {t('storefront.tabs.stores')}
                         </button>
                     </div>
 
@@ -649,7 +654,7 @@ function ShopPageContent() {
                         shops.length === 0 ? (
                             <div className="text-center py-12">
                                 <i className="fa-solid fa-shop text-4xl text-slate-600 mb-4"></i>
-                                <p className="text-slate-400 text-sm">No industrial storefront postings available yet.</p>
+                                <p className="text-slate-400 text-sm">{t('storefront.noPostings')}</p>
                             </div>
                         ) : (
                             <>
@@ -660,7 +665,7 @@ function ShopPageContent() {
                                             type="text"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="Search for parts, materials, or capacity..."
+                                            placeholder={t('storefront.searchListingsPlaceholder')}
                                             className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all placeholder:text-slate-500"
                                         />
                                     </div>
@@ -670,17 +675,17 @@ function ShopPageContent() {
                                             onChange={(e) => setListingSort(e.target.value as any)}
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                         >
-                                            <option value="new-to-old">Newest first</option>
-                                            <option value="old-to-new">Oldest first</option>
-                                            <option value="price-high-low">Price: High to Low</option>
-                                            <option value="price-low-high">Price: Low to High</option>
+                                            <option value="new-to-old">{t('storefront.sort.newestFirst')}</option>
+                                            <option value="old-to-new">{t('storefront.sort.oldestFirst')}</option>
+                                            <option value="price-high-low">{t('storefront.sort.priceHighToLow')}</option>
+                                            <option value="price-low-high">{t('storefront.sort.priceLowToHigh')}</option>
                                         </select>
                                         <select
                                             value={selectedCategory}
                                             onChange={(e) => setSelectedCategory(e.target.value)}
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                         >
-                                            <option value="">All Categories</option>
+                                            <option value="">{t('storefront.allCategories')}</option>
                                             {listingCategories.map((category) => (
                                                 <option key={category} value={category}>
                                                     {category}
@@ -692,7 +697,7 @@ function ShopPageContent() {
                                             onChange={(e) => setSelectedProvince(e.target.value)}
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                         >
-                                            <option value="">All Provinces</option>
+                                            <option value="">{t('storefront.allProvinces')}</option>
                                             {CANADIAN_PROVINCES.map((prov) => (
                                                 <option key={prov.code} value={prov.code}>
                                                     {prov.name} ({prov.code})
@@ -704,14 +709,15 @@ function ShopPageContent() {
 
                                 {/* Results Count */}
                                 <div className="mb-4 text-sm text-slate-400">
-                                    Showing <span className="text-white font-bold">{filteredShops.length}</span> of{' '}
-                                    <span className="text-white font-bold">{shops.length}</span> listings
+                                    {t('storefront.resultsCountListings')
+                                        .replace('{count}', String(filteredShops.length))
+                                        .replace('{total}', String(shops.length))}
                                 </div>
 
                                 {filteredShops.length === 0 ? (
                                     <div className="text-center py-12">
                                         <i className="fa-solid fa-filter text-4xl text-slate-600 mb-4"></i>
-                                        <p className="text-slate-400 text-sm">No listings match your search or category.</p>
+                                        <p className="text-slate-400 text-sm">{t('storefront.noListingsMatch')}</p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -730,7 +736,7 @@ function ShopPageContent() {
                                                     ) : null}
 
                                                     <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
-                                                        {shop.title || 'Untitled listing'}
+                                                        {shop.title || t('storefront.listingCard.untitledListing')}
                                                     </h3>
                                                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
                                                         <i className="fa-solid fa-store text-orange-400 mr-1"></i>
@@ -738,16 +744,16 @@ function ShopPageContent() {
                                                     </p>
 
                                                     <p className="text-xs text-slate-400 line-clamp-1 mb-4">
-                                                        {shop.description || 'No description available.'}
+                                                        {shop.description || t('storefront.listingCard.noDescription')}
                                                     </p>
 
                                                     <div className="mt-auto flex items-end justify-between mb-4 gap-3">
                                                         <span className="text-xl font-black text-white truncate">
-                                                            {shop.price || 'Negotiable'}
+                                                            {shop.price || t('storefront.listingCard.negotiable')}
                                                         </span>
                                                         <span className="text-xs text-slate-400 shrink-0">
                                                             <i className="fa-solid fa-location-dot mr-1"></i>
-                                                            {shop.location || 'N/A'}
+                                                            {shop.location || t('storefront.listingCard.notAvailable')}
                                                         </span>
                                                     </div>
 
@@ -757,14 +763,17 @@ function ShopPageContent() {
                                                             onClick={() => setSelectedListing(shop)}
                                                             className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
                                                         >
-                                                            View Listing
+                                                            {t('storefront.viewListing')}
                                                         </button>
                                                         {shop.supplierEmail ? (
                                                             <a
-                                                                href={`mailto:${shop.supplierEmail}?subject=${encodeURIComponent('Industrial storefront inquiry: ' + (shop.title || 'Listing'))}`}
+                                                                href={`mailto:${shop.supplierEmail}?subject=${encodeURIComponent(
+                                                                    t('storefront.modal.emailSubjectPrefix') +
+                                                                    (shop.title || t('storefront.listingCard.untitledListing'))
+                                                                )}`}
                                                                 className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
                                                             >
-                                                                <i className="fa-solid fa-envelope"></i> Email Supplier
+                                                                <i className="fa-solid fa-envelope"></i> {t('storefront.modal.emailSupplier')}
                                                             </a>
                                                         ) : null}
                                                     </div>
@@ -779,7 +788,7 @@ function ShopPageContent() {
                         stores.length === 0 ? (
                             <div className="text-center py-12">
                                 <i className="fa-solid fa-building text-4xl text-slate-600 mb-4"></i>
-                                <p className="text-slate-400 text-sm">No stores available yet.</p>
+                                <p className="text-slate-400 text-sm">{t('storefront.noStores')}</p>
                             </div>
                         ) : (
                             <>
@@ -788,7 +797,7 @@ function ShopPageContent() {
                                         <div className="flex-1 min-w-[200px] relative">
                                             <input
                                                 type="text"
-                                                placeholder="Find manufacturers, equipment, or sourcing opportunities..."
+                                                placeholder={t('storefront.searchStoresPlaceholder')}
                                                 value={storeFilters.search}
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, search: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 pl-10 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-marcan-red focus:shadow-neon outline-none transition-all"
@@ -804,7 +813,7 @@ function ShopPageContent() {
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, industry: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                             >
-                                                <option value="">All Industries</option>
+                                                <option value="">{t('storefront.allIndustries')}</option>
                                                 {INDUSTRY_HUBS.map((hub) => (
                                                     <option key={hub} value={hub}>
                                                         {hub}
@@ -819,7 +828,7 @@ function ShopPageContent() {
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, province: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                             >
-                                                <option value="">All Provinces</option>
+                                                <option value="">{t('storefront.allProvinces')}</option>
                                                 {CANADIAN_PROVINCES.map((province) => (
                                                     <option key={province.code} value={province.code}>
                                                         {province.name}
@@ -834,7 +843,7 @@ function ShopPageContent() {
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, certification: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                                             >
-                                                <option value="">All Certifications</option>
+                                                <option value="">{t('storefront.allCertifications')}</option>
                                                 {CERTIFICATIONS.map((cert) => (
                                                     <option key={cert.code} value={cert.code}>
                                                         {cert.label}
@@ -848,25 +857,27 @@ function ShopPageContent() {
                                                 onClick={() => setStoreFilters({ search: '', industry: '', province: '', certification: '' })}
                                                 className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                                             >
-                                                Clear
+                                                {t('storefront.clear')}
                                             </button>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="mb-4 text-sm text-slate-400">
-                                    Showing <span className="text-white font-bold">{filteredStores.length}</span> of <span className="text-white font-bold">{stores.length}</span> stores
+                                    {t('storefront.resultsCountStores')
+                                        .replace('{count}', String(filteredStores.length))
+                                        .replace('{total}', String(stores.length))}
                                 </div>
 
                                 {filteredStores.length === 0 ? (
                                     <div className="text-center py-12">
                                         <i className="fa-solid fa-filter text-4xl text-slate-600 mb-4"></i>
-                                        <p className="text-slate-400 text-sm">No stores match your filters.</p>
+                                        <p className="text-slate-400 text-sm">{t('storefront.noStoresMatch')}</p>
                                         <button
                                             onClick={() => setStoreFilters({ search: '', industry: '', province: '', certification: '' })}
                                             className="mt-4 px-4 py-2 rounded-lg bg-marcan-red text-white text-xs font-bold uppercase tracking-wider hover:shadow-neon transition-all"
                                         >
-                                            Clear Filters
+                                            {t('storefront.clearFilters')}
                                         </button>
                                     </div>
                                 ) : (
@@ -904,7 +915,7 @@ function ShopPageContent() {
                                                                         const city = parts.length > 0 ? parts[0] : '';
                                                                         const provinceCode = String(store.province || (parts.length > 1 ? parts[parts.length - 1] : '')).toUpperCase();
                                                                         const code = provinceCode.length === 2 ? provinceCode : (provinceCode.slice(0, 2) || '');
-                                                                        return city && code ? `${city}, ${code}` : (raw || 'N/A');
+                                                                        return city && code ? `${city}, ${code}` : (raw || t('storefront.listingCard.notAvailable'));
                                                                     })()}
                                                                 </p>
                                                             </div>
@@ -913,7 +924,7 @@ function ShopPageContent() {
                                                         <div className="mt-auto flex flex-wrap gap-2">
                                                             {isStorefrontProfile ? (
                                                                 <span className="px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                                                                    Storefront
+                                                                    {t('storefront.storefrontTag')}
                                                                 </span>
                                                             ) : (
                                                                 (store.tags && store.tags.length > 0) ? (
@@ -938,7 +949,7 @@ function ShopPageContent() {
                                                                     }}
                                                                     className="text-[11px] font-bold uppercase tracking-wider text-slate-300 hover:text-white"
                                                                 >
-                                                                    view in company directory {'->'}
+                                                                    {t('storefront.viewInDirectory')} {'->'}
                                                                 </Link>
                                                             </div>
                                                         )}

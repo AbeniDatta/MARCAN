@@ -3,7 +3,17 @@
     "brand": "Marcan Platform",
     "breadcrumbHome": "Home",
     "login": "Login",
-    "myAccount": "My Account"
+    "myAccount": "My Account",
+    "breadcrumbSearch": "Search",
+    "breadcrumbCompanyProfile": "Company Profile",
+    "breadcrumbIndustrialStorefrontLogin": "Industrial Storefront Login",
+    "breadcrumbPostRequest": "Post Request",
+    "breadcrumbCreateListing": "Create Listing",
+    "breadcrumbSupport": "Support",
+    "breadcrumbBecomeBuyer": "Become a Buyer",
+    "breadcrumbMyPostsSourcingRequests": "My Posts / Sourcing Requests",
+    "breadcrumbMyPostsStorefrontListings": "My Posts / Storefront Listings",
+    "breadcrumbTermsOfService": "Terms of Service"
   },
   "sidebar": {
     "home": "Home",
@@ -28,6 +38,34 @@
       "joinNetwork": "Join Our Network"
     },
     "industriesTitle": "Industries",
+    "howMarcanWorks": {
+      "title": "How Marcan Works",
+      "node1": {
+        "title": "1. Instant Onboarding",
+        "body": "Buyers and storefront accounts set up in seconds. Suppliers can auto-generate a full profile using our 2-minute AI website importer."
+      },
+      "node2": {
+        "title": "2. Request or List",
+        "body": "Buyers post targeted RFQs to the network. Suppliers and storefront accounts list surplus materials, equipment, or available capacity."
+      },
+      "node3": {
+        "title": "3. Match & Collaborate",
+        "body": "Access direct contact details to make connections. Negotiate your own terms and build long-lasting business-to-business relationships."
+      }
+    },
+    "industries": {
+      "exploreIndustry": "Explore Industry",
+      "precisionMachining": "Precision Machining",
+      "foundriesCasting": "Foundries & Casting",
+      "surfaceFinishing": "Surface Finishing",
+      "toolingMolds": "Tooling & Molds",
+      "automation": "Automation",
+      "precisionMachiningDescription": "CNC milling, turning, and EDM. High tolerance capabilities for aerospace & medical.",
+      "foundriesCastingDescription": "Sand casting, die casting, and investment casting. Iron, steel, and aluminum alloys.",
+      "surfaceFinishingDescription": "Anodizing, powder coating, plating, and heat treatment services.",
+      "toolingMoldsDescription": "Injection molds, dies, and custom tooling solutions for mass production.",
+      "automationDescription": "Robotics, PLC programming, and automated manufacturing systems for increased efficiency."
+    },
     "marcanStandardTitle": "The Marcan Standard",
     "marcanStandard": {
       "aiSetupTitle": "AI-Powered 2-Minute Setup",
@@ -38,6 +76,294 @@
       "directContactBody": "No middlemen fees. Connect directly with manufacturers for quotes and lead times.",
       "freeTitle": "100% Free to Use",
       "freeBody": "No hidden fees, subscriptions, or paywalls. Access the network, source materials, and grow your business completely free."
+    }
+  },
+  "directory": {
+    "explore": "Explore",
+    "title": "Company Directory",
+    "searchPlaceholder": "Find manufacturers, equipment, or sourcing opportunities...",
+    "allIndustries": "All Industries",
+    "allProvinces": "All Provinces",
+    "allCertifications": "All Certifications",
+    "clear": "Clear",
+    "aiLabel": "AI",
+    "results": {
+      "aiMatched": "Showing {count} AI-matched results",
+      "filteredFrom": "(filtered from {total} matches)",
+      "ofAllCompanies": "Showing {count} of {total} companies"
+    },
+    "empty": {
+      "noCompanies": "No companies available yet.",
+      "noMatches": "No companies match your filters.",
+      "clearFilters": "Clear Filters"
+    },
+    "viewProfile": "View Profile"
+  },
+  "wishlist": {
+    "explore": "Explore",
+    "title": "Sourcing Requests",
+    "postRequest": "Post Request",
+    "searchPlaceholder": "Search requests by title, category, or details...",
+    "allIndustries": "All Industries",
+    "allProvinces": "All Provinces",
+    "sort": {
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "priceHighToLow": "Price: High to Low",
+      "priceLowToHigh": "Price: Low to High",
+      "byCategory": "By Category"
+    },
+    "clear": "Clear",
+    "resultsCount": "Showing {count} of {total} requests",
+    "empty": {
+      "noRequests": "No sourcing requests available yet."
+    },
+    "loginPrompt": {
+      "prefix": "Please",
+      "login": "log in",
+      "or": "or",
+      "signUp": "sign up",
+      "suffix": "to post a request"
+    },
+    "companyFallback": "Anonymous Buyer",
+    "recentlyPosted": "Recently posted",
+    "posted": "Posted",
+    "industryCategory": "Industry Category",
+    "quantityLabel": "Quantity:",
+    "by": "by",
+    "viewDetails": "View Details",
+    "sourcingRequestFallback": "Sourcing Request",
+    "requestDescription": "Request Description",
+    "sourcingRequirements": "Sourcing Requirements",
+    "targetQuantity": "Target Quantity",
+    "targetLocation": "Target Location",
+    "targetPrice": "Target Price",
+    "noneSpecified": "None Specified",
+    "deadline": "Deadline",
+    "asap": "ASAP",
+    "interestedInRfq": "Interested in this RFQ?",
+    "emailBuyer": "Email Buyer",
+    "postedBy": "Posted By",
+    "notAvailable": "N/A",
+    "closeRequestDetailsAria": "Close request details",
+    "time": {
+      "justNow": "Just now",
+      "minute": "minute",
+      "minutes": "minutes",
+      "hour": "hour",
+      "hours": "hours",
+      "day": "day",
+      "days": "days"
+    }
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "subtitle": "Have questions about joining the network? Need support with a trade? Our team is ready to help Canadian manufacturers succeed.",
+    "sendMessage": "Send us a message",
+    "form": {
+      "namePlaceholder": "Name",
+      "emailPlaceholder": "Email",
+      "subjectPlaceholder": "Subject",
+      "messagePlaceholder": "How can we help?"
+    },
+    "status": {
+      "missingFields": "Please fill in your name, email, and message.",
+      "success": "Message sent! We’ll get back to you shortly.",
+      "sending": "Sending...",
+      "sendMessage": "Send Message",
+      "genericError": "Failed to send message. Please try again."
+    },
+    "headquarters": "Headquarters",
+    "emailUs": "Email Us"
+  },
+  "storefront": {
+    "explore": "Explore",
+    "title": "Industrial Storefront",
+    "createListing": "Create Listing",
+    "createProfile": "Create your industrial storefront profile",
+    "tabs": {
+      "listings": "Listings",
+      "stores": "Stores"
+    },
+    "noPostings": "No industrial storefront postings available yet.",
+    "noListingsMatch": "No listings match your search or category.",
+    "noStores": "No stores available yet.",
+    "noStoresMatch": "No stores match your filters.",
+    "searchListingsPlaceholder": "Search for parts, materials, or capacity...",
+    "searchStoresPlaceholder": "Find manufacturers, equipment, or sourcing opportunities...",
+    "sort": {
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first",
+      "priceHighToLow": "Price: High to Low",
+      "priceLowToHigh": "Price: Low to High"
+    },
+    "allCategories": "All Categories",
+    "allProvinces": "All Provinces",
+    "allIndustries": "All Industries",
+    "allCertifications": "All Certifications",
+    "clear": "Clear",
+    "clearFilters": "Clear Filters",
+    "resultsCountListings": "Showing {count} of {total} listings",
+    "resultsCountStores": "Showing {count} of {total} stores",
+    "storefrontTag": "Storefront",
+    "viewInDirectory": "view in company directory",
+    "viewListing": "View Listing",
+    "listingCard": {
+      "untitledListing": "Untitled listing",
+      "noDescription": "No description available.",
+      "negotiable": "Negotiable",
+      "notAvailable": "N/A"
+    },
+    "modal": {
+      "type": "Type",
+      "price": "Price",
+      "location": "Location",
+      "descriptionLabel": "Description",
+      "listingDetailsLabel": "Listing Details",
+      "askingPrice": "Asking Price",
+      "listedBy": "Listed By",
+      "notSpecified": "Not specified",
+      "unknownCompany": "Unknown company",
+      "platformMember": "Platform Member",
+      "viewFullProfile": "View Full Profile",
+      "descriptionFallback": "No description available for this listing.",
+      "emailSupplier": "Email Supplier",
+      "emailSubjectPrefix": "Industrial storefront inquiry: "
+    }
+  },
+  "storefrontProfile": {
+    "companyNotFound": "Company not found.",
+    "backToStores": "Back to Stores",
+    "verifiedSupplier": "Verified Supplier",
+    "aboutUs": "About Us",
+    "coreCapabilities": "Core Capabilities",
+    "contactInformation": "Contact Information",
+    "certifications": "Certifications",
+    "industriesServed": "Industries Served"
+  },
+  "storefrontLogin": {
+    "title": "Sign in to Your Industrial Storefront Profile",
+    "credentialsLabel": "Credentials",
+    "emailPlaceholder": "WORK EMAIL",
+    "passwordPlaceholder": "PASSWORD",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot Password?",
+    "loginButton": "Sign in",
+    "loggingIn": "Logging in...",
+    "resetPasswordTitle": "Reset Password",
+    "resetPasswordBody": "Enter your email address and we'll send you a link to reset your password.",
+    "emailAddressPlaceholder": "Email Address",
+    "sendResetLink": "Send Reset Link",
+    "createProfilePromptPrefix": "Don't have an Industrial Storefront Profile?",
+    "createProfilePromptLink": "Create one now",
+    "errors": {
+      "invalidCredential": "Invalid email or password. Please check your credentials and try again.",
+      "userNotFound": "No account found with this email address.",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "invalidEmail": "Invalid email address.",
+      "userDisabled": "This account has been disabled.",
+      "tooManyRequests": "Too many failed login attempts. Please try again later.",
+      "networkRequestFailed": "Network error. Please check your internet connection.",
+      "generic": "An error occurred during login."
+    },
+    "forgotPasswordErrors": {
+      "failedToSend": "Failed to send password reset email.",
+      "userNotFound": "No account found with this email address.",
+      "invalidEmail": "Invalid email address.",
+      "generic": "Failed to send password reset email."
+    },
+    "forgotPasswordSentAlert": "Password reset email sent! Please check your inbox."
+  },
+  "signup": {
+    "title": "How do you want to use Marcan?",
+    "subtitle": "Choose the path that fits you best. You can always create another type of profile later.",
+    "joinBuyer": {
+      "title": "Join as a Buyer",
+      "desc1": "Post requirements and receive competitive quotes from vetted Canadian suppliers.",
+      "desc2": "Manage RFQs, track quotes, and connect directly with manufacturers - all in one place.",
+      "workEmailLabel": "Work Email",
+      "workEmailPlaceholder": "you@company.com",
+      "prefillText": "We'll pre-fill your account with this email on the next step.",
+      "errorEmailRequired": "Please enter your email to continue as a buyer."
+    },
+    "joinSupplier": {
+      "title": "Join as a Supplier",
+      "desc1": "Showcase your shop with an AI-powered 2-minute setup via your website URL.",
+      "desc2": "Paste your existing website and let Marcan's AI scraper build a comprehensive supplier profile for you.",
+      "websiteUrlLabel": "Website URL",
+      "websiteUrlPlaceholder": "https://www.yourcompany.com",
+      "manualFillTextPrefix": "Don't have a website or prefer to fill it out manually? ",
+      "manualFillTextLink": "Click here",
+      "alreadyMemberPrefix": "Already a member?",
+      "loginLinkText": "Login"
+    }
+  },
+  "buyerSignup": {
+    "changeOption": "Change Option",
+    "title": "Create Your Buyer Account",
+    "subtitle": "Create your procurement profile to start sourcing manufacturers.",
+    "labels": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "emailAddress": "Email Address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "companyOptional": "Company (Optional)",
+      "roleInCompany": "Role in Company *"
+    },
+    "placeholders": {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "emailAddress": "jane.doe@example.com",
+      "password": "Create Password",
+      "confirmPassword": "Confirm Password",
+      "companyOptional": "Organization you represent",
+      "roleInCompany": "e.g., Procurement Manager, Buyer, Director"
+    },
+    "actions": {
+      "createAccount": "Create Your Account",
+      "creatingAccount": "Creating Account..."
+    },
+    "errors": {
+      "missingFields": "Please fill in all required fields.",
+      "roleRequired": "Please enter your role in the company.",
+      "passwordsNoMatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 6 characters long.",
+      "generic": "An error occurred during signup.",
+      "emailAlreadyInUse": "An account with this email already exists. Please login instead.",
+      "invalidEmail": "Invalid email address.",
+      "weakPassword": "Password is too weak. Please choose a stronger password."
+    },
+    "alreadyMemberPrefix": "Already a member?",
+    "loginLinkText": "Login"
+  },
+  "storefrontCreateListing": {
+    "backToIndustrialStorefront": "Back to Industrial Storefront",
+    "title": "Create Listing",
+    "description": "Post equipment, materials, surplus parts, or production capacity.",
+    "itemNameLabel": "Item Name",
+    "itemNamePlaceholder": "e.g. Used Haas CNC Mill or Surplus Aluminum Sheet",
+    "listingTypeLabel": "Listing Type",
+    "selectTypePlaceholder": "Select Type...",
+    "listingTypes": {
+      "equipmentMachinery": "Equipment / Machinery",
+      "rawMaterials": "Raw Materials",
+      "surplusParts": "Surplus Parts",
+      "extraSpace": "Extra Space"
+    },
+    "priceLabel": "Price ($ CAD)",
+    "pricePlaceholder": "0.00",
+    "cityLabel": "City",
+    "cityPlaceholder": "e.g. Toronto",
+    "provinceLabel": "Province",
+    "selectProvincePlaceholder": "Select Province...",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Provide details about the item, technical specs, age, and reason for selling...",
+    "postListingButton": "Post Listing",
+    "alerts": {
+      "loginRequired": "Please log in to create a listing",
+      "failedToCreate": "Failed to create listing",
+      "failedToCreateTryAgain": "Failed to create listing. Please try again."
     }
   },
   "marketplace": {

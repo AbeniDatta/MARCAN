@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -12,6 +13,7 @@ function BuyerSignupPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { login } = useAuth();
+    const { t } = useI18n();
 
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -35,23 +37,23 @@ function BuyerSignupPageContent() {
         setError('');
 
         if (!buyerData.firstName || !buyerData.lastName || !buyerData.email || !buyerData.password) {
-            setError('Please fill in all required fields.');
+            setError(t('buyerSignup.errors.missingFields'));
             return;
         }
 
         // If company name is provided, job title is required
         if (buyerData.company.trim() && !buyerData.jobTitle.trim()) {
-            setError('Please enter your role in the company.');
+            setError(t('buyerSignup.errors.roleRequired'));
             return;
         }
 
         if (buyerData.password !== buyerData.confirmPassword) {
-            setError('Passwords do not match.');
+            setError(t('buyerSignup.errors.passwordsNoMatch'));
             return;
         }
 
         if (buyerData.password.length < 6) {
-            setError('Password must be at least 6 characters long.');
+            setError(t('buyerSignup.errors.passwordTooShort'));
             return;
         }
 
@@ -107,13 +109,13 @@ function BuyerSignupPageContent() {
             login(userData);
             router.push('/');
         } catch (err: any) {
-            let errorMessage = 'An error occurred during signup.';
+            let errorMessage = t('buyerSignup.errors.generic');
             if (err.code === 'auth/email-already-in-use') {
-                errorMessage = 'An account with this email already exists. Please login instead.';
+                errorMessage = t('buyerSignup.errors.emailAlreadyInUse');
             } else if (err.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address.';
+                errorMessage = t('buyerSignup.errors.invalidEmail');
             } else if (err.code === 'auth/weak-password') {
-                errorMessage = 'Password is too weak. Please choose a stronger password.';
+                errorMessage = t('buyerSignup.errors.weakPassword');
             } else if (err.message) {
                 errorMessage = err.message;
             }
@@ -148,15 +150,15 @@ function BuyerSignupPageContent() {
                                         className="text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
                                     >
                                         <i className="fa-solid fa-arrow-left"></i>
-                                        Change Option
+                                        {t('buyerSignup.changeOption')}
                                     </button>
                                 </div>
                                 <div className="text-center mt-4">
                                     <h2 className="font-heading text-2xl md:text-2xl font-black text-white uppercase tracking-widest mb-2">
-                                        Create Your Buyer Account
+                                        {t('buyerSignup.title')}
                                     </h2>
                                     <p className="text-xs md:text-xs text-slate-500">
-                                        Create your procurement profile to start sourcing manufacturers.
+                                        {t('buyerSignup.subtitle')}
                                     </p>
                                 </div>
                             </div>
@@ -164,10 +166,10 @@ function BuyerSignupPageContent() {
                             <form onSubmit={handleBuyerSubmit} className="space-y-4 max-w-2xl mx-auto">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">First Name</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.firstName')}</label>
                                         <input
                                             type="text"
-                                            placeholder="Jane"
+                                            placeholder={t('buyerSignup.placeholders.firstName')}
                                             value={buyerData.firstName}
                                             onChange={(e) => setBuyerData({ ...buyerData, firstName: e.target.value })}
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -175,10 +177,10 @@ function BuyerSignupPageContent() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Last Name</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.lastName')}</label>
                                         <input
                                             type="text"
-                                            placeholder="Doe"
+                                            placeholder={t('buyerSignup.placeholders.lastName')}
                                             value={buyerData.lastName}
                                             onChange={(e) => setBuyerData({ ...buyerData, lastName: e.target.value })}
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -188,10 +190,10 @@ function BuyerSignupPageContent() {
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Email Address</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.emailAddress')}</label>
                                     <input
                                         type="email"
-                                        placeholder="jane.doe@example.com"
+                                        placeholder={t('buyerSignup.placeholders.emailAddress')}
                                         value={buyerData.email}
                                         onChange={(e) => setBuyerData({ ...buyerData, email: e.target.value })}
                                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -201,11 +203,11 @@ function BuyerSignupPageContent() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Password</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.password')}</label>
                                         <div className="relative">
                                             <input
                                                 type={showPassword ? "text" : "password"}
-                                                placeholder="Create Password"
+                                                placeholder={t('buyerSignup.placeholders.password')}
                                                 value={buyerData.password}
                                                 onChange={(e) => setBuyerData({ ...buyerData, password: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -221,11 +223,11 @@ function BuyerSignupPageContent() {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Confirm Password</label>
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.confirmPassword')}</label>
                                         <div className="relative">
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
-                                                placeholder="Confirm Password"
+                                                placeholder={t('buyerSignup.placeholders.confirmPassword')}
                                                 value={buyerData.confirmPassword}
                                                 onChange={(e) => setBuyerData({ ...buyerData, confirmPassword: e.target.value })}
                                                 className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-10 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -245,10 +247,10 @@ function BuyerSignupPageContent() {
                                 <div className="pt-1 border-t border-white/5">
                                     <div className="grid grid-cols-2 gap-4 mb-1">
                                         <div className="col-span-2">
-                                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Company (Optional)</label>
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.companyOptional')}</label>
                                             <input
                                                 type="text"
-                                                placeholder="Organization you represent"
+                                                placeholder={t('buyerSignup.placeholders.companyOptional')}
                                                 value={buyerData.company}
                                                 onChange={(e) =>
                                                     setBuyerData({
@@ -262,12 +264,10 @@ function BuyerSignupPageContent() {
                                         </div>
                                         {buyerData.company.trim() && (
                                             <div className="col-span-2">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                                                    Role in Company *
-                                                </label>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('buyerSignup.labels.roleInCompany')}</label>
                                                 <input
                                                     type="text"
-                                                    placeholder="e.g., Procurement Manager, Buyer, Director"
+                                                    placeholder={t('buyerSignup.placeholders.roleInCompany')}
                                                     value={buyerData.jobTitle}
                                                     onChange={(e) => setBuyerData({ ...buyerData, jobTitle: e.target.value })}
                                                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-600 transition-all"
@@ -285,19 +285,19 @@ function BuyerSignupPageContent() {
                                 >
                                     {isLoading ? (
                                         <span>
-                                            <i className="fa-solid fa-spinner fa-spin mr-2"></i> Creating Account...
+                                            <i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('buyerSignup.actions.creatingAccount')}
                                         </span>
                                     ) : (
-                                        'Create Your Account'
+                                        t('buyerSignup.actions.createAccount')
                                     )}
                                 </button>
                             </form>
 
                             <div className="mt-3 text-center">
                                 <p className="text-xs text-slate-500">
-                                    Already a member?{' '}
+                                    {t('buyerSignup.alreadyMemberPrefix')}{' '}
                                     <Link href="/login" className="text-marcan-red font-bold hover:text-white transition-colors ml-1">
-                                        Login
+                                        {t('buyerSignup.loginLinkText')}
                                     </Link>
                                 </p>
                             </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -18,6 +19,7 @@ export default function ShopLoginPage() {
     const [resetEmail, setResetEmail] = useState('');
 
     const { login } = useAuth();
+    const { t } = useI18n();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -64,22 +66,22 @@ export default function ShopLoginPage() {
             login(userData);
             router.push('/shop');
         } catch (err: any) {
-            let errorMessage = 'An error occurred during login.';
+            let errorMessage = t('storefrontLogin.errors.generic');
 
             if (err.code === 'auth/invalid-credential') {
-                errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+                errorMessage = t('storefrontLogin.errors.invalidCredential');
             } else if (err.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email address.';
+                errorMessage = t('storefrontLogin.errors.userNotFound');
             } else if (err.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password. Please try again.';
+                errorMessage = t('storefrontLogin.errors.wrongPassword');
             } else if (err.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address.';
+                errorMessage = t('storefrontLogin.errors.invalidEmail');
             } else if (err.code === 'auth/user-disabled') {
-                errorMessage = 'This account has been disabled.';
+                errorMessage = t('storefrontLogin.errors.userDisabled');
             } else if (err.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many failed login attempts. Please try again later.';
+                errorMessage = t('storefrontLogin.errors.tooManyRequests');
             } else if (err.code === 'auth/network-request-failed') {
-                errorMessage = 'Network error. Please check your internet connection.';
+                errorMessage = t('storefrontLogin.errors.networkRequestFailed');
             } else if (err.message) {
                 errorMessage = err.message;
             }
@@ -98,16 +100,16 @@ export default function ShopLoginPage() {
 
         try {
             await sendPasswordResetEmail(auth, resetEmail);
-            alert('Password reset email sent! Please check your inbox.');
+            alert(t('storefrontLogin.forgotPasswordSentAlert'));
             setShowForgotPassword(false);
             setResetEmail('');
         } catch (err: any) {
-            let errorMessage = 'Failed to send password reset email.';
+            let errorMessage = t('storefrontLogin.forgotPasswordErrors.generic');
 
             if (err.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email address.';
+                errorMessage = t('storefrontLogin.forgotPasswordErrors.userNotFound');
             } else if (err.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address.';
+                errorMessage = t('storefrontLogin.forgotPasswordErrors.invalidEmail');
             } else if (err.message) {
                 errorMessage = err.message;
             }
@@ -131,7 +133,7 @@ export default function ShopLoginPage() {
 
                         <div className="text-center mb-8">
                             <h2 className="font-heading text-2xl font-black text-white uppercase tracking-widest mb-2">
-                                Sign in to Your Industrial Storefront Profile
+                                {t('storefrontLogin.title')}
                             </h2>
 
                         </div>
@@ -145,14 +147,14 @@ export default function ShopLoginPage() {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest ml-1">
-                                    Credentials
+                                    {t('storefrontLogin.credentialsLabel')}
                                 </label>
                                 <input
                                     type="email"
                                     id="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="WORK EMAIL"
+                                    placeholder={t('storefrontLogin.emailPlaceholder')}
                                     required
                                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500 mb-4"
                                 />
@@ -161,7 +163,7 @@ export default function ShopLoginPage() {
                                     id="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="PASSWORD"
+                                    placeholder={t('storefrontLogin.passwordPlaceholder')}
                                     required
                                     className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                                 />
@@ -175,14 +177,14 @@ export default function ShopLoginPage() {
                                         onChange={(e) => setRememberMe(e.target.checked)}
                                         className="rounded border-white/20 bg-black/40 text-marcan-red focus:ring-0"
                                     />
-                                    Remember me
+                                    {t('storefrontLogin.rememberMe')}
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => setShowForgotPassword(true)}
                                     className="hover:text-white transition-colors"
                                 >
-                                    Forgot Password?
+                                    {t('storefrontLogin.forgotPassword')}
                                 </button>
                             </div>
 
@@ -193,10 +195,10 @@ export default function ShopLoginPage() {
                             >
                                 {isLoading ? (
                                     <span>
-                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i> Logging in...
+                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('storefrontLogin.loggingIn')}
                                     </span>
                                 ) : (
-                                    'Sign in'
+                                    t('storefrontLogin.loginButton')
                                 )}
                             </button>
                         </form>
@@ -211,9 +213,9 @@ export default function ShopLoginPage() {
                                     >
                                         <i className="fa-solid fa-times text-xl"></i>
                                     </button>
-                                    <h3 className="font-heading text-xl font-bold text-white mb-4">Reset Password</h3>
+                                    <h3 className="font-heading text-xl font-bold text-white mb-4">{t('storefrontLogin.resetPasswordTitle')}</h3>
                                     <p className="text-sm text-slate-400 mb-6">
-                                        Enter your email address and we'll send you a link to reset your password.
+                                        {t('storefrontLogin.resetPasswordBody')}
                                     </p>
 
                                     <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -221,7 +223,7 @@ export default function ShopLoginPage() {
                                             type="email"
                                             value={resetEmail}
                                             onChange={(e) => setResetEmail(e.target.value)}
-                                            placeholder="Email Address"
+                                            placeholder={t('storefrontLogin.emailAddressPlaceholder')}
                                             required
                                             className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                                         />
@@ -230,7 +232,7 @@ export default function ShopLoginPage() {
                                             className="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon transition-all"
                                             disabled={isLoading}
                                         >
-                                            Send Reset Link
+                                            {t('storefrontLogin.sendResetLink')}
                                         </button>
                                     </form>
                                 </div>
@@ -238,12 +240,12 @@ export default function ShopLoginPage() {
                         )}
 
                         <div className="text-center mt-6 text-xs text-slate-500">
-                            Don't have an Industrial Storefront Profile?{' '}
+                            {t('storefrontLogin.createProfilePromptPrefix')}{' '}
                             <Link
                                 href="/become-supplier?step=0"
                                 className="text-orange-400 font-bold hover:text-orange-300"
                             >
-                                Create one now
+                                {t('storefrontLogin.createProfilePromptLink')}
                             </Link>
                         </div>
                     </div>
