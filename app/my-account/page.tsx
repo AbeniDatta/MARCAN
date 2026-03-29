@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
@@ -25,6 +26,7 @@ const CANADIAN_PROVINCES = [
 
 export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profile' | 'buyer-profile' | 'my-posts'>('profile');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -91,6 +93,7 @@ export default function MyAccountPage() {
   const [myWishlistRequests, setMyWishlistRequests] = useState<any[]>([]);
   const [mySupplierListings, setMySupplierListings] = useState<any[]>([]);
   const [viewingListing, setViewingListing] = useState<any | null>(null);
+  const [viewingRequest, setViewingRequest] = useState<any | null>(null);
   const [editingListing, setEditingListing] = useState<any | null>(null);
   const [listingFormData, setListingFormData] = useState({
     title: '',
@@ -710,6 +713,7 @@ export default function MyAccountPage() {
 
       // Update state by removing the deleted request
       setMyWishlistRequests((prev) => prev.filter((req) => req.id !== requestId));
+      setViewingRequest((v: any | null) => (v && v.id === requestId ? null : v));
 
       setSaveMessage({ type: 'success', text: 'Wishlist request deleted successfully!' });
       setTimeout(() => setSaveMessage(null), 3000);
@@ -721,6 +725,7 @@ export default function MyAccountPage() {
   };
 
   const handleStartEditRequest = (request: any) => {
+    setViewingRequest(null);
     setEditingRequest(request);
     setRequestFormData({
       title: request.title || '',
@@ -2347,49 +2352,68 @@ export default function MyAccountPage() {
                           </Link>
                         </div>
                       ) : (
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                           {myWishlistRequests.slice(0, 3).map((request) => (
                             <div
                               key={request.id}
-                              className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
+                              className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden relative"
                             >
-                              <div className="absolute top-3 right-3">
                               <button
-                                  onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
-                                  className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
+                                type="button"
+                                onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
+                                className="absolute top-3 right-3 z-20 w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
                                 title="Delete request"
                               >
                                 <i className="fa-solid fa-trash text-xs"></i>
                               </button>
-                              </div>
-                              <div className="flex justify-between items-start mb-2 pr-10">
-                                <div>
-                                  <h4 className="text-white font-bold text-sm uppercase">{request.title}</h4>
-                                  <div className="text-xs text-slate-500 mt-1">
-                                    {new Date(request.createdAt || request.timestamp).toLocaleDateString()}
+
+                              <div className="p-5 flex flex-col flex-grow">
+                                {request.category ? (
+                                  <div className="mb-3">
+                                    <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                      {request.category}
+                                    </span>
                                   </div>
+                                ) : null}
+
+                                <h3 className="font-heading font-bold text-white mb-1 line-clamp-1 pr-10">
+                                  {request.title || 'Untitled request'}
+                                </h3>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
+                                  <i className="fa-solid fa-building text-orange-400 mr-1"></i>
+                                  {request.companyName || request.company || formData.companyName || 'Your company'}
+                                </p>
+
+                                <p className="text-xs text-slate-400 line-clamp-1 mb-4">
+                                  {request.specifications || request.description || 'No description provided.'}
+                                </p>
+
+                                <div className="mt-auto flex items-end justify-between mb-4 gap-3">
+                                  <span className="text-xl font-black text-white truncate">
+                                    {request.targetPrice || t('wishlist.noneSpecified')}
+                                  </span>
+                                  <span className="text-xs text-slate-400 shrink-0">
+                                    <i className="fa-solid fa-location-dot mr-1"></i>
+                                    {request.location || 'N/A'}
+                                  </span>
                                 </div>
-                                <span className="px-2 py-1 rounded bg-white/5 text-slate-300 text-[10px] font-bold uppercase border border-white/10">
-                                  {request.category}
-                                </span>
-                              </div>
-                              <p className="text-slate-400 text-xs mb-2 leading-relaxed line-clamp-2">
-                                {request.specifications || request.description}
-                              </p>
-                              <div className="flex gap-4 text-xs text-slate-500">
-                                {request.quantity && <span>Qty: {request.quantity}</span>}
-                                {request.targetPrice && <span>Price: {request.targetPrice}</span>}
-                                {request.deadline && (
-                                  <span>Deadline: {new Date(request.deadline).toLocaleDateString()}</span>
-                                )}
-                              </div>
-                              <div className="mt-3 flex justify-end">
-                                <button
-                                  onClick={() => handleStartEditRequest(request)}
-                                  className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition"
-                                >
-                                  Edit Request
-                                </button>
+
+                                <div className="flex flex-col gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewingRequest(request)}
+                                    className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                  >
+                                    View Request
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditRequest(request)}
+                                    className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                  >
+                                    Edit Request
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -2749,6 +2773,133 @@ export default function MyAccountPage() {
                   document.body
                 )
               }
+
+              {isDomReady &&
+                viewingRequest &&
+                createPortal(
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <button
+                      type="button"
+                      className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
+                      onClick={() => setViewingRequest(null)}
+                      aria-label={t('wishlist.closeRequestDetailsAria')}
+                    />
+                    <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
+                      <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {viewingRequest.category ? (
+                            <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
+                              {viewingRequest.category}
+                            </span>
+                          ) : null}
+                          <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
+                            {viewingRequest.title || t('wishlist.sourcingRequestFallback')}
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setViewingRequest(null)}
+                          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
+                          aria-label={t('wishlist.closeRequestDetailsAria')}
+                        >
+                          <i className="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                      </div>
+
+                      <div className="p-6 md:p-8 space-y-8 relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                          <div className="lg:col-span-2 space-y-8">
+                            {viewingRequest.description || viewingRequest.specifications ? (
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                  <i className="fa-solid fa-align-left text-orange-400"></i> {t('wishlist.requestDescription')}
+                                </h4>
+                                <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                  <p>{viewingRequest.description || viewingRequest.specifications}</p>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <i className="fa-solid fa-list-check text-orange-400"></i> {t('wishlist.sourcingRequirements')}
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                                    {t('wishlist.targetQuantity')}
+                                  </span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {viewingRequest.quantity || t('wishlist.notAvailable')}
+                                  </span>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                                    {t('wishlist.targetLocation')}
+                                  </span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {viewingRequest.location || t('wishlist.notAvailable')}
+                                  </span>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                                    {t('wishlist.targetPrice')}
+                                  </span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {viewingRequest.targetPrice || t('wishlist.noneSpecified')}
+                                  </span>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                                    {t('wishlist.deadline')}
+                                  </span>
+                                  <span className="text-sm font-semibold text-white">
+                                    {viewingRequest.deadline
+                                      ? new Date(viewingRequest.deadline).toLocaleDateString()
+                                      : t('wishlist.asap')}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-6">
+                            <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
+                              <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">
+                                {t('wishlist.targetPrice')}
+                              </div>
+                              <div className="text-4xl font-black text-white tracking-tight mb-6">
+                                {viewingRequest.targetPrice || t('wishlist.noneSpecified')}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleStartEditRequest(viewingRequest);
+                                }}
+                                className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                              >
+                                <i className="fa-solid fa-pen"></i> Edit Request
+                              </button>
+                            </div>
+
+                            <div className="glass-card p-6 rounded-2xl border border-white/5">
+                              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                                {t('wishlist.postedBy')}
+                              </h4>
+                              <div className="text-sm font-bold text-white mb-1">
+                                {viewingRequest.companyName || viewingRequest.company || formData.companyName || t('wishlist.companyFallback')}
+                              </div>
+                              <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
+                                <i className="fa-solid fa-circle-check"></i> {t('storefront.modal.platformMember')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )}
 
               {editingListing && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">

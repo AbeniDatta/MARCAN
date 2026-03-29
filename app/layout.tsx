@@ -3,6 +3,7 @@ import { Inter, Montserrat } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import AmbientBackground from '@/components/AmbientBackground';
+import DevelopmentDisclaimer from '@/components/DevelopmentDisclaimer';
 import { I18nProvider } from '@/contexts/I18nContext';
 
 const inter = Inter({
@@ -41,7 +42,10 @@ export default function RootLayout({
         <AmbientBackground />
         <I18nProvider>
           <Sidebar />
-          {children}
+          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+            {children}
+            <DevelopmentDisclaimer />
+          </div>
         </I18nProvider>
       </body>
     </html>

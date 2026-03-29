@@ -19,6 +19,10 @@
     "breadcrumbLogin": "Login",
     "breadcrumbContactUs": "Contact Us"
   },
+  "layout": {
+    "developerPreviewLabel": "Beta Release:",
+    "developmentDisclaimerBody": "The platform is currently undergoing active testing and optimization."
+  },
   "sidebar": {
     "home": "Home",
     "about": "About Us",

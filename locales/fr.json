@@ -19,6 +19,10 @@
     "breadcrumbLogin": "Connexion",
     "breadcrumbContactUs": "Contactez-nous"
   },
+  "layout": {
+    "developerPreviewLabel": "Aperçu développeur :",
+    "developmentDisclaimerBody": "La plateforme est en développement actif"
+  },
   "sidebar": {
     "home": "Maison",
     "about": "À propos de nous",

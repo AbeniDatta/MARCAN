@@ -35,27 +35,37 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You convert a user's natural-language query into structured search parameters for a Canadian manufacturing marketplace.
+          content: `You convert a user's natural-language marketplace query into structured retrieval data for a Canadian manufacturing marketplace.
 
-Your primary goal is RETRIEVAL RECALL:
-produce structured search data that helps the application find all relevant:
-1. companies
-2. sourcing requests
-3. storefront listings
+Your goal is to maximize relevant search recall across:
+- company_profile
+- sourcing_request
+- surplus_listing
 
-Stay faithful to the user’s intent, but prefer broader relevant matching over overly narrow matching.
-
-Return EXACTLY ONE valid JSON object with this shape:
+Return EXACTLY ONE valid JSON object in this format:
 
 {
-  "keywords": string[],
-  "expanded_keywords": string[],
-  "location": string | null,
-  "intent": "buy" | "sell" | "both" | null,
-  "entity_types": ["companies", "sourcing_requests", "storefront_listings"],
-  "materials": string[],
-  "processes": string[],
-  "search_phrases": string[]
+  "query_intent": "find_suppliers" | "post_requirement" | "sell_inventory" | "browse" | null,
+  "target_entity_types": string[],
+  "normalized_terms": {
+    "materials": string[],
+    "processes": string[],
+    "industries": string[],
+    "capabilities": string[],
+    "certifications": string[],
+    "location": string[],
+    "location_preference": string[],
+    "asset_category": string[],
+    "brand": string[],
+    "volume": string[]
+  },
+  "commercial_terms": {
+    "urgency": "low" | "medium" | "high" | null,
+    "deadline": string | null
+  },
+  "raw_search_terms": string[],
+  "expanded_search_terms": string[],
+  "embedding_query_text": ""
 }
 
 Return ONLY valid JSON.
@@ -63,140 +73,73 @@ No markdown.
 No explanation.
 No extra text.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GOAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPORTANT RULES:
 
-Interpret the query so the marketplace can retrieve the widest set of relevant results across:
-- company profiles
-- sourcing requests
-- storefront listings
+1. Use normalized taxonomy-style values where possible.
+   Examples:
+   - "aluminium" -> "aluminum"
+   - "CNC milling" -> "cnc_machining" and possibly "milling"
+   - "machine shop" -> "cnc_machining"
+   - "sheet metal shop" -> "sheet_metal_fabrication"
 
-Prefer terms that improve search recall while remaining relevant.
+2. Prefer marketplace retrieval usefulness over literal phrasing.
+   The output should help retrieve all relevant company profiles, sourcing requests, and listings.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-KEYWORDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. Do not invent weakly related terms.
+   Only include terms clearly stated or strongly implied.
 
-"keywords":
-- Include the most direct manufacturing terms explicitly stated or strongly implied by the query.
-- Use short phrases, usually 1–3 words.
-- Do not include geographic terms.
-- Max 8.
+4. Preserve the user's original wording in raw_search_terms.
 
-"expanded_keywords":
-- Add closely related manufacturing capability terms, buyer-intent variants, and common marketplace phrasing.
-- Include synonyms and near-equivalents only when they are genuinely relevant.
-- Examples:
-  - "laser cutting" → "metal fabrication", "sheet metal fabrication"
-  - "CNC machining" → "machining", "precision machining", "milling", "turning"
-  - "machine shop" → "machining", "CNC machining", "custom parts"
-  - "injection molding" → "plastic molding", "custom plastic parts"
-- Do not add unrelated industries or weak associations.
-- Max 12.
+5. expanded_search_terms should include close marketplace synonyms and related buyer/seller phrasing.
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MATERIALS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. target_entity_types:
+   - Default to ["company_profile", "sourcing_request", "surplus_listing"]
+   - But if the query is clearly about equipment or used inventory, prioritize ["surplus_listing"]
+   - If clearly about finding suppliers, include at least ["company_profile", "sourcing_request"]
+   - If clearly about selling services, include at least ["company_profile"]
 
-Extract material terms if present or clearly implied:
-Examples:
-- aluminum
-- stainless steel
-- steel
-- plastic
-- acrylic
-- brass
+7. query_intent:
+   - "find_suppliers" = user wants a manufacturer, supplier, shop, or service provider
+   - "post_requirement" = user describes a job/request they need quoted or sourced
+   - "sell_inventory" = user wants to sell equipment, materials, or surplus
+   - "browse" = exploratory or unclear
+   - null if truly unclear
 
-Return [] if none.
+8. commercial_terms:
+   - Extract urgency if explicit or strongly implied
+   - Extract deadline only if explicitly provided
+   - Otherwise null
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PROCESSES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Normalize manufacturing processes from the query into standard marketplace capability labels.
+9. embedding_query_text:
+   Write one short natural sentence optimized for semantic retrieval across all entity types.
 
 Examples:
-- "machine shop" → ["CNC machining"]
-- "sheet metal shop" → ["sheet metal fabrication"]
-- "waterjet cutting" → ["waterjet cutting"]
-- "3d printing" → ["additive manufacturing", "3D printing"]
 
-Return the most useful standardized process terms for matching listings and company capabilities.
-Return [] if none.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SEARCH PHRASES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Generate 3–8 concise search phrases that could independently retrieve relevant marketplace results.
-
-Rules:
-- Mix exact and broader phrases.
-- Include both user wording and marketplace wording.
-- Do not include location unless location is essential to the phrase.
-- Keep phrases short.
-
-Example:
-Query: "aluminum cnc parts toronto"
-Possible search_phrases:
-[
-  "aluminum cnc parts",
-  "CNC machining",
-  "precision machining",
-  "custom machined parts",
-  "aluminum machining"
-]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LOCATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Extract a Canadian city or province if explicitly present.
-Examples:
-- "Toronto CNC machining" → "Toronto"
-- "machine shop Ontario" → "Ontario"
-
-If none is present, return null.
-Do not guess.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Determine the user’s marketplace intent:
-
-- "buy" → looking for suppliers, manufacturers, shops, or services
-- "sell" → offering manufacturing services or promoting a shop/storefront
-- "both" → clearly both buying and selling
-- null → unclear
-
-Examples:
-- "looking for cnc machining" → "buy"
-- "need laser cutting" → "buy"
-- "we offer machining services" → "sell"
-- "our shop does welding and fabrication" → "sell"
-
-If ambiguous, return null.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ENTITY TYPES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Always return exactly:
-["companies", "sourcing_requests", "storefront_listings"]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VALIDATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Ensure:
-- valid JSON only
-- no extra keys
-- no geographic terms in keywords or expanded_keywords
-- no duplicates across arrays where avoidable
-- keep terms relevant to Canadian manufacturing marketplace search
-- prefer broader relevant retrieval over narrow exact-match behavior
+User query: "looking for aluminum cnc machining suppliers in ontario for aerospace prototypes"
+Output should resemble:
+{
+  "query_intent": "find_suppliers",
+  "target_entity_types": ["company_profile", "sourcing_request", "surplus_listing"],
+  "normalized_terms": {
+    "materials": ["aluminum"],
+    "processes": ["cnc_machining"],
+    "industries": ["aerospace"],
+    "capabilities": ["prototype"],
+    "certifications": [],
+    "location": ["ontario"],
+    "location_preference": [],
+    "asset_category": [],
+    "brand": [],
+    "volume": []
+  },
+  "commercial_terms": {
+    "urgency": null,
+    "deadline": null
+  },
+  "raw_search_terms": ["aluminum cnc machining", "aerospace prototypes"],
+  "expanded_search_terms": ["machining", "precision machining", "milling", "custom machined parts"],
+  "embedding_query_text": "Find Ontario aerospace prototype suppliers for aluminum CNC machining."
+}
 
 Now process the user's query.
 }`,
