@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -62,6 +63,27 @@ function ProfilePageContent() {
     const returnTo = searchParams.get('from') || '/directory';
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [userData, setUserData] = useState<any>(null);
+    const [companyListings, setCompanyListings] = useState<any[]>([]);
+    const [companyRequests, setCompanyRequests] = useState<any[]>([]);
+    const [selectedListing, setSelectedListing] = useState<any | null>(null);
+    const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+    const [isDomReady, setIsDomReady] = useState(false);
+
+    useEffect(() => {
+        setIsDomReady(true);
+    }, []);
+
+    useEffect(() => {
+        if (!selectedListing && !selectedRequest) return;
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setSelectedListing(null);
+                setSelectedRequest(null);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [selectedListing, selectedRequest]);
 
     useEffect(() => {
         if (!companyId) return;
@@ -76,9 +98,46 @@ function ProfilePageContent() {
                 const foundCompany = await response.json();
                 setCompany(foundCompany);
                 setUserData(foundCompany);
+
+                const companyNames = [foundCompany?.companyName, foundCompany?.name]
+                    .map((name) => String(name || '').trim().toLowerCase())
+                    .filter(Boolean);
+
+                try {
+                    const [listingsRes, requestsRes] = await Promise.all([
+                        fetch('/api/listings'),
+                        fetch('/api/wishlist'),
+                    ]);
+
+                    const listingsData = listingsRes.ok ? await listingsRes.json() : [];
+                    const requestsData = requestsRes.ok ? await requestsRes.json() : [];
+
+                    const relatedListings = (Array.isArray(listingsData) ? listingsData : []).filter((listing: any) => {
+                        const supplierName = String(listing?.supplier || '').trim().toLowerCase();
+                        return (
+                            listing?.profileId === foundCompany?.id ||
+                            listing?.storefrontProfileId === foundCompany?.id ||
+                            companyNames.includes(supplierName)
+                        );
+                    });
+
+                    const relatedRequests = (Array.isArray(requestsData) ? requestsData : []).filter((request: any) => {
+                        const requestCompany = String(request?.company || request?.companyName || '').trim().toLowerCase();
+                        return companyNames.includes(requestCompany);
+                    });
+
+                    setCompanyListings(relatedListings);
+                    setCompanyRequests(relatedRequests);
+                } catch (error) {
+                    console.error('Error fetching company activity:', error);
+                    setCompanyListings([]);
+                    setCompanyRequests([]);
+                }
             } catch (error) {
                 console.error('Error fetching company profile:', error);
                 setCompany(null);
+                setCompanyListings([]);
+                setCompanyRequests([]);
             }
         };
 
@@ -147,6 +206,151 @@ function ProfilePageContent() {
         return INDUSTRY_LOGOS[valid[idx]];
     };
     const headerIndustryLogo = isStorefrontProfile ? null : getIndustryLogo(displayIndustries, company.id || displayName || '');
+
+    const closeModals = () => {
+        setSelectedListing(null);
+        setSelectedRequest(null);
+    };
+
+    const detailsModal = isDomReady && (selectedListing || selectedRequest)
+        ? createPortal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                <button
+                    type="button"
+                    className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
+                    onClick={closeModals}
+                    aria-label="Close details modal"
+                />
+                <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
+                    <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
+                                {selectedListing ? (selectedListing.listingType || 'Listing') : (selectedRequest?.category || 'Request')}
+                            </span>
+                            <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
+                                {selectedListing?.title || selectedRequest?.title || 'Details'}
+                            </h3>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={closeModals}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
+                            aria-label="Close details modal"
+                        >
+                            <i className="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                    {selectedListing ? (
+                        <div className="p-6 md:p-8 space-y-8 relative z-10">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div className="lg:col-span-2 space-y-8">
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <i className="fa-solid fa-align-left text-orange-400"></i> Description
+                                        </h4>
+                                        <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                            <p>{selectedListing.description || 'No description provided.'}</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <i className="fa-solid fa-list-check text-orange-400"></i> Listing Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Type</span>
+                                                <span className="text-sm font-semibold text-white">{selectedListing.listingType || 'Not specified'}</span>
+                                            </div>
+                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</span>
+                                                <span className="text-sm font-semibold text-white">{selectedListing.price || 'Negotiable'}</span>
+                                            </div>
+                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</span>
+                                                <span className="text-sm font-semibold text-white">{selectedListing.location || 'Not specified'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
+                                        <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Asking Price</div>
+                                        <div className="text-4xl font-black text-white tracking-tight mb-6">
+                                            {selectedListing.price || 'Negotiable'}
+                                        </div>
+                                        {displayEmail ? (
+                                            <a
+                                                href={`mailto:${displayEmail}?subject=${encodeURIComponent(`Industrial storefront inquiry: ${selectedListing.title || 'Listing'}`)}`}
+                                                className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                                            >
+                                                <i className="fa-solid fa-envelope"></i> Email Supplier
+                                            </a>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                disabled
+                                                className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-slate-500 text-sm font-bold uppercase tracking-wider cursor-not-allowed"
+                                            >
+                                                Email Supplier
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="glass-card p-6 rounded-2xl border border-white/5">
+                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Listed By</h4>
+                                        <div className="flex items-center gap-4 mb-5">
+                                            {displayLogoUrl ? (
+                                                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10 shadow-inner">
+                                                    <img src={displayLogoUrl} alt={displayName} className="w-full h-full object-cover" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 border border-white/10 shadow-inner">
+                                                    <i className={`fa-solid ${displayIcon || 'fa-industry'} text-xl`}></i>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="text-sm font-bold text-white mb-1">{displayName}</div>
+                                                <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
+                                                    <i className="fa-solid fa-circle-check"></i> Platform Member
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={closeModals}
+                                            className="w-full py-2.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/5 hover:text-white transition-all"
+                                        >
+                                            Back to Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-6 md:p-8 space-y-6">
+                            <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                <p>{selectedRequest?.description || 'No description provided.'}</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="glass-card p-4 rounded-xl border border-white/5">
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</div>
+                                    <div className="text-sm font-semibold text-white">{selectedRequest?.targetPrice || 'Not specified'}</div>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5">
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</div>
+                                    <div className="text-sm font-semibold text-white">{selectedRequest?.location || 'N/A'}</div>
+                                </div>
+                                <div className="glass-card p-4 rounded-xl border border-white/5">
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Company</div>
+                                    <div className="text-sm font-semibold text-white">{displayName}</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>,
+            document.body
+        )
+        : null;
 
     return (
         <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -334,7 +538,84 @@ function ProfilePageContent() {
                         )}
                     </div>
                 </div>
+
+                <div className="mt-10 space-y-8">
+                    <div>
+                        <h3 className="font-bold text-lg text-white mb-4 uppercase tracking-wide border-b border-white/10 pb-2">
+                            Storefront Listings
+                        </h3>
+                        {companyListings.length === 0 ? (
+                            <p className="text-slate-400 text-sm">No storefront listings found for this company.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {companyListings.map((listing) => (
+                                    <div key={listing.id} className="glass-card p-4 rounded-xl border border-white/5 relative overflow-hidden group">
+                                        <div className="text-[10px] text-orange-400 uppercase font-bold tracking-wider mb-2">
+                                            {listing.listingType || 'Listing'}
+                                        </div>
+                                        <h4 className="text-sm font-bold text-white line-clamp-1 mb-2">{listing.title || 'Untitled listing'}</h4>
+                                        <p className="text-xs text-slate-400 line-clamp-2 mb-3">{listing.description || 'No description provided.'}</p>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-sm font-black text-white">{listing.price || 'Negotiable'}</span>
+                                            <span className="text-[11px] text-slate-400 truncate">{listing.location || 'N/A'}</span>
+                                        </div>
+                                        <div className="absolute inset-0 bg-marcan-dark/85 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedRequest(null);
+                                                    setSelectedListing(listing);
+                                                }}
+                                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider"
+                                            >
+                                                View Listing
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <h3 className="font-bold text-lg text-white mb-4 uppercase tracking-wide border-b border-white/10 pb-2">
+                            Sourcing Requests
+                        </h3>
+                        {companyRequests.length === 0 ? (
+                            <p className="text-slate-400 text-sm">No sourcing requests found for this company.</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {companyRequests.map((request) => (
+                                    <div key={request.id} className="glass-card p-4 rounded-xl border border-white/5 relative overflow-hidden group">
+                                        <div className="text-[10px] text-orange-400 uppercase font-bold tracking-wider mb-2">
+                                            {request.category || 'Request'}
+                                        </div>
+                                        <h4 className="text-sm font-bold text-white line-clamp-1 mb-2">{request.title || 'Untitled request'}</h4>
+                                        <p className="text-xs text-slate-400 line-clamp-2 mb-3">{request.description || 'No description provided.'}</p>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-sm font-black text-white">{request.targetPrice || 'Not specified'}</span>
+                                            <span className="text-[11px] text-slate-400 truncate">{request.location || 'N/A'}</span>
+                                        </div>
+                                        <div className="absolute inset-0 bg-marcan-dark/85 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedListing(null);
+                                                    setSelectedRequest(request);
+                                                }}
+                                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider"
+                                            >
+                                                View Request
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
+            {detailsModal}
         </main>
     );
 }

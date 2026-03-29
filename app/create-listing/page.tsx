@@ -85,7 +85,7 @@ export default function CreateListingPage() {
       router.push('/shop');
     } catch (error: any) {
       console.error('Error creating listing:', error);
-    alert(error.message || t('storefrontCreateListing.alerts.failedToCreateTryAgain'));
+      alert(error.message || t('storefrontCreateListing.alerts.failedToCreateTryAgain'));
     }
   };
 

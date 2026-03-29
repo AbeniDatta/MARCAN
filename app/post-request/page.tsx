@@ -128,7 +128,7 @@ export default function PostRequestPage() {
                 throw new Error(error.error || 'Failed to create request');
             }
 
-            router.push('/wishlist');
+            router.push('/shop?tab=listings&mode=buy');
         } catch (error: any) {
             console.error('Error creating request:', error);
             alert(error.message || 'Failed to create request. Please try again.');
@@ -152,10 +152,10 @@ export default function PostRequestPage() {
             <div className="flex-1 overflow-y-auto p-8 relative">
                 <div className="max-w-3xl mx-auto py-6">
                     <Link
-                        href="/wishlist"
+                        href="/shop?tab=listings&mode=buy"
                         className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                     >
-                        <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Sourcing Requests
+                        <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Industrial Storefront
                     </Link>
 
                     <div className="glass-card p-10 rounded-3xl border border-white/5">

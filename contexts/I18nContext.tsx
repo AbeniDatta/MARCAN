@@ -16,7 +16,7 @@ const resources: Record<Lang, Messages> = {
 interface I18nContextValue {
   lang: Lang;
   setLang: (lang: Lang) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
   translateText: (value: string) => string;
 }
 
@@ -71,14 +71,20 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     () => ({
       lang,
       setLang: setLangAndPersist,
-      t: (key: string) => {
+      t: (key: string, vars?: Record<string, string | number>) => {
         const parts = key.split('.');
         let current: any = resources[lang];
         for (const part of parts) {
           if (current == null) break;
           current = current[part];
         }
-        return typeof current === 'string' ? current : key;
+        let out = typeof current === 'string' ? current : key;
+        if (vars && typeof out === 'string') {
+          Object.entries(vars).forEach(([k, v]) => {
+            out = out.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+          });
+        }
+        return out;
       },
       translateText: (raw: string) => {
         if (lang === 'en') return raw;

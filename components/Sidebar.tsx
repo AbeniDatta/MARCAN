@@ -21,12 +21,11 @@ export default function Sidebar() {
 
     const navItems: NavItem[] = [
         { href: '/', label: t('sidebar.home'), icon: 'fa-house' },
-        { href: '/about', label: t('sidebar.about'), icon: 'fa-shield-halved' },
         { href: '/directory', label: t('sidebar.directory'), icon: 'fa-address-book' },
-        { href: '/wishlist', label: t('sidebar.wishlist'), icon: 'fa-bullhorn' },
-        { href: '/contact', label: t('sidebar.contact'), icon: 'fa-envelope' },
-        { href: '/help', label: t('sidebar.help'), icon: 'fa-circle-question' },
         { href: '/shop', label: t('sidebar.shop'), icon: 'fa-store' },
+        { href: '/about', label: t('sidebar.about'), icon: 'fa-people-group' },
+        { href: '/help', label: t('sidebar.help'), icon: 'fa-circle-question' },
+        { href: '/contact', label: t('sidebar.contact'), icon: 'fa-envelope' },
     ];
 
     // Check if user has a supplier profile in the database
@@ -115,10 +114,6 @@ export default function Sidebar() {
                                 )}
                             </Link>
 
-                            {/* Separation between Help Center and the Shop tab */}
-                            {item.href === '/help' && (
-                                <div className="my-2 h-px bg-white/10" style={{ pageBreakAfter: 'always' }} />
-                            )}
                         </div>
                     );
                 })}

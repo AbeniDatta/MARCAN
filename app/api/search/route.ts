@@ -5,6 +5,17 @@ import { openai } from '@/lib/openai';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+function formatPrice(rawPrice: string) {
+  const numeric = String(rawPrice ?? '').replace(/[^0-9.]/g, '');
+  const parsed = Number.parseFloat(numeric);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  const normalized = Number.isInteger(parsed) ? parsed.toString() : parsed.toFixed(2);
+  return `$${normalized}`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const db = prisma as any;
@@ -26,119 +37,168 @@ export async function POST(req: NextRequest) {
           role: 'system',
           content: `You convert a user's natural-language query into structured search parameters for a Canadian manufacturing marketplace.
 
-Your goal is to maximize relevant search results while staying faithful to the user's intent.
+Your primary goal is RETRIEVAL RECALL:
+produce structured search data that helps the application find all relevant:
+1. companies
+2. sourcing requests
+3. storefront listings
 
-Return EXACTLY ONE JSON object in this format:
+Stay faithful to the user’s intent, but prefer broader relevant matching over overly narrow matching.
+
+Return EXACTLY ONE valid JSON object with this shape:
 
 {
   "keywords": string[],
+  "expanded_keywords": string[],
   "location": string | null,
-  "intent": "buy" | "sell" | "both" | null
+  "intent": "buy" | "sell" | "both" | null,
+  "entity_types": ["companies", "sourcing_requests", "storefront_listings"],
+  "materials": string[],
+  "processes": string[],
+  "search_phrases": string[]
 }
 
 Return ONLY valid JSON.
-No explanations.
+No markdown.
+No explanation.
 No extra text.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-KEYWORD EXTRACTION RULES
+GOAL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Extract manufacturing-related keywords from the query.
+Interpret the query so the marketplace can retrieve the widest set of relevant results across:
+- company profiles
+- sourcing requests
+- storefront listings
 
-Include BOTH:
+Prefer terms that improve search recall while remaining relevant.
 
-1) Direct keywords from the query
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+KEYWORDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"keywords":
+- Include the most direct manufacturing terms explicitly stated or strongly implied by the query.
+- Use short phrases, usually 1–3 words.
+- Do not include geographic terms.
+- Max 8.
+
+"expanded_keywords":
+- Add closely related manufacturing capability terms, buyer-intent variants, and common marketplace phrasing.
+- Include synonyms and near-equivalents only when they are genuinely relevant.
+- Examples:
+  - "laser cutting" → "metal fabrication", "sheet metal fabrication"
+  - "CNC machining" → "machining", "precision machining", "milling", "turning"
+  - "machine shop" → "machining", "CNC machining", "custom parts"
+  - "injection molding" → "plastic molding", "custom plastic parts"
+- Do not add unrelated industries or weak associations.
+- Max 12.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MATERIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract material terms if present or clearly implied:
 Examples:
-"laser cutting toronto" → ["laser cutting"]
+- aluminum
+- stainless steel
+- steel
+- plastic
+- acrylic
+- brass
 
-2) Closely related manufacturing capability terms if clearly implied
+Return [] if none.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROCESSES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Normalize manufacturing processes from the query into standard marketplace capability labels.
+
 Examples:
-"laser cutting" → may also include ["metal fabrication", "sheet metal"]
-"CNC machining" → may also include ["machining", "precision machining"]
-"machine shop" → may include ["machining"]
+- "machine shop" → ["CNC machining"]
+- "sheet metal shop" → ["sheet metal fabrication"]
+- "waterjet cutting" → ["waterjet cutting"]
+- "3d printing" → ["additive manufacturing", "3D printing"]
+
+Return the most useful standardized process terms for matching listings and company capabilities.
+Return [] if none.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEARCH PHRASES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Generate 3–8 concise search phrases that could independently retrieve relevant marketplace results.
 
 Rules:
-- Only include closely related manufacturing terms.
-- Do NOT include unrelated industries.
-- Do NOT include geographic terms in keywords.
-- Use short phrases (1–3 words).
-- Maximum 8 keywords.
-- Remove duplicates.
+- Mix exact and broader phrases.
+- Include both user wording and marketplace wording.
+- Do not include location unless location is essential to the phrase.
+- Keep phrases short.
+
+Example:
+Query: "aluminum cnc parts toronto"
+Possible search_phrases:
+[
+  "aluminum cnc parts",
+  "CNC machining",
+  "precision machining",
+  "custom machined parts",
+  "aluminum machining"
+]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOCATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Extract a Canadian city or province if explicitly present.
+Examples:
+- "Toronto CNC machining" → "Toronto"
+- "machine shop Ontario" → "Ontario"
+
+If none is present, return null.
+Do not guess.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Determine the user’s marketplace intent:
+
+- "buy" → looking for suppliers, manufacturers, shops, or services
+- "sell" → offering manufacturing services or promoting a shop/storefront
+- "both" → clearly both buying and selling
+- null → unclear
 
 Examples:
+- "looking for cnc machining" → "buy"
+- "need laser cutting" → "buy"
+- "we offer machining services" → "sell"
+- "our shop does welding and fabrication" → "sell"
 
-Query: "laser cutting toronto"
-Valid output:
-["laser cutting", "metal fabrication", "sheet metal"]
-
-Query: "aluminum cnc parts"
-Valid output:
-["CNC machining", "machining", "aluminum"]
-
-Query: "plastic injection molding"
-Valid output:
-["injection molding", "plastic"]
+If ambiguous, return null.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LOCATION RULES
+ENTITY TYPES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Extract a Canadian city or province if present.
-
-Examples:
-"Toronto CNC machining" → "Toronto"
-"machine shop Ontario" → "Ontario"
-
-If none present → null
-
-Do NOT guess location.
+Always return exactly:
+["companies", "sourcing_requests", "storefront_listings"]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTENT RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Determine user's role:
-
-buy → looking for suppliers or services
-Examples:
-"looking for CNC machining"
-"need laser cutting"
-
-sell → offering services
-Examples:
-"we offer machining services"
-"I run a machine shop"
-
-both → explicitly both
-
-If unclear → null
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VALIDATION RULES
+VALIDATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Ensure:
+- valid JSON only
+- no extra keys
+- no geographic terms in keywords or expanded_keywords
+- no duplicates across arrays where avoidable
+- keep terms relevant to Canadian manufacturing marketplace search
+- prefer broader relevant retrieval over narrow exact-match behavior
 
-- Keywords are relevant manufacturing terms
-- No unrelated industries
-- No geographic terms in keywords
-- Valid JSON
-- No extra keys
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FINAL OUTPUT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Return EXACTLY:
-
-{
-  "keywords": [],
-  "location": null,
-  "intent": null
-}
-
-Now process this query: {USER_QUERY}
+Now process the user's query.
 }`,
         },
         {
@@ -316,13 +376,14 @@ Now process this query: {USER_QUERY}
       id: r.id,
       title: r.title,
       company: r.companyName,
-      province: r.buyerProfile?.province || '',
+      province: r.targetProvince || r.buyerProfile?.province || '',
       category: r.category || '',
       description: r.description || '',
       quantity: r.quantity || '',
-      targetPrice: r.targetPrice || '',
+      targetPrice: r.targetPrice ? formatPrice(r.targetPrice) || r.targetPrice : '',
       deadline: r.deadline ? r.deadline.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
+      location: [r.targetCity, r.targetProvince].filter(Boolean).join(', ') || '',
       logoUrl: null,
       selectedIcon: null,
     }));

@@ -239,12 +239,20 @@ export default function BecomeSupplierPage() {
     const urlFromQuery = params.get('url');
     const requestedStepParam = params.get('step');
     const requestedStep = requestedStepParam ? Number(requestedStepParam) : NaN;
+    const companyFromQuery = params.get('company');
 
     if (start === 'import' && urlFromQuery) {
       setCurrentView('form');
       setWizardStep(1);
       setIsImporting(true);
       setHasProcessedQueryParams(true);
+
+      if (companyFromQuery) {
+        setFormData((prev) => ({
+          ...prev,
+          companyName: prev.companyName || companyFromQuery,
+        }));
+      }
 
       const runImport = async () => {
         try {
@@ -320,11 +328,23 @@ export default function BecomeSupplierPage() {
         onboardingMethod: 'MANUAL',
       }));
       setHasProcessedQueryParams(true);
+      if (companyFromQuery) {
+        setFormData((prev) => ({
+          ...prev,
+          companyName: prev.companyName || companyFromQuery,
+        }));
+      }
     } else if (!Number.isNaN(requestedStep) && requestedStep >= 0 && requestedStep <= 6) {
       // Deep-link into a specific wizard step (e.g., ?step=0 for Shop Profile)
       setCurrentView('form');
       setWizardStep(requestedStep as WizardStep);
       setHasProcessedQueryParams(true);
+      if (companyFromQuery) {
+        setFormData((prev) => ({
+          ...prev,
+          companyName: prev.companyName || companyFromQuery,
+        }));
+      }
     }
   }, [isMounted, hasProcessedQueryParams]);
 
@@ -674,20 +694,20 @@ export default function BecomeSupplierPage() {
         body: JSON.stringify(
           isStorefrontSignup
             ? {
-                userId,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-                companyName: formData.companyName,
-                role: formData.role,
-                streetAddress: formData.streetAddress,
-                city: formData.city,
-                province: formData.province,
-                businessNumber: formData.businessNumber || null,
-                website: formData.website || null,
-                phone: formData.phone || null,
-                aboutUs: formData.aboutUs || null,
-              }
+              userId,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              companyName: formData.companyName,
+              role: formData.role,
+              streetAddress: formData.streetAddress,
+              city: formData.city,
+              province: formData.province,
+              businessNumber: formData.businessNumber || null,
+              website: formData.website || null,
+              phone: formData.phone || null,
+              aboutUs: formData.aboutUs || null,
+            }
             : submitData
         ),
       });
@@ -1833,7 +1853,7 @@ export default function BecomeSupplierPage() {
                       <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:flex-nowrap items-center justify-between gap-4 relative z-10">
                         <p className="text-[11px] text-slate-500 sm:whitespace-nowrap">
                           By creating an industrial storefront profile, you agree to our{' '}
-                          <a href="#" className="text-orange-400 hover:text-orange-300">
+                          <a href="/terms" className="text-orange-400 hover:text-orange-300 underline underline-offset-4">
                             Terms of Service
                           </a>
                           .
@@ -1966,7 +1986,14 @@ export default function BecomeSupplierPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="mt-8 flex justify-between">
+                    <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <p className="text-[11px] text-slate-500">
+                        By completing your supplier profile, you agree to our{' '}
+                        <a href="/terms" className="text-marcan-red hover:text-white underline underline-offset-4">
+                          Terms of Service
+                        </a>
+                        .
+                      </p>
                       <button
                         type="button"
                         onClick={prevStep}

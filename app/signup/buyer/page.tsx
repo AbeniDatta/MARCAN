@@ -294,6 +294,16 @@ function BuyerSignupPageContent() {
                             </form>
 
                             <div className="mt-3 text-center">
+                                <p className="text-[11px] text-slate-500">
+                                    By creating a buyer account, you agree to our{' '}
+                                    <Link href="/terms" className="text-marcan-red hover:text-white underline underline-offset-4">
+                                        Terms of Service
+                                    </Link>
+                                    .
+                                </p>
+                            </div>
+
+                            <div className="mt-3 text-center">
                                 <p className="text-xs text-slate-500">
                                     {t('buyerSignup.alreadyMemberPrefix')}{' '}
                                     <Link href="/login" className="text-marcan-red font-bold hover:text-white transition-colors ml-1">

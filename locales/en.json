@@ -13,7 +13,11 @@
     "breadcrumbBecomeBuyer": "Become a Buyer",
     "breadcrumbMyPostsSourcingRequests": "My Posts / Sourcing Requests",
     "breadcrumbMyPostsStorefrontListings": "My Posts / Storefront Listings",
-    "breadcrumbTermsOfService": "Terms of Service"
+    "breadcrumbTermsOfService": "Terms of Service",
+    "breadcrumbSignUp": "Sign Up",
+    "breadcrumbAboutUs": "About Us",
+    "breadcrumbLogin": "Login",
+    "breadcrumbContactUs": "Contact Us"
   },
   "sidebar": {
     "home": "Home",
@@ -23,7 +27,7 @@
     "marketplace": "Supplier Listings",
     "contact": "Contact Us",
     "shop": "Industrial Storefront",
-    "help": "Help Center",
+    "help": "Help Centre",
     "welcomeUser": "Welcome {name}!",
     "signOutLabel": "Sign Out",
     "logout": "Logout",
@@ -66,6 +70,40 @@
       "toolingMoldsDescription": "Injection molds, dies, and custom tooling solutions for mass production.",
       "automationDescription": "Robotics, PLC programming, and automated manufacturing systems for increased efficiency."
     },
+    "quickStart": {
+      "badge": "Instant AI Setup",
+      "titleBefore": "Create your",
+      "titleHighlight": "Supplier Profile",
+      "body": "Skip tedious forms. Drop your website link and our AI will extract your capabilities, location, and machinery in under 2 minutes.",
+      "urlPlaceholder": "https://your-company.com",
+      "autoGenerate": "Auto-Generate",
+      "freeToJoin": "100% free to join",
+      "enterUrlError": "Please enter a website URL",
+      "invalidUrlError": "Invalid URL. Please include http(s):// and a valid domain."
+    },
+    "searchBar": {
+      "placeholder": "Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')...",
+      "askAi": "Ask Our AI",
+      "tryAsking": "Try asking:",
+      "prompt1": "Plastic injection molding shops",
+      "prompt2": "Copper fabrication companies",
+      "prompt3": "Titanium machining suppliers serving defense industry"
+    },
+    "certifications": {
+      "quality": "Quality",
+      "aerospace": "Aerospace",
+      "controlled": "Controlled",
+      "process": "Process",
+      "environmental": "Environmental",
+      "safety": "Safety",
+      "automotive": "Automotive",
+      "medical": "Medical"
+    },
+    "marquee": {
+      "onMarcan": "On Marcan"
+    },
+    "manufacturersSectionTitle": "Manufacturers",
+    "emptyManufacturers": "No manufacturers found in the directory yet.",
     "marcanStandardTitle": "The Marcan Standard",
     "marcanStandard": {
       "aiSetupTitle": "AI-Powered 2-Minute Setup",
@@ -276,7 +314,57 @@
   },
   "signup": {
     "title": "How do you want to use Marcan?",
-    "subtitle": "Choose the path that fits you best. You can always create another type of profile later.",
+    "subtitle": "",
+    "alreadyMemberPrefix": "Already a member?",
+    "loginLinkText": "Login",
+    "tree": {
+      "label": "Account decision tree",
+      "continue": "Continue",
+      "recommendationLabel": "Recommended account",
+      "q1": {
+        "title": "1) What is your main goal right now?",
+        "sourceTitle": "Storefront Buyer Account",
+        "sourceBody": "I am looking to source materials and want to connect with suppliers.",
+        "listTitle": "I want to post storefront listings",
+        "listBody": "I want to list equipment, materials, or capacity.",
+        "bothTitle": "I want both sourcing and listings",
+        "bothBody": "I need full access to buyer and supplier tools."
+      },
+      "q2": {
+        "title": "2) For listings, which fits you best?",
+        "storefrontTitle": "Storefront only",
+        "storefrontBody": "I only need storefront listings.",
+        "supplierTitle": "Supplier growth profile",
+        "supplierBody": "I want listings plus directory visibility and AI recommendations."
+      },
+      "recommendations": {
+        "buyerTitle": "Buyer Account",
+        "buyerBody": "Buyer accounts are best for posting sourcing requests and managing RFQs.",
+        "storefrontTitle": "Storefront Account",
+        "storefrontBody": "Storefront accounts are best if you only want to publish storefront listings.",
+        "supplierTitle": "Supplier Account",
+        "supplierBody": "Supplier accounts unlock sourcing requests, storefront listings, company directory visibility, and AI recommendations."
+      },
+      "errors": {
+        "selectPath": "Please choose an option in the decision tree to continue.",
+        "buyerEmailRequired": "Please enter your email to continue as a buyer.",
+        "storefrontCompanyRequired": "Please enter your company name to continue as a storefront seller."
+      }
+    },
+    "capabilities": {
+      "buyer": {
+        "title": "Buyer Account",
+        "body": "Can post sourcing requests only."
+      },
+      "storefront": {
+        "title": "Storefront Account",
+        "body": "Can create storefront listings only."
+      },
+      "supplier": {
+        "title": "Supplier Account",
+        "body": "Can do both, appears in the company directory, and can be recommended by AI."
+      }
+    },
     "joinBuyer": {
       "title": "Join as a Buyer",
       "desc1": "Post requirements and receive competitive quotes from vetted Canadian suppliers.",
@@ -286,16 +374,41 @@
       "prefillText": "We'll pre-fill your account with this email on the next step.",
       "errorEmailRequired": "Please enter your email to continue as a buyer."
     },
+    "joinStorefront": {
+      "companyNameLabel": "Company Name",
+      "companyNamePlaceholder": "e.g. Acme Manufacturing Ltd."
+    },
     "joinSupplier": {
       "title": "Join as a Supplier",
       "desc1": "Showcase your shop with an AI-powered 2-minute setup via your website URL.",
       "desc2": "Paste your existing website and let Marcan's AI scraper build a comprehensive supplier profile for you.",
       "websiteUrlLabel": "Website URL",
+      "invalidUrl": "Invalid URL. Please include http(s):// and a valid domain.",
       "websiteUrlPlaceholder": "https://www.yourcompany.com",
       "manualFillTextPrefix": "Don't have a website or prefer to fill it out manually? ",
-      "manualFillTextLink": "Click here",
-      "alreadyMemberPrefix": "Already a member?",
-      "loginLinkText": "Login"
+      "manualFillTextLink": "Click here"
+    },
+    "pathPicker": {
+      "title": "Choose Your Path",
+      "subtitle": "Select the account type that best matches your immediate goals on the Marcan platform.",
+      "buyerBullet1": "Post Sourcing Requests (RFQs)",
+      "buyerBullet2": "Search the Company Directory",
+      "buyerBullet3": "Message Suppliers Directly",
+      "joinBuyerCta": "Join as a Buyer",
+      "supplierBadge": "Full Network Access",
+      "supplierTitle": "Supplier Account",
+      "supplierSubtitle": "I am a manufacturer looking to win new business and list capacity.",
+      "supplierBullet1": "Instant AI Profile Generation",
+      "supplierBullet2": "Public Company Directory Profile",
+      "supplierBullet3": "Receive RFQ Matches",
+      "supplierBullet4": "Create Storefront Listings",
+      "manualLinkLabel": "Become a Supplier (manual start)",
+      "storefrontTitle": "Storefront Seller Account",
+      "storefrontSubtitle": "I just want to sell off surplus materials, parts, or equipment.",
+      "storefrontBullet1": "Post Storefront Listings",
+      "storefrontBullet2": "Manage Inventory Dashboard",
+      "storefrontBullet3": "Receive Buyer Inquiries",
+      "joinSellerCta": "Join as a Seller"
     }
   },
   "buyerSignup": {
@@ -512,5 +625,126 @@
       "authInvalidEmail": "Invalid email address.",
       "authWeakPassword": "Password is too weak. Please choose a stronger password."
     }
+  },
+  "help": {
+    "title": "Help Centre",
+    "subtitle": "Browse our FAQs and helpful resources to find answers to your questions.",
+    "faqHeading": "FAQ",
+    "resourcesTitle": "Resources",
+    "termsOfService": "Terms of Service",
+    "videoTutorials": "Video Tutorials",
+    "userManualPdf": "User Manual (PDF)",
+    "comingSoon": "Coming Soon",
+    "metaTitle": "Help Centre - Marcan",
+    "metaDescription": "Find answers to your questions about Marcan.",
+    "a1p1": "Yes. Marcan is free to join and use for Canadian manufacturing and industrial businesses. You can create accounts, browse the ",
+    "a1p2": ", explore the ",
+    "a1p3": ", and post sourcing requests without subscriptions, commissions, or paywalls on the platform itself.",
+    "q2": "Who can use Marcan (e.g. Canadian manufacturing focus)?",
+    "a2": "Marcan is built for Canadian manufacturing and industry — job shops, contract manufacturers, distributors, OEMs, and related suppliers. Anyone can sign up as a buyer to search and post RFQs. Company profiles in the directory, supplier onboarding, and storefront selling are meant for organizations that operate and serve customers in Canada.",
+    "q3": "What is the difference between a buyer account, a supplier account, and a storefront seller?",
+    "a3p1": "A ",
+    "a3buyer": "buyer account",
+    "a3p2": " is for procurement teams who want to search the ecosystem, use the directory, and publish sourcing requests (RFQs). A ",
+    "a3supplier": "supplier account",
+    "a3p3": " is the full network path: company profile in the directory, RFQ visibility, optional AI-assisted setup from your website, and the ability to create storefront-style listings. A ",
+    "a3storefront": "storefront seller",
+    "a3p4": " is focused on listing surplus materials, parts, or equipment in the Shop with a lighter storefront onboarding. Paths are started from ",
+    "a3p5": "; buyer and supplier or storefront flows use separate onboarding steps.",
+    "q4": "What is the AI search on the home page for?",
+    "a4": "The large prompt on the home page lets you describe what you need in plain language (for example capabilities, certifications, or industries). Submitting it takes you to Marcan's search experience so you can discover relevant companies and content from that query instead of typing exact keywords alone.",
+    "q5": "What is the Company Directory and how do I use it?",
+    "a5p1": "The ",
+    "a5p2": " is a browsable list of supplier company profiles — capabilities, certifications, industries, locations, and public contact details when provided. Open it from the sidebar, filter or explore listings, and click through to a company's profile to learn more and reach out directly.",
+    "q6": "How do I become a supplier and get a company profile in the directory?",
+    "a6p1": "Start from ",
+    "a6p2": " and choose the supplier path. Complete the onboarding form (website import or manual). Once your profile is submitted and active, your company can appear in the Company Directory and be discoverable alongside your listings and RFQ-related activity as applicable.",
+    "q7": "How does the website URL / AI import work for building my supplier profile?",
+    "a7p1": "You paste a public ",
+    "a7p2": " URL for your company website. Marcan uses automated extraction to pull structured hints about your business — such as capabilities, location, and services — into the supplier onboarding flow. You always review and edit those fields before your profile is finalized; nothing is published without your completion of the wizard.",
+    "q8": "What if I don't have a website or prefer to enter my details manually?",
+    "a8p1": "During supplier onboarding, choose the manual path instead of import (the link offered next to the website field). You'll step through the same company, capability, and contact sections yourself. You can also find it here ",
+    "a8p2": ".",
+    "q9": "What are sourcing requests (RFQs) and how do I post one?",
+    "a9p1": "Sourcing requests are buyer-side RFQs: structured posts describing parts, materials, services, quantities, or timelines you need. Create one from the ",
+    "a9p2": " flow (when signed in). Suppliers and other users can discover your request and contact you using the details you choose to display. You can track what you've published from ",
+    "a9myAccount": "My Account",
+    "a9p3": " and the My Posts areas.",
+    "q10": "How do I contact a company I find on Marcan?",
+    "a10": "Open the company's directory or storefront profile and use the RFQ email, phone, or website they list. Shop listings and sourcing requests show the contact fields each party opted into. Marcan does not host in-app messaging for negotiations — you reach out directly by email or phone.",
+    "q11": "Does Marcan handle payments, shipping, or contracts between users?",
+    "a11": "No. Marcan is a discovery and connection layer: profiles, listings, and RFQs help you find each other. Pricing, invoicing, shipping, quality terms, and contracts are agreed directly between buyers and suppliers. Always perform your own diligence before placing orders or sharing sensitive information.",
+    "q12": "Who do I contact if something breaks?",
+    "a12p1": "Use the ",
+    "a12p2": " page to send a message describing what went wrong. We use that channel for technical issues, account questions, and feedback about the platform.",
+    "q1": "Is Marcan free to use?",
+    "linkLabelShop": "Industrial Storefront"
+  },
+  "about": {
+    "heroTitle": "About Us",
+    "heroSubtitle": "Learn about us and our mission to connect Canada’s manufacturing capabilities and simplify local sourcing.",
+    "originsLabel": "Origins",
+    "whoWeAreTitle": "Who We Are",
+    "whoWeAreBodyPrefix": "We're a team of engineering students and industry builders working at the ",
+    "whoWeAreBodyBold": "University of Waterloo",
+    "whoWeAreBodySuffix": ". Our goal is simple: remove fragmentation and make local sourcing feel obvious for Canadian manufacturers.",
+    "credibilityLabel": "Credibility Matters",
+    "supportedByTitle": "Supported By",
+    "supportedBySubtitle": "Marcan is supported by leading institutions focused on strengthening manufacturing talent and capability.",
+    "partnerUw": "University of Waterloo",
+    "partnerUwSub": "Faculty of Engineering",
+    "partnerNgen": "NGen Canada",
+    "partnerNgenSub": "Partner Support",
+    "whyTitle": "Why Marcan Exists",
+    "whyBody": "For too long, local sourcing has been hindered by outdated directories and disconnected networks. We are removing the friction from domestic procurement so Canadian businesses can find and trade with one another more easily.",
+    "visionTitle": "Our Vision",
+    "visionBody": "A future where Canadian manufacturing is easy to discover, easy to source, and easy to trust. We are building Marcan to help the right shop win the right work again and again.",
+    "frameworkLabel": "Our Framework",
+    "whatWeDoTitle": "What We Do",
+    "whatWeDoSubtitle": "A focused workflow for real-world manufacturing: find capacity, communicate clearly, and move decisions forward.",
+    "card1Title": "Discover Local Capability",
+    "card1Body": "Browse suppliers and manufacturing capabilities using our AI search tool built exclusively for Canadian businesses.",
+    "card2Title": "List What You Can Build",
+    "card2Body": "Publish equipment, materials, surplus parts, and capacity so buyers can find you faster.",
+    "card3Title": "Match Through RFQs",
+    "card3Body": "Send targeted sourcing requests and connect directly, so conversations start on the right spec.",
+    "ctaTitle": "Ready to Build the Network?",
+    "ctaBody": "Join Marcan to connect directly with local manufacturers and to build a more resilient Canadian manufacturing industry.",
+    "ctaSignUp": "Create Account",
+    "ctaContact": "Talk To Us",
+    "metaTitle": "About Us - Marcan",
+    "metaDescription": "Learn about Marcan, a premium B2B network built to revitalize Canadian manufacturing through fast, local connections."
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Sign in to access your procurement dashboard and sourcing tools.",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot Password?",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "signUpLink": "Sign up",
+    "resetTitle": "Reset Password",
+    "resetBody": "Enter your email address and we'll send you a link to reset your password.",
+    "sendResetLink": "Send Reset Link",
+    "sending": "Sending...",
+    "errGeneric": "An error occurred during login.",
+    "errInvalidCredential": "Invalid email or password. Please check your credentials and try again.",
+    "errUserNotFound": "No account found with this email address.",
+    "errWrongPassword": "Incorrect password. Please try again.",
+    "errInvalidEmail": "Invalid email address.",
+    "errUserDisabled": "This account has been disabled.",
+    "errTooManyRequests": "Too many failed login attempts. Please try again later.",
+    "errNetwork": "Network error. Please check your internet connection.",
+    "errResetFailed": "Failed to send password reset email.",
+    "resetSent": "Password reset email sent! Please check your inbox.",
+    "breadcrumb": "Login",
+    "credentialsLabel": "Credentials",
+    "accessHint": "Access your Marcan Account",
+    "emailPlaceholder": "WORK EMAIL",
+    "passwordPlaceholder": "PASSWORD",
+    "loginButton": "Login"
   }
 }

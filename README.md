@@ -113,7 +113,7 @@ marcan26/
 - `/about` - About Us
 - `/contact` - Contact Us
 - `/directory` - Company Directory
-- `/help` - Help Center
+- `/help` - Help Centre
 - `/login` - Login page
 - `/marketplace` - Supplier Listings
 - `/signup` - Sign Up page

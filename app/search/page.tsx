@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { useI18n } from '@/contexts/I18nContext';
 
 type TabType = 'companies' | 'listings' | 'requests';
 
@@ -65,7 +67,10 @@ const PROVINCE_NAME_BY_CODE = new Map(CANADIAN_PROVINCES.map((p) => [p.code, p.n
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useI18n();
   const query = searchParams.get('q') || '';
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [isDomReady, setIsDomReady] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('companies');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
@@ -92,6 +97,19 @@ function SearchPageContent() {
     industry: '',
     province: '',
   });
+
+  useEffect(() => {
+    setIsDomReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRequest) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedRequest(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedRequest]);
 
   useEffect(() => {
     if (query) {
@@ -139,14 +157,6 @@ function SearchPageContent() {
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
-  };
-
-  const getInitials = (name: string) => {
-    const words = name.split(' ');
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
   };
 
   const filteredCompanies = useMemo(() => {
@@ -245,13 +255,18 @@ function SearchPageContent() {
         const haystack = `${request.category || ''} ${request.title || ''} ${request.description || ''}`.toLowerCase();
         if (!haystack.includes(requestsFilters.industry.toLowerCase())) return false;
       }
-      // Province filter
+      // Province filter (target province / location, aligned with storefront cards)
       if (requestsFilters.province) {
         const targetCode = requestsFilters.province.toUpperCase();
         const targetName = PROVINCE_NAME_BY_CODE.get(targetCode) || '';
         const requestProvince = String(request.province || '').toUpperCase();
-        const haystack = `${request.title || ''} ${request.description || ''} ${request.category || ''}`.toLowerCase();
-        if (!(requestProvince === targetCode || haystack.includes(targetName))) return false;
+        const locationSuffix = String(request.location || '').split(',').pop()?.trim().toUpperCase() || '';
+        const locationText = String(request.location || '').toLowerCase();
+        const provinceMatch =
+          requestProvince === targetCode ||
+          locationSuffix === targetCode ||
+          locationText.includes(targetName);
+        if (!provinceMatch) return false;
       }
       // Search
       if (normalizedSearch) {
@@ -299,7 +314,133 @@ function SearchPageContent() {
     return INDUSTRY_LOGOS[selectedIndustries[selectedIndex]];
   };
 
+  const closeRequestModal = () => setSelectedRequest(null);
+
+  const sourcingRequestModal =
+    selectedRequest && isDomReady
+      ? createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <button
+              type="button"
+              className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
+              onClick={closeRequestModal}
+              aria-label={t('wishlist.closeRequestDetailsAria')}
+            />
+
+            <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
+              <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
+                <div className="flex items-center gap-3 min-w-0">
+                  {selectedRequest.category ? (
+                    <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
+                      {selectedRequest.category}
+                    </span>
+                  ) : null}
+                  <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
+                    {selectedRequest.title || t('wishlist.sourcingRequestFallback')}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeRequestModal}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
+                  aria-label={t('wishlist.closeRequestDetailsAria')}
+                >
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <div className="p-6 md:p-8 space-y-8 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 space-y-8">
+                    {selectedRequest.description ? (
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                          <i className="fa-solid fa-align-left text-orange-400"></i> {t('wishlist.requestDescription')}
+                        </h4>
+                        <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                          <p>{selectedRequest.description}</p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i className="fa-solid fa-list-check text-orange-400"></i> {t('wishlist.sourcingRequirements')}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                            {t('wishlist.targetQuantity')}
+                          </span>
+                          <span className="text-sm font-semibold text-white">
+                            {selectedRequest.quantity || t('wishlist.notAvailable')}
+                          </span>
+                        </div>
+                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                            {t('wishlist.targetLocation')}
+                          </span>
+                          <span className="text-sm font-semibold text-white">
+                            {selectedRequest.location || t('wishlist.notAvailable')}
+                          </span>
+                        </div>
+                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                            {t('wishlist.targetPrice')}
+                          </span>
+                          <span className="text-sm font-semibold text-white">
+                            {selectedRequest.targetPrice || t('wishlist.noneSpecified')}
+                          </span>
+                        </div>
+                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">
+                            {t('wishlist.deadline')}
+                          </span>
+                          <span className="text-sm font-semibold text-white">
+                            {selectedRequest.deadline
+                              ? new Date(selectedRequest.deadline).toLocaleDateString()
+                              : t('wishlist.asap')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
+                      <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">
+                        {t('wishlist.interestedInRfq')}
+                      </div>
+                      <Link
+                        href="/post-request"
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                      >
+                        <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
+                      </Link>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-2xl border border-white/5">
+                      <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+                        {t('wishlist.postedBy')}
+                      </h4>
+                      <div className="text-sm font-bold text-white mb-1">
+                        {selectedRequest.company || t('wishlist.companyFallback')}
+                      </div>
+                      <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
+                        <i className="fa-solid fa-circle-check"></i> {t('storefront.modal.platformMember')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
+    <>
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Search" />
 
@@ -700,84 +841,74 @@ function SearchPageContent() {
                     </div>
                   )}
 
-                  {/* Requests Tab */}
+                  {/* Requests Tab — storefront sourcing-request card layout */}
                   {activeTab === 'requests' && (
-                    <div className="space-y-4">
+                    <div>
                       {filteredRequests.length === 0 ? (
                         <div className="text-center py-12">
-                          <i className="fa-solid fa-bullhorn text-4xl text-slate-600 mb-4"></i>
-                          <p className="text-slate-400">
-                            {results.requests.length === 0 ? 'No sourcing requests found.' : 'No sourcing requests match your filters.'}
+                          <i className="fa-solid fa-filter text-4xl text-slate-600 mb-4"></i>
+                          <p className="text-slate-400 text-sm">
+                            {results.requests.length === 0
+                              ? 'No sourcing requests found.'
+                              : 'No sourcing requests match your filters.'}
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {filteredRequests.map((request) => (
-                            <div
-                              key={request.id}
-                              className="glass-card p-6 md:p-8 rounded-2xl flex flex-col md:flex-row gap-6 relative overflow-hidden group hover:border-marcan-red/30 transition-all"
-                            >
-                              <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-marcan-red shadow-neon opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                        <>
+                          <div className="mb-4 text-sm text-slate-400">
+                            {t('wishlist.resultsCount')
+                              .replace('{count}', String(filteredRequests.length))
+                              .replace('{total}', String(results.requests.length))}
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {filteredRequests.map((request) => (
+                              <div
+                                key={request.id}
+                                className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden"
+                              >
+                                <div className="p-5 flex flex-col flex-grow">
+                                  {request.category ? (
+                                    <div className="mb-3">
+                                      <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                        {request.category}
+                                      </span>
+                                    </div>
+                                  ) : null}
 
-                              <div className="hidden md:flex flex-shrink-0">
-                                {request.logoUrl ? (
-                                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center overflow-hidden">
-                                    <img
-                                      src={request.logoUrl}
-                                      alt={request.company}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center font-heading font-black text-white text-xl shadow-lg">
-                                    {getInitials(request.company || 'U')}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex-grow">
-                                <div className="flex flex-wrap justify-between items-start gap-4 mb-2">
-                                  <div>
-                                    <h4 className="text-white font-bold text-lg mb-1 group-hover:text-marcan-red transition-colors">
-                                      {request.title}
-                                    </h4>
-                                    <div className="text-xs text-slate-500 font-medium">
-                                      {request.company ? <>by <span className="text-slate-300">{request.company}</span></> : null}
-                                    </div>
-                                  </div>
-                                  {request.category && (
-                                    <span className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-300 shadow-sm">
-                                      {request.category}
-                                    </span>
-                                  )}
-                                </div>
-                                {request.description && (
-                                  <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-2 md:pr-24">
-                                    {request.description}
+                                  <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
+                                    {request.title || request.company || t('wishlist.sourcingRequestFallback')}
+                                  </h3>
+                                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
+                                    <i className="fa-solid fa-building text-orange-400 mr-1"></i>
+                                    {request.company || t('wishlist.companyFallback')}
                                   </p>
-                                )}
-                                <div className="flex flex-wrap items-center gap-6">
-                                  {request.quantity && (
-                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                                      <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red"><i className="fa-solid fa-cubes"></i></div>
-                                      Quantity: {request.quantity}
-                                    </div>
-                                  )}
-                                  {request.deadline && (
-                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-wider">
-                                      <div className="w-6 h-6 rounded bg-marcan-red/10 flex items-center justify-center text-marcan-red"><i className="fa-solid fa-calendar-day"></i></div>
-                                      Deadline: {new Date(request.deadline).toLocaleDateString()}
-                                    </div>
-                                  )}
+
+                                  <p className="text-xs text-slate-400 line-clamp-1 mb-4">
+                                    {request.description || t('storefront.listingCard.noDescription')}
+                                  </p>
+
+                                  <div className="mt-auto flex items-end justify-between mb-4 gap-3">
+                                    <span className="text-xl font-black text-white truncate">
+                                      {request.targetPrice || t('wishlist.noneSpecified')}
+                                    </span>
+                                    <span className="text-xs text-slate-400 shrink-0">
+                                      <i className="fa-solid fa-location-dot mr-1"></i>
+                                      {request.location || t('storefront.listingCard.notAvailable')}
+                                    </span>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedRequest(request)}
+                                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
+                                  >
+                                    <i className="fa-solid fa-eye"></i> View Request
+                                  </button>
                                 </div>
                               </div>
-                              <div className="md:absolute md:right-8 md:top-1/2 md:-translate-y-1/2 flex items-center justify-end mt-2 md:mt-0 opacity-100 md:opacity-0 group-hover:opacity-100 md:translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                                <button className="bg-marcan-red text-white px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:shadow-neon transition-all flex items-center gap-2 border border-marcan-red">
-                                  View Details <i className="fa-solid fa-arrow-right"></i>
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
                   )}
@@ -795,6 +926,8 @@ function SearchPageContent() {
         </div>
       </div>
     </main>
+    {sourcingRequestModal}
+    </>
   );
 }
 

@@ -1,12 +1,31 @@
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
+import path from 'path';
+import { execSync } from 'child_process';
 
 export const metadata: Metadata = {
   title: 'Terms of Service - Marcan',
   description: 'Terms of Service for Marcan platform.',
 };
 
+function getLastUpdatedDate(): string {
+  try {
+    const filePath = path.join(process.cwd(), 'app/terms/page.tsx');
+    const iso = execSync(`git log -1 --format=%cI -- "${filePath}"`, { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+    if (iso) {
+      return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+  } catch {
+    // Fallbacks below
+  }
+  const fallback = process.env.NEXT_PUBLIC_BUILD_TIME || new Date().toISOString();
+  return new Date(fallback).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 export default function TermsPage() {
+  const lastUpdated = getLastUpdatedDate();
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Terms of Service" />
@@ -20,7 +39,7 @@ export default function TermsPage() {
             <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-4">
               Terms of Service
             </h2>
-            <p className="text-slate-400 text-lg">Last updated: {new Date().toLocaleDateString()}</p>
+            <p className="text-slate-400 text-lg">Last updated: {lastUpdated}</p>
           </div>
 
           <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8">

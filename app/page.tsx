@@ -9,39 +9,13 @@ import { useI18n } from '@/contexts/I18nContext';
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickStartUrl, setQuickStartUrl] = useState('');
+  const [quickStartError, setQuickStartError] = useState('');
   const [companyNames, setCompanyNames] = useState<string[]>([]);
   const [shouldScroll, setShouldScroll] = useState(false);
   const marqueeContainerRef = useRef<HTMLDivElement | null>(null);
   const marqueeTrackRef = useRef<HTMLDivElement | null>(null);
-  const { t } = useI18n();
-
-  const certifications = [
-    { code: 'ISO 9001', label: 'Quality' },
-    { code: 'AS9100', label: 'Aerospace' },
-    { code: 'CGRP', label: 'Controlled' },
-    { code: 'NADCAP', label: 'Process' },
-    { code: 'ISO 14001', label: 'Environmental' },
-    { code: 'ISO 45001', label: 'Safety' },
-    { code: 'IATF 16949', label: 'Automotive' },
-    { code: 'ISO 13485', label: 'Medical' },
-  ];
-
-  const [currentGroup, setCurrentGroup] = useState(0);
-  const certificationsPerGroup = 4;
-  const totalGroups = Math.ceil(certifications.length / certificationsPerGroup);
-
-  const currentCertifications = certifications.slice(
-    currentGroup * certificationsPerGroup,
-    (currentGroup + 1) * certificationsPerGroup
-  );
-
-  const nextGroup = () => {
-    setCurrentGroup((prev) => (prev + 1) % totalGroups);
-  };
-
-  const prevGroup = () => {
-    setCurrentGroup((prev) => (prev - 1 + totalGroups) % totalGroups);
-  };
+  const { t, translateText } = useI18n();
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -93,21 +67,44 @@ export default function HomePage() {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  const handleQuickStartImport = () => {
+    const trimmedUrl = quickStartUrl.trim();
+    if (!trimmedUrl) {
+      setQuickStartError(t('home.quickStart.enterUrlError'));
+      return;
+    }
+    const isValid = (() => {
+      try {
+        const parsed = new URL(trimmedUrl);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    })();
+    if (!isValid) {
+      setQuickStartError(t('home.quickStart.invalidUrlError'));
+      return;
+    }
+    setQuickStartError('');
+    router.push(`/become-supplier?start=import&url=${encodeURIComponent(trimmedUrl)}`);
+  };
+
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
-      <Header breadcrumb="Home" />
+      <Header breadcrumb={translateText('Home')} />
 
       {/* Content Scroll Area */}
       <div className="flex-1 overflow-y-auto p-8 relative">
         {/* Search Bar Container */}
         <form onSubmit={handleSearch} className="mb-4 w-full">
-          <div className="relative group w-full max-w-5xl mx-auto">
+          <div className="relative group w-full max-w-6xl mx-auto">
             {/* Enhanced AI Gradient Glow */}
             <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red via-orange-500 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
 
-            <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 p-2 pl-6 shadow-lg w-full cursor-text">
+            <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 p-3 pl-7 shadow-lg w-full cursor-text">
               {/* AI Icon */}
-              <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-xl mr-4"></i>
+              <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-2xl mr-4"></i>
 
               {/* Prompt-style Input */}
               <input
@@ -120,132 +117,160 @@ export default function HomePage() {
                     handleSearch(e);
                   }
                 }}
-                placeholder="Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')..."
-                className="bg-transparent text-white py-2 focus:outline-none placeholder:text-slate-500 font-medium text-base md:text-lg text-left w-full"
+                placeholder={t('home.searchBar.placeholder')}
+                className="bg-transparent text-white py-3 focus:outline-none placeholder:text-slate-500 font-medium text-lg md:text-xl text-left w-full"
               />
 
               {/* AI Action Button */}
               <button
                 type="submit"
-                className="hidden sm:flex bg-white/5 hover:bg-marcan-red text-white px-6 py-3 rounded-full font-bold text-xs uppercase tracking-wider transition-all ml-2 items-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon shrink-0"
+                className="hidden sm:flex bg-white/5 hover:bg-marcan-red text-white px-7 py-3.5 rounded-full font-bold text-sm uppercase tracking-wider transition-all ml-3 items-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon shrink-0"
               >
-                Ask Our AI <i className="fa-solid fa-arrow-right"></i>
+                {t('home.searchBar.askAi')} <i className="fa-solid fa-arrow-right"></i>
               </button>
             </label>
           </div>
         </form>
 
         {/* Suggested AI Prompts */}
-        <div className="flex items-center justify-center gap-2 mt-4 mb-6 text-[10px] sm:text-xs font-medium text-slate-400 flex-wrap">
-          <span className="uppercase tracking-widest font-bold text-slate-600 mr-2">Try asking:</span>
+        <div className="flex items-center justify-start lg:justify-center gap-1 mt-5 mb-7 text-xs sm:text-sm font-medium text-slate-400 flex-nowrap overflow-x-auto whitespace-nowrap pb-1">
+          <span className="uppercase tracking-widest font-bold text-slate-600 mr-2 shrink-0">{t('home.searchBar.tryAsking')}</span>
           <button
             type="button"
-            onClick={() => setSearchQuery('Plastic injection molding shops')}
-            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+            onClick={() => setSearchQuery(t('home.searchBar.prompt1'))}
+            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all shrink-0"
           >
-            &quot;Plastic injection molding shops&quot;
+            &quot;{t('home.searchBar.prompt1')}&quot;
           </button>
           <button
             type="button"
-            onClick={() => setSearchQuery('Copper fabrication companies')}
-            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+            onClick={() => setSearchQuery(t('home.searchBar.prompt2'))}
+            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all shrink-0"
           >
-            &quot;Copper fabrication companies&quot;
+            &quot;{t('home.searchBar.prompt2')}&quot;
           </button>
           <button
             type="button"
-            onClick={() => setSearchQuery('Titanium machining suppliers serving defense industry')}
-            className="px-4 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all"
+            onClick={() => setSearchQuery(t('home.searchBar.prompt3'))}
+            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 hover:text-white transition-all shrink-0"
           >
-            &quot;Titanium machining suppliers serving defense industry&quot;
+            &quot;{t('home.searchBar.prompt3')}&quot;
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main Hero Card */}
-          <div className="lg:col-span-7 glass-card rounded-3xl p-10 relative overflow-hidden group border border-white/5">
+          <div className="lg:col-span-7 glass-card rounded-3xl p-10 md:p-10 relative overflow-hidden group border border-white/5 min-h-[420px] flex items-center">
             <div className="absolute inset-0 bg-gradient-to-r from-marcan-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="relative z-10">
-              <h1 className="font-heading text-5xl font-black text-white mb-4 tracking-tight leading-none uppercase">
+              <h1 className="font-heading text-5xl md:text-6xl font-black text-white mb-6 tracking-tight leading-none uppercase">
                 {t('home.hero.titleWelcome')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">
                   Marcan
                 </span>
               </h1>
-              <p className="text-slate-400 text-lg mb-8 max-w-lg font-light leading-relaxed">
+              <p className="text-slate-300 text-xl mb-10 max-w-2xl font-light leading-relaxed">
                 {t('home.hero.tagline')}
               </p>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Link
                   href="/directory"
-                  className="bg-marcan-red text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:shadow-neon hover:scale-105 transition-all duration-300 inline-block"
+                  className="bg-marcan-red text-white px-7 py-4 rounded-lg font-bold uppercase tracking-wider text-base hover:shadow-neon hover:scale-105 transition-all duration-300 inline-block"
                 >
                   {t('home.hero.findManufacturers')}
                 </Link>
                 <Link
                   href="/signup"
-                  className="border border-white/20 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
+                  className="border border-white/20 text-white px-7 py-4 rounded-lg font-bold uppercase tracking-wider text-base hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
                 >
                   {t('home.hero.joinNetwork')}
                 </Link>
               </div>
+
             </div>
             {/* Background graphic */}
             <i className="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[200px] text-white/5 rotate-[-20deg]"></i>
           </div>
 
-          {/* Platform Workflow */}
-          <div className="lg:col-span-5 glass-card rounded-3xl p-8 flex flex-col justify-center relative overflow-hidden border border-white/5 group">
+          {/* AI Scraper Spotlight */}
+          <div className="lg:col-span-5 glass-card rounded-3xl p-3 flex flex-col justify-center relative overflow-hidden border border-white/5 group min-h-[420px]">
             {/* Background Effect */}
             <div className="absolute -right-10 -bottom-10 text-9xl text-white/5 group-hover:text-marcan-red/10 transition-colors duration-500 pointer-events-none">
               <i className="fa-solid fa-network-wired"></i>
             </div>
 
             <div className="relative z-10">
-              {/*}
-              <div className="flex items-center gap-2 mb-5">
-                <i className="fa-solid fa-route text-marcan-red"></i>
-                <span className="text-slate-300 text-xs font-bold uppercase tracking-widest">How Marcan Works</span>
-              </div>
-              */}
-              <h4 className="font-heading font-black text-2xl text-white mb-6">{t('home.howMarcanWorks.title')}</h4>
+              {/* AI website scraper quick start (URL -> auto-import supplier profile) */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0a1024]/90 to-[#040816]/95 border-2 border-orange-500/40 backdrop-blur-md relative overflow-hidden group/ai shadow-[0_0_50px_rgba(249,115,22,0.12)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-marcan-red/10 opacity-70 group-hover/ai:opacity-100 transition-opacity duration-500" />
+                <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-marcan-red/10 blur-3xl pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-4 bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-widest">
+                    <i className="fa-solid fa-bolt" />
+                    {t('home.quickStart.badge')}
+                  </div>
+                  <h3 className="font-heading font-black text-3xl leading-[1.05] uppercase mb-3">
+                    <span className="text-white">{t('home.quickStart.titleBefore')}</span>
+                    <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-marcan-red">
+                      {t('home.quickStart.titleHighlight')}
+                    </span>
+                  </h3>
+                  <p className="text-sm text-slate-300 mb-5 leading-relaxed">{t('home.quickStart.body')}</p>
 
-              {/* Ecosystem Timeline/Node Flow */}
-              <div className="relative mt-2 space-y-7">
+                  <div className="flex flex-col gap-3">
+                    <div className="relative flex-grow">
+                      <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
+                      <input
+                        type="url"
+                        value={quickStartUrl}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setQuickStartUrl(v);
+                          if (!v.trim()) {
+                            setQuickStartError('');
+                            return;
+                          }
+                          try {
+                            const u = new URL(v.trim());
+                            const ok = u.protocol === 'http:' || u.protocol === 'https:';
+                            setQuickStartError(ok ? '' : t('home.quickStart.invalidUrlError'));
+                          } catch {
+                            setQuickStartError(t('home.quickStart.invalidUrlError'));
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleQuickStartImport();
+                          }
+                        }}
+                        placeholder={t('home.quickStart.urlPlaceholder')}
+                        className={`w-full bg-black/70 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 border ${quickStartError ? 'border-red-500/40 focus:border-red-500' : 'border-white/10 focus:border-orange-500'
+                          }`}
+                      />
 
-                {/* Node 1: Onboarding */}
-                <div className="relative group/node cursor-default">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-1">
-                      <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node1.title')}</div>
+                      {quickStartError && (
+                        <div className="mt-2 text-[11px] text-red-400">{quickStartError}</div>
+                      )}
                     </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node1.body')}</div>
+
+                    <button
+                      type="button"
+                      onClick={handleQuickStartImport}
+                      disabled={!quickStartUrl.trim() || !!quickStartError}
+                      className="w-full bg-gradient-to-r from-orange-500 to-marcan-red text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <i className="fa-solid fa-wand-magic-sparkles" />
+                      {t('home.quickStart.autoGenerate')}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 text-[11px] text-slate-400 font-semibold tracking-wide uppercase flex items-center gap-2">
+                    <i className="fa-solid fa-shield-halved text-slate-500" />
+                    {t('home.quickStart.freeToJoin')}
                   </div>
                 </div>
-
-                {/* Node 2: Dual Action */}
-                <div className="relative group/node cursor-default">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-1">
-                      <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node2.title')}</div>
-                    </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node2.body')}</div>
-                  </div>
-                </div>
-
-                {/* Node 3: Collaborate */}
-                <div className="relative group/node cursor-default">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2 mb-1">
-                      <i className="fa-solid fa-handshake-simple text-marcan-red text-sm"></i>
-                      <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node3.title')}</div>
-                    </div>
-                    <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node3.body')}</div>
-                  </div>
-                </div>
-
               </div>
             </div>
           </div>
@@ -266,7 +291,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform">
                   <i className="fa-solid fa-microchip text-2xl"></i>
                 </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">Precision Machining</h4>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.precisionMachining')}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.precisionMachiningDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:text-white transition-colors">
                   {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -281,7 +306,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
                   <i className="fa-solid fa-fire text-2xl"></i>
                 </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">Foundries & Casting</h4>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.foundriesCasting')}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.foundriesCastingDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-orange-400 uppercase tracking-wider group-hover:text-white transition-colors">
                   {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -296,7 +321,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">
                   <i className="fa-solid fa-spray-can-sparkles text-2xl"></i>
                 </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">Surface Finishing</h4>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.surfaceFinishing')}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.surfaceFinishingDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-purple-400 uppercase tracking-wider group-hover:text-white transition-colors">
                   {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -311,7 +336,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4 group-hover:scale-110 transition-transform">
                   <i className="fa-solid fa-screwdriver-wrench text-2xl"></i>
                 </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">Tooling & Molds</h4>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.toolingMolds')}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.toolingMoldsDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-green-400 uppercase tracking-wider group-hover:text-white transition-colors">
                   {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -326,7 +351,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
                   <i className="fa-solid fa-robot text-2xl"></i>
                 </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">Automation</h4>
+                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.automation')}</h4>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.automationDescription')}</p>
                 <div className="flex items-center text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
                   {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -390,11 +415,11 @@ export default function HomePage() {
 
           {/* Trusted Partners Section */}
           <div className="lg:col-span-12">
-            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">Manufacturers</div>
+            <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 ml-1">{t('home.manufacturersSectionTitle')}</div>
             <div className="glass-card rounded-2xl border border-white/5 p-4 overflow-hidden">
               {marqueeNames.length === 0 ? (
                 <div className="h-16 flex items-center justify-center text-sm text-slate-500">
-                  No manufacturers found in the directory yet.
+                  {t('home.emptyManufacturers')}
                 </div>
               ) : (
                 <div className="manufacturer-marquee" ref={marqueeContainerRef}>

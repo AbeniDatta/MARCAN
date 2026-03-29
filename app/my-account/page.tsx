@@ -1450,8 +1450,8 @@ export default function MyAccountPage() {
                               {formData.firstName || supplierProfile?.firstName || user?.firstName || 'Not specified'}
                             </div>
                           )}
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                             Last Name <span className="text-marcan-red">*</span>
                           </label>
@@ -2324,7 +2324,7 @@ export default function MyAccountPage() {
                 <div className="space-y-8">
                   {/* Wishlist Requests Section */}
                   {accountRole !== 'storefront' && (
-                    <div className="glass-card p-8 rounded-2xl border border-white/5">
+                  <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                         <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                         <Link
@@ -2354,13 +2354,13 @@ export default function MyAccountPage() {
                               className="glass-card p-4 rounded-xl border border-white/5 hover:border-marcan-red/30 transition-all relative"
                             >
                               <div className="absolute top-3 right-3">
-                                <button
+                              <button
                                   onClick={() => setPendingDelete({ type: 'wishlist', id: request.id })}
                                   className="w-8 h-8 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 flex items-center justify-center text-red-400 hover:text-red-300 transition-all"
-                                  title="Delete request"
-                                >
-                                  <i className="fa-solid fa-trash text-xs"></i>
-                                </button>
+                                title="Delete request"
+                              >
+                                <i className="fa-solid fa-trash text-xs"></i>
+                              </button>
                               </div>
                               <div className="flex justify-between items-start mb-2 pr-10">
                                 <div>
@@ -2402,9 +2402,9 @@ export default function MyAccountPage() {
                               >
                                 See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
                               </Link>
-                            </div>
-                          )}
                         </div>
+                      )}
+                  </div>
                       )}
                     </div>
                   )}
@@ -2610,7 +2610,7 @@ export default function MyAccountPage() {
                                     <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
                                       {listing.listingType}
                                     </span>
-                                  </div>
+                              </div>
                                 ) : null}
 
                                 <h3 className="font-heading font-bold text-white mb-1 line-clamp-1 pr-10">
@@ -2688,7 +2688,7 @@ export default function MyAccountPage() {
                           <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
                             {viewingListing.title || 'Untitled listing'}
                           </h3>
-                        </div>
+            </div>
                         <button
                           onClick={() => setViewingListing(null)}
                           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
