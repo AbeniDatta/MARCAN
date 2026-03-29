@@ -4,6 +4,9 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
 
+const UW_ENGINEERING_URL = 'https://uwaterloo.ca/engineering/';
+const NGEN_URL = 'https://www.ngen.ca/';
+
 export default function AboutPageClient() {
   const { t, translateText } = useI18n();
 
@@ -25,7 +28,14 @@ export default function AboutPageClient() {
               <h2 className="font-heading text-3xl font-black text-white uppercase tracking-wide mb-6">{t('about.whoWeAreTitle')}</h2>
               <p className="text-slate-400 text-sm leading-relaxed">
                 {t('about.whoWeAreBodyPrefix')}
-                <strong className="text-white"> {t('about.whoWeAreBodyBold')} </strong>
+                <a
+                  href={UW_ENGINEERING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-white underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-marcan-red rounded-sm"
+                >
+                  {t('about.whoWeAreBodyBold')}
+                </a>
                 {t('about.whoWeAreBodySuffix')}
               </p>
             </div>
@@ -36,25 +46,41 @@ export default function AboutPageClient() {
               <p className="text-slate-400 text-xs mb-8 max-w-md">{t('about.supportedBySubtitle')}</p>
 
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="bg-black/40 border border-white/10 rounded-xl p-5 flex items-center gap-4 group hover:border-marcan-red/30 transition-colors">
+                <a
+                  href={UW_ENGINEERING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-black/40 border border-white/10 rounded-xl p-5 flex items-center gap-4 group hover:border-marcan-red/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-marcan-red"
+                  aria-label={`${t('about.partnerUw')}, ${t('about.partnerUwSub')}`}
+                >
                   <div className="w-12 h-12 rounded-lg bg-marcan-red/10 flex items-center justify-center text-marcan-red shadow-neon shrink-0">
-                    <i className="fa-solid fa-building-columns text-xl" />
+                    <i className="fa-solid fa-building-columns text-xl" aria-hidden />
                   </div>
                   <div>
-                    <div className="text-white font-bold text-sm leading-tight">{t('about.partnerUw')}</div>
+                    <div className="text-white font-bold text-sm leading-tight group-hover:text-marcan-red transition-colors">
+                      {t('about.partnerUw')}
+                    </div>
                     <div className="text-slate-500 text-[10px] uppercase tracking-wider mt-1">{t('about.partnerUwSub')}</div>
                   </div>
-                </div>
+                </a>
 
-                <div className="bg-black/40 border border-white/10 rounded-xl p-5 flex items-center gap-4 group hover:border-blue-500/30 transition-colors">
+                <a
+                  href={NGEN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-black/40 border border-white/10 rounded-xl p-5 flex items-center gap-4 group hover:border-blue-500/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  aria-label={`${t('about.partnerNgen')}, ${t('about.partnerNgenSub')}`}
+                >
                   <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] shrink-0">
-                    <i className="fa-solid fa-industry text-xl" />
+                    <i className="fa-solid fa-industry text-xl" aria-hidden />
                   </div>
                   <div>
-                    <div className="text-white font-bold text-sm leading-tight">{t('about.partnerNgen')}</div>
+                    <div className="text-white font-bold text-sm leading-tight group-hover:text-blue-300 transition-colors">
+                      {t('about.partnerNgen')}
+                    </div>
                     <div className="text-slate-500 text-[10px] uppercase tracking-wider mt-1">{t('about.partnerNgenSub')}</div>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </section>

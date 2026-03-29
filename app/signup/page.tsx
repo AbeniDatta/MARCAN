@@ -91,9 +91,12 @@ export default function SignupPage() {
                     <i className="fa-solid fa-check text-blue-400 mt-1 text-sm" />
                     <span className="text-sm text-slate-300">{t('signup.pathPicker.buyerBullet3')}</span>
                   </div>
+                  <div className="flex items-start gap-3">
+
+                  </div>
                 </div>
 
-                <div className="mt-8 pt-4 border-t border-white/10">
+                <div className="mt-14 space-y-3 pt-10 border-t border-white/10">
                   <button
                     type="button"
                     onClick={handleJoinBuyer}
@@ -217,9 +220,13 @@ export default function SignupPage() {
                     <i className="fa-solid fa-check text-orange-400 mt-1 text-sm" />
                     <span className="text-sm text-slate-300">{t('signup.pathPicker.storefrontBullet3')}</span>
                   </div>
+                  <div className="flex items-start gap-3">
+
+                  </div>
                 </div>
 
-                <div className="mt-8 pt-4 border-t border-white/10">
+
+                <div className="mt-14 space-y-3 pt-10 border-t border-white/10">
                   <button
                     type="button"
                     onClick={handleJoinStorefront}
