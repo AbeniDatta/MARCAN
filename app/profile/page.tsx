@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
 
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
     'Precision Machining': {
@@ -194,7 +195,8 @@ function ProfilePageContent() {
         ? (/^https?:\/\//i.test(displayWebsite) ? displayWebsite : `https://${displayWebsite}`)
         : '';
     const getIndustryLogo = (industries: string[], seed: string) => {
-        const valid = Array.isArray(industries) ? industries.filter((i) => INDUSTRY_LOGOS[i]) : [];
+        const normalized = Array.isArray(industries) ? industries.map((i) => normalizeIndustryHubName(i)).filter(Boolean) as string[] : [];
+        const valid = normalized.filter((i) => INDUSTRY_LOGOS[i]);
         if (valid.length === 0) return null;
         if (valid.length === 1) return INDUSTRY_LOGOS[valid[0]];
         const seedString = `${seed}:${valid.join('|')}`;
@@ -511,7 +513,7 @@ function ProfilePageContent() {
                         {/* Industries Served */}
                         {displayIndustries.length > 0 && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries Served</h3>
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Capabilities</h3>
                                 <div className="flex flex-wrap gap-3">
                                     {displayIndustries.map((industry: string) => {
                                         const map = INDUSTRY_LOGOS[industry];

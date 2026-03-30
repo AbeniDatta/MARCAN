@@ -48,7 +48,7 @@
       "findManufacturers": "Find Manufacturers",
       "joinNetwork": "Join Our Network"
     },
-    "industriesTitle": "Industries",
+    "industriesTitle": "Capabilities",
     "howMarcanWorks": {
       "title": "How Marcan Works",
       "node1": {
@@ -65,7 +65,7 @@
       }
     },
     "industries": {
-      "exploreIndustry": "Explore Industry",
+      "exploreIndustry": "Explore Capability",
       "precisionMachining": "Precision Machining",
       "foundriesCasting": "Foundries & Casting",
       "surfaceFinishing": "Surface Finishing",
@@ -127,7 +127,7 @@
     "explore": "Explore",
     "title": "Company Directory",
     "searchPlaceholder": "Find manufacturers, equipment, or sourcing opportunities...",
-    "allIndustries": "All Industries",
+    "allIndustries": "All Capabilities",
     "allProvinces": "All Provinces",
     "allCertifications": "All Certifications",
     "clear": "Clear",
@@ -149,7 +149,7 @@
     "title": "Sourcing Requests",
     "postRequest": "Post Request",
     "searchPlaceholder": "Search requests by title, category, or details...",
-    "allIndustries": "All Industries",
+    "allIndustries": "All Capabilities",
     "allProvinces": "All Provinces",
     "sort": {
       "newestFirst": "Newest first",
@@ -247,7 +247,7 @@
     },
     "allCategories": "All Categories",
     "allProvinces": "All Provinces",
-    "allIndustries": "All Industries",
+    "allIndustries": "All Capabilities",
     "allCertifications": "All Certifications",
     "clear": "Clear",
     "clearFilters": "Clear Filters",
@@ -614,7 +614,7 @@
       "selectOnboardingMethod": "Please select an onboarding method",
       "basicCompanyRequired": "Company name, street address, city, and province are required",
       "selectProvinceServed": "Please select at least one province served",
-      "selectIndustryHub": "Please select at least one industry hub",
+      "selectIndustryHub": "Please select at least one capability",
       "selectProcessAndMaterial": "Please select at least one process and one material, or enter them in the \"Other\" fields",
       "selectTypicalJobSize": "Please select at least one typical job size",
       "selectTypicalLeadTime": "Please select a typical lead time",

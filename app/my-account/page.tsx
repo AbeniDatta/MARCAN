@@ -1700,7 +1700,7 @@ export default function MyAccountPage() {
                       </div>
                       <div className="md:col-span-2">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                          Industry Hub(s) <span className="text-marcan-red">*</span>
+                          Capabilities <span className="text-marcan-red">*</span>
                         </label>
                         {isEditMode ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-black/20 rounded-lg border border-white/10">

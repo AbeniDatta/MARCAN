@@ -174,8 +174,8 @@ function SearchPageContent() {
       if (normalizedSearch) {
         const certStrings = Array.isArray(company.certifications)
           ? company.certifications.map((cert: any) =>
-              typeof cert === 'string' ? cert : `${cert.code || ''} ${cert.name || ''}`
-            )
+            typeof cert === 'string' ? cert : `${cert.code || ''} ${cert.name || ''}`
+          )
           : [];
         const haystack = [
           company.name,
@@ -607,7 +607,7 @@ function SearchPageContent() {
                           onChange={(e) => setFilters({ ...filters, industry: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                         >
-                          <option value="">All Industries</option>
+                          <option value="">All Capabilities</option>
                           {INDUSTRY_HUBS.map((hub) => (
                             <option key={hub} value={hub}>
                               {hub}
@@ -722,17 +722,17 @@ function SearchPageContent() {
                         listingsSort !== 'new-to-old' ||
                         listingsFilters.category ||
                         listingsFilters.province) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setListingsFilters({ search: '', category: '', province: '' });
-                            setListingsSort('new-to-old');
-                          }}
-                          className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
-                        >
-                          {t('storefront.clear')}
-                        </button>
-                      )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setListingsFilters({ search: '', category: '', province: '' });
+                              setListingsSort('new-to-old');
+                            }}
+                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
+                          >
+                            {t('storefront.clear')}
+                          </button>
+                        )}
                     </div>
                   </div>
                 )}
@@ -755,7 +755,7 @@ function SearchPageContent() {
                         onChange={(e) => setRequestsFilters({ ...requestsFilters, industry: e.target.value })}
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                       >
-                        <option value="">All Industries</option>
+                        <option value="">All Capabilities</option>
                         {INDUSTRY_HUBS.map((hub) => (
                           <option key={hub} value={hub}>
                             {hub}
@@ -983,7 +983,7 @@ function SearchPageContent() {
                                         <a
                                           href={`mailto:${listing.supplierEmail}?subject=${encodeURIComponent(
                                             t('storefront.modal.emailSubjectPrefix') +
-                                              (listing.title || t('storefront.listingCard.untitledListing'))
+                                            (listing.title || t('storefront.listingCard.untitledListing'))
                                           )}`}
                                           className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
                                         >

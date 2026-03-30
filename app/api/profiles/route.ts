@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { scheduleSupplierProfileEnrichment } from '@/services/ai-enrichment';
+import { normalizeIndustriesServed } from '@/lib/industryHubNormalize';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -228,7 +229,8 @@ export async function POST(request: NextRequest) {
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
       typicalJobSize: typicalJobSize || null,
-      industriesServed: industriesServed || [],
+      // Always store industry hubs as canonical English values so logos render consistently.
+      industriesServed: normalizeIndustriesServed(industriesServed),
       leadTimeMinDays: normalizedLeadTimeMin,
       leadTimeMaxDays: normalizedLeadTimeMax,
       maxPartSizeMmX: normalizedMaxX,

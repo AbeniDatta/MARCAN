@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
+import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
 
 const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
@@ -201,10 +202,13 @@ function DirectoryPageContent() {
 
       // Industry filter
       if (filters.industry) {
-        const companyIndustries = Array.isArray(company.industriesServed) && company.industriesServed.length > 0
+        const companyIndustriesRaw = Array.isArray(company.industriesServed) && company.industriesServed.length > 0
           ? company.industriesServed
           : (Array.isArray(company.tags) ? company.tags : []);
-        const hasIndustry = companyIndustries.some(
+        const normalizedIndustries = companyIndustriesRaw
+          .map((hub: string) => normalizeIndustryHubName(hub))
+          .filter(Boolean) as string[];
+        const hasIndustry = normalizedIndustries.some(
           (hub: string) => String(hub).toLowerCase() === filters.industry.toLowerCase()
         );
         if (!hasIndustry) return false;
@@ -256,9 +260,10 @@ function DirectoryPageContent() {
   }, [companies, filters, aiSearchResults]);
 
   const getIndustryLogoForCompany = (company: any) => {
-    const selectedIndustries = Array.isArray(company.industriesServed)
-      ? company.industriesServed.filter((industry: string) => INDUSTRY_LOGOS[industry])
+    const normalizedIndustries = Array.isArray(company.industriesServed)
+      ? company.industriesServed.map((industry: string) => normalizeIndustryHubName(industry)).filter(Boolean)
       : [];
+    const selectedIndustries = normalizedIndustries.filter((industry: string) => INDUSTRY_LOGOS[industry]);
 
     if (selectedIndustries.length === 0) return null;
     if (selectedIndustries.length === 1) return INDUSTRY_LOGOS[selectedIndustries[0]];
@@ -434,7 +439,9 @@ function DirectoryPageContent() {
                     <p className="text-xs text-slate-500 uppercase mb-4">
                       <i className="fa-solid fa-location-dot"></i> {company.location}
                     </p>
-                    <p className="text-slate-400 text-xs mb-6 leading-relaxed">{company.description}</p>
+                    <p className="text-slate-400 text-xs mb-6 leading-relaxed line-clamp-4 overflow-hidden">
+                      {company.description}
+                    </p>
 
                     {/* Industry Tags */}
                     {(company.tags && company.tags.length > 0) && (
