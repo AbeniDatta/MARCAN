@@ -23,7 +23,8 @@
   "layout": {
     "developerPreviewLabel": "Beta Release:",
     "developmentDisclaimerBody": "The platform is currently undergoing active testing and optimization.",
-    "closeMenuAria": "Close navigation menu"
+    "closeMenuAria": "Close navigation menu",
+    "dismissDisclaimerAria": "Dismiss beta notice"
   },
   "sidebar": {
     "home": "Home",
@@ -56,7 +57,7 @@
       },
       "node2": {
         "title": "2. Request or List",
-        "body": "Buyers post targeted RFQs to the network. Suppliers and storefront accounts list surplus materials, equipment, or available capacity."
+        "body": "Buyers and suppliers can post targeted RFQs to the network. Suppliers and storefront accounts can also list surplus materials, equipment, or available capacity."
       },
       "node3": {
         "title": "3. Match & Collaborate",
@@ -170,6 +171,8 @@
       "suffix": "to post a request"
     },
     "companyFallback": "Anonymous Buyer",
+    "postRequestEligibleAccountHint": "A buyer or supplier account is required to post requests.",
+    "postRequestFormSubtitle": "Create an RFQ to source materials or services from the network.",
     "recentlyPosted": "Recently posted",
     "posted": "Posted",
     "industryCategory": "Industry Category",
@@ -225,6 +228,7 @@
     "title": "Industrial Storefront",
     "createListing": "Create Listing",
     "createProfile": "Create your industrial storefront profile",
+    "createListingDisabledHint": "A supplier or industrial storefront profile is required to create listings.",
     "tabs": {
       "listings": "Listings",
       "stores": "Stores"
@@ -272,7 +276,8 @@
       "viewFullProfile": "View Full Profile",
       "descriptionFallback": "No description available for this listing.",
       "emailSupplier": "Email Supplier",
-      "emailSubjectPrefix": "Industrial storefront inquiry: "
+      "emailSubjectPrefix": "Industrial storefront inquiry: ",
+      "closeListingAria": "Close listing details"
     }
   },
   "storefrontProfile": {
@@ -345,7 +350,7 @@
       },
       "recommendations": {
         "buyerTitle": "Buyer Account",
-        "buyerBody": "Buyer accounts are best for posting sourcing requests and managing RFQs.",
+        "buyerBody": "Best when you mainly need search and RFQs without supplier listings or a directory profile. (Supplier accounts can post RFQs too.)",
         "storefrontTitle": "Storefront Account",
         "storefrontBody": "Storefront accounts are best if you only want to publish storefront listings.",
         "supplierTitle": "Supplier Account",
@@ -368,7 +373,7 @@
       },
       "supplier": {
         "title": "Supplier Account",
-        "body": "Can do both, appears in the company directory, and can be recommended by AI."
+        "body": "Can post sourcing requests, create storefront listings, appear in the company directory, and be recommended by AI."
       }
     },
     "joinBuyer": {
@@ -399,14 +404,14 @@
       "subtitle": "Select the account type that best matches your immediate goals on the Marcan platform.",
       "buyerBullet1": "Post Sourcing Requests (RFQs)",
       "buyerBullet2": "Search the Company Directory",
-      "buyerBullet3": "pAccess Direct Contact Details",
+      "buyerBullet3": "Access Direct Contact Details",
       "joinBuyerCta": "Join as a Buyer",
       "supplierBadge": "Full Network Access",
       "supplierTitle": "Supplier Account",
       "supplierSubtitle": "I am a manufacturer looking to win new business and list capacity.",
       "supplierBullet1": "Instant AI Profile Generation",
       "supplierBullet2": "Public Company Directory Profile",
-      "supplierBullet3": "Receive RFQ Matches",
+      "supplierBullet3": "Post Sourcing Requests (RFQs)",
       "supplierBullet4": "Create Storefront Listings",
       "manualLinkLabel": "Become a Supplier (manual start)",
       "storefrontTitle": "Storefront Seller Account",
@@ -647,13 +652,13 @@
     "a1p2": ", explore the ",
     "a1p3": ", and post sourcing requests without subscriptions, commissions, or paywalls on the platform itself.",
     "q2": "Who can use Marcan (e.g. Canadian manufacturing focus)?",
-    "a2": "Marcan is built for Canadian manufacturing and industry — job shops, contract manufacturers, distributors, OEMs, and related suppliers. Anyone can sign up as a buyer to search and post RFQs. Company profiles in the directory, supplier onboarding, and storefront selling are meant for organizations that operate and serve customers in Canada.",
+    "a2": "Marcan is built for Canadian manufacturing and industry — job shops, contract manufacturers, distributors, OEMs, and related suppliers. You can sign up as a buyer or supplier to search the ecosystem; buyer and supplier accounts can post sourcing requests (RFQs). Company profiles in the directory, supplier onboarding, and storefront selling are meant for organizations that operate and serve customers in Canada.",
     "q3": "What is the difference between a buyer account, a supplier account, and a storefront seller?",
     "a3p1": "A ",
     "a3buyer": "buyer account",
     "a3p2": " is for procurement teams who want to search the ecosystem, use the directory, and publish sourcing requests (RFQs). A ",
     "a3supplier": "supplier account",
-    "a3p3": " is the full network path: company profile in the directory, RFQ visibility, optional AI-assisted setup from your website, and the ability to create storefront-style listings. A ",
+    "a3p3": " is the full network path: company profile in the directory, RFQ visibility, optional AI-assisted setup from your website, storefront-style listings, and the same ability to post outbound sourcing requests (RFQs) as a buyer account. A ",
     "a3storefront": "storefront seller",
     "a3p4": " is focused on listing surplus materials, parts, or equipment in the Shop with a lighter storefront onboarding. Paths are started from ",
     "a3p5": "; buyer and supplier or storefront flows use separate onboarding steps.",
@@ -672,8 +677,8 @@
     "a8p1": "During supplier onboarding, choose the manual path instead of import (the link offered next to the website field). You'll step through the same company, capability, and contact sections yourself. You can also find it here ",
     "a8p2": ".",
     "q9": "What are sourcing requests (RFQs) and how do I post one?",
-    "a9p1": "Sourcing requests are buyer-side RFQs: structured posts describing parts, materials, services, quantities, or timelines you need. Create one from the ",
-    "a9p2": " flow (when signed in). Suppliers and other users can discover your request and contact you using the details you choose to display. You can track what you've published from ",
+    "a9p1": "Sourcing requests are structured RFQs describing parts, materials, services, quantities, or timelines you need. Signed-in buyers and suppliers can create them from the ",
+    "a9p2": " flow (when signed in). Other users can discover your request and contact you using the details you choose to display. You can track what you've published from ",
     "a9myAccount": "My Account",
     "a9p3": " and the My Posts areas.",
     "q10": "How do I contact a company I find on Marcan?",
@@ -713,7 +718,7 @@
     "card2Title": "List What You Can Build",
     "card2Body": "Publish equipment, materials, surplus parts, and capacity so buyers can find you faster.",
     "card3Title": "Match Through RFQs",
-    "card3Body": "Send targeted sourcing requests and connect directly, so conversations start on the right spec.",
+    "card3Body": "Buyers and suppliers can publish targeted sourcing requests and connect directly, so conversations start on the right spec.",
     "ctaTitle": "Ready to Build the Network?",
     "ctaBody": "Join Marcan to connect directly with local manufacturers and to build a more resilient Canadian manufacturing industry.",
     "ctaSignUp": "Create Account",

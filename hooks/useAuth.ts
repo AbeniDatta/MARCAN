@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { fetchAccountRoleFromApi } from '@/lib/accountRole';
 
 interface UserInfo {
     firstName: string;
@@ -75,33 +76,52 @@ export function useAuth() {
                 // User is signed in via Firebase
                 setIsAuthenticated(true);
 
+                let baseUser: UserInfo;
+
                 // Get user data from localStorage (contains extended profile data)
                 const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('marcan_user') : null;
                 if (storedUserData) {
                     try {
-                        const parsed = JSON.parse(storedUserData);
-                        setUser(parsed);
+                        baseUser = JSON.parse(storedUserData);
                     } catch (e) {
-                        // If parsing fails, create basic user info from Firebase
                         const nameParts = firebaseUser.displayName?.split(' ') || [];
-                        setUser({
+                        baseUser = {
                             firstName: nameParts[0] || 'User',
                             lastName: nameParts.slice(1).join(' ') || 'User',
                             email: firebaseUser.email || '',
-                        });
+                        };
                     }
                 } else {
-                    // No stored data, create basic user info from Firebase
                     const nameParts = firebaseUser.displayName?.split(' ') || [];
-                    setUser({
+                    baseUser = {
                         firstName: nameParts[0] || 'User',
                         lastName: nameParts.slice(1).join(' ') || 'User',
                         email: firebaseUser.email || '',
-                    });
+                    };
                 }
 
-                // Ensure localStorage is in sync
+                // Ensure email matches Firebase (source of truth for signed-in identity)
+                if (firebaseUser.email) {
+                    baseUser = { ...baseUser, email: firebaseUser.email };
+                }
+
+                setUser(baseUser);
                 localStorage.setItem('marcan_auth', 'true');
+
+                const emailForRole = firebaseUser.email || baseUser.email;
+                if (emailForRole) {
+                    void (async () => {
+                        try {
+                            const apiRole = await fetchAccountRoleFromApi(emailForRole);
+                            const merged: UserInfo = { ...baseUser, email: emailForRole, role: apiRole ?? baseUser.role };
+                            setUser(merged);
+                            localStorage.setItem('marcan_user', JSON.stringify(merged));
+                            window.dispatchEvent(new Event('marcan-auth-change'));
+                        } catch {
+                            // keep baseUser / existing role
+                        }
+                    })();
+                }
             } else {
                 // User is signed out
                 setIsAuthenticated(false);

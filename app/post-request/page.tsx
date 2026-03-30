@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 export default function PostRequestPage() {
     const router = useRouter();
+    const { t } = useI18n();
     const { isAuthenticated, isMounted, user } = useAuth();
     const [isSupplier, setIsSupplier] = useState(false);
     const isBuyer = !isSupplier;
@@ -161,7 +163,7 @@ export default function PostRequestPage() {
                     <div className="glass-card p-10 rounded-3xl border border-white/5">
                         <div className="mb-8 border-b border-white/10 pb-6">
                             <h2 className="font-heading text-3xl font-black text-white uppercase tracking-widest mb-2">Post New Request</h2>
-                            <p className="text-xs text-slate-500">Create an RFQ to source materials or services from the network.</p>
+                            <p className="text-xs text-slate-500">{t('wishlist.postRequestFormSubtitle')}</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">

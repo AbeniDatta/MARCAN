@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
+import { auth as firebaseAuth } from '@/lib/firebase';
 import { useI18n } from '@/contexts/I18nContext';
 
 const CANADIAN_PROVINCES = [
@@ -25,10 +26,10 @@ const CANADIAN_PROVINCES = [
 ];
 
 export default function MyAccountPage() {
-  const { isAuthenticated, user, isLoading, isMounted, login } = useAuth();
+  const { isAuthenticated, user, isLoading, isMounted, login, logout } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile' | 'buyer-profile' | 'my-posts'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'buyer-profile' | 'my-posts' | 'delete-account'>('profile');
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -955,40 +956,53 @@ export default function MyAccountPage() {
     }
   };
 
-  const handleDeactivateAccount = async () => {
-    if (!user) return;
+  const handlePermanentDeleteAccount = async () => {
+    if (!user?.email) return;
+
+    const firebaseUser = firebaseAuth.currentUser;
+    if (!firebaseUser) {
+      setError('You must be signed in to delete your account.');
+      setShowDeleteConfirm(false);
+      return;
+    }
 
     setIsDeletingProfile(true);
     setError('');
 
     try {
+      const idToken = await firebaseUser.getIdToken(true);
       const response = await fetch('/api/account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.email,
-          action: 'deactivate',
+          action: 'delete_permanent',
+          idToken,
         }),
       });
 
+      const payload = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Failed to deactivate account');
+        throw new Error(
+          typeof payload.details === 'string' && payload.details
+            ? `${payload.error || 'Request failed'}: ${payload.details}`
+            : payload.error || 'Failed to delete account'
+        );
       }
 
-      await response.json();
-
       setShowDeleteConfirm(false);
-      setSaveMessage({
-        type: 'success',
-        text: 'Your account has been marked as deactivated and scheduled for deletion in 30 days. Log in again before then to keep it active.',
-      });
-      setTimeout(() => setSaveMessage(null), 5000);
+      await logout();
+      // Full reload so all client state clears; Auth user may already be gone server-side.
+      if (typeof window !== 'undefined') {
+        window.location.assign('/');
+      }
     } catch (err: any) {
-      console.error('Error deactivating account:', err);
-      setError(err.message || 'Failed to deactivate account');
+      console.error('Error deleting account:', err);
+      const msg = err.message || 'Failed to delete account';
+      setError(msg);
+      setSaveMessage({ type: 'error', text: msg });
       setShowDeleteConfirm(false);
     } finally {
       setIsDeletingProfile(false);
@@ -1079,6 +1093,19 @@ export default function MyAccountPage() {
                   }`}
               >
                 My Posts
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('delete-account')}
+                className={`account-nav-btn w-full text-left px-5 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === 'delete-account'
+                  ? 'bg-marcan-red text-white border-marcan-red shadow-[0_0_24px_rgba(220,38,38,0.35)]'
+                  : 'text-slate-400 hover:text-white hover:bg-marcan-red/90 border-transparent hover:border-marcan-red/50'
+                  }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <i className="fa-solid fa-trash-can text-[10px] opacity-80" aria-hidden />
+                  Delete account
+                </span>
               </button>
             </div>
 
@@ -1208,13 +1235,7 @@ export default function MyAccountPage() {
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="text-marcan-red text-xs font-bold uppercase tracking-wider hover:text-red-400 transition-colors flex items-center gap-2"
-                      >
-                        <i className="fa-solid fa-trash-can"></i> Delete Account
-                      </button>
+                    <div className="flex justify-end items-center pt-4 border-t border-white/5">
                       {!isEditMode ? (
                         <button
                           onClick={() => setIsEditMode(true)}
@@ -1455,8 +1476,8 @@ export default function MyAccountPage() {
                               {formData.firstName || supplierProfile?.firstName || user?.firstName || 'Not specified'}
                             </div>
                           )}
-                      </div>
-                      <div>
+                        </div>
+                        <div>
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
                             Last Name <span className="text-marcan-red">*</span>
                           </label>
@@ -2213,13 +2234,7 @@ export default function MyAccountPage() {
                     </div>
 
 
-                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="text-marcan-red text-xs font-bold uppercase tracking-wider hover:text-red-400 transition-colors flex items-center gap-2"
-                      >
-                        <i className="fa-solid fa-trash-can"></i> Delete Account
-                      </button>
+                    <div className="flex justify-end items-center pt-4 border-t border-white/5">
                       {!isEditMode ? (
                         <button
                           onClick={() => setIsEditMode(true)}
@@ -2245,40 +2260,6 @@ export default function MyAccountPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Delete Confirmation Modal */}
-                    {showDeleteConfirm && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                        <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
-                          <div className="text-center mb-6">
-                            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                              <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
-                            </div>
-                            <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">
-                              Delete Account?
-                            </h3>
-                            <p className="text-slate-400 text-sm leading-relaxed">
-                              This will mark your account as deactivated and schedule it for permanent deletion in 30 days. If you log in again before then, your account will be restored and the deletion will be cancelled.
-                            </p>
-                          </div>
-                          <div className="flex gap-4">
-                            <button
-                              onClick={() => setShowDeleteConfirm(false)}
-                              className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleDeactivateAccount}
-                              disabled={isDeletingProfile}
-                              className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isDeletingProfile ? 'Deactivating...' : 'Delete Account'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -2329,7 +2310,7 @@ export default function MyAccountPage() {
                 <div className="space-y-8">
                   {/* Wishlist Requests Section */}
                   {accountRole !== 'storefront' && (
-                  <div className="glass-card p-8 rounded-2xl border border-white/5">
+                    <div className="glass-card p-8 rounded-2xl border border-white/5">
                       <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
                         <h3 className="font-bold text-lg text-white uppercase tracking-wide">My Sourcing Requests</h3>
                         <Link
@@ -2426,9 +2407,9 @@ export default function MyAccountPage() {
                               >
                                 See all requests <i className="fa-solid fa-arrow-right text-[10px]"></i>
                               </Link>
+                            </div>
+                          )}
                         </div>
-                      )}
-                  </div>
                       )}
                     </div>
                   )}
@@ -2634,7 +2615,7 @@ export default function MyAccountPage() {
                                     <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
                                       {listing.listingType}
                                     </span>
-                              </div>
+                                  </div>
                                 ) : null}
 
                                 <h3 className="font-heading font-bold text-white mb-1 line-clamp-1 pr-10">
@@ -2694,6 +2675,73 @@ export default function MyAccountPage() {
                 </div>
               )}
 
+              {activeTab === 'delete-account' && (
+                <div className="account-tab block animate-fade-in">
+                  <div className="glass-card p-8 rounded-3xl border border-red-500/20">
+                    <div className="mb-6 border-b border-white/5 pb-4">
+                      <h3 className="font-heading font-black text-xl text-white uppercase tracking-wide">
+                        Delete account
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-400 leading-relaxed max-w-2xl">
+                        Deleting your account permanently removes your buyer, supplier, and storefront profiles and related posts from Marcan, then removes your Firebase sign-in. This cannot be undone.
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 mb-8">
+                      <p className="text-xs text-slate-300 leading-relaxed uppercase font-bold tracking-wider mb-2 text-red-300">
+                        Before you continue
+                      </p>
+                      <ul className="text-sm text-slate-400 space-y-2 list-disc list-inside">
+                        <li>Download or copy anything you need from My Posts before continuing.</li>
+                        <li>Keep this tab open until the process finishes; if your session has expired, sign in again and retry.</li>
+                      </ul>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-wider text-xs border border-red-500 shadow-[0_0_28px_rgba(220,38,38,0.45)] hover:shadow-[0_0_32px_rgba(220,38,38,0.55)] transition-all"
+                    >
+                      <i className="fa-solid fa-trash-can" aria-hidden />
+                      Delete my account
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                  <div className="glass-card p-8 rounded-2xl border border-red-500/30 max-w-md w-full mx-4">
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                        <i className="fa-solid fa-exclamation-triangle text-red-400 text-2xl"></i>
+                      </div>
+                      <h3 className="font-heading text-xl font-bold text-white mb-2 uppercase">
+                        Delete Account?
+                      </h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Your Marcan profiles and posts will be removed from our database right away and your Firebase sign-in will be deleted. This cannot be undone. You will be signed out immediately.
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePermanentDeleteAccount}
+                        disabled={isDeletingProfile}
+                        className="flex-1 bg-red-500 text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-red-600 hover:shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isDeletingProfile ? 'Deleting...' : 'Delete permanently'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {isDomReady && viewingListing &&
                 createPortal(
                   <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -2712,7 +2760,7 @@ export default function MyAccountPage() {
                           <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
                             {viewingListing.title || 'Untitled listing'}
                           </h3>
-            </div>
+                        </div>
                         <button
                           onClick={() => setViewingListing(null)}
                           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"

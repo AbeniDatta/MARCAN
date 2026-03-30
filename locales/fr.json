@@ -23,7 +23,8 @@
   "layout": {
     "developerPreviewLabel": "Aperçu développeur :",
     "developmentDisclaimerBody": "La plateforme est en développement actif",
-    "closeMenuAria": "Fermer le menu de navigation"
+    "closeMenuAria": "Fermer le menu de navigation",
+    "dismissDisclaimerAria": "Masquer l’avis bêta"
   },
   "sidebar": {
     "home": "Maison",
@@ -56,7 +57,7 @@
       },
       "node2": {
         "title": "2. Demander ou répertorier",
-        "body": "Les acheteurs publient des RFQ ciblées au réseau. Les fournisseurs et les comptes vitrines listent des matériaux excédentaires, des équipements ou des capacités disponibles."
+        "body": "Les acheteurs et les fournisseurs peuvent publier des RFQ ciblées au réseau. Les fournisseurs et les comptes vitrines peuvent aussi lister des matériaux excédentaires, des équipements ou des capacités disponibles."
       },
       "node3": {
         "title": "3. Associer et collaborer",
@@ -170,6 +171,8 @@
       "suffix": "pour publier une demande"
     },
     "companyFallback": "Acheteur anonyme",
+    "postRequestEligibleAccountHint": "Un compte acheteur ou fournisseur est requis pour publier une demande.",
+    "postRequestFormSubtitle": "Créez une RFQ pour vous approvisionner en matériaux ou services auprès du réseau.",
     "recentlyPosted": "Récemment",
     "posted": "Publié",
     "industryCategory": "Catégorie d’industrie",
@@ -225,6 +228,7 @@
     "title": "Vitrine industrielle",
     "createListing": "Créer une annonce",
     "createProfile": "Créez votre profil de vitrine industrielle",
+    "createListingDisabledHint": "Un profil fournisseur ou une vitrine industrielle est requis pour publier des annonces.",
     "tabs": {
       "listings": "Annonces",
       "stores": "Vendeurs"
@@ -272,7 +276,8 @@
       "viewFullProfile": "Voir le profil complet",
       "descriptionFallback": "Aucune description disponible pour cette annonce.",
       "emailSupplier": "Courriel au fournisseur",
-      "emailSubjectPrefix": "Demande via vitrine industrielle : "
+      "emailSubjectPrefix": "Demande via vitrine industrielle : ",
+      "closeListingAria": "Fermer les détails de l’annonce"
     }
   },
   "storefrontProfile": {
@@ -345,7 +350,7 @@
       },
       "recommendations": {
         "buyerTitle": "Compte Acheteur",
-        "buyerBody": "Les comptes acheteur sont ideaux pour publier des demandes d'approvisionnement et gerer les RFQ.",
+        "buyerBody": "Idéal si vous voulez surtout chercher et publier des RFQ sans annonces fournisseur ni profil annuaire. (Les comptes fournisseur peuvent aussi publier des RFQ.)",
         "storefrontTitle": "Compte Vitrine",
         "storefrontBody": "Les comptes vitrine sont ideaux si vous voulez seulement publier des annonces vitrine.",
         "supplierTitle": "Compte Fournisseur",
@@ -368,7 +373,7 @@
       },
       "supplier": {
         "title": "Compte Fournisseur",
-        "body": "Permet les deux, apparait dans l'annuaire des entreprises, et peut etre recommande par l'IA."
+        "body": "Permet de publier des demandes d'approvisionnement et des annonces vitrine, d'apparaître dans l'annuaire et d'être recommandé par l'IA."
       }
     },
     "joinBuyer": {
@@ -406,7 +411,7 @@
       "supplierSubtitle": "Je suis un fabricant qui veut gagner de nouveaux contrats et publier de la capacité.",
       "supplierBullet1": "Génération de profil IA instantanée",
       "supplierBullet2": "Profil public dans l’annuaire",
-      "supplierBullet3": "Réception de correspondances RFQ",
+      "supplierBullet3": "Publier des demandes d’approvisionnement (RFQ)",
       "supplierBullet4": "Créer des annonces vitrine",
       "manualLinkLabel": "Devenir fournisseur (démarrage manuel)",
       "storefrontTitle": "Compte vendeur vitrine",
@@ -647,13 +652,13 @@
     "a1p2": ", explorer la ",
     "a1p3": ", et publier des demandes d'approvisionnement sans abonnements, commissions ou paywalls sur la plateforme elle-même.",
     "q2": "Qui peut utiliser Marcan (p. ex. focus sur la fabrication canadienne)?",
-    "a2": "Marcan s'adresse à la fabrication et à l'industrie canadiennes — ateliers, sous-traitants, distributeurs, OEM et fournisseurs connexes. Tout le monde peut s'inscrire comme acheteur pour chercher et publier des RFQ. Les profils dans l'annuaire, l'intégration fournisseur et la vente en vitrine visent les organisations qui opèrent et servent des clients au Canada.",
+    "a2": "Marcan s'adresse à la fabrication et à l'industrie canadiennes — ateliers, sous-traitants, distributeurs, OEM et fournisseurs connexes. Vous pouvez vous inscrire comme acheteur ou fournisseur pour explorer l'écosystème ; les comptes acheteur et fournisseur peuvent publier des demandes d'approvisionnement (RFQ). Les profils dans l'annuaire, l'intégration fournisseur et la vente en vitrine visent les organisations qui opèrent et servent des clients au Canada.",
     "q3": "Quelle est la différence entre un compte acheteur, un compte fournisseur et un vendeur vitrine?",
     "a3p1": "Un ",
     "a3buyer": "compte acheteur",
     "a3p2": " sert aux équipes d'approvisionnement qui veulent explorer l'écosystème, utiliser l'annuaire et publier des demandes (RFQ). Un ",
     "a3supplier": "compte fournisseur",
-    "a3p3": " correspond au parcours réseau complet : profil dans l'annuaire, visibilité RFQ, configuration assistée par IA à partir de votre site et possibilité de publier des annonces vitrine. Un ",
+    "a3p3": " correspond au parcours réseau complet : profil dans l'annuaire, visibilité RFQ, configuration assistée par IA à partir de votre site, annonces vitrine et la même possibilité de publier des demandes d'approvisionnement (RFQ) qu'avec un compte acheteur. Un ",
     "a3storefront": "vendeur vitrine",
     "a3p4": " se concentre sur l'excédent de matériaux, pièces ou équipement dans la boutique avec une intégration vitrine plus légère. Les parcours commencent depuis ",
     "a3p5": " ; les flux acheteur, fournisseur ou vitrine ont des étapes d'intégration distinctes.",
@@ -672,8 +677,8 @@
     "a8p1": "Pendant l'intégration fournisseur, choisissez le parcours manuel plutôt que l'import (lien à côté du champ URL). Vous parcourrez les mêmes sections entreprise, capacités et contact. Vous pouvez aussi ouvrir ",
     "a8p2": ".",
     "q9": "Que sont les demandes d'approvisionnement (RFQ) et comment en publier une?",
-    "a9p1": "Les demandes d'approvisionnement sont des RFQ côté acheteur : des publications structurées décrivant pièces, matériaux, services, quantités ou délais. Créez-en une depuis ",
-    "a9p2": " (une fois connecté). Les fournisseurs peuvent découvrir votre demande et vous contacter selon les coordonnées affichées. Suivez vos publications dans ",
+    "a9p1": "Les demandes d'approvisionnement sont des RFQ structurées décrivant pièces, matériaux, services, quantités ou délais. Les acheteurs et fournisseurs connectés peuvent en créer depuis ",
+    "a9p2": " (une fois connecté). D'autres utilisateurs peuvent découvrir votre demande et vous contacter selon les coordonnées affichées. Suivez vos publications dans ",
     "a9myAccount": "Mon compte",
     "a9p3": " et les sections Mes publications.",
     "q10": "Comment contacter une entreprise trouvée sur Marcan?",
@@ -713,7 +718,7 @@
     "card2Title": "Lister ce que vous fabriquez",
     "card2Body": "Publiez équipement, matériaux, pièces excédentaires et capacité pour que les acheteurs vous trouvent plus vite.",
     "card3Title": "Matcher par RFQ",
-    "card3Body": "Envoyez des demandes ciblées et connectez-vous directement pour démarrer sur les bonnes spécifications.",
+    "card3Body": "Les acheteurs et les fournisseurs peuvent publier des demandes ciblées et se connecter directement pour démarrer sur les bonnes spécifications.",
     "ctaTitle": "Prêt à bâtir le réseau?",
     "ctaBody": "Rejoignez Marcan pour vous connecter aux fabricants locaux et renforcer l’industrie manufacturière canadienne.",
     "ctaSignUp": "Créer un compte",

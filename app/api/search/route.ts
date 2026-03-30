@@ -35,110 +35,207 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You convert a user's natural-language marketplace query into structured retrieval data for a Canadian manufacturing marketplace.
+          content: `You convert a user's natural-language search query into structured retrieval data for MARCAN, a Canadian manufacturing marketplace.
 
-Your goal is to maximize relevant search recall across:
-- company_profile
+Your job is to produce normalized search metadata that helps retrieve the most relevant results across these marketplace entity types:
+
+- supplier_profile
 - sourcing_request
-- surplus_listing
+- storefront_listing
 
-Return EXACTLY ONE valid JSON object in this format:
+Return EXACTLY ONE valid JSON object.
+Return JSON only.
+No markdown.
+No explanation.
+No extra text.
+
+Use this exact structure:
 
 {
-  "query_intent": "find_suppliers" | "post_requirement" | "sell_inventory" | "browse" | null,
+  "query_intent": "find_suppliers" | "find_buyers" | "find_listings" | "sell_inventory" | "browse" | null,
   "target_entity_types": string[],
   "normalized_terms": {
     "materials": string[],
     "processes": string[],
     "industries": string[],
-    "capabilities": string[],
     "certifications": string[],
+    "services": string[],
+    "company_types": string[],
     "location": string[],
     "location_preference": string[],
-    "asset_category": string[],
-    "brand": string[],
-    "volume": string[]
+    "equipment_types": string[],
+    "listing_classes": string[],
+    "brands": string[],
+    "job_size": string[],
+    "keywords": string[]
   },
   "commercial_terms": {
     "urgency": "low" | "medium" | "high" | null,
-    "deadline": string | null
+    "deadline": string | null,
+    "quantity": string | null,
+    "target_price": string | null
   },
   "raw_search_terms": string[],
   "expanded_search_terms": string[],
-  "embedding_query_text": ""
+  "embedding_query_text": string
 }
-
-Return ONLY valid JSON.
-No markdown.
-No explanation.
-No extra text.
 
 IMPORTANT RULES:
 
-1. Use normalized taxonomy-style values where possible.
+1. Normalize terminology to canonical marketplace values where possible.
    Examples:
    - "aluminium" -> "aluminum"
-   - "CNC milling" -> "cnc_machining" and possibly "milling"
-   - "machine shop" -> "cnc_machining"
-   - "sheet metal shop" -> "sheet_metal_fabrication"
+   - "AL" -> "aluminum"
+   - "CNC machining shop" -> process "cnc_machining"
+   - "machine shop" -> company_types may include "machine_shop"
+   - "sheet metal shop" -> process "sheet_metal_fabrication"
+   - "ISO 9001 certified" -> certification "iso_9001"
 
-2. Prefer marketplace retrieval usefulness over literal phrasing.
-   The output should help retrieve all relevant company profiles, sourcing requests, and listings.
+2. Optimize for marketplace retrieval usefulness.
+   The output should help retrieve relevant supplier profiles, sourcing requests, and storefront listings.
 
 3. Do not invent weakly related terms.
-   Only include terms clearly stated or strongly implied.
+   Only include terms that are explicit or strongly supported by the query.
 
-4. Preserve the user's original wording in raw_search_terms.
+4. Preserve the user's original wording in raw_search_terms where useful.
 
-5. expanded_search_terms should include close marketplace synonyms and related buyer/seller phrasing.
+5. expanded_search_terms should include only close, high-confidence marketplace synonyms or equivalent phrasing.
+   Do not over-expand.
 
 6. target_entity_types:
-   - Default to ["company_profile", "sourcing_request", "surplus_listing"]
-   - But if the query is clearly about equipment or used inventory, prioritize ["surplus_listing"]
-   - If clearly about finding suppliers, include at least ["company_profile", "sourcing_request"]
-   - If clearly about selling services, include at least ["company_profile"]
+   - Default to ["supplier_profile", "sourcing_request", "storefront_listing"]
+   - If the query is clearly about finding suppliers, prioritize "supplier_profile"
+   - If the query is clearly about who needs work / who is buying / open jobs / RFQs, prioritize "sourcing_request"
+   - If the query is clearly about used equipment, surplus, extra material, extra capacity, or sale posts, prioritize "storefront_listing"
 
-7. query_intent:
-   - "find_suppliers" = user wants a manufacturer, supplier, shop, or service provider
-   - "post_requirement" = user describes a job/request they need quoted or sourced
-   - "sell_inventory" = user wants to sell equipment, materials, or surplus
-   - "browse" = exploratory or unclear
-   - null if truly unclear
+7. query_intent meanings:
+   - "find_suppliers" = user wants a manufacturer, supplier, fabricator, machine shop, or service provider
+   - "find_buyers" = user wants to find companies or requests that need something sourced or quoted
+   - "find_listings" = user wants equipment, inventory, machine time, space, or other listings
+   - "sell_inventory" = user appears to be offering equipment, material, capacity, or assets for sale
+   - "browse" = exploratory or broad search
+   - null only if truly unclear
 
 8. commercial_terms:
-   - Extract urgency if explicit or strongly implied
-   - Extract deadline only if explicitly provided
-   - Otherwise null
+   - Extract urgency only if explicit or strongly implied
+   - Extract deadline only if explicit
+   - Extract quantity only if explicit
+   - Extract target_price only if explicit
+   - Otherwise use null
 
-9. embedding_query_text:
-   Write one short natural sentence optimized for semantic retrieval across all entity types.
+9. location handling:
+   - Put explicit location terms in "location"
+   - Put preferred service-area or shipping-region style locations in "location_preference"
+   - Normalize Canadian provinces where possible
+
+10. Distinguish carefully:
+   - processes = manufacturing operations like cnc_machining, welding, laser_cutting
+   - services = broader service offerings like design_support, prototyping, assembly
+   - company_types = broad business/seller types like machine_shop, foundry, fabricator
+   - equipment_types = specific equipment or machine categories
+   - listing_classes = one or more of inventory, equipment, machine_time, space, service
+
+11. embedding_query_text:
+   Write one short, natural sentence optimized for semantic retrieval across the target entity types.
+
+12. If the query is mixed, include all relevant target_entity_types and the strongest overall intent.
 
 Examples:
 
+Example 1
 User query: "looking for aluminum cnc machining suppliers in ontario for aerospace prototypes"
-Output should resemble:
+
 {
   "query_intent": "find_suppliers",
-  "target_entity_types": ["company_profile", "sourcing_request", "surplus_listing"],
+  "target_entity_types": ["supplier_profile", "sourcing_request", "storefront_listing"],
   "normalized_terms": {
     "materials": ["aluminum"],
     "processes": ["cnc_machining"],
     "industries": ["aerospace"],
-    "capabilities": ["prototype"],
     "certifications": [],
+    "services": ["prototyping"],
+    "company_types": ["machine_shop"],
     "location": ["ontario"],
     "location_preference": [],
-    "asset_category": [],
-    "brand": [],
-    "volume": []
+    "equipment_types": [],
+    "listing_classes": [],
+    "brands": [],
+    "job_size": ["prototype"],
+    "keywords": ["aluminum cnc machining", "aerospace prototypes"]
   },
   "commercial_terms": {
     "urgency": null,
-    "deadline": null
+    "deadline": null,
+    "quantity": null,
+    "target_price": null
   },
-  "raw_search_terms": ["aluminum cnc machining", "aerospace prototypes"],
-  "expanded_search_terms": ["machining", "precision machining", "milling", "custom machined parts"],
-  "embedding_query_text": "Find Ontario aerospace prototype suppliers for aluminum CNC machining."
+  "raw_search_terms": ["aluminum cnc machining suppliers", "aerospace prototypes", "ontario"],
+  "expanded_search_terms": ["precision machining", "cnc milling", "custom machined parts", "prototype machining"],
+  "embedding_query_text": "Find Ontario suppliers for aerospace prototype aluminum CNC machining."
+}
+
+Example 2
+User query: "who needs stainless welding in alberta"
+
+{
+  "query_intent": "find_buyers",
+  "target_entity_types": ["sourcing_request", "supplier_profile"],
+  "normalized_terms": {
+    "materials": ["stainless_steel"],
+    "processes": ["welding"],
+    "industries": [],
+    "certifications": [],
+    "services": [],
+    "company_types": [],
+    "location": ["alberta"],
+    "location_preference": [],
+    "equipment_types": [],
+    "listing_classes": [],
+    "brands": [],
+    "job_size": [],
+    "keywords": ["stainless welding"]
+  },
+  "commercial_terms": {
+    "urgency": null,
+    "deadline": null,
+    "quantity": null,
+    "target_price": null
+  },
+  "raw_search_terms": ["who needs stainless welding", "alberta"],
+  "expanded_search_terms": ["stainless steel welding", "fabrication", "welded assemblies"],
+  "embedding_query_text": "Find Alberta sourcing requests or buyers needing stainless steel welding."
+}
+
+Example 3
+User query: "used haas cnc for sale in quebec"
+
+{
+  "query_intent": "find_listings",
+  "target_entity_types": ["storefront_listing"],
+  "normalized_terms": {
+    "materials": [],
+    "processes": [],
+    "industries": [],
+    "certifications": [],
+    "services": [],
+    "company_types": [],
+    "location": ["quebec"],
+    "location_preference": [],
+    "equipment_types": ["cnc_machine"],
+    "listing_classes": ["equipment"],
+    "brands": ["haas"],
+    "job_size": [],
+    "keywords": ["used haas cnc", "for sale"]
+  },
+  "commercial_terms": {
+    "urgency": null,
+    "deadline": null,
+    "quantity": null,
+    "target_price": null
+  },
+  "raw_search_terms": ["used haas cnc", "for sale", "quebec"],
+  "expanded_search_terms": ["used cnc machine", "haas machine", "second-hand cnc equipment"],
+  "embedding_query_text": "Find used Haas CNC equipment listings in Quebec."
 }
 
 Now process the user's query.
@@ -245,6 +342,8 @@ Now process the user's query.
             companyName: true,
             province: true,
             certifications: true,
+            email: true,
+            rfqEmail: true,
           },
         },
       },
@@ -301,8 +400,11 @@ Now process the user's query.
 
     const formattedListings = listings.map((l: any) => ({
       id: l.id,
+      profileId: l.profileId,
+      storefrontProfileId: l.storefrontProfileId ?? null,
       title: l.title,
       supplier: l.supplierProfile.companyName,
+      supplierEmail: l.supplierProfile?.rfqEmail || l.supplierProfile?.email || null,
       price: l.price || '',
       listingType: l.listingType || '',
       condition: l.condition || '',

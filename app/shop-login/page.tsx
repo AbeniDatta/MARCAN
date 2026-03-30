@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { fetchAccountRoleFromApi } from '@/lib/accountRole';
 
 export default function ShopLoginPage() {
     const [email, setEmail] = useState('');
@@ -61,6 +62,11 @@ export default function ShopLoginPage() {
                 } catch {
                     // ignore
                 }
+            }
+
+            const apiRole = await fetchAccountRoleFromApi(userData.email);
+            if (apiRole) {
+                userData = { ...userData, role: apiRole };
             }
 
             login(userData);

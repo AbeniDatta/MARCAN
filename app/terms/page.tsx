@@ -61,7 +61,7 @@ export default function TermsPage() {
               <ul className="list-disc list-inside text-slate-400 space-y-2 ml-4">
                 <li>A Company Directory featuring verified supplier profiles</li>
                 <li>A marketplace for suppliers to list equipment, materials, surplus parts, and production capacity</li>
-                <li>A sourcing request system for buyers to post requests for quotes (RFQs)</li>
+                <li>A sourcing request system for registered users (including buyers and suppliers) to post requests for quotes (RFQs)</li>
                 <li>Tools to facilitate connections between Canadian manufacturing enterprises</li>
               </ul>
               <p className="text-slate-400 leading-relaxed mt-4">
@@ -129,7 +129,7 @@ export default function TermsPage() {
                 <li>You will honor the terms and conditions stated in your listings</li>
               </ul>
               <p className="text-slate-400 leading-relaxed mt-4 mb-4">
-                <strong>Sourcing Requests:</strong> Buyers may post requests for quotes (RFQs) for materials or services.
+                <strong>Sourcing Requests:</strong> Buyers and suppliers with eligible accounts may post requests for quotes (RFQs) for materials or services.
                 You represent and warrant that:
               </p>
               <ul className="list-disc list-inside text-slate-400 space-y-2 ml-4">

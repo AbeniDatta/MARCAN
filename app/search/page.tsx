@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import StorefrontListingModal, { type StorefrontListingModalData } from '@/components/StorefrontListingModal';
 import { useI18n } from '@/contexts/I18nContext';
 
 type TabType = 'companies' | 'listings' | 'requests';
@@ -70,6 +71,7 @@ function SearchPageContent() {
   const { t } = useI18n();
   const query = searchParams.get('q') || '';
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [selectedListing, setSelectedListing] = useState<StorefrontListingModalData | null>(null);
   const [isDomReady, setIsDomReady] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('companies');
   const [loading, setLoading] = useState(true);
@@ -92,6 +94,9 @@ function SearchPageContent() {
     category: '',
     province: '',
   });
+  const [listingsSort, setListingsSort] = useState<
+    'new-to-old' | 'old-to-new' | 'price-high-low' | 'price-low-high'
+  >('new-to-old');
   const [requestsFilters, setRequestsFilters] = useState({
     search: '',
     industry: '',
@@ -103,13 +108,16 @@ function SearchPageContent() {
   }, []);
 
   useEffect(() => {
-    if (!selectedRequest) return;
+    if (!selectedRequest && !selectedListing) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectedRequest(null);
+      if (event.key === 'Escape') {
+        setSelectedRequest(null);
+        setSelectedListing(null);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedRequest]);
+  }, [selectedRequest, selectedListing]);
 
   useEffect(() => {
     if (query) {
@@ -210,7 +218,7 @@ function SearchPageContent() {
 
   const filteredListings = useMemo(() => {
     const normalizedSearch = listingsFilters.search.trim().toLowerCase();
-    return results.listings.filter((listing) => {
+    const filtered = results.listings.filter((listing) => {
       // Category (listingType) filter
       if (listingsFilters.category) {
         if (String(listing.listingType || '') !== listingsFilters.category) return false;
@@ -245,7 +253,38 @@ function SearchPageContent() {
       }
       return true;
     });
-  }, [results.listings, listingsFilters]);
+
+    const sorted = [...filtered];
+    switch (listingsSort) {
+      case 'new-to-old':
+        sorted.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        );
+        break;
+      case 'old-to-new':
+        sorted.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+        );
+        break;
+      case 'price-high-low':
+        sorted.sort((a, b) => {
+          const priceA = parseFloat(String(a.price || '0').replace(/[^0-9.]/g, '')) || 0;
+          const priceB = parseFloat(String(b.price || '0').replace(/[^0-9.]/g, '')) || 0;
+          return priceB - priceA;
+        });
+        break;
+      case 'price-low-high':
+        sorted.sort((a, b) => {
+          const priceA = parseFloat(String(a.price || '0').replace(/[^0-9.]/g, '')) || 0;
+          const priceB = parseFloat(String(b.price || '0').replace(/[^0-9.]/g, '')) || 0;
+          return priceA - priceB;
+        });
+        break;
+    }
+    return sorted;
+  }, [results.listings, listingsFilters, listingsSort]);
 
   const filteredRequests = useMemo(() => {
     const normalizedSearch = requestsFilters.search.trim().toLowerCase();
@@ -315,6 +354,19 @@ function SearchPageContent() {
   };
 
   const closeRequestModal = () => setSelectedRequest(null);
+
+  const searchListingToModal = (listing: any): StorefrontListingModalData => ({
+    profileId: String(listing.profileId || ''),
+    listingType: listing.listingType,
+    title: listing.title,
+    description: listing.description,
+    price: listing.price,
+    location: listing.location,
+    supplierEmail: listing.supplierEmail ?? null,
+    supplierName: listing.supplier,
+    supplierLogoUrl: listing.logoUrl ?? null,
+    supplierIcon: listing.selectedIcon ?? 'fa-industry',
+  });
 
   const sourcingRequestModal =
     selectedRequest && isDomReady
@@ -557,47 +609,75 @@ function SearchPageContent() {
                 )}
 
                 {activeTab === 'listings' && (
-                  <div className="glass-card p-4 rounded-2xl flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-4 mb-6">
-                    <div className="relative w-full min-w-0 lg:flex-[2] lg:min-w-[220px] lg:max-w-[520px]">
-                      <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                      <input
-                        type="text"
-                        value={listingsFilters.search}
-                        onChange={(e) => setListingsFilters({ ...listingsFilters, search: e.target.value })}
-                        placeholder="Search for parts, materials, or capacity..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all placeholder:text-slate-500"
-                      />
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 w-full lg:w-auto min-w-0">
-                      <select
-                        value={listingsFilters.category}
-                        onChange={(e) => setListingsFilters({ ...listingsFilters, category: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
-                      >
-                        <option value="">All Categories</option>
-                        {/* Derive categories from listings data */}
-                        {Array.from(new Set(results.listings.map((l: any) => l.listingType).filter(Boolean))).map((c: string) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={listingsFilters.province}
-                        onChange={(e) => setListingsFilters({ ...listingsFilters, province: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
-                      >
-                        <option value="">All Provinces</option>
-                        {CANADIAN_PROVINCES.map((province) => (
-                          <option key={province.code} value={province.code}>
-                            {province.name}
-                          </option>
-                        ))}
-                      </select>
-                      {(listingsFilters.search || listingsFilters.category || listingsFilters.province) && (
+                  <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+                      <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] relative">
+                        <input
+                          type="text"
+                          value={listingsFilters.search}
+                          onChange={(e) => setListingsFilters({ ...listingsFilters, search: e.target.value })}
+                          placeholder={t('storefront.searchListingsPlaceholder')}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 pl-10 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                          <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm"></i>
+                        </div>
+                      </div>
+
+                      <div className="w-full sm:w-auto sm:min-w-[160px]">
+                        <select
+                          value={listingsSort}
+                          onChange={(e) => setListingsSort(e.target.value as typeof listingsSort)}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                        >
+                          <option value="new-to-old">{t('storefront.sort.newestFirst')}</option>
+                          <option value="old-to-new">{t('storefront.sort.oldestFirst')}</option>
+                          <option value="price-high-low">{t('storefront.sort.priceHighToLow')}</option>
+                          <option value="price-low-high">{t('storefront.sort.priceLowToHigh')}</option>
+                        </select>
+                      </div>
+                      <div className="w-full sm:w-auto sm:min-w-[180px]">
+                        <select
+                          value={listingsFilters.category}
+                          onChange={(e) => setListingsFilters({ ...listingsFilters, category: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                        >
+                          <option value="">{t('storefront.allCategories')}</option>
+                          {Array.from(new Set(results.listings.map((l: any) => l.listingType).filter(Boolean))).map((c: string) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="w-full sm:w-auto sm:min-w-[140px]">
+                        <select
+                          value={listingsFilters.province}
+                          onChange={(e) => setListingsFilters({ ...listingsFilters, province: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
+                        >
+                          <option value="">{t('storefront.allProvinces')}</option>
+                          {CANADIAN_PROVINCES.map((province) => (
+                            <option key={province.code} value={province.code}>
+                              {province.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {(listingsFilters.search.trim() ||
+                        listingsSort !== 'new-to-old' ||
+                        listingsFilters.category ||
+                        listingsFilters.province) && (
                         <button
-                          onClick={() => setListingsFilters({ search: '', category: '', province: '' })}
+                          type="button"
+                          onClick={() => {
+                            setListingsFilters({ search: '', category: '', province: '' });
+                            setListingsSort('new-to-old');
+                          }}
                           className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                         >
-                          Clear
+                          {t('storefront.clear')}
                         </button>
                       )}
                     </div>
@@ -782,61 +862,87 @@ function SearchPageContent() {
                       </div>
                     )}
 
-                    {/* Listings Tab */}
+                    {/* Listings Tab — match Industrial Storefront listing cards */}
                     {activeTab === 'listings' && (
                       <div className="space-y-4">
                         {filteredListings.length === 0 ? (
                           <div className="text-center py-12">
                             <i className="fa-solid fa-shop text-4xl text-slate-600 mb-4"></i>
                             <p className="text-slate-400">
-                              {results.listings.length === 0 ? 'No supplier listings found.' : 'No supplier listings match your filters.'}
+                              {results.listings.length === 0
+                                ? t('storefront.noPostings')
+                                : t('storefront.noListingsMatch')}
                             </p>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {filteredListings.map((listing) => (
-                              <div
-                                key={listing.id}
-                                className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden"
-                              >
-                                <div className="p-5 flex flex-col flex-grow">
-                                  {listing.listingType ? (
-                                    <div className="mb-3">
-                                      <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
-                                        {listing.listingType}
+                          <>
+                            <div className="mb-4 text-sm text-slate-400">
+                              {t('storefront.resultsCountListings')
+                                .replace('{count}', String(filteredListings.length))
+                                .replace('{total}', String(results.listings.length))}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                              {filteredListings.map((listing) => (
+                                <div
+                                  key={listing.id}
+                                  className="glass-card rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all duration-300 flex flex-col group overflow-hidden"
+                                >
+                                  <div className="p-5 flex flex-col flex-grow">
+                                    {listing.listingType ? (
+                                      <div className="mb-3">
+                                        <span className="inline-flex px-2 py-1 text-[9px] font-bold uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded">
+                                          {listing.listingType}
+                                        </span>
+                                      </div>
+                                    ) : null}
+
+                                    <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
+                                      {listing.title || t('storefront.listingCard.untitledListing')}
+                                    </h3>
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
+                                      <i className="fa-solid fa-store text-orange-400 mr-1"></i>
+                                      {listing.supplier || t('storefront.modal.unknownCompany')}
+                                    </p>
+
+                                    <p className="text-xs text-slate-400 line-clamp-1 mb-4">
+                                      {listing.description || t('storefront.listingCard.noDescription')}
+                                    </p>
+
+                                    <div className="mt-auto flex items-end justify-between mb-4 gap-3">
+                                      <span className="text-xl font-black text-white truncate">
+                                        {listing.price || t('storefront.listingCard.negotiable')}
+                                      </span>
+                                      <span className="text-xs text-slate-400 shrink-0">
+                                        <i className="fa-solid fa-location-dot mr-1"></i>
+                                        {listing.location || t('storefront.listingCard.notAvailable')}
                                       </span>
                                     </div>
-                                  ) : null}
 
-                                  <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
-                                    {listing.title || 'Untitled listing'}
-                                  </h3>
-                                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
-                                    <i className="fa-solid fa-store text-orange-400 mr-1"></i>
-                                    {listing.supplier || 'Unknown'}
-                                  </p>
-
-                                  <p className="text-xs text-slate-400 line-clamp-1 mb-4">
-                                    {listing.description || 'No description available.'}
-                                  </p>
-
-                                  <div className="mt-auto flex items-end justify-between mb-4 gap-3">
-                                    <span className="text-xl font-black text-white truncate">
-                                      {listing.price || 'Negotiable'}
-                                    </span>
-                                    <span className="text-xs text-slate-400 shrink-0">
-                                      <i className="fa-solid fa-location-dot mr-1"></i>
-                                      {listing.location || 'N/A'}
-                                    </span>
+                                    <div className="flex flex-col gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedListing(searchListingToModal(listing))}
+                                        className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                      >
+                                        {t('storefront.viewListing')}
+                                      </button>
+                                      {listing.supplierEmail ? (
+                                        <a
+                                          href={`mailto:${listing.supplierEmail}?subject=${encodeURIComponent(
+                                            t('storefront.modal.emailSubjectPrefix') +
+                                              (listing.title || t('storefront.listingCard.untitledListing'))
+                                          )}`}
+                                          className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
+                                        >
+                                          <i className="fa-solid fa-envelope"></i> {t('storefront.modal.emailSupplier')}
+                                        </a>
+                                      ) : null}
+                                    </div>
                                   </div>
-
-                                  <button className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5">
-                                    View Listing
-                                  </button>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          </>
                         )}
                       </div>
                     )}
@@ -926,6 +1032,11 @@ function SearchPageContent() {
           </div>
         </div>
       </main>
+      <StorefrontListingModal
+        open={!!selectedListing && isDomReady}
+        listing={selectedListing}
+        onClose={() => setSelectedListing(null)}
+      />
       {sourcingRequestModal}
     </>
   );
