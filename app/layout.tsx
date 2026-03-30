@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import AmbientBackground from '@/components/AmbientBackground';
 import DevelopmentDisclaimer from '@/components/DevelopmentDisclaimer';
 import { I18nProvider } from '@/contexts/I18nContext';
+import { MobileNavProvider } from '@/contexts/MobileNavContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -20,7 +21,13 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: 'Marcan - Manufacturing Canada',
-  description: 'Sourcing local just got smarter. The ultimate ecosystem for Canadian Manufacturing Enterprises.'
+  description: 'Sourcing local just got smarter. The ultimate ecosystem for Canadian Manufacturing Enterprises.',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover' as const,
 };
 
 export default function RootLayout({
@@ -37,15 +44,17 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${montserrat.variable} bg-marcan-dark text-slate-300 font-sans h-screen overflow-hidden flex selection:bg-marcan-red selection:text-white`}
+        className={`${inter.variable} ${montserrat.variable} bg-marcan-dark text-slate-300 font-sans min-h-dvh h-dvh max-h-dvh overflow-hidden flex selection:bg-marcan-red selection:text-white`}
       >
         <AmbientBackground />
         <I18nProvider>
-          <Sidebar />
-          <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
-            {children}
-            <DevelopmentDisclaimer />
-          </div>
+          <MobileNavProvider>
+            <Sidebar />
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+              {children}
+              <DevelopmentDisclaimer />
+            </div>
+          </MobileNavProvider>
         </I18nProvider>
       </body>
     </html>

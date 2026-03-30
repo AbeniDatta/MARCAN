@@ -7,7 +7,7 @@ export default function DevelopmentDisclaimer() {
 
   return (
     <div
-      className="bg-gradient-to-r from-orange-500/10 via-marcan-red/10 to-orange-500/10 border-t border-white/5 py-2 px-4 flex items-center justify-center gap-3 shrink-0 z-40 backdrop-blur-md"
+      className="bg-gradient-to-r from-orange-500/10 via-marcan-red/10 to-orange-500/10 border-t border-white/5 py-2 px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex flex-wrap sm:flex-nowrap items-center justify-center gap-2 sm:gap-3 shrink-0 z-40 backdrop-blur-md"
       role="status"
       aria-live="polite"
     >

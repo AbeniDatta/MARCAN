@@ -14,15 +14,15 @@ export default function AboutPageClient() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb={translateText('About Us')} />
 
-      <div className="flex-1 overflow-y-auto p-6 md:p-8 relative">
-        <div className="max-w-6xl mx-auto py-4">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="max-w-6xl mx-auto w-full min-w-0 py-4">
           <div className="text-center mb-8">
-            <i className="fa-solid fa-people-group text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
-            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">{t('about.heroTitle')}</h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">{t('about.heroSubtitle')}</p>
+            <i className="fa-solid fa-people-group text-4xl sm:text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
+            <h2 className="font-heading text-3xl sm:text-4xl font-black text-white uppercase tracking-tight mb-3 px-2">{t('about.heroTitle')}</h2>
+            <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto px-2">{t('about.heroSubtitle')}</p>
           </div>
           <section className="glass-card rounded-3xl border border-white/5 overflow-hidden mb-12 flex flex-col lg:flex-row">
-            <div className="lg:w-5/12 p-10 md:p-12 bg-black/20 border-r border-white/5 relative">
+            <div className="lg:w-5/12 p-6 sm:p-10 md:p-12 bg-black/20 lg:border-r border-b lg:border-b-0 border-white/5 relative">
               <i className="fa-solid fa-users absolute top-10 right-10 text-6xl text-white/5 pointer-events-none" />
               <h3 className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-4">{t('about.originsLabel')}</h3>
               <h2 className="font-heading text-3xl font-black text-white uppercase tracking-wide mb-6">{t('about.whoWeAreTitle')}</h2>
@@ -40,7 +40,7 @@ export default function AboutPageClient() {
               </p>
             </div>
 
-            <div className="lg:w-7/12 p-10 md:p-12 relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
+            <div className="lg:w-7/12 p-6 sm:p-10 md:p-12 relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent">
               <h3 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">{t('about.credibilityLabel')}</h3>
               <h2 className="font-heading text-2xl font-bold text-white uppercase tracking-wide mb-2">{t('about.supportedByTitle')}</h2>
               <p className="text-slate-400 text-xs mb-8 max-w-md">{t('about.supportedBySubtitle')}</p>
@@ -86,14 +86,14 @@ export default function AboutPageClient() {
           </section>
 
           <section className="grid md:grid-cols-2 gap-8 mb-10">
-            <div className="glass-card p-10 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-marcan-red/30 transition-all duration-500">
+            <div className="glass-card p-6 sm:p-10 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-marcan-red/30 transition-all duration-500">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110" />
               <i className="fa-solid fa-link-slash text-4xl text-slate-700 group-hover:text-marcan-red transition-colors mb-6 relative z-10" />
               <h3 className="font-heading text-2xl font-black text-white mb-4 uppercase tracking-wide relative z-10">{t('about.whyTitle')}</h3>
               <p className="text-slate-400 leading-relaxed text-sm relative z-10">{t('about.whyBody')}</p>
             </div>
 
-            <div className="glass-card p-10 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-orange-500/30 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent">
+            <div className="glass-card p-6 sm:p-10 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-orange-500/30 transition-all duration-500 bg-gradient-to-br from-white/5 to-transparent">
               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110" />
               <i className="fa-solid fa-eye text-4xl text-slate-700 group-hover:text-orange-500 transition-colors mb-6 relative z-10" />
               <h3 className="font-heading text-2xl font-black text-white mb-4 uppercase tracking-wide relative z-10">{t('about.visionTitle')}</h3>
@@ -135,7 +135,7 @@ export default function AboutPageClient() {
             </div>
           </section>
 
-          <section className="glass-card p-10 md:p-12 rounded-3xl border border-marcan-red/20 bg-gradient-to-r from-marcan-red/10 via-marcan-dark to-transparent relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <section className="glass-card p-6 sm:p-10 md:p-12 rounded-3xl border border-marcan-red/20 bg-gradient-to-r from-marcan-red/10 via-marcan-dark to-transparent relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="absolute left-0 top-0 bottom-0 w-2 bg-marcan-red shadow-neon" />
             <div className="relative z-10 max-w-2xl text-center md:text-left">
               <h2 className="font-heading text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-3">{t('about.ctaTitle')}</h2>

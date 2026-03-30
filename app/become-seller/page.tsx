@@ -998,7 +998,7 @@ export default function BecomeSupplierPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.provincesServed')} *</label>
-                        <div className="grid grid-cols-3 gap-2 mt-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                           {CANADIAN_PROVINCES.map((p) => (
                             <label
                               key={p.code}
@@ -1405,7 +1405,7 @@ export default function BecomeSupplierPage() {
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.productionProfile.maxPartSizeOptional')}</label>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div>
                             <label className="text-[8px] text-slate-500 mb-1 block">X</label>
                             <input

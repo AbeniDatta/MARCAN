@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { scheduleStorefrontListingEnrichment } from '@/services/ai-enrichment';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -153,6 +154,8 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    scheduleStorefrontListingEnrichment(listing.id);
 
     // Determine badge and icon
     let badge = 'Available';

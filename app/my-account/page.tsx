@@ -999,7 +999,7 @@ export default function MyAccountPage() {
     return (
       <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
         <Header breadcrumb="My Account" />
-        <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center">
+        <div className="flex-1 overflow-y-auto page-scroll flex items-center justify-center">
           <div className="text-slate-400">Loading...</div>
         </div>
       </main>
@@ -1014,7 +1014,7 @@ export default function MyAccountPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="My Account" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
         <div className="max-w-5xl mx-auto py-6">
           {/* Save Message */}
           {saveMessage && (

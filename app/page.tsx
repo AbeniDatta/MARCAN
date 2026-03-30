@@ -95,33 +95,41 @@ export default function HomePage() {
       <Header breadcrumb={translateText('Home')} />
 
       {/* Content Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
         {/* Search Bar Container */}
-        <form onSubmit={handleSearch} className="mb-4 w-full">
-          <div className="relative group w-full max-w-6xl mx-auto">
+        <form onSubmit={handleSearch} className="mb-4 w-full max-w-6xl mx-auto">
+          <div className="relative group w-full">
             {/* Enhanced AI Gradient Glow */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red via-orange-500 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-marcan-red via-orange-500 to-blue-600 rounded-2xl sm:rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
 
-            <label className="relative flex items-center justify-center bg-marcan-panel rounded-full border border-white/10 p-3 pl-7 shadow-lg w-full cursor-text">
-              {/* AI Icon */}
-              <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-2xl mr-4"></i>
+            <label className="relative flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 bg-marcan-panel rounded-2xl sm:rounded-full border border-white/10 p-3 sm:pl-7 sm:pr-3 shadow-lg w-full cursor-text">
+              <div className="flex items-center w-full min-w-0">
+                {/* AI Icon */}
+                <i className="fa-solid fa-wand-magic-sparkles text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-xl sm:text-2xl mr-3 sm:mr-4 shrink-0"></i>
 
-              {/* Prompt-style Input */}
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSearch(e);
-                  }
-                }}
-                placeholder={t('home.searchBar.placeholder')}
-                className="bg-transparent text-white py-3 focus:outline-none placeholder:text-slate-500 font-medium text-lg md:text-xl text-left w-full"
-              />
+                {/* Prompt-style Input */}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSearch(e);
+                    }
+                  }}
+                  placeholder={t('home.searchBar.placeholder')}
+                  className="bg-transparent text-white py-2 sm:py-3 focus:outline-none placeholder:text-slate-500 font-medium text-base sm:text-lg md:text-xl text-left w-full min-w-0"
+                />
+              </div>
 
               {/* AI Action Button */}
+              <button
+                type="submit"
+                className="w-full sm:w-auto sm:shrink-0 flex sm:hidden bg-white/5 hover:bg-marcan-red text-white px-6 py-3 rounded-xl sm:rounded-full font-bold text-sm uppercase tracking-wider transition-all items-center justify-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon"
+              >
+                {t('home.searchBar.askAi')} <i className="fa-solid fa-arrow-right"></i>
+              </button>
               <button
                 type="submit"
                 className="hidden sm:flex bg-white/5 hover:bg-marcan-red text-white px-7 py-3.5 rounded-full font-bold text-sm uppercase tracking-wider transition-all ml-3 items-center gap-2 border border-white/10 hover:border-marcan-red hover:shadow-neon shrink-0"
@@ -158,18 +166,18 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 w-full min-w-0">
           {/* Main Hero Card */}
-          <div className="lg:col-span-7 glass-card rounded-3xl p-10 md:p-10 relative overflow-hidden group border border-white/5 min-h-[420px] flex items-center">
+          <div className="lg:col-span-7 glass-card rounded-3xl p-6 sm:p-8 md:p-10 relative overflow-hidden group border border-white/5 min-h-[min(420px,70vh)] sm:min-h-[420px] flex items-center">
             <div className="absolute inset-0 bg-gradient-to-r from-marcan-red/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             <div className="relative z-10">
-              <h1 className="font-heading text-5xl md:text-6xl font-black text-white mb-6 tracking-tight leading-none uppercase">
+              <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-black text-white mb-4 sm:mb-6 tracking-tight leading-[1.05] sm:leading-none uppercase">
                 {t('home.hero.titleWelcome')} <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-marcan-red to-orange-500 text-glow">
                   Marcan
                 </span>
               </h1>
-              <p className="text-slate-300 text-xl mb-10 max-w-2xl font-light leading-relaxed">
+              <p className="text-slate-300 text-base sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-2xl font-light leading-relaxed">
                 {t('home.hero.tagline')}
               </p>
               <div className="flex flex-wrap gap-4">
@@ -189,11 +197,11 @@ export default function HomePage() {
 
             </div>
             {/* Background graphic */}
-            <i className="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[200px] text-white/5 rotate-[-20deg]"></i>
+            <i className="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[120px] sm:text-[160px] md:text-[200px] text-white/5 rotate-[-20deg] pointer-events-none"></i>
           </div>
 
           {/* AI Scraper Spotlight */}
-          <div className="lg:col-span-5 glass-card rounded-3xl p-3 flex flex-col justify-center relative overflow-hidden border border-white/5 group min-h-[420px]">
+          <div className="lg:col-span-5 glass-card rounded-3xl p-3 sm:p-4 flex flex-col justify-center relative overflow-hidden border border-white/5 group min-h-[min(380px,65vh)] sm:min-h-[420px]">
             {/* Background Effect */}
             <div className="absolute -right-10 -bottom-10 text-9xl text-white/5 group-hover:text-marcan-red/10 transition-colors duration-500 pointer-events-none">
               <i className="fa-solid fa-network-wired"></i>

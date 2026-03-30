@@ -11,17 +11,17 @@ export default function HelpPageClient() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb={translateText('Support')} />
 
-      <div className="flex-1 overflow-y-auto p-6 relative">
-        <div className="max-w-5xl mx-auto py-6">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="max-w-5xl mx-auto w-full min-w-0 py-6">
           <div className="text-center mb-8">
-            <i className="fa-solid fa-life-ring text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
-            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">{t('help.title')}</h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">{t('help.subtitle')}</p>
+            <i className="fa-solid fa-life-ring text-4xl sm:text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
+            <h2 className="font-heading text-3xl sm:text-4xl font-black text-white uppercase tracking-tight mb-3 px-2">{t('help.title')}</h2>
+            <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto px-2">{t('help.subtitle')}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <div className="glass-card p-8 rounded-2xl border border-white/5">
+              <div className="glass-card p-5 sm:p-8 rounded-2xl border border-white/5">
                 <h3 className="font-bold text-xl text-white mb-6 flex items-center gap-3">
                   <i className="fa-solid fa-clipboard-question text-marcan-red"></i> {t('help.faqHeading')}
                 </h3>

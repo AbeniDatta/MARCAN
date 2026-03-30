@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import {
+  scheduleBuyerProfileEnrichment,
+  scheduleSourcingRequestEnrichment,
+} from '@/services/ai-enrichment';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -98,6 +102,7 @@ export async function POST(request: NextRequest) {
       where: { userId },
     });
 
+    let createdBuyerProfile = false;
     if (!profile) {
       // Create a basic buyer profile if it doesn't exist
       profile = await prisma.buyerProfile.create({
@@ -106,6 +111,7 @@ export async function POST(request: NextRequest) {
           companyName: body.companyName || 'Anonymous',
         },
       });
+      createdBuyerProfile = true;
     }
 
     // Create the wishlist request
@@ -156,6 +162,11 @@ export async function POST(request: NextRequest) {
       logoUrl: null,
       selectedIcon: null,
     };
+
+    if (createdBuyerProfile) {
+      scheduleBuyerProfileEnrichment(profile.id);
+    }
+    scheduleSourcingRequestEnrichment(wishlistRequest.id);
 
     return NextResponse.json(formattedRequest, { status: 201 });
   } catch (error: any) {

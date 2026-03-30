@@ -872,21 +872,21 @@ function ShopPageContent() {
             <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
                 <Header breadcrumb="Industrial Storefront" />
 
-                <div ref={storesScrollRef} className="flex-1 overflow-y-auto p-8 relative">
-                    <div className="flex justify-between items-end mb-8">
-                        <div>
+                <div ref={storesScrollRef} className="flex-1 overflow-y-auto page-scroll relative w-full min-w-0">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end mb-8">
+                        <div className="min-w-0">
                             <div className="text-orange-500 text-xs font-bold uppercase tracking-widest mb-1">
                                 {t('storefront.explore')}
                             </div>
-                            <h2 className="font-heading text-3xl font-bold text-white uppercase">{t('storefront.title')}</h2>
+                            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white uppercase">{t('storefront.title')}</h2>
                         </div>
 
-                        <div className="flex flex-col items-end gap-2 max-w-[280px]">
+                        <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto sm:max-w-[280px]">
                             {listingMode === 'buy' ? (
                                 isMounted && canCreateSourcingRequest ? (
                                     <Link
                                         href="/post-request"
-                                        className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center"
+                                        className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center justify-center w-full sm:w-auto"
                                     >
                                         <i className="fa-solid fa-plus mr-2"></i> {t('wishlist.postRequest')}
                                     </Link>
@@ -900,7 +900,7 @@ function ShopPageContent() {
                                             <i className="fa-solid fa-lock mr-2"></i> {t('wishlist.postRequest')}
                                         </button>
                                         {!isAuthenticated ? (
-                                            <p className="text-[11px] text-slate-500 text-right">
+                                            <p className="text-[11px] text-slate-500 text-left sm:text-right">
                                                 {t('wishlist.loginPrompt.prefix')}{' '}
                                                 <Link href="/login" className="text-orange-400 hover:text-orange-300 underline">
                                                     {t('wishlist.loginPrompt.login')}
@@ -912,7 +912,7 @@ function ShopPageContent() {
                                                 {t('wishlist.loginPrompt.suffix')}
                                             </p>
                                         ) : (
-                                            <p className="text-[11px] text-slate-500 text-right">
+                                            <p className="text-[11px] text-slate-500 text-left sm:text-right">
                                                 Buyer or supplier account required to post requests.
                                             </p>
                                         )}
@@ -922,7 +922,7 @@ function ShopPageContent() {
                                 <div className="flex flex-col items-end gap-2">
                                     <Link
                                         href="/create-listing"
-                                        className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center"
+                                        className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center justify-center w-full sm:w-auto"
                                     >
                                         <i className="fa-solid fa-plus mr-2"></i> {t('storefront.createListing')}
                                     </Link>
@@ -930,7 +930,7 @@ function ShopPageContent() {
                             ) : isMounted ? (
                                 <Link
                                     href="/become-supplier?step=0"
-                                    className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center whitespace-nowrap"
+                                    className="bg-gradient-to-r from-orange-500 to-red-600 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:shadow-neon transition-all inline-flex items-center justify-center whitespace-normal sm:whitespace-nowrap text-center w-full sm:w-auto"
                                 >
                                     <i className="fa-solid fa-plus mr-2"></i> {t('storefront.createProfile')}
                                 </Link>
@@ -1009,11 +1009,11 @@ function ShopPageContent() {
 
                     {/* Secondary tab toggle (Listings vs Stores) */}
                     {listingMode !== 'buy' && (
-                        <div className="inline-flex items-center bg-black/50 border border-white/10 rounded-xl p-1.5 mb-8">
+                        <div className="flex flex-col sm:inline-flex sm:flex-row w-full sm:w-auto items-stretch sm:items-center bg-black/50 border border-white/10 rounded-xl p-1.5 mb-8 gap-1">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('listings')}
-                                className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'listings'
+                                className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all flex-1 sm:flex-initial ${activeTab === 'listings'
                                     ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                     }`}
@@ -1023,7 +1023,7 @@ function ShopPageContent() {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('stores')}
-                                className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'stores'
+                                className={`flex items-center justify-center gap-2 px-4 sm:px-8 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest transition-all flex-1 sm:flex-initial ${activeTab === 'stores'
                                     ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-[0_0_15px_rgba(249,115,22,0.4)]'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                     }`}
@@ -1043,8 +1043,8 @@ function ShopPageContent() {
                             </div>
                         ) : (
                             <>
-                                <div className="glass-card p-4 rounded-2xl flex flex-wrap items-center gap-4 mb-8">
-                                    <div className="relative flex-[2] min-w-[220px] max-w-[520px]">
+                                <div className="glass-card p-4 rounded-2xl flex flex-col lg:flex-row lg:flex-wrap lg:items-center gap-4 mb-8">
+                                    <div className="relative w-full min-w-0 lg:flex-[2] lg:min-w-[220px] lg:max-w-[520px]">
                                         <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
                                         <input
                                             type="text"
@@ -1054,7 +1054,7 @@ function ShopPageContent() {
                                             className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all placeholder:text-slate-500"
                                         />
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 w-full lg:w-auto min-w-0">
                                         <select
                                             value={listingSort}
                                             onChange={(e) => setListingSort(e.target.value as any)}
@@ -1225,8 +1225,8 @@ function ShopPageContent() {
                         ) : (
                             <>
                                 <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <div className="flex-1 min-w-[200px] relative">
+                                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+                                        <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] relative">
                                             <input
                                                 type="text"
                                                 placeholder={t('storefront.searchStoresPlaceholder')}
@@ -1239,7 +1239,7 @@ function ShopPageContent() {
                                             </div>
                                         </div>
 
-                                        <div className="min-w-[180px]">
+                                        <div className="w-full sm:w-auto sm:min-w-[180px]">
                                             <select
                                                 value={storeFilters.industry}
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, industry: e.target.value })}
@@ -1254,7 +1254,7 @@ function ShopPageContent() {
                                             </select>
                                         </div>
 
-                                        <div className="min-w-[140px]">
+                                        <div className="w-full sm:w-auto sm:min-w-[140px]">
                                             <select
                                                 value={storeFilters.province}
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, province: e.target.value })}
@@ -1269,7 +1269,7 @@ function ShopPageContent() {
                                             </select>
                                         </div>
 
-                                        <div className="min-w-[160px]">
+                                        <div className="w-full sm:w-auto sm:min-w-[160px]">
                                             <select
                                                 value={storeFilters.certification}
                                                 onChange={(e) => setStoreFilters({ ...storeFilters, certification: e.target.value })}

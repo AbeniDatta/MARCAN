@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { scheduleSupplierProfileEnrichment } from '@/services/ai-enrichment';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -294,6 +295,9 @@ export async function POST(request: NextRequest) {
         skipDuplicates: true,
       });
     }
+
+    // Post-save AI enrichment (non-blocking; failures do not affect this response)
+    scheduleSupplierProfileEnrichment(profile.id);
 
     return NextResponse.json(profile, {
       status: existingProfile ? 200 : 201,

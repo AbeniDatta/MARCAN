@@ -17,11 +17,13 @@
     "breadcrumbSignUp": "Inscription",
     "breadcrumbAboutUs": "À propos de nous",
     "breadcrumbLogin": "Connexion",
-    "breadcrumbContactUs": "Contactez-nous"
+    "breadcrumbContactUs": "Contactez-nous",
+    "openMenuAria": "Ouvrir le menu de navigation"
   },
   "layout": {
     "developerPreviewLabel": "Aperçu développeur :",
-    "developmentDisclaimerBody": "La plateforme est en développement actif"
+    "developmentDisclaimerBody": "La plateforme est en développement actif",
+    "closeMenuAria": "Fermer le menu de navigation"
   },
   "sidebar": {
     "home": "Maison",

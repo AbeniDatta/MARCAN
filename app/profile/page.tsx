@@ -148,7 +148,7 @@ function ProfilePageContent() {
         return (
             <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
                 <Header breadcrumb="Company Profile" />
-                <div className="flex-1 overflow-y-auto p-8 relative">
+                <div className="flex-1 overflow-y-auto page-scroll relative">
                     <div className="text-center py-12">
                         <p className="text-slate-400">Company not found.</p>
                         <Link href={returnTo} className="text-marcan-red hover:text-white mt-4 inline-block">
@@ -356,7 +356,7 @@ function ProfilePageContent() {
         <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
             <Header breadcrumb="Company Profile" />
 
-            <div className="flex-1 overflow-y-auto p-8 relative">
+            <div className="flex-1 overflow-y-auto page-scroll relative">
                 <Link
                     href={returnTo}
                     className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
@@ -625,7 +625,7 @@ export default function ProfilePage() {
         <Suspense fallback={
             <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
                 <Header breadcrumb="Company Profile" />
-                <div className="flex-1 overflow-y-auto p-8 relative">
+                <div className="flex-1 overflow-y-auto page-scroll relative">
                     <div className="text-center py-12">
                         <p className="text-slate-400">Loading...</p>
                     </div>

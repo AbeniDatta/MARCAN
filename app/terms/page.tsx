@@ -30,19 +30,19 @@ export default function TermsPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Terms of Service" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="max-w-4xl mx-auto py-12">
-          <div className="text-center mb-12">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="max-w-4xl mx-auto w-full min-w-0 py-8 sm:py-12">
+          <div className="text-center mb-8 sm:mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-marcan-red/10 border border-marcan-red/30 mb-6 shadow-neon">
               <i className="fa-solid fa-gavel text-2xl text-marcan-red"></i>
             </div>
-            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-4">
+            <h2 className="font-heading text-3xl sm:text-4xl font-black text-white uppercase tracking-tight mb-4 px-2">
               Terms of Service
             </h2>
-            <p className="text-slate-400 text-lg">Last updated: {lastUpdated}</p>
+            <p className="text-slate-400 text-base sm:text-lg px-2">Last updated: {lastUpdated}</p>
           </div>
 
-          <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8">
+          <div className="glass-card p-5 sm:p-8 rounded-2xl border border-white/5 space-y-6 sm:space-y-8 overflow-x-auto">
             <section>
               <h3 className="font-bold text-xl text-white mb-4">1. Acceptance of Terms</h3>
               <p className="text-slate-400 leading-relaxed">

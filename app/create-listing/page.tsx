@@ -145,7 +145,7 @@ export default function CreateListingPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Create Listing" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
         <div className="max-w-3xl mx-auto py-6">
           <Link
             href="/shop"

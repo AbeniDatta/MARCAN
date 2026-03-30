@@ -277,16 +277,16 @@ function DirectoryPageContent() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Company Directory" />
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-8 relative">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto page-scroll relative">
         <div className="mb-6">
           <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">{t('directory.explore')}</div>
-          <h2 className="font-heading text-3xl font-bold text-white uppercase mb-6">{t('directory.title')}</h2>
+          <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white uppercase mb-6">{t('directory.title')}</h2>
 
           {/* Horizontal Filter Bar */}
           <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
               {/* Global Search - AI Powered */}
-              <div className="flex-1 min-w-[200px] relative">
+              <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] relative">
                 <input
                   type="text"
                   placeholder={t('directory.searchPlaceholder')}
@@ -325,7 +325,7 @@ function DirectoryPageContent() {
               </div>
 
               {/* Province Filter */}
-              <div className="min-w-[140px]">
+              <div className="w-full sm:w-auto sm:min-w-[140px]">
                 <select
                   value={filters.province}
                   onChange={(e) => setFilters({ ...filters, province: e.target.value })}
@@ -341,7 +341,7 @@ function DirectoryPageContent() {
               </div>
 
               {/* Certification Filter */}
-              <div className="min-w-[160px]">
+              <div className="w-full sm:w-auto sm:min-w-[160px]">
                 <select
                   value={filters.certification}
                   onChange={(e) => setFilters({ ...filters, certification: e.target.value })}
@@ -489,7 +489,7 @@ export default function DirectoryPage() {
       fallback={
         <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
           <Header breadcrumb="Company Directory" />
-          <div className="flex-1 overflow-y-auto p-8 relative">
+          <div className="flex-1 overflow-y-auto page-scroll relative">
             <div className="text-slate-400 text-sm">Loading directory...</div>
           </div>
         </main>

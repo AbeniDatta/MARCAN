@@ -49,17 +49,17 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex-1 relative z-10 overflow-y-auto flex flex-col">
+    <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb={translateText('Sign Up')} />
 
-      <div className="flex-1 overflow-y-auto p-4 relative">
-        <div className="flex items-center justify-center py-8">
-          <div className="w-full max-w-6xl">
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="flex items-center justify-center py-6 sm:py-8">
+          <div className="w-full max-w-6xl min-w-0">
+            <div className="text-center mb-8 sm:mb-12 px-1">
+              <h2 className="font-heading text-3xl sm:text-4xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
                 {t('signup.pathPicker.title')}
               </h2>
-              <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+              <p className="text-slate-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
                 {t('signup.pathPicker.subtitle')}
               </p>
             </div>
@@ -67,7 +67,7 @@ export default function SignupPage() {
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-5xl mx-auto relative z-10">
               {/* Buyer Account */}
               <div
-                className="glass-card rounded-3xl border border-white/5 p-8 flex flex-col text-left hover:border-blue-500/50 hover:-translate-y-2 transition-all duration-300 bg-gradient-to-b from-transparent to-blue-900/5"
+                className="glass-card rounded-3xl border border-white/5 p-6 sm:p-8 flex flex-col text-left hover:border-blue-500/50 hover:-translate-y-2 transition-all duration-300 bg-gradient-to-b from-transparent to-blue-900/5"
               >
                 <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 text-2xl mb-6 border border-blue-500/20">
                   <i className="fa-solid fa-magnifying-glass-chart" />
@@ -109,7 +109,7 @@ export default function SignupPage() {
 
               {/* Verified Supplier */}
               <div
-                className="glass-card rounded-3xl border border-marcan-red/30 p-8 flex flex-col text-left hover:-translate-y-2 transition-all duration-300 relative shadow-[0_0_30px_rgba(239,68,68,0.1)] bg-gradient-to-b from-marcan-red/10 to-transparent"
+                className="glass-card rounded-3xl border border-marcan-red/30 p-6 sm:p-8 flex flex-col text-left hover:-translate-y-2 transition-all duration-300 relative shadow-[0_0_30px_rgba(239,68,68,0.1)] bg-gradient-to-b from-marcan-red/10 to-transparent"
               >
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-marcan-red to-orange-500 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-neon whitespace-nowrap">
                   {t('signup.pathPicker.supplierBadge')}
@@ -196,7 +196,7 @@ export default function SignupPage() {
 
               {/* Storefront Seller */}
               <div
-                className="glass-card rounded-3xl border border-white/5 p-8 flex flex-col text-left hover:border-orange-500/50 hover:-translate-y-2 transition-all duration-300 bg-gradient-to-b from-transparent to-orange-900/5"
+                className="glass-card rounded-3xl border border-white/5 p-6 sm:p-8 flex flex-col text-left hover:border-orange-500/50 hover:-translate-y-2 transition-all duration-300 bg-gradient-to-b from-transparent to-orange-900/5"
               >
                 <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 text-2xl mb-6 border border-orange-500/20">
                   <i className="fa-solid fa-store" />

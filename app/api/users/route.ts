@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { scheduleBuyerProfileEnrichment } from '@/services/ai-enrichment';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -47,22 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      userId,
-      firstName,
-      lastName,
-      email,
-      companyName,
-      jobTitle,
-      phone,
-      city,
-      province,
-      primaryProcesses,
-      materials,
-      certifications,
-      industriesServed,
-      otherComments,
-    } = body;
+    const { userId, firstName, lastName, email, companyName, jobTitle, phone, city, province } = body;
 
     if (!userId || !email) {
       return NextResponse.json(
@@ -76,22 +62,19 @@ export async function POST(request: NextRequest) {
       where: { userId },
     });
 
-    const profileData: any = {
+    const profileData = {
       userId,
       firstName: firstName || null,
       lastName: lastName || null,
       email: email || userId || null,
-      companyName: companyName || `${firstName} ${lastName}`.trim(),
+      companyName:
+        (companyName && String(companyName).trim()) ||
+        `${firstName || ''} ${lastName || ''}`.trim() ||
+        'Organization',
       jobTitle: jobTitle || null,
       phone: phone || null,
       city: city || null,
       province: province || null,
-      // Buyer-specific fields
-      primaryProcesses: Array.isArray(primaryProcesses) ? primaryProcesses : [],
-      materials: Array.isArray(materials) ? materials : [],
-      certifications: Array.isArray(certifications) ? certifications : [],
-      industriesServed: Array.isArray(industriesServed) ? industriesServed : [],
-      otherComments: otherComments || null,
     };
 
     let profile;
@@ -112,6 +95,8 @@ export async function POST(request: NextRequest) {
       });
       console.log('Buyer profile created successfully:', profile.id);
     }
+
+    scheduleBuyerProfileEnrichment(profile.id);
 
     return NextResponse.json(
       {

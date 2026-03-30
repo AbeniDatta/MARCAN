@@ -121,9 +121,9 @@ export default function LoginPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb={translateText('Login')} />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
         <div className="flex items-center justify-center h-full min-h-[500px]">
-          <div className="glass-card p-10 rounded-3xl w-full max-w-md relative overflow-hidden">
+          <div className="glass-card p-6 sm:p-10 rounded-3xl w-full max-w-md relative overflow-hidden mx-auto">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-marcan-red to-transparent shadow-neon"></div>
 
             <div className="text-center mb-8">

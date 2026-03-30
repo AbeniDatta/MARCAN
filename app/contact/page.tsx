@@ -54,21 +54,21 @@ export default function ContactPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="Contact Us" />
 
-      <div className="flex-1 overflow-hidden p-6 relative">
-        <div className="max-w-4xl mx-auto py-6">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="max-w-4xl mx-auto w-full min-w-0 py-6">
           <div className="text-center mb-8">
-            <i className="fa-solid fa-paper-plane text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
-            <h2 className="font-heading text-4xl font-black text-white uppercase tracking-tight mb-3">
+            <i className="fa-solid fa-paper-plane text-4xl sm:text-5xl text-marcan-red mb-4 shadow-neon rounded-full p-4 bg-white/5"></i>
+            <h2 className="font-heading text-3xl sm:text-4xl font-black text-white uppercase tracking-tight mb-3">
               {t('contact.title')}
             </h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto px-1">
               {t('contact.subtitle')}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-stretch">
             {/* Contact Form */}
-            <div className="glass-card p-8 rounded-2xl flex flex-col h-full">
+            <div className="glass-card p-5 sm:p-8 rounded-2xl flex flex-col h-full">
               <h3 className="font-bold text-xl text-white mb-4 uppercase text-center">{t('contact.sendMessage')}</h3>
               {status && (
                 <div
@@ -81,7 +81,7 @@ export default function ContactPage() {
                 </div>
               )}
               <form className="space-y-3 flex-1 flex flex-col" onSubmit={handleSubmit}>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder={t('contact.form.namePlaceholder')}

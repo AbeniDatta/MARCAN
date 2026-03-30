@@ -68,45 +68,47 @@ export default function MarketplacePage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb={t('marketplace.breadcrumb')} />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
-        <div className="flex justify-between items-end mb-8">
-          <div>
+      <div className="flex-1 overflow-y-auto page-scroll relative">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end mb-8">
+          <div className="min-w-0">
             <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">
               {t('marketplace.exploreLabel')}
             </div>
-            <h2 className="font-heading text-3xl font-bold text-white uppercase">
+            <h2 className="font-heading text-2xl sm:text-3xl font-bold text-white uppercase">
               {t('marketplace.title')}
             </h2>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
             {isMounted && isAuthenticated && isSupplier ? (
               <Link
                 href="/create-listing"
-                className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center"
+                className="bg-white/5 border border-white/10 text-white px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-white/10 transition-all inline-flex items-center justify-center w-full sm:w-auto"
               >
                 <i className="fa-solid fa-plus mr-2"></i> {t('marketplace.createListing')}
               </Link>
             ) : isMounted && isAuthenticated && !isSupplier ? (
               <>
                 <button
+                  type="button"
                   disabled
-                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
+                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center justify-center w-full sm:w-auto"
                 >
                   <i className="fa-solid fa-plus mr-2"></i> {t('marketplace.createListing')}
                 </button>
-                <p className="text-xs text-slate-500 text-right max-w-[200px]">
+                <p className="text-xs text-slate-500 text-left sm:text-right sm:max-w-[200px]">
                   {t('marketplace.onlySuppliersNotice')}
                 </p>
               </>
             ) : isMounted ? (
               <>
                 <button
+                  type="button"
                   disabled
-                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center"
+                  className="bg-slate-600/50 border border-slate-600/50 text-slate-400 px-6 py-2 rounded-lg font-bold uppercase tracking-wider text-xs cursor-not-allowed opacity-50 inline-flex items-center justify-center w-full sm:w-auto"
                 >
                   <i className="fa-solid fa-plus mr-2"></i> {t('marketplace.createListing')}
                 </button>
-                <p className="text-xs text-slate-500 text-right max-w-[200px]">
+                <p className="text-xs text-slate-500 text-left sm:text-right sm:max-w-[200px]">
                   {t('marketplace.loginToCreate')}
                 </p>
               </>

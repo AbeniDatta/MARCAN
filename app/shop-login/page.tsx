@@ -124,7 +124,7 @@ export default function ShopLoginPage() {
         <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
             <Header breadcrumb="Industrial Storefront Login" />
 
-            <div className="flex-1 overflow-y-auto p-8 relative">
+            <div className="flex-1 overflow-y-auto page-scroll relative">
                 <div className="flex items-center justify-center h-full min-h-[500px]">
                     <div className="glass-card p-10 rounded-3xl w-full max-w-md relative overflow-hidden">
                         <div

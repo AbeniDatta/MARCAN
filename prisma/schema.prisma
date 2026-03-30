@@ -113,10 +113,18 @@ model BuyerProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // AI enrichment (normalized JSON + lifecycle)
+  aiSchema     Json?     @map("ai_schema")
+  aiSummary    String?   @map("ai_summary") @db.Text
+  aiStatus     String    @default("pending") @map("ai_status") @db.Text
+  aiEnrichedAt DateTime? @map("ai_enriched_at") @db.Timestamptz(6)
+  aiError      String?   @map("ai_error") @db.Text
+
   sourcingRequests SourcingRequest[]
 
   @@index([province])
   @@index([createdAt(sort: Desc)])
+  @@index([aiStatus])
   @@map("buyer_profiles")
 }
 
@@ -180,6 +188,13 @@ model SupplierProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // AI enrichment (normalized JSON + lifecycle)
+  aiSchema     Json?     @map("ai_schema")
+  aiSummary    String?   @map("ai_summary") @db.Text
+  aiStatus     String    @default("pending") @map("ai_status") @db.Text
+  aiEnrichedAt DateTime? @map("ai_enriched_at") @db.Timestamptz(6)
+  aiError      String?   @map("ai_error") @db.Text
+
   storefrontListings StorefrontListing[]
 
   // Normalized taxonomy relations
@@ -189,6 +204,7 @@ model SupplierProfile {
   @@index([province])
   @@index([verified])
   @@index([createdAt(sort: Desc)])
+  @@index([aiStatus])
   @@map("supplier_profiles")
 }
 
@@ -236,11 +252,19 @@ model StorefrontProfile {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // AI enrichment (normalized JSON + lifecycle)
+  aiSchema     Json?     @map("ai_schema")
+  aiSummary    String?   @map("ai_summary") @db.Text
+  aiStatus     String    @default("pending") @map("ai_status") @db.Text
+  aiEnrichedAt DateTime? @map("ai_enriched_at") @db.Timestamptz(6)
+  aiError      String?   @map("ai_error") @db.Text
+
   storefrontListings StorefrontListing[]
 
   @@index([province])
   @@index([verified])
   @@index([createdAt(sort: Desc)])
+  @@index([aiStatus])
   @@map("storefront_profiles")
 }
 
@@ -261,12 +285,20 @@ model StorefrontListing {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // AI enrichment (normalized JSON + lifecycle)
+  aiSchema     Json?     @map("ai_schema")
+  aiSummary    String?   @map("ai_summary") @db.Text
+  aiStatus     String    @default("pending") @map("ai_status") @db.Text
+  aiEnrichedAt DateTime? @map("ai_enriched_at") @db.Timestamptz(6)
+  aiError      String?   @map("ai_error") @db.Text
+
   supplierProfile SupplierProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   storefrontProfile StorefrontProfile? @relation(fields: [storefrontProfileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
   @@index([storefrontProfileId])
   @@index([createdAt(sort: Desc)])
+  @@index([aiStatus])
   @@map("storefront_listings")
 }
 
@@ -286,9 +318,17 @@ model SourcingRequest {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  // AI enrichment (normalized JSON + lifecycle)
+  aiSchema     Json?     @map("ai_schema")
+  aiSummary    String?   @map("ai_summary") @db.Text
+  aiStatus     String    @default("pending") @map("ai_status") @db.Text
+  aiEnrichedAt DateTime? @map("ai_enriched_at") @db.Timestamptz(6)
+  aiError      String?   @map("ai_error") @db.Text
+
   buyerProfile BuyerProfile @relation(fields: [buyerProfileId], references: [id], onDelete: Cascade)
 
   @@index([buyerProfileId])
   @@index([createdAt(sort: Desc)])
+  @@index([aiStatus])
   @@map("sourcing_requests")
 }

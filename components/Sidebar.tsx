@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { useMobileNav } from '@/contexts/MobileNavContext';
 
 interface NavItem {
     href: string;
@@ -18,6 +19,11 @@ export default function Sidebar() {
     const { isAuthenticated, user, logout, isMounted } = useAuth();
     const [hasSupplierProfile, setHasSupplierProfile] = useState(false);
     const { t } = useI18n();
+    const { isOpen, close } = useMobileNav();
+
+    useEffect(() => {
+        close();
+    }, [pathname, close]);
 
     const navItems: NavItem[] = [
         { href: '/', label: t('sidebar.home'), icon: 'fa-house' },
@@ -67,20 +73,42 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="relative z-20 w-20 lg:w-72 glass-panel flex flex-col justify-between py-8 px-4 transition-all duration-300">
-            {/* Brand */}
-            <Link href="/" className="flex items-center gap-4 px-2 mb-10 cursor-pointer group">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300 relative bg-transparent overflow-hidden">
-                    <img
-                        src="/images/marcan-potential-logo.png"
-                        alt="Marcan Logo"
-                        className="w-full h-full object-contain"
-                    />
+        <>
+            <button
+                type="button"
+                aria-label={t('layout.closeMenuAria')}
+                className={`fixed inset-0 z-[35] bg-black/65 backdrop-blur-sm transition-opacity lg:hidden ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                onClick={close}
+            />
+
+            <aside
+                className={`glass-panel flex flex-col justify-between py-6 sm:py-8 px-3 sm:px-4 transition-transform duration-300 ease-out shrink-0
+          fixed z-[40] inset-y-0 left-0 w-[min(20rem,calc(100vw-1rem))] max-w-[min(20rem,calc(100vw-1rem))]
+          shadow-2xl lg:shadow-none lg:relative lg:z-20 lg:w-72 lg:max-w-none lg:translate-x-0
+          ${isOpen ? 'translate-x-0 max-lg:pointer-events-auto' : '-translate-x-full lg:translate-x-0 max-lg:pointer-events-none'}`}
+            >
+                <div className="flex items-start justify-between gap-2 lg:justify-start mb-6 lg:mb-10">
+                    <Link href="/" onClick={close} className="flex items-center gap-4 px-2 cursor-pointer group min-w-0">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-neon group-hover:scale-105 transition-transform duration-300 relative bg-transparent overflow-hidden shrink-0">
+                            <img
+                                src="/images/marcan-potential-logo.png"
+                                alt="Marcan Logo"
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            <h1 className="font-heading font-bold text-lg sm:text-xl text-white tracking-widest uppercase truncate">Marcan</h1>
+                        </div>
+                    </Link>
+                    <button
+                        type="button"
+                        className="lg:hidden shrink-0 w-10 h-10 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors"
+                        onClick={close}
+                        aria-label={t('layout.closeMenuAria')}
+                    >
+                        <i className="fa-solid fa-xmark text-lg" aria-hidden />
+                    </button>
                 </div>
-                <div className="hidden lg:block">
-                    <h1 className="font-heading font-bold text-xl text-white tracking-widest uppercase">Marcan</h1>
-                </div>
-            </Link>
 
             {/* Nav Links */}
             <nav className="flex-grow space-y-2">
@@ -91,6 +119,7 @@ export default function Sidebar() {
                         <div key={item.href}>
                             <Link
                                 href={item.href}
+                                onClick={close}
                                 className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${isShopTab
                                     ? 'text-orange-400 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 shadow-[inset_0_0_20px_rgba(249,115,22,0.10)]'
                                     : active ? 'text-white' : 'text-slate-400'
@@ -105,10 +134,10 @@ export default function Sidebar() {
                                         }
                                         }`}
                                 />
-                                <i className={`fa-solid ${item.icon} text-xl w-6 text-center`}></i>
-                                <span className="hidden lg:block font-semibold text-sm tracking-wide">{item.label}</span>
+                                <i className={`fa-solid ${item.icon} text-xl w-6 text-center shrink-0`}></i>
+                                <span className="font-semibold text-sm tracking-wide truncate">{item.label}</span>
                                 {item.badge && (
-                                    <span className="hidden lg:flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">
+                                    <span className="flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon shrink-0">
                                         {item.badge}
                                     </span>
                                 )}
@@ -125,20 +154,24 @@ export default function Sidebar() {
                 {isMounted && isAuthenticated && user ? (
                     <>
                         <div className="w-full glass-card p-4 rounded-xl flex items-center gap-4">
-                            <div className="hidden lg:block text-center whitespace-nowrap">
+                            <div className="text-left min-w-0 flex-1">
                                 <span className="text-medium font-bold text-white text-center">
                                     {t('sidebar.welcomeUser').replace('{name}', user.firstName)}
                                 </span>
                             </div>
                         </div>
                         <button
-                            onClick={logout}
+                            type="button"
+                            onClick={() => {
+                                close();
+                                logout();
+                            }}
                             className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-red-500/50 transition-colors duration-300 text-left"
                         >
                             <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-red-400 border border-red-500/30">
                                 <i className="fa-solid fa-right-from-bracket"></i>
                             </div>
-                            <div className="hidden lg:block text-left">
+                            <div className="text-left min-w-0">
                                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('sidebar.signOutLabel')}</div>
                                 <div className="text-sm font-bold text-white group-hover:text-red-400 transition-colors">
                                     {t('sidebar.logout')}
@@ -149,12 +182,13 @@ export default function Sidebar() {
                 ) : isMounted ? (
                     <Link
                         href="/signup"
+                        onClick={close}
                         className="w-full glass-card p-4 rounded-xl flex items-center gap-4 group hover:border-marcan-red/50 transition-colors duration-300"
                     >
                         <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-marcan-red border border-marcan-red/30 shadow-neon">
                             <i className="fa-solid fa-user-plus"></i>
                         </div>
-                        <div className="hidden lg:block text-left">
+                        <div className="text-left min-w-0">
                             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('sidebar.joinMarcan')}</div>
                             <div className="text-sm font-bold text-white group-hover:text-marcan-red transition-colors">
                                 {t('sidebar.signUp')}
@@ -164,5 +198,6 @@ export default function Sidebar() {
                 ) : null}
             </div>
         </aside>
+        </>
     );
 }

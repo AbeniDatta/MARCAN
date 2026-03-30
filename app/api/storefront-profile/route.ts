@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { scheduleStorefrontProfileEnrichment } from '@/services/ai-enrichment';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +62,8 @@ export async function POST(request: NextRequest) {
       : await (prisma as any).storefrontProfile.create({
           data: { userId, ...data },
         });
+
+    scheduleStorefrontProfileEnrichment(profile.id);
 
     return NextResponse.json(profile);
   } catch (error: any) {

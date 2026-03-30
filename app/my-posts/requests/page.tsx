@@ -151,7 +151,7 @@ export default function MyRequestsPage() {
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
       <Header breadcrumb="My Posts / Sourcing Requests" />
 
-      <div className="flex-1 overflow-y-auto p-8 relative">
+      <div className="flex-1 overflow-y-auto page-scroll relative">
         <div className="flex justify-between items-end mb-6">
           <div>
             <div className="text-marcan-red text-xs font-bold uppercase tracking-widest mb-1">My Posts</div>
