@@ -55,6 +55,7 @@ type SourcingRequestCard = {
     id: string;
     title: string;
     company?: string;
+    buyerEmail?: string | null;
     category?: string;
     description?: string;
     quantity?: string;
@@ -710,12 +711,23 @@ function ShopPageContent() {
                             <div className="space-y-6">
                                 <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
                                     <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">{t('wishlist.interestedInRfq')}</div>
-                                    <Link
-                                        href="/post-request"
-                                        className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                                    >
-                                        <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
-                                    </Link>
+                                    {selectedRequest?.buyerEmail ? (
+                                        <a
+                                            href={`mailto:${selectedRequest.buyerEmail}?subject=${encodeURIComponent(
+                                                `RFQ: ${selectedRequest.title || ''}`
+                                            )}`}
+                                            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                                        >
+                                            <i className="fa-solid fa-envelope" aria-hidden></i> {t('wishlist.emailBuyer')}
+                                        </a>
+                                    ) : (
+                                        <Link
+                                            href="/post-request"
+                                            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                                        >
+                                            <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
+                                        </Link>
+                                    )}
                                 </div>
 
                                 <div className="glass-card p-6 rounded-2xl border border-white/5">

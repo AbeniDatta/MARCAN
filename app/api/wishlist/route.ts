@@ -32,7 +32,14 @@ export async function GET() {
       where: {
         active: true,
       },
-      // buyerProfile kept out of include to prioritize request-level target location
+      include: {
+        buyerProfile: {
+          select: {
+            email: true,
+            userId: true, // Firebase email (auth identifier)
+          },
+        },
+      },
       orderBy: {
         createdAt: 'desc',
       },
@@ -62,6 +69,7 @@ export async function GET() {
       city: req.targetCity || null,
       province: req.targetProvince || null,
       location: [req.targetCity, req.targetProvince].filter(Boolean).join(', ') || null,
+      buyerEmail: req.buyerProfile?.email ?? req.buyerProfile?.userId ?? null,
       logoUrl: null,
       selectedIcon: null,
     }));
@@ -102,12 +110,22 @@ export async function POST(request: NextRequest) {
       where: { userId },
     });
 
+    // If the buyer profile exists but email is missing, backfill it from userId.
+    // (Historically some profiles were created without `buyerProfile.email` populated.)
+    if (profile && !profile.email) {
+      profile = await prisma.buyerProfile.update({
+        where: { userId },
+        data: { email: userId },
+      });
+    }
+
     let createdBuyerProfile = false;
     if (!profile) {
       // Create a basic buyer profile if it doesn't exist
       profile = await prisma.buyerProfile.create({
         data: {
           userId,
+          email: userId,
           companyName: body.companyName || 'Anonymous',
         },
       });
@@ -133,6 +151,8 @@ export async function POST(request: NextRequest) {
         buyerProfile: {
           select: {
             companyName: true,
+            email: true,
+            userId: true,
           },
         },
       },
@@ -161,6 +181,7 @@ export async function POST(request: NextRequest) {
       timestamp: wishlistRequest.createdAt.getTime(),
       logoUrl: null,
       selectedIcon: null,
+      buyerEmail: wishlistRequest.buyerProfile?.email ?? wishlistRequest.buyerProfile?.userId ?? null,
     };
 
     if (createdBuyerProfile) {

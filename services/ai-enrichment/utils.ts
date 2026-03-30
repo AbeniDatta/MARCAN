@@ -115,3 +115,22 @@ export function truncateError(message: string, max = 4000): string {
   if (message.length <= max) return message;
   return `${message.slice(0, max - 20)}…[truncated]`;
 }
+
+/** Human-readable Zod failure for `ai_error` (works with Zod 4 issues). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatZodError(err: { issues: any[] }): string {
+  try {
+    return err.issues
+      .map((i) => {
+        const p = Array.isArray(i.path) && i.path.length > 0 ? i.path.join('.') : '(root)';
+        const extra =
+          i.code === 'invalid_value' && 'input' in i && i.input !== undefined
+            ? ` (received: ${JSON.stringify(i.input)})`
+            : '';
+        return `${p}: ${i.message}${extra}`;
+      })
+      .join('; ');
+  } catch {
+    return String(err);
+  }
+}

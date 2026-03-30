@@ -34,6 +34,12 @@ export default function Sidebar() {
         { href: '/contact', label: t('sidebar.contact'), icon: 'fa-envelope' },
     ];
 
+    // Group navigation links for clearer IA:
+    // - First 3: Platform
+    // - Last 3: Support & Info
+    const platformItems = navItems.slice(0, 3);
+    const supportItems = navItems.slice(3);
+
     // Check if user has a supplier profile in the database
     useEffect(() => {
         if (isMounted && isAuthenticated && user?.email) {
@@ -112,27 +118,22 @@ export default function Sidebar() {
 
             {/* Nav Links */}
             <nav className="flex-grow space-y-2">
-                {navItems.map((item) => {
+                <div className="pt-2 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    Platform
+                </div>
+                {platformItems.map((item) => {
                     const active = isActive(item.href);
-                    const isShopTab = item.href === '/shop';
                     return (
                         <div key={item.href}>
                             <Link
                                 href={item.href}
                                 onClick={close}
-                                className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${isShopTab
-                                    ? 'text-orange-400 bg-gradient-to-r from-orange-500/10 to-transparent border-l-4 border-orange-500 shadow-[inset_0_0_20px_rgba(249,115,22,0.10)]'
-                                    : active ? 'text-white' : 'text-slate-400'
-                                    } hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
+                                className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${active ? 'text-white' : 'text-slate-400'} hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
                             >
                                 <div
-                                    className={`absolute inset-0 ${isShopTab ? 'bg-orange-500/10' : 'bg-marcan-red/10'} transition-transform duration-300 ${isShopTab
-                                        ? 'translate-x-0'
-                                        : active
-                                            ? 'translate-x-0'
-                                            : 'translate-x-[-100%] group-hover:translate-x-0'
-                                        }
-                                        }`}
+                                    className={`absolute inset-0 bg-marcan-red/10 transition-transform duration-300 ${
+                                        active ? 'translate-x-0' : 'translate-x-[-100%] group-hover:translate-x-0'
+                                    }`}
                                 />
                                 <i className={`fa-solid ${item.icon} text-xl w-6 text-center shrink-0`}></i>
                                 <span className="font-semibold text-sm tracking-wide truncate">{item.label}</span>
@@ -142,7 +143,35 @@ export default function Sidebar() {
                                     </span>
                                 )}
                             </Link>
+                        </div>
+                    );
+                })}
 
+                <div className="pt-4 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    Support &amp; Info
+                </div>
+                {supportItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                        <div key={item.href}>
+                            <Link
+                                href={item.href}
+                                onClick={close}
+                                className={`nav-item w-full flex items-center gap-4 px-4 py-4 rounded-xl ${active ? 'text-white' : 'text-slate-400'} hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden`}
+                            >
+                                <div
+                                    className={`absolute inset-0 bg-marcan-red/10 transition-transform duration-300 ${
+                                        active ? 'translate-x-0' : 'translate-x-[-100%] group-hover:translate-x-0'
+                                    }`}
+                                />
+                                <i className={`fa-solid ${item.icon} text-xl w-6 text-center shrink-0`}></i>
+                                <span className="font-semibold text-sm tracking-wide truncate">{item.label}</span>
+                                {item.badge && (
+                                    <span className="flex ml-auto bg-marcan-red/20 text-marcan-red border border-marcan-red/50 text-[10px] font-bold px-2 py-0.5 rounded shadow-neon shrink-0">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </Link>
                         </div>
                     );
                 })}

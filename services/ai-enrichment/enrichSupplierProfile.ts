@@ -4,7 +4,7 @@ import { runJsonCompletion } from './openai-client';
 import { buildSupplierProfilePrompts } from './prompts';
 import { supplierAiOutputSchema, type SupplierAiOutput } from './schemas';
 import { mapSupplierCapabilitiesFromAi } from './mapSupplierCapabilities';
-import { truncateError, tryParseJson } from './utils';
+import { formatZodError, truncateError, tryParseJson } from './utils';
 
 function supplierPayload(row: {
   companyName: string;
@@ -88,11 +88,13 @@ export async function enrichSupplierProfile(supplierProfileId: string): Promise<
 
   const validated = supplierAiOutputSchema.safeParse(parsedUnknown);
   if (!validated.success) {
+    const detail = formatZodError(validated.error);
+    console.warn('[ai-enrichment] supplier zod failed:', supplierProfileId, detail);
     await prisma.supplierProfile.update({
       where: { id: supplierProfileId },
       data: {
         aiStatus: 'failed',
-        aiError: truncateError(validated.error.message),
+        aiError: truncateError(detail || validated.error.message),
         aiEnrichedAt: new Date(),
       },
     });

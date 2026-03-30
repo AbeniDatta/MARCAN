@@ -374,6 +374,8 @@ Now process the user's query.
           select: {
             companyName: true,
             province: true,
+            email: true,
+            userId: true,
           },
         },
       },
@@ -421,6 +423,7 @@ Now process the user's query.
       id: r.id,
       title: r.title,
       company: r.companyName,
+      companyName: r.companyName,
       province: r.targetProvince || r.buyerProfile?.province || '',
       category: r.category || '',
       description: r.description || '',
@@ -429,6 +432,7 @@ Now process the user's query.
       deadline: r.deadline ? r.deadline.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
       location: [r.targetCity, r.targetProvince].filter(Boolean).join(', ') || '',
+      buyerEmail: r.buyerProfile?.email ?? r.buyerProfile?.userId ?? null,
       logoUrl: null,
       selectedIcon: null,
     }));

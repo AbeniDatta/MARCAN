@@ -22,7 +22,10 @@ type Entity =
  * Header: `Authorization: Bearer <ENRICHMENT_RETRY_SECRET>`
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.ENRICHMENT_RETRY_SECRET?.trim();
+  // Some shells keep quotes when you `source .env.local` (e.g. ENRICHMENT_RETRY_SECRET="abc").
+  // Accept both quoted and unquoted variants for robustness.
+  const secretRaw = process.env.ENRICHMENT_RETRY_SECRET?.trim();
+  const secret = secretRaw?.replace(/^['"]|['"]$/g, '');
   if (!secret) {
     return NextResponse.json(
       { error: 'ENRICHMENT_RETRY_SECRET is not configured' },
@@ -31,7 +34,8 @@ export async function POST(request: NextRequest) {
   }
 
   const auth = request.headers.get('authorization') || '';
-  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  const tokenRaw = auth.replace(/^Bearer\s+/i, '').trim();
+  const token = tokenRaw.replace(/^['"]|['"]$/g, '');
   if (token !== secret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

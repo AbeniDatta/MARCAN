@@ -82,7 +82,8 @@ export default function CreateListingPage() {
         throw new Error(error.error || t('storefrontCreateListing.alerts.failedToCreate'));
       }
 
-      router.push('/shop');
+      // Keep the user on the Sell (storefront listings) view after creating a listing.
+      router.push('/shop?tab=listings&mode=sell');
     } catch (error: any) {
       console.error('Error creating listing:', error);
       alert(error.message || t('storefrontCreateListing.alerts.failedToCreateTryAgain'));

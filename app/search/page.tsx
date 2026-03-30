@@ -77,6 +77,7 @@ function SearchPageContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
   const [filters, setFilters] = useState({
+    search: '',
     industry: '',
     province: '',
     certification: '',
@@ -168,7 +169,31 @@ function SearchPageContent() {
   };
 
   const filteredCompanies = useMemo(() => {
+    const normalizedSearch = filters.search.trim().toLowerCase();
     return results.companies.filter((company) => {
+      if (normalizedSearch) {
+        const certStrings = Array.isArray(company.certifications)
+          ? company.certifications.map((cert: any) =>
+              typeof cert === 'string' ? cert : `${cert.code || ''} ${cert.name || ''}`
+            )
+          : [];
+        const haystack = [
+          company.name,
+          company.description,
+          company.location,
+          company.city,
+          company.province,
+          company.website,
+          ...(Array.isArray(company.industriesServed) ? company.industriesServed : []),
+          ...(Array.isArray(company.capabilities) ? company.capabilities : []),
+          ...certStrings,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(normalizedSearch)) return false;
+      }
+
       if (filters.industry) {
         const companyIndustries = Array.isArray(company.industriesServed) ? company.industriesServed : [];
         const hasIndustry = companyIndustries.some(
@@ -463,12 +488,24 @@ function SearchPageContent() {
                     <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">
                       {t('wishlist.interestedInRfq')}
                     </div>
-                    <Link
-                      href="/post-request"
-                      className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                    >
-                      <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
-                    </Link>
+                    {selectedRequest?.buyerEmail ? (
+                      <a
+                        href={`mailto:${selectedRequest.buyerEmail}?subject=${encodeURIComponent(
+                          `RFQ: ${selectedRequest.title || ''}`
+                        )}`}
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                      >
+                        <i className="fa-solid fa-envelope" aria-hidden />
+                        {t('wishlist.emailBuyer')}
+                      </a>
+                    ) : (
+                      <Link
+                        href="/post-request"
+                        className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                      >
+                        <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
+                      </Link>
+                    )}
                   </div>
 
                   <div className="glass-card p-6 rounded-2xl border border-white/5">
@@ -551,6 +588,19 @@ function SearchPageContent() {
                 {activeTab === 'companies' && (
                   <div className="glass-card p-4 rounded-xl border border-white/5 mb-6">
                     <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+                      <div className="w-full min-w-0 sm:flex-1 sm:min-w-[200px] relative">
+                        <input
+                          type="text"
+                          value={filters.search}
+                          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                          placeholder={t('directory.searchPlaceholder')}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 pl-10 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-marcan-red focus:shadow-neon outline-none transition-all"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                          <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm" aria-hidden />
+                        </div>
+                      </div>
+
                       <div className="w-full sm:w-auto sm:min-w-[180px]">
                         <select
                           value={filters.industry}
@@ -596,12 +646,15 @@ function SearchPageContent() {
                         </select>
                       </div>
 
-                      {(filters.industry || filters.province || filters.certification) && (
+                      {(filters.search.trim() || filters.industry || filters.province || filters.certification) && (
                         <button
-                          onClick={() => setFilters({ industry: '', province: '', certification: '' })}
+                          type="button"
+                          onClick={() =>
+                            setFilters({ search: '', industry: '', province: '', certification: '' })
+                          }
                           className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all hover:text-white"
                         >
-                          Clear
+                          {t('directory.clear')}
                         </button>
                       )}
                     </div>

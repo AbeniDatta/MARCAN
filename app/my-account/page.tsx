@@ -495,6 +495,8 @@ export default function MyAccountPage() {
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
+            streetAddress:
+              existingProfile.streetAddress ?? formData.streetAddress ?? '',
             companyName: existingProfile.companyName || formData.companyName || `${formData.firstName} ${formData.lastName}`.trim(),
             jobTitle: formData.jobTitle || null,
             // Preserve all existing profile data
@@ -599,6 +601,10 @@ export default function MyAccountPage() {
 
       const submitData = {
         userId: user.email,
+        email: user.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        streetAddress: formData.streetAddress || supplierProfile?.streetAddress || '',
         onboardingMethod: supplierProfile?.onboardingMethod || 'MANUAL',
         companyName: formData.companyName,
         city: formData.city,
@@ -2683,7 +2689,7 @@ export default function MyAccountPage() {
                         Delete account
                       </h3>
                       <p className="mt-2 text-sm text-slate-400 leading-relaxed max-w-2xl">
-                        Deleting your account permanently removes your buyer, supplier, and storefront profiles and related posts from Marcan, then removes your Firebase sign-in. This cannot be undone.
+                        Deleting your account permanently removes your profiles and related posts from Marcan. This cannot be undone.
                       </p>
                     </div>
                     <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 mb-8">
@@ -2692,7 +2698,7 @@ export default function MyAccountPage() {
                       </p>
                       <ul className="text-sm text-slate-400 space-y-2 list-disc list-inside">
                         <li>Download or copy anything you need from My Posts before continuing.</li>
-                        <li>Keep this tab open until the process finishes; if your session has expired, sign in again and retry.</li>
+                        <li>Keep this tab open until the process finishes.</li>
                       </ul>
                     </div>
                     <button
@@ -2718,7 +2724,7 @@ export default function MyAccountPage() {
                         Delete Account?
                       </h3>
                       <p className="text-slate-400 text-sm leading-relaxed">
-                        Your Marcan profiles and posts will be removed from our database right away and your Firebase sign-in will be deleted. This cannot be undone. You will be signed out immediately.
+                        Your Marcan profiles and posts will be removed from our database right away. This cannot be undone.
                       </p>
                     </div>
                     <div className="flex gap-4">
