@@ -122,14 +122,14 @@ const aboutEn = {
     'Learn about us and our mission to connect Canada’s manufacturing capabilities and simplify local sourcing.',
   originsLabel: 'Origins',
   whoWeAreTitle: 'Who We Are',
-  whoWeAreBodyPrefix: "We're a team of engineering students and industry builders working at the ",
+  whoWeAreBodyPrefix: "We're a team of engineering students working at the ",
   whoWeAreBodyBold: 'University of Waterloo',
   whoWeAreBodySuffix:
-    '. Our goal is simple: remove fragmentation and make local sourcing feel obvious for Canadian manufacturers.',
+    '. Our goal is simple: minimize fragmentation for Canadian manufacturers.',
   credibilityLabel: 'Credibility Matters',
   supportedByTitle: 'Supported By',
   supportedBySubtitle:
-    'Marcan is supported by leading institutions focused on strengthening manufacturing talent and capability.',
+    '',
   partnerUw: 'University of Waterloo',
   partnerUwSub: 'Faculty of Engineering',
   partnerNgen: 'NGen Canada',
