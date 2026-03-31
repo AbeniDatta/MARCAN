@@ -520,7 +520,7 @@
       "select": "Select...",
       "businessNumber": "Business Number",
       "provincesServed": "Provinces Served",
-      "industriesServed": "Industries Served",
+      "industriesServed": "Categories Served",
       "companyType": "Company Type",
       "website": "Website",
       "saveAndNext": "Save and Next"
