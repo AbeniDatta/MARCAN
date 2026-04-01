@@ -48,7 +48,7 @@
       "findManufacturers": "Trouver des fabricants",
       "joinNetwork": "Rejoignez notre réseau"
     },
-    "industriesTitle": "Industries",
+    "industriesTitle": "Capacités",
     "howMarcanWorks": {
       "title": "Comment Marcan fonctionne",
       "node1": {
@@ -71,11 +71,15 @@
       "surfaceFinishing": "Finition de surface",
       "toolingMolds": "Outillage et moules",
       "automation": "Automatisation",
+      "additiveManufacturing": "Fabrication additive",
+      "manufacturingSupport": "Support manufacturier",
       "precisionMachiningDescription": "Usinage CNC, tournage et EDM. Capacités à haute tolérance pour l’aérospatiale et le médical.",
       "foundriesCastingDescription": "Fonderie au sable, moulage sous pression et moulage par investissement. Alliages de fer, d’acier et d’aluminium.",
       "surfaceFinishingDescription": "Anodisation, peinture en poudre, placage et traitements thermiques.",
       "toolingMoldsDescription": "Moules d’injection, matrices et solutions d’outillage sur mesure pour la production de masse.",
-      "automationDescription": "Robotique, programmation PLC et systèmes de fabrication automatisés pour une efficacité accrue."
+      "automationDescription": "Robotique, programmation PLC et systèmes de fabrication automatisés pour une efficacité accrue.",
+      "additiveManufacturingDescription": "Impression 3D pour le prototypage et les pièces de production (polymères et métaux).",
+      "manufacturingSupportDescription": "Soutien en ingénierie, DFM, qualité/inspection et préparation à la production."
     },
     "quickStart": {
       "badge": "Configuration IA instantanée",
@@ -520,7 +524,7 @@
       "select": "Sélectionner…",
       "businessNumber": "Numéro d’entreprise",
       "provincesServed": "Provinces desservies",
-      "industriesServed": "Industries desservies",
+      "industriesServed": "Capacités",
       "companyType": "Type d’entreprise",
       "website": "Site web",
       "saveAndNext": "Enregistrer et continuer"
@@ -572,7 +576,7 @@
       "certifications": "Certifications",
       "otherCertifications": "Autres certifications (séparées par des virgules)",
       "addCertificationsHelp": "Ajoutez des certifications non listées ci-dessus.",
-      "industriesServed": "Industries desservies",
+      "industriesServed": "Capacités",
       "otherIndustries": "Autres industries (séparées par des virgules)",
       "addIndustriesHelp": "Ajoutez des industries non listées ci-dessus.",
       "aboutUs": "À propos de nous"

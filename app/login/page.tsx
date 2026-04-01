@@ -31,17 +31,26 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
-      let firstName = 'User';
-      let lastName = 'User';
+      const deriveNameFromEmail = (emailValue: string) => {
+        const safeEmail = (emailValue || '').trim();
+        if (!safeEmail) return { firstName: 'There', lastName: '' };
+        const local = safeEmail.split('@')[0] || '';
+        const token = (local.split(/[._-]+/).find(Boolean) || local).trim();
+        const firstName = token ? token.charAt(0).toUpperCase() + token.slice(1) : 'There';
+        return { firstName, lastName: '' };
+      };
+
+      let firstName = 'There';
+      let lastName = '';
 
       if (firebaseUser.displayName) {
-        const nameParts = firebaseUser.displayName.split(' ');
-        firstName = nameParts[0] || 'User';
-        lastName = nameParts.slice(1).join(' ') || 'User';
+        const nameParts = firebaseUser.displayName.split(/\s+/).filter(Boolean);
+        firstName = nameParts[0] || firstName;
+        lastName = nameParts.slice(1).join(' ') || lastName;
       } else {
-        const emailParts = email.split('@')[0].split('.');
-        firstName = emailParts[0] || 'User';
-        lastName = emailParts[1] || 'User';
+        const derived = deriveNameFromEmail(email);
+        firstName = derived.firstName;
+        lastName = derived.lastName;
       }
 
       const storedUserData = typeof window !== 'undefined' ? localStorage.getItem('marcan_user') : null;

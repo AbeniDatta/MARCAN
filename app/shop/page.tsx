@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import StorefrontListingModal from '@/components/StorefrontListingModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
 
 type ShopListingCard = {
     // listing identifiers
@@ -67,13 +68,14 @@ type SourcingRequestCard = {
     timestamp?: number;
 };
 
-const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
     'Precision Machining': { icon: 'fa-microchip', bgClass: 'bg-blue-500/10', iconClass: 'text-blue-400' },
     'Foundries & Casting': { icon: 'fa-fire', bgClass: 'bg-orange-500/10', iconClass: 'text-orange-400' },
     'Surface Finishing': { icon: 'fa-spray-can-sparkles', bgClass: 'bg-purple-500/10', iconClass: 'text-purple-400' },
     'Tooling & Molds': { icon: 'fa-screwdriver-wrench', bgClass: 'bg-green-500/10', iconClass: 'text-green-400' },
     Automation: { icon: 'fa-robot', bgClass: 'bg-cyan-500/10', iconClass: 'text-cyan-400' },
+    'Additive Manufacturing': { icon: 'fa-cubes', bgClass: 'bg-fuchsia-500/10', iconClass: 'text-fuchsia-400' },
+    'Manufacturing Support': { icon: 'fa-life-ring', bgClass: 'bg-amber-500/10', iconClass: 'text-amber-400' },
 };
 
 const CANADIAN_PROVINCES = [

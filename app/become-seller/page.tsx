@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
 
 type WizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type View = 'landing' | 'form';
@@ -60,8 +61,16 @@ export default function BecomeSupplierPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
   const INDUSTRY_HUB_NAMES = isFr
-    ? ['Usinage de précision', 'Fonderies et moulage', 'Finition de surface', 'Outillage et moules', 'Automatisation']
-    : ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
+    ? [
+      'Usinage de précision',
+      'Fonderies et moulage',
+      'Finition de surface',
+      'Outillage et moules',
+      'Automatisation',
+      'Fabrication additive',
+      'Support manufacturier',
+    ]
+    : Array.from(INDUSTRY_HUBS_EN);
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];

@@ -7,10 +7,10 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import StorefrontListingModal, { type StorefrontListingModalData } from '@/components/StorefrontListingModal';
 import { useI18n } from '@/contexts/I18nContext';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
 
 type TabType = 'companies' | 'listings' | 'requests';
 
-const INDUSTRY_HUBS = ['Precision Machining', 'Foundries & Casting', 'Surface Finishing', 'Tooling & Molds', 'Automation'];
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
   'Precision Machining': {
     icon: 'fa-microchip',
@@ -36,6 +36,16 @@ const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass:
     icon: 'fa-robot',
     bgClass: 'bg-cyan-500/10',
     iconClass: 'text-cyan-400',
+  },
+  'Additive Manufacturing': {
+    icon: 'fa-cubes',
+    bgClass: 'bg-fuchsia-500/10',
+    iconClass: 'text-fuchsia-400',
+  },
+  'Manufacturing Support': {
+    icon: 'fa-life-ring',
+    bgClass: 'bg-amber-500/10',
+    iconClass: 'text-amber-400',
   },
 };
 const CANADIAN_PROVINCES = [

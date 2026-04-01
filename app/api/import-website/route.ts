@@ -801,13 +801,15 @@ If none explicitly mentioned → []
 INDUSTRY HUBS (FOR MARCAN HOMEPAGE FILTERS)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-In addition to industriesServed, you MUST also select zero or more of the following MARCAN industry hubs:
+In addition to industriesServed, you MUST also select one or more of the following MARCAN industry hubs:
 
 - Precision Machining  
 - Foundries & Casting  
 - Surface Finishing  
 - Tooling & Molds  
 - Automation  
+- Additive Manufacturing  
+- Manufacturing Support  
 
 Use these ONLY if the website clearly indicates the company is active in that area.
 

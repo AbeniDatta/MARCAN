@@ -4,6 +4,8 @@ export const INDUSTRY_HUBS_EN = [
   'Surface Finishing',
   'Tooling & Molds',
   'Automation',
+  'Additive Manufacturing',
+  'Manufacturing Support',
 ] as const;
 
 const CANONICAL_BY_LOWER: Record<string, string> = {
@@ -15,6 +17,13 @@ const CANONICAL_BY_LOWER: Record<string, string> = {
   'tooling & molds': 'Tooling & Molds',
   'tooling and molds': 'Tooling & Molds',
   automation: 'Automation',
+  'additive manufacturing': 'Additive Manufacturing',
+  '3d printing': 'Additive Manufacturing',
+  '3-d printing': 'Additive Manufacturing',
+  'additive': 'Additive Manufacturing',
+  'manufacturing support': 'Manufacturing Support',
+  'mfg support': 'Manufacturing Support',
+  'manufacturing services': 'Manufacturing Support',
 
   // French -> English
   'usinage de precision': 'Precision Machining',
@@ -25,6 +34,8 @@ const CANONICAL_BY_LOWER: Record<string, string> = {
   'finition de surface': 'Surface Finishing',
   'outillage et moules': 'Tooling & Molds',
   'automatisation': 'Automation',
+  'fabrication additive': 'Additive Manufacturing',
+  'impression 3d': 'Additive Manufacturing',
 };
 
 function stripAccents(input: string): string {

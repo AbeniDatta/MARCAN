@@ -27,6 +27,26 @@ interface UserInfo {
     role?: string;
 }
 
+const deriveNameFromEmail = (email?: string | null) => {
+    const safeEmail = (email || '').trim();
+    if (!safeEmail) return { firstName: 'There', lastName: '' };
+    const local = safeEmail.split('@')[0] || '';
+    const token = (local.split(/[._-]+/).find(Boolean) || local).trim();
+    const firstName = token ? token.charAt(0).toUpperCase() + token.slice(1) : 'There';
+    return { firstName, lastName: '' };
+};
+
+const deriveNameFromDisplayName = (displayName?: string | null) => {
+    const raw = (displayName || '').trim();
+    if (!raw) return null;
+    const parts = raw.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return null;
+    return {
+        firstName: parts[0],
+        lastName: parts.slice(1).join(' '),
+    };
+};
+
 // Helper function to get auth state from localStorage
 const getAuthState = () => {
     if (typeof window === 'undefined') {
@@ -84,18 +104,20 @@ export function useAuth() {
                     try {
                         baseUser = JSON.parse(storedUserData);
                     } catch (e) {
-                        const nameParts = firebaseUser.displayName?.split(' ') || [];
+                        const fromDisplay = deriveNameFromDisplayName(firebaseUser.displayName);
+                        const fromEmail = deriveNameFromEmail(firebaseUser.email);
                         baseUser = {
-                            firstName: nameParts[0] || 'User',
-                            lastName: nameParts.slice(1).join(' ') || 'User',
+                            firstName: fromDisplay?.firstName || fromEmail.firstName,
+                            lastName: fromDisplay?.lastName || fromEmail.lastName,
                             email: firebaseUser.email || '',
                         };
                     }
                 } else {
-                    const nameParts = firebaseUser.displayName?.split(' ') || [];
+                    const fromDisplay = deriveNameFromDisplayName(firebaseUser.displayName);
+                    const fromEmail = deriveNameFromEmail(firebaseUser.email);
                     baseUser = {
-                        firstName: nameParts[0] || 'User',
-                        lastName: nameParts.slice(1).join(' ') || 'User',
+                        firstName: fromDisplay?.firstName || fromEmail.firstName,
+                        lastName: fromDisplay?.lastName || fromEmail.lastName,
                         email: firebaseUser.email || '',
                     };
                 }

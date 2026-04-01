@@ -8,6 +8,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { auth as firebaseAuth } from '@/lib/firebase';
 import { useI18n } from '@/contexts/I18nContext';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
 
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
@@ -122,14 +123,6 @@ export default function MyAccountPage() {
     city: '',
     province: '',
   });
-
-  const INDUSTRY_HUBS = [
-    'Precision Machining',
-    'Foundries & Casting',
-    'Surface Finishing',
-    'Tooling & Molds',
-    'Automation',
-  ];
 
   const CANADIAN_PROVINCES = [
     { code: 'ON', name: 'Ontario' },

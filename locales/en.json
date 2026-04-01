@@ -71,11 +71,15 @@
       "surfaceFinishing": "Surface Finishing",
       "toolingMolds": "Tooling & Molds",
       "automation": "Automation",
+      "additiveManufacturing": "Additive Manufacturing",
+      "manufacturingSupport": "Manufacturing Support",
       "precisionMachiningDescription": "CNC milling, turning, and EDM. High tolerance capabilities for aerospace & medical.",
       "foundriesCastingDescription": "Sand casting, die casting, and investment casting. Iron, steel, and aluminum alloys.",
       "surfaceFinishingDescription": "Anodizing, powder coating, plating, and heat treatment services.",
       "toolingMoldsDescription": "Injection molds, dies, and custom tooling solutions for mass production.",
-      "automationDescription": "Robotics, PLC programming, and automated manufacturing systems for increased efficiency."
+      "automationDescription": "Robotics, PLC programming, and automated manufacturing systems for increased efficiency.",
+      "additiveManufacturingDescription": "3D printing for prototyping and production parts across polymers and metals.",
+      "manufacturingSupportDescription": "Engineering support, DFM, quality/inspection, and production readiness services."
     },
     "quickStart": {
       "badge": "Instant AI Setup",
@@ -520,7 +524,7 @@
       "select": "Select...",
       "businessNumber": "Business Number",
       "provincesServed": "Provinces Served",
-      "industriesServed": "Categories Served",
+      "industriesServed": "Capabilities",
       "companyType": "Company Type",
       "website": "Website",
       "saveAndNext": "Save and Next"

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
 
 export default function PostRequestPage() {
     const router = useRouter();
@@ -24,14 +25,6 @@ export default function PostRequestPage() {
         city: '',
         province: '',
     });
-
-    const INDUSTRY_HUBS = [
-        'Precision Machining',
-        'Foundries & Casting',
-        'Surface Finishing',
-        'Tooling & Molds',
-        'Automation',
-    ];
 
     const CANADIAN_PROVINCES = [
         { code: 'ON', name: 'Ontario' },

@@ -16,6 +16,7 @@ export default function HomePage() {
   const marqueeContainerRef = useRef<HTMLDivElement | null>(null);
   const marqueeTrackRef = useRef<HTMLDivElement | null>(null);
   const { t, translateText } = useI18n();
+  const [capabilityPage, setCapabilityPage] = useState(0);
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -89,6 +90,70 @@ export default function HomePage() {
     setQuickStartError('');
     router.push(`/become-supplier?start=import&url=${encodeURIComponent(trimmedUrl)}`);
   };
+
+  const capabilityCards = useMemo(() => ([
+    {
+      hub: 'Precision Machining',
+      title: t('home.industries.precisionMachining'),
+      description: t('home.industries.precisionMachiningDescription'),
+      icon: 'fa-microchip',
+      iconWrapClass: 'bg-blue-500/10 text-blue-400',
+      ctaClass: 'text-blue-400',
+    },
+    {
+      hub: 'Foundries & Casting',
+      title: t('home.industries.foundriesCasting'),
+      description: t('home.industries.foundriesCastingDescription'),
+      icon: 'fa-fire',
+      iconWrapClass: 'bg-orange-500/10 text-orange-400',
+      ctaClass: 'text-orange-400',
+    },
+    {
+      hub: 'Surface Finishing',
+      title: t('home.industries.surfaceFinishing'),
+      description: t('home.industries.surfaceFinishingDescription'),
+      icon: 'fa-spray-can-sparkles',
+      iconWrapClass: 'bg-purple-500/10 text-purple-400',
+      ctaClass: 'text-purple-400',
+    },
+    {
+      hub: 'Tooling & Molds',
+      title: t('home.industries.toolingMolds'),
+      description: t('home.industries.toolingMoldsDescription'),
+      icon: 'fa-screwdriver-wrench',
+      iconWrapClass: 'bg-green-500/10 text-green-400',
+      ctaClass: 'text-green-400',
+    },
+    {
+      hub: 'Automation',
+      title: t('home.industries.automation'),
+      description: t('home.industries.automationDescription'),
+      icon: 'fa-robot',
+      iconWrapClass: 'bg-cyan-500/10 text-cyan-400',
+      ctaClass: 'text-cyan-400',
+    },
+    {
+      hub: 'Additive Manufacturing',
+      title: t('home.industries.additiveManufacturing'),
+      description: t('home.industries.additiveManufacturingDescription'),
+      icon: 'fa-cubes',
+      iconWrapClass: 'bg-fuchsia-500/10 text-fuchsia-400',
+      ctaClass: 'text-fuchsia-400',
+    },
+    {
+      hub: 'Manufacturing Support',
+      title: t('home.industries.manufacturingSupport'),
+      description: t('home.industries.manufacturingSupportDescription'),
+      icon: 'fa-life-ring',
+      iconWrapClass: 'bg-amber-500/10 text-amber-400',
+      ctaClass: 'text-amber-400',
+    },
+  ]), [t]);
+
+  const capabilityPages = Math.max(1, Math.ceil(capabilityCards.length / 5));
+  const normalizedCapabilityPage = ((capabilityPage % capabilityPages) + capabilityPages) % capabilityPages;
+  const visibleCapabilityCards = capabilityCards.slice(normalizedCapabilityPage * 5, normalizedCapabilityPage * 5 + 5);
+  const showCapabilityPager = capabilityCards.length > 5;
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -288,83 +353,36 @@ export default function HomePage() {
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest">{t('home.industriesTitle')}</h3>
               <div className="h-[1px] bg-white/10 flex-grow"></div>
+              {showCapabilityPager && (
+                <button
+                  type="button"
+                  onClick={() => setCapabilityPage((p) => (p + 1) % capabilityPages)}
+                  className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center shrink-0"
+                  aria-label="Next capabilities"
+                  title="Next capabilities"
+                >
+                  <i className="fa-solid fa-arrow-right" />
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-              {/* Industry Card 1 */}
-              <Link
-                href={`/directory?industry=${encodeURIComponent('Precision Machining')}`}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
-              >
-                <div className="w-14 h-14 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-microchip text-2xl"></i>
-                </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.precisionMachining')}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.precisionMachiningDescription')}</p>
-                <div className="flex items-center text-[10px] font-bold text-blue-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
-                </div>
-              </Link>
-
-              {/* Industry Card 2 */}
-              <Link
-                href={`/directory?industry=${encodeURIComponent('Foundries & Casting')}`}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
-              >
-                <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-fire text-2xl"></i>
-                </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.foundriesCasting')}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.foundriesCastingDescription')}</p>
-                <div className="flex items-center text-[10px] font-bold text-orange-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
-                </div>
-              </Link>
-
-              {/* Industry Card 3 */}
-              <Link
-                href={`/directory?industry=${encodeURIComponent('Surface Finishing')}`}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
-              >
-                <div className="w-14 h-14 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-spray-can-sparkles text-2xl"></i>
-                </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.surfaceFinishing')}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.surfaceFinishingDescription')}</p>
-                <div className="flex items-center text-[10px] font-bold text-purple-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
-                </div>
-              </Link>
-
-              {/* Industry Card 4 */}
-              <Link
-                href={`/directory?industry=${encodeURIComponent('Tooling & Molds')}`}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
-              >
-                <div className="w-14 h-14 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-screwdriver-wrench text-2xl"></i>
-                </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.toolingMolds')}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.toolingMoldsDescription')}</p>
-                <div className="flex items-center text-[10px] font-bold text-green-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
-                </div>
-              </Link>
-
-              {/* Industry Card 5 */}
-              <Link
-                href={`/directory?industry=${encodeURIComponent('Automation')}`}
-                className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
-              >
-                <div className="w-14 h-14 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
-                  <i className="fa-solid fa-robot text-2xl"></i>
-                </div>
-                <h4 className="font-heading font-bold text-lg text-white mb-2">{t('home.industries.automation')}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{t('home.industries.automationDescription')}</p>
-                <div className="flex items-center text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                  {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
-                </div>
-              </Link>
+              {visibleCapabilityCards.map((card) => (
+                <Link
+                  key={card.hub}
+                  href={`/directory?industry=${encodeURIComponent(card.hub)}`}
+                  className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
+                >
+                  <div className={`w-14 h-14 rounded-xl ${card.iconWrapClass} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <i className={`fa-solid ${card.icon} text-2xl`} />
+                  </div>
+                  <h4 className="font-heading font-bold text-lg text-white mb-2">{card.title}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed mb-4">{card.description}</p>
+                  <div className={`flex items-center text-[10px] font-bold ${card.ctaClass} uppercase tracking-wider group-hover:text-white transition-colors`}>
+                    {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
 
