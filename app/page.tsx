@@ -5,9 +5,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchAccountRoleFromApi } from '@/lib/accountRole';
 
 export default function HomePage() {
   const router = useRouter();
+  const { isAuthenticated, user, isMounted } = useAuth();
+  /** quick = import CTA · how = How Marcan Works · pending = resolving DB role */
+  const [heroSidePanel, setHeroSidePanel] = useState<'quick' | 'how' | 'pending'>('quick');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickStartUrl, setQuickStartUrl] = useState('');
   const [quickStartError, setQuickStartError] = useState('');
@@ -16,7 +21,8 @@ export default function HomePage() {
   const marqueeContainerRef = useRef<HTMLDivElement | null>(null);
   const marqueeTrackRef = useRef<HTMLDivElement | null>(null);
   const { t, translateText } = useI18n();
-  const [capabilityPage, setCapabilityPage] = useState(0);
+  const CAPABILITY_WINDOW = 5;
+  const [capabilityStartIndex, setCapabilityStartIndex] = useState(0);
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -38,6 +44,30 @@ export default function HomePage() {
 
     loadCompanies();
   }, []);
+
+  useEffect(() => {
+    if (!isMounted || !isAuthenticated || !user?.email) {
+      setHeroSidePanel('quick');
+      return;
+    }
+    if (user.role === 'supplier') {
+      setHeroSidePanel('how');
+      return;
+    }
+    if (user.role === 'buyer' || user.role === 'seller') {
+      setHeroSidePanel('quick');
+      return;
+    }
+    setHeroSidePanel('pending');
+    let cancelled = false;
+    fetchAccountRoleFromApi(user.email).then((role) => {
+      if (cancelled) return;
+      setHeroSidePanel(role === 'supplier' ? 'how' : 'quick');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMounted, isAuthenticated, user?.email, user?.role]);
 
   // Decide whether we need to animate (only when content exceeds container)
   useEffect(() => {
@@ -150,10 +180,17 @@ export default function HomePage() {
     },
   ]), [t]);
 
-  const capabilityPages = Math.max(1, Math.ceil(capabilityCards.length / 5));
-  const normalizedCapabilityPage = ((capabilityPage % capabilityPages) + capabilityPages) % capabilityPages;
-  const visibleCapabilityCards = capabilityCards.slice(normalizedCapabilityPage * 5, normalizedCapabilityPage * 5 + 5);
-  const showCapabilityPager = capabilityCards.length > 5;
+  const maxCapabilityStart = Math.max(0, capabilityCards.length - CAPABILITY_WINDOW);
+  const positionCount = maxCapabilityStart + 1;
+  const normalizedCapabilityStart =
+    maxCapabilityStart === 0
+      ? 0
+      : ((capabilityStartIndex % positionCount) + positionCount) % positionCount;
+  const visibleCapabilityCards = capabilityCards.slice(
+    normalizedCapabilityStart,
+    normalizedCapabilityStart + CAPABILITY_WINDOW
+  );
+  const showCapabilityPager = capabilityCards.length > CAPABILITY_WINDOW;
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -265,7 +302,7 @@ export default function HomePage() {
             <i className="fa-brands fa-canadian-maple-leaf absolute -bottom-10 -right-10 text-[120px] sm:text-[160px] md:text-[200px] text-white/5 rotate-[-20deg] pointer-events-none"></i>
           </div>
 
-          {/* AI Scraper Spotlight */}
+          {/* Supplier: How Marcan Works · Others: AI quick-start (import profile) */}
           <div className="lg:col-span-5 glass-card rounded-3xl p-3 sm:p-4 flex flex-col justify-center relative overflow-hidden border border-white/5 group min-h-[min(380px,65vh)] sm:min-h-[420px]">
             {/* Background Effect */}
             <div className="absolute -right-10 -bottom-10 text-9xl text-white/5 group-hover:text-marcan-red/10 transition-colors duration-500 pointer-events-none">
@@ -273,78 +310,133 @@ export default function HomePage() {
             </div>
 
             <div className="relative z-10">
-              {/* AI website scraper quick start (URL -> auto-import supplier profile) */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0a1024]/90 to-[#040816]/95 border-2 border-orange-500/40 backdrop-blur-md relative overflow-hidden group/ai shadow-[0_0_50px_rgba(249,115,22,0.12)]">
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-marcan-red/10 opacity-70 group-hover/ai:opacity-100 transition-opacity duration-500" />
-                <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-marcan-red/10 blur-3xl pointer-events-none" />
-                <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-4 bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-widest">
-                    <i className="fa-solid fa-bolt" />
-                    {t('home.quickStart.badge')}
-                  </div>
-                  <h3 className="font-heading font-black text-3xl leading-[1.05] uppercase mb-3">
-                    <span className="text-white">{t('home.quickStart.titleBefore')}</span>
-                    <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-marcan-red">
-                      {t('home.quickStart.titleHighlight')}
-                    </span>
-                  </h3>
-                  <p className="text-sm text-slate-300 mb-5 leading-relaxed">{t('home.quickStart.body')}</p>
+              {heroSidePanel === 'how' ? (
+                <div className="p-5 sm:p-6">
+                  <h4 className="font-heading font-black text-2xl text-white mb-6">{t('home.howMarcanWorks.title')}</h4>
 
-                  <div className="flex flex-col gap-3">
-                    <div className="relative flex-grow">
-                      <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
-                      <input
-                        type="url"
-                        value={quickStartUrl}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setQuickStartUrl(v);
-                          if (!v.trim()) {
-                            setQuickStartError('');
-                            return;
-                          }
-                          try {
-                            const u = new URL(v.trim());
-                            const ok = u.protocol === 'http:' || u.protocol === 'https:';
-                            setQuickStartError(ok ? '' : t('home.quickStart.invalidUrlError'));
-                          } catch {
-                            setQuickStartError(t('home.quickStart.invalidUrlError'));
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleQuickStartImport();
-                          }
-                        }}
-                        placeholder={t('home.quickStart.urlPlaceholder')}
-                        className={`w-full bg-black/70 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 border ${quickStartError ? 'border-red-500/40 focus:border-red-500' : 'border-white/10 focus:border-orange-500'
-                          }`}
-                      />
-
-                      {quickStartError && (
-                        <div className="mt-2 text-[11px] text-red-400">{quickStartError}</div>
-                      )}
+                  <div className="relative mt-2 space-y-7">
+                    <div className="relative group/node cursor-default">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                          <i className="fa-solid fa-user-plus text-blue-400 text-sm"></i>
+                          <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node1.title')}</div>
+                        </div>
+                        <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node1.body')}</div>
+                      </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={handleQuickStartImport}
-                      disabled={!quickStartUrl.trim() || !!quickStartError}
-                      className="w-full bg-gradient-to-r from-orange-500 to-marcan-red text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      <i className="fa-solid fa-wand-magic-sparkles" />
-                      {t('home.quickStart.autoGenerate')}
-                    </button>
-                  </div>
+                    <div className="relative group/node cursor-default">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                          <i className="fa-solid fa-arrows-split-up-and-left text-purple-400 text-sm"></i>
+                          <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node2.title')}</div>
+                        </div>
+                        <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node2.body')}</div>
+                      </div>
+                    </div>
 
-                  <div className="mt-4 text-[11px] text-slate-400 font-semibold tracking-wide uppercase flex items-center gap-2">
-                    <i className="fa-solid fa-shield-halved text-slate-500" />
-                    {t('home.quickStart.freeToJoin')}
+                    <div className="relative group/node cursor-default">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                          <i className="fa-solid fa-handshake-simple text-marcan-red text-sm"></i>
+                          <div className="text-white text-sm font-bold tracking-wide">{t('home.howMarcanWorks.node3.title')}</div>
+                        </div>
+                        <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node3.body')}</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : heroSidePanel === 'pending' ? (
+                <div className="p-5 sm:p-6 space-y-4" aria-busy="true">
+                  <div className="h-8 w-3/4 rounded-lg bg-white/10 animate-pulse" />
+                  <div className="space-y-6 pt-2">
+                    <div className="space-y-2">
+                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
+                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
+                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
+                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0a1024]/90 to-[#040816]/95 border-2 border-orange-500/40 backdrop-blur-md relative overflow-hidden group/ai shadow-[0_0_50px_rgba(249,115,22,0.12)]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-marcan-red/10 opacity-70 group-hover/ai:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-marcan-red/10 blur-3xl pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-4 bg-orange-500/10 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-widest">
+                      <i className="fa-solid fa-bolt" />
+                      {t('home.quickStart.badge')}
+                    </div>
+                    <h3 className="font-heading font-black text-3xl leading-[1.05] uppercase mb-3">
+                      <span className="text-white">{t('home.quickStart.titleBefore')}</span>
+                      <br />
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-marcan-red">
+                        {t('home.quickStart.titleHighlight')}
+                      </span>
+                    </h3>
+                    <p className="text-sm text-slate-300 mb-5 leading-relaxed">{t('home.quickStart.body')}</p>
+
+                    <div className="flex flex-col gap-3">
+                      <div className="relative flex-grow">
+                        <i className="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" />
+                        <input
+                          type="url"
+                          value={quickStartUrl}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setQuickStartUrl(v);
+                            if (!v.trim()) {
+                              setQuickStartError('');
+                              return;
+                            }
+                            try {
+                              const u = new URL(v.trim());
+                              const ok = u.protocol === 'http:' || u.protocol === 'https:';
+                              setQuickStartError(ok ? '' : t('home.quickStart.invalidUrlError'));
+                            } catch {
+                              setQuickStartError(t('home.quickStart.invalidUrlError'));
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleQuickStartImport();
+                            }
+                          }}
+                          placeholder={t('home.quickStart.urlPlaceholder')}
+                          className={`w-full bg-black/70 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none transition-all placeholder:text-slate-600 border ${quickStartError ? 'border-red-500/40 focus:border-red-500' : 'border-white/10 focus:border-orange-500'
+                            }`}
+                        />
+
+                        {quickStartError && (
+                          <div className="mt-2 text-[11px] text-red-400">{quickStartError}</div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleQuickStartImport}
+                        disabled={!quickStartUrl.trim() || !!quickStartError}
+                        className="w-full bg-gradient-to-r from-orange-500 to-marcan-red text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <i className="fa-solid fa-wand-magic-sparkles" />
+                        {t('home.quickStart.autoGenerate')}
+                      </button>
+                    </div>
+
+                    <div className="mt-4 text-[11px] text-slate-400 font-semibold tracking-wide uppercase flex items-center gap-2">
+                      <i className="fa-solid fa-shield-halved text-slate-500" />
+                      {t('home.quickStart.freeToJoin')}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -356,7 +448,9 @@ export default function HomePage() {
               {showCapabilityPager && (
                 <button
                   type="button"
-                  onClick={() => setCapabilityPage((p) => (p + 1) % capabilityPages)}
+                  onClick={() =>
+                    setCapabilityStartIndex((i) => (i + 1) % (maxCapabilityStart + 1))
+                  }
                   className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-all flex items-center justify-center shrink-0"
                   aria-label="Next capabilities"
                   title="Next capabilities"

@@ -146,7 +146,8 @@
       "noMatches": "No companies match your filters.",
       "clearFilters": "Clear Filters"
     },
-    "viewProfile": "View Profile"
+    "viewProfile": "View Profile",
+    "capabilitiesShort": "Capabilities"
   },
   "wishlist": {
     "explore": "Explore",
@@ -258,7 +259,7 @@
     "resultsCountListings": "Showing {count} of {total} listings",
     "resultsCountStores": "Showing {count} of {total} stores",
     "storefrontTag": "Storefront",
-    "viewInDirectory": "view in company directory",
+    "viewInDirectory": "view company profile",
     "viewListing": "View Listing",
     "listingCard": {
       "untitledListing": "Untitled listing",

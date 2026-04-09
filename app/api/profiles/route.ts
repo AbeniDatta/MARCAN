@@ -6,6 +6,30 @@ import { normalizeIndustriesServed } from '@/lib/industryHubNormalize';
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
 
+function splitCommaSeparated(value: unknown): string[] {
+  if (typeof value !== 'string') return [];
+  return value
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+function mergeUniqueStrings(existing: unknown, additions: string[]): string[] {
+  const base = Array.isArray(existing) ? (existing.filter((x) => typeof x === 'string') as string[]) : [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const item of [...base, ...additions]) {
+    const normalized = item.trim();
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(normalized);
+  }
+  return out;
+}
+
 // POST create or update profile (authenticated)
 export async function POST(request: NextRequest) {
   try {
@@ -72,6 +96,12 @@ export async function POST(request: NextRequest) {
       phone,
       preferredContactMethod,
       industriesServed,
+      // Comma-separated "Other" fields (free text)
+      otherProcesses,
+      otherMaterials,
+      otherFinishes,
+      otherCertifications,
+      otherIndustries,
       // Additional profile attributes
       shippingCapability,
       minOrderQty,
@@ -190,6 +220,12 @@ export async function POST(request: NextRequest) {
       return result;
     };
 
+    const otherProcessList = splitCommaSeparated(otherProcesses);
+    const otherMaterialList = splitCommaSeparated(otherMaterials);
+    const otherFinishList = splitCommaSeparated(otherFinishes);
+    const otherCertificationList = splitCommaSeparated(otherCertifications);
+    const otherIndustryList = splitCommaSeparated(otherIndustries);
+
     // Normalize numeric fields that might arrive as strings
     const normalizedLeadTimeMin =
       typeof leadTimeMinDays === 'string' ? parseInt(leadTimeMinDays, 10) || null : leadTimeMinDays ?? null;
@@ -205,6 +241,9 @@ export async function POST(request: NextRequest) {
       typeof minOrderQty === 'string' ? parseInt(minOrderQty, 10) || null : minOrderQty ?? null;
 
     // Prepare profile data
+    const legacyCapabilitiesFromSelection =
+      Array.isArray(capabilities) && capabilities.length > 0 ? capabilities : mapCapabilityNames(processes, 'PROCESS');
+
     const profileData: any = {
       firstName: firstName || null,
       lastName: lastName || null,
@@ -218,11 +257,26 @@ export async function POST(request: NextRequest) {
       province: province || null,
       aboutUs: aboutUs || null,
       // Legacy array fields (use human-readable names for backward compatibility and AI search)
-      capabilities: Array.isArray(capabilities) && capabilities.length > 0
-        ? capabilities
-        : mapCapabilityNames(processes, 'PROCESS'),
-      materials: mapCapabilityNames(materials, 'MATERIAL'),
-      certifications: mapCapabilityNames(certifications, 'CERTIFICATION'),
+      capabilities: mergeUniqueStrings(existingProfile?.capabilities, [
+        ...legacyCapabilitiesFromSelection,
+        ...otherProcessList,
+      ]),
+      materials: mergeUniqueStrings(existingProfile?.materials, [
+        ...mapCapabilityNames(materials, 'MATERIAL'),
+        ...otherMaterialList,
+      ]),
+      finishes: mergeUniqueStrings(existingProfile?.finishes, [
+        ...mapCapabilityNames(finishes, 'FINISH'),
+        ...otherFinishList,
+      ]),
+      certifications: mergeUniqueStrings(existingProfile?.certifications, [
+        ...mapCapabilityNames(certifications, 'CERTIFICATION'),
+        ...otherCertificationList,
+      ]),
+      industries: mergeUniqueStrings(existingProfile?.industries, [
+        ...mapCapabilityNames(industries, 'INDUSTRY'),
+        ...otherIndustryList,
+      ]),
       shippingCapability: shippingCapability || null,
       minOrderQty: normalizedMinOrderQty,
       // New fields
@@ -421,6 +475,7 @@ export async function GET(request: NextRequest) {
             userId: profile.email,
             profileType: 'supplier',
             name: profile.companyName,
+            companyName: profile.companyName,
             location,
             description: profile.aboutUs || 'No description available.',
             icon: 'fa-industry',
@@ -428,6 +483,8 @@ export async function GET(request: NextRequest) {
             tags,
             capabilities: profile.capabilities,
             certifications: profile.certifications,
+            finishes: profile.finishes ?? [],
+            industries: profile.industries ?? [],
             industriesServed: profile.industriesServed,
             materials: profile.materials,
             website: profile.website,
@@ -440,6 +497,12 @@ export async function GET(request: NextRequest) {
             capabilitiesByType,
             email: profile.email,
             aboutUs: profile.aboutUs,
+            typicalJobSize: profile.typicalJobSize ?? null,
+            leadTimeMinDays: profile.leadTimeMinDays ?? null,
+            leadTimeMaxDays: profile.leadTimeMaxDays ?? null,
+            maxPartSizeMmX: profile.maxPartSizeMmX ?? null,
+            maxPartSizeMmY: profile.maxPartSizeMmY ?? null,
+            maxPartSizeMmZ: profile.maxPartSizeMmZ ?? null,
           },
           {
             headers: { 'Content-Type': 'application/json' },
@@ -481,6 +544,8 @@ export async function GET(request: NextRequest) {
           tags: [],
           capabilities: [],
           certifications: [],
+          finishes: [],
+          industries: [],
           industriesServed: [],
           materials: [],
           website: storefrontProfile.website,
@@ -592,10 +657,38 @@ export async function GET(request: NextRequest) {
       })
       : [];
 
+    const supplierIds = supplierProfiles.map((p: { id: string }) => p.id);
+    let processNamesByProfileId = new Map<string, string[]>();
+    if (supplierIds.length > 0) {
+      try {
+        const processRows = (
+          await db.profileCapability.findMany({
+            where: { supplierProfileId: { in: supplierIds } },
+            include: { capability: true },
+          })
+        ).filter((row: { capability?: { type?: string } }) => row.capability?.type === 'PROCESS');
+        for (const row of processRows) {
+          const sid = row.supplierProfileId as string;
+          const nm = row.capability?.name;
+          if (!nm) continue;
+          const arr = processNamesByProfileId.get(sid) || [];
+          if (!arr.includes(nm)) arr.push(nm);
+          processNamesByProfileId.set(sid, arr);
+        }
+      } catch (e) {
+        console.warn('Directory: could not load process capabilities for cards:', e);
+        processNamesByProfileId = new Map();
+      }
+    }
+
     // Format supplier profiles to match frontend expectations.
     const formattedSupplierProfiles = supplierProfiles.map((profile: any) => {
-      // Create tags from capabilities
-      const tags = profile.capabilities.slice(0, 3);
+      const processCapabilityNames = processNamesByProfileId.get(profile.id) || [];
+      // Directory cards: prefer taxonomy process names; fallback to legacy capability strings
+      const tags =
+        processCapabilityNames.length > 0
+          ? processCapabilityNames.slice(0, 6)
+          : profile.capabilities.slice(0, 3);
 
       // Build location string
       const locationParts = [];
@@ -613,8 +706,12 @@ export async function GET(request: NextRequest) {
         icon: 'fa-industry',
         logoUrl: null,
         tags,
+        /** Process names from ProfileCapability (for cards); may duplicate tags when fallback */
+        processCapabilityNames,
         capabilities: profile.capabilities,
         certifications: profile.certifications,
+        finishes: profile.finishes ?? [],
+        industries: profile.industries ?? [],
         materials: profile.materials,
         website: profile.website,
         phone: profile.phone,
@@ -647,6 +744,8 @@ export async function GET(request: NextRequest) {
         tags: [],
         capabilities: [],
         certifications: [],
+        finishes: [],
+        industries: [],
         materials: [],
         website: profile.website,
         phone: profile.phone,

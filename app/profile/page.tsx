@@ -7,6 +7,44 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
 
+function mergeUniqueStrings(...lists: (string[] | undefined)[]): string[] {
+    const s = new Set<string>();
+    for (const list of lists) {
+        if (!Array.isArray(list)) continue;
+        for (const x of list) {
+            const v = String(x || '').trim();
+            if (v) s.add(v);
+        }
+    }
+    return Array.from(s);
+}
+
+const TYPICAL_JOB_LABELS: Record<string, string> = {
+    PROTOTYPE: 'Prototype',
+    LOW_VOLUME: 'Low volume',
+    MEDIUM_VOLUME: 'Medium volume',
+    HIGH_VOLUME: 'High volume',
+};
+
+function formatLeadTimeRange(
+    minDays: number | null | undefined,
+    maxDays: number | null | undefined,
+): string | null {
+    if (minDays != null && maxDays != null) return `${minDays}–${maxDays} days`;
+    if (minDays != null) return `${minDays}+ days`;
+    if (maxDays != null) return `Up to ${maxDays} days`;
+    return null;
+}
+
+function formatMaxPartMm(
+    x: number | null | undefined,
+    y: number | null | undefined,
+    z: number | null | undefined,
+): string | null {
+    if (x == null && y == null && z == null) return null;
+    return [x, y, z].map((v) => (v == null ? '—' : String(v))).join(' × ');
+}
+
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
     'Precision Machining': {
         icon: 'fa-microchip',
@@ -53,9 +91,20 @@ interface CompanyProfile {
     certifications?: string[];
     industriesServed?: string[];
     capabilitiesByType?: {
+        PROCESS?: string[];
+        MATERIAL?: string[];
+        FINISH?: string[];
         INDUSTRY?: string[];
     };
     businessNumber?: string;
+    materials?: string[];
+    finishes?: string[];
+    typicalJobSize?: string | null;
+    leadTimeMinDays?: number | null;
+    leadTimeMaxDays?: number | null;
+    maxPartSizeMmX?: number | null;
+    maxPartSizeMmY?: number | null;
+    maxPartSizeMmZ?: number | null;
 }
 
 function ProfilePageContent() {
@@ -186,6 +235,50 @@ function ProfilePageContent() {
         company.capabilitiesByType?.INDUSTRY ||
         []
     ).filter(Boolean);
+    const capabilitiesByType = userData?.capabilitiesByType || company.capabilitiesByType;
+
+    const displayPrimaryProcesses =
+        capabilitiesByType?.PROCESS && capabilitiesByType.PROCESS.length > 0
+            ? capabilitiesByType.PROCESS
+            : displayCapabilities;
+
+    const displayMaterialsList = mergeUniqueStrings(
+        capabilitiesByType?.MATERIAL,
+        userData?.materials,
+        company.materials,
+    );
+
+    const displayFinishesList = mergeUniqueStrings(
+        capabilitiesByType?.FINISH,
+        userData?.finishes,
+        company.finishes,
+    );
+
+    const typicalJobSizeRaw = userData?.typicalJobSize ?? company.typicalJobSize;
+    const typicalJobSizeLabel =
+        typicalJobSizeRaw != null && String(typicalJobSizeRaw).length > 0
+            ? TYPICAL_JOB_LABELS[String(typicalJobSizeRaw)] || String(typicalJobSizeRaw)
+            : null;
+
+    const leadTimeLabel = formatLeadTimeRange(
+        userData?.leadTimeMinDays ?? company.leadTimeMinDays,
+        userData?.leadTimeMaxDays ?? company.leadTimeMaxDays,
+    );
+
+    const maxPartLabel = formatMaxPartMm(
+        userData?.maxPartSizeMmX ?? company.maxPartSizeMmX,
+        userData?.maxPartSizeMmY ?? company.maxPartSizeMmY,
+        userData?.maxPartSizeMmZ ?? company.maxPartSizeMmZ,
+    );
+
+    const hasProductionProfileSection =
+        displayPrimaryProcesses.length > 0 ||
+        displayMaterialsList.length > 0 ||
+        displayFinishesList.length > 0 ||
+        typicalJobSizeLabel != null ||
+        leadTimeLabel != null ||
+        maxPartLabel != null;
+
     const displayTags = company.tags || [];
     const displayIcon = userData?.selectedIcon || company.icon || 'fa-industry';
     const displayLogoUrl = userData?.logoUrl || company.logoUrl;
@@ -438,22 +531,91 @@ function ProfilePageContent() {
                             </div>
                         )}
 
-                        {/* Core Capabilities */}
-                        {displayCapabilities.length > 0 && (
-                            <div className="glass-card p-8 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-lg text-white mb-6 uppercase tracking-wide border-b border-white/5 pb-2">
-                                    Core Capabilities
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {displayCapabilities.map((capability: string, index: number) => (
-                                        <div key={index} className="flex items-start gap-3">
-                                            <i className="fa-solid fa-check-circle text-marcan-red mt-1"></i>
-                                            <div>
-                                                <h4 className="text-white font-bold text-sm">{capability}</h4>
-                                            </div>
+                        {/* Primary processes, materials, finishes, production metrics */}
+                        {hasProductionProfileSection && (
+                            <div className="glass-card p-8 rounded-2xl border border-white/5 space-y-8">
+                                {displayPrimaryProcesses.length > 0 && (
+                                    <div>
+                                        <h3 className="font-bold text-lg text-white mb-4 uppercase tracking-wide border-b border-white/5 pb-2">
+                                            Primary Processes
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {displayPrimaryProcesses.map((proc: string, index: number) => (
+                                                <div key={`${proc}-${index}`} className="flex items-start gap-3">
+                                                    <i className="fa-solid fa-check-circle text-marcan-red mt-1"></i>
+                                                    <div>
+                                                        <h4 className="text-white font-bold text-sm">{proc}</h4>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                )}
+
+                                {displayMaterialsList.length > 0 && (
+                                    <div>
+                                        <h4 className="font-bold text-sm mb-3 uppercase tracking-wide text-slate-400">
+                                            Materials
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {displayMaterialsList.map((m) => (
+                                                <span
+                                                    key={m}
+                                                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-xs"
+                                                >
+                                                    {m}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {displayFinishesList.length > 0 && (
+                                    <div>
+                                        <h4 className="font-bold text-sm mb-3 uppercase tracking-wide text-slate-400">
+                                            Finishes
+                                        </h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {displayFinishesList.map((f) => (
+                                                <span
+                                                    key={f}
+                                                    className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-xs"
+                                                >
+                                                    {f}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(typicalJobSizeLabel || leadTimeLabel || maxPartLabel) && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                                        {typicalJobSizeLabel && (
+                                            <div>
+                                                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                                                    Typical job size
+                                                </div>
+                                                <div className="text-sm text-slate-300">{typicalJobSizeLabel}</div>
+                                            </div>
+                                        )}
+                                        {leadTimeLabel && (
+                                            <div>
+                                                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                                                    Typical lead time
+                                                </div>
+                                                <div className="text-sm text-slate-300">{leadTimeLabel}</div>
+                                            </div>
+                                        )}
+                                        {maxPartLabel && (
+                                            <div className="sm:col-span-2">
+                                                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                                                    Max part size (mm)
+                                                </div>
+                                                <div className="text-sm text-slate-300 font-mono">{maxPartLabel}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -493,27 +655,10 @@ function ProfilePageContent() {
                             </div>
                         )}
 
-                        {/* Certifications */}
-                        {displayCertifications.length > 0 && (
-                            <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Certifications</h3>
-                                <div className="space-y-3">
-                                    {displayCertifications.map((cert: string, index: number) => (
-                                        <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5">
-                                            <i className="fa-solid fa-certificate text-yellow-500"></i>
-                                            <div>
-                                                <div className="text-xs font-bold text-white">{cert}</div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Industries Served */}
+                        {/* Industries served — between contact and certifications */}
                         {displayIndustries.length > 0 && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Capabilities</h3>
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries served</h3>
                                 <div className="flex flex-wrap gap-3">
                                     {displayIndustries.map((industry: string) => {
                                         const map = INDUSTRY_LOGOS[industry];
@@ -535,6 +680,23 @@ function ProfilePageContent() {
                                             </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Certifications */}
+                        {displayCertifications.length > 0 && (
+                            <div className="glass-card p-6 rounded-2xl border border-white/5">
+                                <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Certifications</h3>
+                                <div className="space-y-3">
+                                    {displayCertifications.map((cert: string, index: number) => (
+                                        <div key={index} className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5">
+                                            <i className="fa-solid fa-certificate text-yellow-500"></i>
+                                            <div>
+                                                <div className="text-xs font-bold text-white">{cert}</div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}

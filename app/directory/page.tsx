@@ -452,17 +452,20 @@ function DirectoryPageContent() {
                       {company.description}
                     </p>
 
-                    {/* Industry Tags */}
+                    {/* Capabilities (taxonomy processes when available; else legacy capability strings) */}
                     {(company.tags && company.tags.length > 0) && (
-                      <div className="mt-auto flex flex-wrap gap-2 mb-4">
-                        {company.tags.map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      <div className="mt-auto mb-4">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">{t('directory.capabilitiesShort')}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {company.tags.map((tag: string) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 

@@ -690,6 +690,11 @@ export default function BecomeSupplierPage() {
       phone: formData.phone || null,
       preferredContactMethod: formData.preferredContactMethod,
       industriesServed: formData.industriesServed || [],
+      otherProcesses: formData.otherProcesses || null,
+      otherMaterials: formData.otherMaterials || null,
+      otherFinishes: formData.otherFinishes || null,
+      otherCertifications: formData.otherCertifications || null,
+      otherIndustries: formData.otherIndustries || null,
       otherComments: otherComments || null,
     };
 

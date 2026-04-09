@@ -147,7 +147,9 @@ model SupplierProfile {
   // Backward-compatible arrays (keep for now; migrate later to ProfileCapability)
   capabilities   String[] @default([]) @db.Text
   materials      String[] @default([]) @db.Text
+  finishes       String[] @default([]) @db.Text
   certifications String[] @default([]) @db.Text
+  industries     String[] @default([]) @db.Text
 
   // Logistics & coverage (attributes, not taxonomy)
   provincesServed    String[] @default([]) @map("provinces_served") @db.Text // ["ON","QC",...]

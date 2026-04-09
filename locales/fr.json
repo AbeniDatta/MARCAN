@@ -146,7 +146,8 @@
       "noMatches": "Aucune entreprise ne correspond à vos filtres.",
       "clearFilters": "Effacer les filtres"
     },
-    "viewProfile": "Voir le profil"
+    "viewProfile": "Voir le profil",
+    "capabilitiesShort": "Capacités"
   },
   "wishlist": {
     "explore": "Explorer",
