@@ -288,7 +288,7 @@ Now process this query: {USER_QUERY}
       location: `${p.city || ''}, ${p.province || ''}`.trim().replace(/^,/, ''),
       description: p.aboutUs || '',
       capabilities: p.profileCapabilities.map((pc: any) => pc.capability.name),
-      industriesServed: normalizeIndustriesServed(p.industriesServed || []),
+      industriesServed: normalizeIndustriesServed(p.capabilities || []),
       province: p.province || '',
       city: p.city || '',
       certifications: p.certifications || [],

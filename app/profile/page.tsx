@@ -279,7 +279,7 @@ function ProfilePageContent() {
         leadTimeLabel != null ||
         maxPartLabel != null;
 
-    const displayTags = company.tags || [];
+    const headerCapabilities = (displayPrimaryProcesses || []).slice(0, 8);
     const displayIcon = userData?.selectedIcon || company.icon || 'fa-industry';
     const displayLogoUrl = userData?.logoUrl || company.logoUrl;
     const displayProfileType = userData?.profileType || company.profileType;
@@ -506,11 +506,11 @@ function ProfilePageContent() {
                                     </span>
                                 )}
                             </p>
-                            {displayTags.length > 0 && (
+                            {headerCapabilities.length > 0 && (
                                 <div className="flex gap-2 flex-wrap">
-                                    {displayTags.map((tag) => (
-                                        <span key={tag} className="bg-white/5 border border-white/10 px-3 py-1 rounded text-xs text-slate-300">
-                                            {tag}
+                                    {headerCapabilities.map((cap: string) => (
+                                        <span key={cap} className="bg-white/5 border border-white/10 px-3 py-1 rounded text-xs text-slate-300">
+                                            {cap}
                                         </span>
                                     ))}
                                 </div>

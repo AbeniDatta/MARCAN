@@ -14,17 +14,18 @@ function supplierPayload(row: {
   website: string | null;
   phone: string | null;
   streetAddress: string;
-  capabilities: string[];
+  primaryProcesses?: string[];
   materials: string[];
   certifications: string[];
   provincesServed: string[];
   shippingCapability: string | null;
-  industriesServed: string[];
+  capabilities: string[];
   typicalJobSize: string | null;
   typicalLeadTime: string | null;
   leadTimeMinDays: number | null;
   leadTimeMaxDays: number | null;
 }): Record<string, unknown> {
+  const legacyPrimary = (row.primaryProcesses ?? (row as any).capabilities ?? []) as string[];
   return {
     company_name: row.companyName,
     city: row.city,
@@ -33,12 +34,12 @@ function supplierPayload(row: {
     about_us: row.aboutUs,
     website: row.website,
     phone: row.phone,
-    legacy_capabilities: row.capabilities,
+    legacy_capabilities: legacyPrimary,
     legacy_materials: row.materials,
     legacy_certifications: row.certifications,
     provinces_served: row.provincesServed,
     shipping_capability: row.shippingCapability,
-    industries_served: row.industriesServed,
+    industries_served: row.capabilities,
     typical_job_size: row.typicalJobSize,
     typical_lead_time: row.typicalLeadTime,
     lead_time_min_days: row.leadTimeMinDays,
@@ -59,7 +60,7 @@ export async function enrichSupplierProfile(supplierProfileId: string): Promise<
     return;
   }
 
-  const { system, user } = buildSupplierProfilePrompts(supplierPayload(row));
+  const { system, user } = buildSupplierProfilePrompts(supplierPayload(row as any));
   const completion = await runJsonCompletion({ system, user });
   if (!completion.ok) {
     await prisma.supplierProfile.update({

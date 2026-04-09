@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
       typeof minOrderQty === 'string' ? parseInt(minOrderQty, 10) || null : minOrderQty ?? null;
 
     // Prepare profile data
-    const legacyCapabilitiesFromSelection =
+    const legacyPrimaryProcessesFromSelection =
       Array.isArray(capabilities) && capabilities.length > 0 ? capabilities : mapCapabilityNames(processes, 'PROCESS');
 
     const profileData: any = {
@@ -257,8 +257,8 @@ export async function POST(request: NextRequest) {
       province: province || null,
       aboutUs: aboutUs || null,
       // Legacy array fields (use human-readable names for backward compatibility and AI search)
-      capabilities: mergeUniqueStrings(existingProfile?.capabilities, [
-        ...legacyCapabilitiesFromSelection,
+      primaryProcesses: mergeUniqueStrings(existingProfile?.primaryProcesses, [
+        ...legacyPrimaryProcessesFromSelection,
         ...otherProcessList,
       ]),
       materials: mergeUniqueStrings(existingProfile?.materials, [
@@ -284,7 +284,8 @@ export async function POST(request: NextRequest) {
       provincesServed: provincesServed || [],
       typicalJobSize: typicalJobSize || null,
       // Always store industry hubs as canonical English values so logos render consistently.
-      industriesServed: normalizeIndustriesServed(industriesServed),
+      // DB column renamed from industries_served -> capabilities.
+      capabilities: normalizeIndustriesServed(industriesServed),
       leadTimeMinDays: normalizedLeadTimeMin,
       leadTimeMaxDays: normalizedLeadTimeMax,
       maxPartSizeMmX: normalizedMaxX,
@@ -463,7 +464,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Shape the response to match the frontend expectations used by directory/cards.
-        const tags = Array.isArray(profile.capabilities) ? profile.capabilities.slice(0, 3) : [];
+        const tags = Array.isArray(profile.primaryProcesses) ? profile.primaryProcesses.slice(0, 3) : [];
         const locationParts: string[] = [];
         if (profile.city) locationParts.push(profile.city);
         if (profile.province) locationParts.push(profile.province);
@@ -481,11 +482,11 @@ export async function GET(request: NextRequest) {
             icon: 'fa-industry',
             logoUrl: null,
             tags,
-            capabilities: profile.capabilities,
+            capabilities: profile.primaryProcesses,
             certifications: profile.certifications,
             finishes: profile.finishes ?? [],
             industries: profile.industries ?? [],
-            industriesServed: profile.industriesServed,
+            industriesServed: profile.capabilities,
             materials: profile.materials,
             website: profile.website,
             phone: profile.phone,
@@ -688,7 +689,7 @@ export async function GET(request: NextRequest) {
       const tags =
         processCapabilityNames.length > 0
           ? processCapabilityNames.slice(0, 6)
-          : profile.capabilities.slice(0, 3);
+          : (profile.primaryProcesses || []).slice(0, 3);
 
       // Build location string
       const locationParts = [];
@@ -708,7 +709,7 @@ export async function GET(request: NextRequest) {
         tags,
         /** Process names from ProfileCapability (for cards); may duplicate tags when fallback */
         processCapabilityNames,
-        capabilities: profile.capabilities,
+        capabilities: profile.primaryProcesses,
         certifications: profile.certifications,
         finishes: profile.finishes ?? [],
         industries: profile.industries ?? [],
@@ -720,7 +721,7 @@ export async function GET(request: NextRequest) {
         streetAddress: profile.streetAddress,
         businessNumber: profile.businessNumber,
         jobTitle: profile.jobTitle,
-        industriesServed: profile.industriesServed,
+        industriesServed: profile.capabilities,
         verified: profile.verified,
       };
     });
