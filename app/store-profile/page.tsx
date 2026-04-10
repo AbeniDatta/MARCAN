@@ -1,22 +1,17 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+export const dynamic = 'force-dynamic';
 
-export default function StoreProfileRedirectPage() {
-  const router = useRouter();
-    const searchParams = useSearchParams();
-
-    useEffect(() => {
-    const id = searchParams.get('id');
-    if (!id) {
-      router.replace('/shop?tab=stores&restoreStores=1');
-      return;
-    }
-    const from = searchParams.get('from') || '/shop?tab=stores&restoreStores=1';
-    router.replace(`/profile?id=${encodeURIComponent(id)}&from=${encodeURIComponent(from)}`);
-  }, [router, searchParams]);
-
-  return null;
+export default async function StoreProfileRedirectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string; from?: string }>;
+}) {
+  const { id, from } = await searchParams;
+  if (!id) {
+    redirect('/shop?tab=stores&restoreStores=1');
+  }
+  const returnTo = from || '/shop?tab=stores&restoreStores=1';
+  redirect(`/profile?id=${encodeURIComponent(id)}&from=${encodeURIComponent(returnTo)}`);
 }
 
