@@ -298,8 +298,8 @@
   "storefrontLogin": {
     "title": "Sign in to Your Industrial Storefront Profile",
     "credentialsLabel": "Credentials",
-    "emailPlaceholder": "WORK EMAIL",
-    "passwordPlaceholder": "PASSWORD",
+    "emailPlaceholder": "Your email",
+    "passwordPlaceholder": "Password",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot Password?",
     "loginButton": "Sign in",
@@ -385,7 +385,7 @@
       "title": "Join as a Buyer",
       "desc1": "Post requirements and receive competitive quotes from vetted Canadian suppliers.",
       "desc2": "Manage RFQs, track quotes, and connect directly with manufacturers - all in one place.",
-      "workEmailLabel": "Work Email",
+      "workEmailLabel": "Your email",
       "workEmailPlaceholder": "you@company.com",
       "prefillText": "We'll pre-fill your account with this email on the next step.",
       "errorEmailRequired": "Please enter your email to continue as a buyer."
@@ -755,12 +755,12 @@
     "errTooManyRequests": "Too many failed login attempts. Please try again later.",
     "errNetwork": "Network error. Please check your internet connection.",
     "errResetFailed": "Failed to send password reset email.",
-    "resetSent": "Password reset email sent! Please check your inbox.",
+    "resetSent": "Password reset email sent! Please check your inbox and spam/junk folder.",
     "breadcrumb": "Login",
     "credentialsLabel": "Credentials",
     "accessHint": "Access your Marcan Account",
-    "emailPlaceholder": "WORK EMAIL",
-    "passwordPlaceholder": "PASSWORD",
+    "emailPlaceholder": "Your email",
+    "passwordPlaceholder": "Password",
     "loginButton": "Login"
   }
 }

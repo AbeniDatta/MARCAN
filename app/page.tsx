@@ -191,6 +191,7 @@ export default function HomePage() {
     normalizedCapabilityStart + CAPABILITY_WINDOW
   );
   const showCapabilityPager = capabilityCards.length > CAPABILITY_WINDOW;
+  const showJoinNetworkCta = isMounted && !isAuthenticated;
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -289,12 +290,14 @@ export default function HomePage() {
                 >
                   {t('home.hero.findManufacturers')}
                 </Link>
-                <Link
-                  href="/signup"
-                  className="border border-white/20 text-white px-7 py-4 rounded-lg font-bold uppercase tracking-wider text-base hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
-                >
-                  {t('home.hero.joinNetwork')}
-                </Link>
+                {showJoinNetworkCta && (
+                  <Link
+                    href="/signup"
+                    className="border border-white/20 text-white px-7 py-4 rounded-lg font-bold uppercase tracking-wider text-base hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
+                  >
+                    {t('home.hero.joinNetwork')}
+                  </Link>
+                )}
               </div>
 
             </div>
@@ -578,7 +581,7 @@ export default function HomePage() {
           animation: none;
         }
         .manufacturer-track.animate {
-          animation: manufacturer-scroll 700s linear infinite;
+          animation: manufacturer-scroll 80s linear infinite;
         }
 
         @keyframes manufacturer-scroll {

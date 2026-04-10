@@ -1243,6 +1243,9 @@ function ShopPageContent() {
                                             (() => {
                                                 const industryLogo = getIndustryLogoForStore(store);
                                                 const isStorefrontProfile = store.profileType === 'storefront';
+                                                const capabilityTags = Array.isArray(store.industriesServed) && store.industriesServed.length > 0
+                                                    ? store.industriesServed
+                                                    : [];
                                                 return (
                                                     <div
                                                         key={store.id}
@@ -1284,8 +1287,8 @@ function ShopPageContent() {
                                                                     {t('storefront.storefrontTag')}
                                                                 </span>
                                                             ) : (
-                                                                (store.tags && store.tags.length > 0) ? (
-                                                                    store.tags.map((tag: string) => (
+                                                                capabilityTags.length > 0 ? (
+                                                                    capabilityTags.map((tag: string) => (
                                                                         <span
                                                                             key={tag}
                                                                             className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
@@ -1299,7 +1302,7 @@ function ShopPageContent() {
                                                         {!isStorefrontProfile && (
                                                             <div className="mt-3">
                                                                 <Link
-                                                                    href={`/store-profile?id=${encodeURIComponent(store.id)}`}
+                                                                    href={`/profile?id=${encodeURIComponent(store.id)}&from=${encodeURIComponent('/shop?tab=stores&restoreStores=1')}`}
                                                                     onClick={() => {
                                                                         const currentTop = storesScrollRef.current?.scrollTop ?? 0;
                                                                         sessionStorage.setItem('shopStoresScrollTop', String(currentTop));

@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const { login } = useAuth();
@@ -109,10 +110,11 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       await sendPasswordResetEmail(auth, resetEmail);
-      alert(t('login.resetSent'));
+      setSuccessMessage(t('login.resetSent'));
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (err: any) {
@@ -149,6 +151,11 @@ export default function LoginPage() {
             {error && (
               <div className="text-xs font-semibold mb-4 text-center text-marcan-red bg-marcan-red/10 border border-marcan-red/30 rounded-lg p-3">
                 {error}
+              </div>
+            )}
+            {successMessage && (
+              <div className="text-xs font-semibold mb-4 text-center text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3">
+                {successMessage}
               </div>
             )}
 
@@ -206,16 +213,16 @@ export default function LoginPage() {
             </form>
 
             {showForgotPassword && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div className="glass-card p-8 rounded-2xl w-full max-w-md relative">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#02030a]/85">
+                <div className="p-8 rounded-2xl w-full max-w-md relative border border-slate-700 bg-[#0b1220] shadow-[0_20px_80px_rgba(0,0,0,0.65)]">
                   <button
                     onClick={() => setShowForgotPassword(false)}
-                    className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
                   >
                     <i className="fa-solid fa-times text-xl"></i>
                   </button>
-                  <h3 className="font-heading text-xl font-bold text-white mb-4">{t('login.resetTitle')}</h3>
-                  <p className="text-sm text-slate-400 mb-6">{t('login.resetBody')}</p>
+                  <h3 className="font-heading text-xl font-bold text-white mb-3">{t('login.resetTitle')}</h3>
+                  <p className="text-sm text-slate-300 mb-6 leading-relaxed">{t('login.resetBody')}</p>
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <input
                       type="email"
@@ -223,13 +230,20 @@ export default function LoginPage() {
                       onChange={(e) => setResetEmail(e.target.value)}
                       placeholder={t('login.emailLabel')}
                       required
-                      className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
+                      className="w-full bg-[#0f172a] border border-slate-600 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
                     />
                     <button
                       type="submit"
-                      className="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon transition-all"
+                      className="w-full bg-marcan-red text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:shadow-neon transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      disabled={isLoading}
                     >
-                      {t('login.sendResetLink')}
+                      {isLoading ? (
+                        <span>
+                          <i className="fa-solid fa-spinner fa-spin mr-2"></i> {t('login.sendResetLink')}
+                        </span>
+                      ) : (
+                        t('login.sendResetLink')
+                      )}
                     </button>
                   </form>
                 </div>

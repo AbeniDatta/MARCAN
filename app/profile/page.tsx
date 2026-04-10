@@ -90,6 +90,7 @@ interface CompanyProfile {
     capabilities?: string[];
     certifications?: string[];
     industriesServed?: string[];
+    industries?: string[];
     capabilitiesByType?: {
         PROCESS?: string[];
         MATERIAL?: string[];
@@ -111,6 +112,7 @@ function ProfilePageContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get('id');
     const returnTo = searchParams.get('from') || '/directory';
+    const isReturnToStores = returnTo.startsWith('/shop?tab=stores');
     const [company, setCompany] = useState<CompanyProfile | null>(null);
     const [userData, setUserData] = useState<any>(null);
     const [companyListings, setCompanyListings] = useState<any[]>([]);
@@ -228,14 +230,18 @@ function ProfilePageContent() {
     const displayAboutUs = userData?.aboutUs || company.aboutUs || company.description;
     const displayCapabilities = userData?.capabilities || company.capabilities || [];
     const displayCertifications = userData?.certifications || company.certifications || [];
-    const displayIndustries = (
-        userData?.industriesServed ||
-        userData?.capabilitiesByType?.INDUSTRY ||
-        company.industriesServed ||
-        company.capabilitiesByType?.INDUSTRY ||
-        []
-    ).filter(Boolean);
     const capabilitiesByType = userData?.capabilitiesByType || company.capabilitiesByType;
+    /** Marcan capability hubs (DB `capabilities` / API `industriesServed`) */
+    const displayMarcanCapabilities = mergeUniqueStrings(
+        userData?.industriesServed,
+        company.industriesServed,
+    );
+    /** Taxonomy / free-text industries (not the hub list) */
+    const displayIndustriesTaxonomy = mergeUniqueStrings(
+        capabilitiesByType?.INDUSTRY,
+        userData?.industries,
+        company.industries,
+    );
 
     const displayPrimaryProcesses =
         capabilitiesByType?.PROCESS && capabilitiesByType.PROCESS.length > 0
@@ -279,7 +285,7 @@ function ProfilePageContent() {
         leadTimeLabel != null ||
         maxPartLabel != null;
 
-    const headerCapabilities = (displayPrimaryProcesses || []).slice(0, 8);
+    const headerCapabilityHubs = displayMarcanCapabilities;
     const displayIcon = userData?.selectedIcon || company.icon || 'fa-industry';
     const displayLogoUrl = userData?.logoUrl || company.logoUrl;
     const displayProfileType = userData?.profileType || company.profileType;
@@ -300,7 +306,7 @@ function ProfilePageContent() {
         const idx = hash % valid.length;
         return INDUSTRY_LOGOS[valid[idx]];
     };
-    const headerIndustryLogo = isStorefrontProfile ? null : getIndustryLogo(displayIndustries, company.id || displayName || '');
+    const headerIndustryLogo = isStorefrontProfile ? null : getIndustryLogo(displayMarcanCapabilities, company.id || displayName || '');
 
     const closeModals = () => {
         setSelectedListing(null);
@@ -456,7 +462,7 @@ function ProfilePageContent() {
                     href={returnTo}
                     className="mb-6 flex items-center text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider group"
                 >
-                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Directory
+                    <i className="fa-solid fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> {isReturnToStores ? 'Back to Stores' : 'Back to Directory'}
                 </Link>
 
                 <div className="glass-card rounded-3xl p-8 mb-8 relative overflow-hidden">
@@ -506,13 +512,16 @@ function ProfilePageContent() {
                                     </span>
                                 )}
                             </p>
-                            {headerCapabilities.length > 0 && (
+                            {headerCapabilityHubs.length > 0 && (
                                 <div className="flex gap-2 flex-wrap">
-                                    {headerCapabilities.map((cap: string) => (
-                                        <span key={cap} className="bg-white/5 border border-white/10 px-3 py-1 rounded text-xs text-slate-300">
-                                            {cap}
-                                        </span>
-                                    ))}
+                                    {headerCapabilityHubs.map((cap: string, idx: number) => {
+                                        const label = normalizeIndustryHubName(cap) || cap;
+                                        return (
+                                            <span key={`${label}-${idx}`} className="bg-white/5 border border-white/10 px-3 py-1 rounded text-xs text-slate-300">
+                                                {label}
+                                            </span>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -655,12 +664,12 @@ function ProfilePageContent() {
                             </div>
                         )}
 
-                        {/* Industries served — between contact and certifications */}
-                        {displayIndustries.length > 0 && (
+                        {/* Industries served — taxonomy / additional industries */}
+                        {displayIndustriesTaxonomy.length > 0 && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
                                 <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries served</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {displayIndustries.map((industry: string) => {
+                                    {displayIndustriesTaxonomy.map((industry: string) => {
                                         const map = INDUSTRY_LOGOS[industry];
                                         return (
                                             <div

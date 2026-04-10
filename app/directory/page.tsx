@@ -424,12 +424,23 @@ function DirectoryPageContent() {
             {filteredCompanies.map((company) => (
               (() => {
                 const industryLogo = getIndustryLogoForCompany(company);
+                const cardCapabilities: string[] = [];
+                const capSeen = new Set<string>();
+                const rawCaps = Array.isArray(company.industriesServed) ? company.industriesServed : [];
+                for (const x of rawCaps) {
+                  const label = normalizeIndustryHubName(String(x)) || String(x).trim();
+                  if (!label) continue;
+                  const k = label.toLowerCase();
+                  if (capSeen.has(k)) continue;
+                  capSeen.add(k);
+                  cardCapabilities.push(label);
+                }
                 return (
                   <div
                     key={company.id}
-                    className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col"
+                    className="glass-card p-6 rounded-2xl group hover:border-marcan-red/40 hover:shadow-neon transition-all duration-300 flex flex-col w-full min-w-0 h-[26rem] overflow-hidden"
                   >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-4 shrink-0">
                       {(company as any).logoUrl ? (
                         <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
                           <img src={(company as any).logoUrl} alt={company.name} className="w-full h-full object-cover" />
@@ -444,53 +455,55 @@ function DirectoryPageContent() {
                         </div>
                       )}
                     </div>
-                    <h3 className="font-heading font-bold text-lg text-white mb-1">{company.name}</h3>
-                    <p className="text-xs text-slate-500 uppercase mb-4">
+                    <h3 className="font-heading font-bold text-lg text-white mb-1 shrink-0 line-clamp-2">{company.name}</h3>
+                    <p className="text-xs text-slate-500 uppercase mb-3 shrink-0 line-clamp-2">
                       <i className="fa-solid fa-location-dot"></i> {company.location}
                     </p>
-                    <p className="text-slate-400 text-xs mb-6 leading-relaxed line-clamp-4 overflow-hidden">
+                    <p className="text-slate-400 text-xs leading-relaxed line-clamp-4 overflow-hidden flex-1 min-h-0 mb-3">
                       {company.description}
                     </p>
 
-                    {/* Capabilities (taxonomy processes when available; else legacy capability strings) */}
-                    {(company.tags && company.tags.length > 0) && (
-                      <div className="mt-auto mb-4">
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">{t('directory.capabilitiesShort')}</div>
-                        <div className="flex flex-wrap gap-2">
-                          {company.tags.map((tag: string) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                    <div className="mt-auto shrink-0 space-y-3 pt-1 min-h-0">
+                      {/* Capabilities (Marcan hubs from profile) */}
+                      {cardCapabilities.length > 0 && (
+                        <div className="max-h-[5.5rem] overflow-y-auto pr-1">
+                          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">{t('directory.capabilitiesShort')}</div>
+                          <div className="flex flex-wrap gap-2">
+                            {cardCapabilities.map((cap: string, idx: number) => (
+                              <span
+                                key={`${cap}-${idx}`}
+                                className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-bold uppercase"
+                              >
+                                {cap}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <Link
-                      href={`/profile?id=${company.id}&from=${encodeURIComponent(
-                        `${pathname}${(() => {
-                          const params = new URLSearchParams();
-                          if (filters.search.trim()) params.set('search', filters.search.trim());
-                          if (filters.industry.trim()) params.set('industry', filters.industry.trim());
-                          if (filters.province.trim()) params.set('province', filters.province.trim());
-                          if (filters.certification.trim()) params.set('certification', filters.certification.trim());
-                          const query = params.toString();
-                          return query ? `?${query}` : '';
-                        })()}`
-                      )}`}
-                      onClick={() => {
-                        sessionStorage.setItem(
-                          'directory-scroll-top',
-                          String(scrollContainerRef.current?.scrollTop || 0)
-                        );
-                      }}
-                      className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
-                    >
-                      {t('directory.viewProfile')}
-                    </Link>
+                      <Link
+                        href={`/profile?id=${company.id}&from=${encodeURIComponent(
+                          `${pathname}${(() => {
+                            const params = new URLSearchParams();
+                            if (filters.search.trim()) params.set('search', filters.search.trim());
+                            if (filters.industry.trim()) params.set('industry', filters.industry.trim());
+                            if (filters.province.trim()) params.set('province', filters.province.trim());
+                            if (filters.certification.trim()) params.set('certification', filters.certification.trim());
+                            const query = params.toString();
+                            return query ? `?${query}` : '';
+                          })()}`
+                        )}`}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'directory-scroll-top',
+                            String(scrollContainerRef.current?.scrollTop || 0)
+                          );
+                        }}
+                        className="w-full py-2 rounded bg-white/5 hover:bg-marcan-red hover:text-white hover:shadow-neon text-slate-300 text-xs font-bold uppercase tracking-wider transition-all text-center block"
+                      >
+                        {t('directory.viewProfile')}
+                      </Link>
+                    </div>
                   </div>
                 );
               })()

@@ -30,6 +30,7 @@ export default function MyAccountPage() {
   const { isAuthenticated, user, isLoading, isMounted, login, logout } = useAuth();
   const { t } = useI18n();
   const router = useRouter();
+  const PENDING_PERMANENT_DELETE_KEY = 'marcan_pending_permanent_delete';
   const [activeTab, setActiveTab] = useState<'profile' | 'buyer-profile' | 'my-posts' | 'delete-account'>('profile');
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -989,11 +990,31 @@ export default function MyAccountPage() {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(
+        const details = typeof payload.details === 'string' ? payload.details : '';
+        const message = 
           typeof payload.details === 'string' && payload.details
             ? `${payload.error || 'Request failed'}: ${payload.details}`
             : payload.error || 'Failed to delete account'
-        );
+        ;
+        // Firebase requires recent sign-in for account deletion. If the ID token is too old,
+        // force a re-login and then retry automatically on the next session.
+        if (details.includes('CREDENTIAL_TOO_OLD_LOGIN_AGAIN') || message.includes('CREDENTIAL_TOO_OLD_LOGIN_AGAIN')) {
+          try {
+            localStorage.setItem(PENDING_PERMANENT_DELETE_KEY, '1');
+          } catch { }
+          setSaveMessage({
+            type: 'error',
+            text: 'For security, please sign in again to delete your Firebase login. You will be redirected to sign in, then we’ll retry the deletion automatically.',
+          });
+          setShowDeleteConfirm(false);
+          await logout();
+          if (typeof window !== 'undefined') {
+            window.location.assign('/login?next=/my-account&action=delete');
+          }
+          return;
+        }
+
+        throw new Error(message);
       }
 
       setShowDeleteConfirm(false);
@@ -1012,6 +1033,27 @@ export default function MyAccountPage() {
       setIsDeletingProfile(false);
     }
   };
+
+  // If the previous delete attempt failed due to Firebase "recent login" requirements,
+  // retry once right after the user signs in again.
+  useEffect(() => {
+    if (!isMounted || !isAuthenticated) return;
+    let pending = false;
+    try {
+      pending = localStorage.getItem(PENDING_PERMANENT_DELETE_KEY) === '1';
+    } catch {
+      pending = false;
+    }
+    if (!pending) return;
+    if (!firebaseAuth.currentUser) return;
+
+    try {
+      localStorage.removeItem(PENDING_PERMANENT_DELETE_KEY);
+    } catch { }
+
+    void handlePermanentDeleteAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, isAuthenticated]);
 
   if (isLoading) {
     return (

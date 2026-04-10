@@ -1,7 +1,36 @@
 -- SupplierProfile changes:
+-- - ensure `email` exists and is backfilled from `user_id` BEFORE dropping `user_id`
+--   (shadow DB replay: `profiles` was renamed to `supplier_profiles` with only `user_id`, no `email`)
 -- - drop user_id, logo_url, selected_icon, primary_intent
--- - rename industry_hubs to industries_served
+-- - rename industry_hubs to industries_served (if present)
 -- - ensure email is NOT NULL + UNIQUE
+
+-- 1) Add email if missing (legacy schema used user_id only)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'supplier_profiles'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'supplier_profiles' AND column_name = 'email'
+  ) THEN
+    ALTER TABLE "supplier_profiles" ADD COLUMN "email" TEXT;
+  END IF;
+END $$;
+
+-- 2) Backfill email from user_id while that column still exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'supplier_profiles' AND column_name = 'user_id'
+  ) THEN
+    UPDATE "supplier_profiles"
+    SET "email" = NULLIF(BTRIM("user_id"), '')
+    WHERE "email" IS NULL OR BTRIM("email") = '';
+  END IF;
+END $$;
 
 DO $$
 BEGIN
@@ -37,4 +66,3 @@ BEGIN
     CREATE UNIQUE INDEX "supplier_profiles_email_key" ON "supplier_profiles"("email");
   END IF;
 END $$;
-

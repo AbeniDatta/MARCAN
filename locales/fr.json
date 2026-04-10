@@ -755,7 +755,7 @@
     "errTooManyRequests": "Trop de tentatives échouées. Réessayez plus tard.",
     "errNetwork": "Erreur réseau. Vérifiez votre connexion.",
     "errResetFailed": "Échec de l’envoi du courriel de réinitialisation.",
-    "resetSent": "Courriel de réinitialisation envoyé! Vérifiez votre boîte de réception.",
+    "resetSent": "Courriel de réinitialisation envoyé! Vérifiez votre boîte de réception et votre dossier spam/courrier indésirable.",
     "breadcrumb": "Connexion",
     "credentialsLabel": "Identifiants",
     "accessHint": "Accédez à votre compte Marcan",
