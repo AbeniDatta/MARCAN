@@ -38,14 +38,6 @@ enum PreferredContactMethod {
   PLATFORM_ONLY
 }
 
-enum TypicalLeadTime {
-  ONE_TWO_WEEKS
-  TWO_FOUR_WEEKS
-  ONE_THREE_MONTHS
-  THREE_PLUS_MONTHS
-  DEPENDS_ON_WORKLOAD
-}
-
 model Capability {
   id      String         @id @default(uuid()) @db.Uuid
   type    CapabilityType
@@ -144,6 +136,9 @@ model SupplierProfile {
   aboutUs        String? @map("about_us") @db.Text
   jobTitle       String? @map("job_title") @db.Text
 
+  /// Cached capability id for COMPANY_TYPE (see `profile_capabilities`); synced on write
+  companyType    String? @map("company_type") @db.Uuid
+
   // Backward-compatible arrays (keep for now; migrate later to ProfileCapability)
   // NOTE: "capabilities" column now stores what used to be industries_served.
   capabilities      String[] @default([]) @db.Text
@@ -155,8 +150,6 @@ model SupplierProfile {
 
   // Logistics & coverage (attributes, not taxonomy)
   provincesServed    String[] @default([]) @map("provinces_served") @db.Text // ["ON","QC",...]
-  shippingCapability String?  @map("shipping_capability") @db.Text // "local" | "national" | "international"
-  minOrderQty        Int?     @map("min_order_qty")
   leadTimeMinDays    Int?     @map("lead_time_min_days")
   leadTimeMaxDays    Int?     @map("lead_time_max_days")
   maxPartSizeMmX     Int?     @map("max_part_size_mm_x")
@@ -165,7 +158,6 @@ model SupplierProfile {
 
   // Step 3: production profile (ranking)
   typicalJobSize TypicalJobSize? @map("typical_job_size")
-  typicalLeadTime TypicalLeadTime? @map("typical_lead_time")
 
   // Capabilities (fixed list: Precision Machining, Foundries & Casting, etc.)
   // Renamed from "industries_served" -> "capabilities"
@@ -173,16 +165,14 @@ model SupplierProfile {
 
   // Step 5: contact / RFQ preferences
   rfqEmail               String?                 @map("rfq_email") @db.Text
-  preferredContactMethod PreferredContactMethod? @map("preferred_contact_method")
+  preferredContactMethod PreferredContactMethod? @default(EMAIL) @map("preferred_contact_method")
 
   // Verification status for directory filtering
   verified Boolean @default(false)
 
   // Internal (hidden) fields for eligibility + enrichment lifecycle
   searchable               Boolean           @default(false)
-  profileCompletenessScore Int               @default(0) @map("profile_completeness_score")
   onboardingMethod         OnboardingMethod? @map("onboarding_method")
-  taxonomyVersion          String            @default("v1") @map("taxonomy_version")
   lastVerifiedAt           DateTime?         @map("last_verified_at") @db.Timestamptz(6)
 
   // Account lifecycle / deactivation

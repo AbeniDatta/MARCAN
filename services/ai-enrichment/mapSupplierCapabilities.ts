@@ -1,4 +1,5 @@
 import type { CapabilityType, Prisma } from '@prisma/client';
+import { syncSupplierCompanyTypeCache } from '@/lib/supplierCompanyTypeCache';
 import type { SupplierAiOutput } from './schemas';
 import { resolveCanonical } from './taxonomy';
 import { slugify } from './utils';
@@ -131,4 +132,6 @@ export async function mapSupplierCapabilitiesFromAi(
     });
     existingIds.add(cap.id);
   }
+
+  await syncSupplierCompanyTypeCache(tx, supplierProfileId);
 }

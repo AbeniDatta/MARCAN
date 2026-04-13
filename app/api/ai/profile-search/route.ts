@@ -198,10 +198,7 @@ export async function POST(req: NextRequest) {
       profiles = await prisma.supplierProfile.findMany({
         where,
         take: 25,
-        orderBy: [
-          { profileCompletenessScore: 'desc' },
-          { updatedAt: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }],
         include: {
           profileCapabilities: {
             include: { capability: true },
@@ -214,10 +211,7 @@ export async function POST(req: NextRequest) {
       profiles = await prisma.supplierProfile.findMany({
         where,
         take: 25,
-        orderBy: [
-          { profileCompletenessScore: 'desc' },
-          { updatedAt: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }],
       });
       // Set empty capabilities for all profiles
       profiles = profiles.map((profile: any) => ({
@@ -256,9 +250,7 @@ ${JSON.stringify(
               province: p.province,
               aboutUs: p.aboutUs,
               provincesServed: p.provincesServed,
-              shippingCapability: p.shippingCapability,
               typicalJobSize: p.typicalJobSize,
-              minOrderQty: p.minOrderQty,
               leadTimeMinDays: p.leadTimeMinDays,
               leadTimeMaxDays: p.leadTimeMaxDays,
               capabilities: p.profileCapabilities.map((pc: any) => ({
@@ -297,9 +289,7 @@ Provide a helpful response to the user's query based on these results.`,
         province: p.province,
         aboutUs: p.aboutUs,
         provincesServed: p.provincesServed,
-        shippingCapability: p.shippingCapability,
         typicalJobSize: p.typicalJobSize,
-        minOrderQty: p.minOrderQty,
         leadTimeMinDays: p.leadTimeMinDays,
         leadTimeMaxDays: p.leadTimeMaxDays,
         capabilities: p.profileCapabilities.map((pc: any) => ({

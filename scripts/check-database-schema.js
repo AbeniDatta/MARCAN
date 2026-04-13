@@ -76,10 +76,11 @@ async function checkSchema() {
 
       console.log('\n📋 supplier_profiles columns:');
       const requiredColumns = [
-        'first_name', 'last_name', 'email', 'typical_lead_time',
-        'industry_hubs', 'verified', 'searchable', 'profile_completeness_score',
-        'onboarding_method', 'taxonomy_version', 'last_verified_at',
-        'rfq_email', 'preferred_contact_method'
+        'first_name', 'last_name', 'email',
+        'capabilities', 'verified', 'searchable',
+        'onboarding_method', 'last_verified_at',
+        'rfq_email', 'preferred_contact_method',
+        'lead_time_min_days', 'lead_time_max_days',
       ];
 
       const existingColumns = supplierProfilesColumns.rows.map(col => col.column_name);

@@ -18,10 +18,8 @@ function supplierPayload(row: {
   materials: string[];
   certifications: string[];
   provincesServed: string[];
-  shippingCapability: string | null;
   capabilities: string[];
   typicalJobSize: string | null;
-  typicalLeadTime: string | null;
   leadTimeMinDays: number | null;
   leadTimeMaxDays: number | null;
 }): Record<string, unknown> {
@@ -38,10 +36,8 @@ function supplierPayload(row: {
     legacy_materials: row.materials,
     legacy_certifications: row.certifications,
     provinces_served: row.provincesServed,
-    shipping_capability: row.shippingCapability,
     industries_served: row.capabilities,
     typical_job_size: row.typicalJobSize,
-    typical_lead_time: row.typicalLeadTime,
     lead_time_min_days: row.leadTimeMinDays,
     lead_time_max_days: row.leadTimeMaxDays,
   };

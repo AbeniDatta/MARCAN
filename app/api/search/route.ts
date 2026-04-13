@@ -190,10 +190,7 @@ Now process this query: {USER_QUERY}
             include: { capability: true },
           },
         },
-        orderBy: [
-          { profileCompletenessScore: 'desc' },
-          { updatedAt: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }],
       });
     } catch (error: any) {
       // Fallback: query without relations if include fails
@@ -207,10 +204,7 @@ Now process this query: {USER_QUERY}
           ],
         },
         //take: 20,
-        orderBy: [
-          { profileCompletenessScore: 'desc' },
-          { updatedAt: 'desc' },
-        ],
+        orderBy: [{ updatedAt: 'desc' }],
       });
       // Set empty capabilities for all profiles
       companies = companies.map((profile: any) => ({

@@ -679,6 +679,7 @@ export default function BecomeSupplierPage() {
       industries: formData.industries,
       // Production profile and logistics
       typicalJobSize: normalizedTypicalJobSize,
+      typicalLeadTime: formData.typicalLeadTime,
       leadTimeMinDays: formData.leadTimeMinDays ? parseInt(formData.leadTimeMinDays, 10) : null,
       leadTimeMaxDays: formData.leadTimeMaxDays ? parseInt(formData.leadTimeMaxDays, 10) : null,
       maxPartSizeMmX: formData.maxPartSizeMmX ? parseInt(formData.maxPartSizeMmX, 10) : null,

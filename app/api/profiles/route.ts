@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { scheduleSupplierProfileEnrichment } from '@/services/ai-enrichment';
 import { normalizeIndustriesServed } from '@/lib/industryHubNormalize';
+import { syncSupplierCompanyTypeCache } from '@/lib/supplierCompanyTypeCache';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,13 @@ function splitCommaSeparated(value: unknown): string[] {
     .split(',')
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
+}
+
+/** Parses optional integers; keeps 0; rejects NaN. */
+function parseOptionalInt(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : parseInt(String(value).trim(), 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 function mergeUniqueStrings(existing: unknown, additions: string[]): string[] {
@@ -86,6 +94,7 @@ export async function POST(request: NextRequest) {
       materials,
       finishes,
       typicalJobSize,
+      typicalLeadTime,
       leadTimeMinDays,
       leadTimeMaxDays,
       maxPartSizeMmX,
@@ -102,9 +111,6 @@ export async function POST(request: NextRequest) {
       otherFinishes,
       otherCertifications,
       otherIndustries,
-      // Additional profile attributes
-      shippingCapability,
-      minOrderQty,
     } = body;
 
     const profileEmail = String(email || body.userId || '').trim().toLowerCase();
@@ -145,21 +151,6 @@ export async function POST(request: NextRequest) {
     const hasMaterial = Array.isArray(materials) && materials.length > 0;
     const hasProvinceServed = Array.isArray(provincesServed) && provincesServed.length > 0;
     const isEligible = hasProcess && hasMaterial && hasProvinceServed;
-
-    // Calculate profile completeness score (simple heuristic)
-    let completenessScore = 0;
-    if (companyName) completenessScore += 10;
-    if (city && province) completenessScore += 10;
-    if (hasProvinceServed) completenessScore += 10;
-    if (hasProcess) completenessScore += 15;
-    if (hasMaterial) completenessScore += 15;
-    if (typicalJobSize) completenessScore += 10;
-    if (rfqEmail) completenessScore += 10;
-    if (aboutUs) completenessScore += 5;
-    if (Array.isArray(finishes) && finishes.length > 0) completenessScore += 5;
-    if (Array.isArray(certifications) && certifications.length > 0) completenessScore += 5;
-    if (Array.isArray(industries) && industries.length > 0) completenessScore += 5;
-    if (website) completenessScore += 5;
 
     // Look up companyType capability ID if companyType is provided as a string name
     let companyTypeCapabilityId: string | null = null;
@@ -227,22 +218,30 @@ export async function POST(request: NextRequest) {
     const otherIndustryList = splitCommaSeparated(otherIndustries);
 
     // Normalize numeric fields that might arrive as strings
-    const normalizedLeadTimeMin =
-      typeof leadTimeMinDays === 'string' ? parseInt(leadTimeMinDays, 10) || null : leadTimeMinDays ?? null;
-    const normalizedLeadTimeMax =
-      typeof leadTimeMaxDays === 'string' ? parseInt(leadTimeMaxDays, 10) || null : leadTimeMaxDays ?? null;
+    let normalizedLeadTimeMin = parseOptionalInt(leadTimeMinDays);
+    let normalizedLeadTimeMax = parseOptionalInt(leadTimeMaxDays);
+    const leadTimeChoice =
+      typicalLeadTime === undefined || typicalLeadTime === null || typicalLeadTime === ''
+        ? null
+        : String(typicalLeadTime).trim().toUpperCase();
+    if (leadTimeChoice === 'DEPENDS_ON_WORKLOAD') {
+      normalizedLeadTimeMin = null;
+      normalizedLeadTimeMax = null;
+    }
+
     const normalizedMaxX =
       typeof maxPartSizeMmX === 'string' ? parseInt(maxPartSizeMmX, 10) || null : maxPartSizeMmX ?? null;
     const normalizedMaxY =
       typeof maxPartSizeMmY === 'string' ? parseInt(maxPartSizeMmY, 10) || null : maxPartSizeMmY ?? null;
     const normalizedMaxZ =
       typeof maxPartSizeMmZ === 'string' ? parseInt(maxPartSizeMmZ, 10) || null : maxPartSizeMmZ ?? null;
-    const normalizedMinOrderQty =
-      typeof minOrderQty === 'string' ? parseInt(minOrderQty, 10) || null : minOrderQty ?? null;
 
     // Prepare profile data
     const legacyPrimaryProcessesFromSelection =
       Array.isArray(capabilities) && capabilities.length > 0 ? capabilities : mapCapabilityNames(processes, 'PROCESS');
+
+    const normalizedPreferredContactMethod =
+      String(preferredContactMethod || '').toUpperCase() === 'PHONE' ? 'PHONE' : 'EMAIL';
 
     const profileData: any = {
       firstName: firstName || null,
@@ -277,8 +276,6 @@ export async function POST(request: NextRequest) {
         ...mapCapabilityNames(industries, 'INDUSTRY'),
         ...otherIndustryList,
       ]),
-      shippingCapability: shippingCapability || null,
-      minOrderQty: normalizedMinOrderQty,
       // New fields
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
@@ -293,11 +290,9 @@ export async function POST(request: NextRequest) {
       maxPartSizeMmZ: normalizedMaxZ,
       rfqEmail: rfqEmail || null,
       phone: phone || null,
-      preferredContactMethod: preferredContactMethod || null,
+      preferredContactMethod: normalizedPreferredContactMethod,
       // Eligibility and enrichment
       searchable: isEligible,
-      profileCompletenessScore: completenessScore,
-      taxonomyVersion: 'v1',
       lastVerifiedAt: isEligible ? new Date() : null,
     };
 
@@ -353,10 +348,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    await syncSupplierCompanyTypeCache(db, profile.id);
+    const profileWithCompanyType = await db.supplierProfile.findUnique({
+      where: { id: profile.id },
+    });
+
     // Post-save AI enrichment (non-blocking; failures do not affect this response)
     scheduleSupplierProfileEnrichment(profile.id);
 
-    return NextResponse.json(profile, {
+    return NextResponse.json(profileWithCompanyType ?? profile, {
       status: existingProfile ? 200 : 201,
       headers: {
         'Content-Type': 'application/json',
@@ -504,6 +504,7 @@ export async function GET(request: NextRequest) {
             maxPartSizeMmX: profile.maxPartSizeMmX ?? null,
             maxPartSizeMmY: profile.maxPartSizeMmY ?? null,
             maxPartSizeMmZ: profile.maxPartSizeMmZ ?? null,
+            companyType: profile.companyType ?? null,
           },
           {
             headers: { 'Content-Type': 'application/json' },
