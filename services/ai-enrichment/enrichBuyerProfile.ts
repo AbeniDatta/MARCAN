@@ -20,9 +20,6 @@ export async function enrichBuyerProfile(buyerProfileId: string): Promise<void> 
     last_name: row.lastName,
     email: row.email,
     job_title: row.jobTitle,
-    phone: row.phone,
-    city: row.city,
-    province: row.province,
   };
 
   const { system, user } = buildBuyerProfilePrompts(payload);

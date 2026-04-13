@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { storefrontListingPresentation } from '@/lib/storefrontListingPresentation';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     const { id } = params;
     const body = await request.json();
-    const { userId, title, listingType, price, location, description, condition } = body;
+    const { userId, title, listingType, price, location, description } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -64,11 +65,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: {
         title,
         listingType,
-        condition: condition ?? null,
         price: formattedPrice,
         location,
         description,
-        category: listingType,
       },
       include: {
         supplierProfile: {
@@ -80,41 +79,19 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       },
     });
 
-    let badge = 'Available';
-    let badgeColor = 'green';
-    let icon = 'fa-box';
-
-    if (updatedListing.listingType === 'Equipment / Machinery') {
-      icon = 'fa-dolly';
-      badge = updatedListing.condition === 'New' ? 'New' : 'Used';
-      badgeColor = updatedListing.condition === 'New' ? 'green' : 'blue';
-    } else if (updatedListing.listingType === 'Raw Materials') {
-      icon = 'fa-shapes';
-      badge = 'Surplus';
-      badgeColor = 'blue';
-    } else if (updatedListing.listingType === 'Surplus Parts') {
-      icon = 'fa-cog';
-      badge = 'Surplus';
-      badgeColor = 'blue';
-    } else if (updatedListing.listingType === 'Production Capacity') {
-      icon = 'fa-industry';
-      badge = 'Capacity';
-      badgeColor = 'purple';
-    }
+    const { badge, badgeColor, icon } = storefrontListingPresentation(updatedListing.listingType);
 
     return NextResponse.json({
       id: updatedListing.id,
       title: updatedListing.title,
       supplier: updatedListing.supplierProfile?.companyName || 'Unknown',
       price: formatPrice(updatedListing.price || '') || updatedListing.price || '',
-      badge: updatedListing.badge || badge,
+      badge,
       badgeColor,
-      icon: updatedListing.imageUrl ? null : icon,
+      icon,
       listingType: updatedListing.listingType || '',
-      condition: updatedListing.condition || '',
       location: updatedListing.location || '',
       description: updatedListing.description || '',
-      imageUrl: updatedListing.imageUrl,
       createdAt: updatedListing.createdAt.toISOString(),
       timestamp: updatedListing.createdAt.getTime(),
       active: updatedListing.active,

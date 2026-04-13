@@ -108,6 +108,7 @@ export default function PostRequestPage() {
                     quantity: formData.quantity,
                     specifications: formData.specifications,
                     deadline: formData.asap ? null : (formData.deadline || null),
+                    asap: formData.asap,
                     targetPrice: formData.targetPrice,
                     userId: user.email,
                     companyName: user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Anonymous',

@@ -23,10 +23,7 @@ export async function enrichStorefrontProfile(storefrontProfileId: string): Prom
     street_address: row.streetAddress,
     city: row.city,
     province: row.province,
-    business_number: row.businessNumber,
     website: row.website,
-    phone: row.phone,
-    about_us: row.aboutUs,
   };
 
   const { system, user } = buildStorefrontProfilePrompts(payload);

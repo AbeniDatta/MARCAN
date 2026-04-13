@@ -1,11 +1,11 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import StorefrontListingModal from '@/components/StorefrontListingModal';
+import SourcingRequestModal from '@/components/SourcingRequestModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
@@ -50,6 +50,7 @@ type StoreCard = {
     province?: string;
     certifications?: Array<string | { code?: string; name?: string }>;
     email?: string | null;
+    website?: string | null;
 };
 
 type SourcingRequestCard = {
@@ -64,6 +65,7 @@ type SourcingRequestCard = {
     location?: string | null;
     province?: string | null;
     deadline?: string | null;
+    isAsap?: boolean;
     createdAt?: string;
     timestamp?: number;
 };
@@ -105,6 +107,13 @@ const CERTIFICATIONS = [
     { code: 'IATF 16949', label: 'IATF 16949' },
     { code: 'ISO 13485', label: 'ISO 13485' },
 ];
+
+function getWebsiteHref(website?: string | null): string | null {
+    const trimmed = String(website || '').trim();
+    if (!trimmed) return null;
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+}
 
 function ShopPageContent() {
     const router = useRouter();
@@ -637,116 +646,6 @@ function ShopPageContent() {
         setSelectedRequest(null);
     };
 
-    const sourcingRequestModal = selectedRequest && isDomReady
-        ? createPortal(
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-                <button
-                    type="button"
-                    className="absolute inset-0 bg-marcan-dark/90 backdrop-blur-sm"
-                    onClick={closeRequestModal}
-                    aria-label={t('wishlist.closeRequestDetailsAria')}
-                />
-
-                <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl border border-white/10 shadow-2xl flex flex-col">
-                    <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
-                        <div className="flex items-center gap-3 min-w-0">
-                            {selectedRequest.category ? (
-                                <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
-                                    {selectedRequest.category}
-                                </span>
-                            ) : null}
-                            <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
-                                {selectedRequest.title || t('wishlist.sourcingRequestFallback')}
-                            </h3>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={closeRequestModal}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:rotate-90 transition-all border border-white/5"
-                            aria-label={t('wishlist.closeRequestDetailsAria')}
-                        >
-                            <i className="fa-solid fa-xmark text-lg"></i>
-                        </button>
-                    </div>
-
-                    <div className="p-6 md:p-8 space-y-8 relative z-10">
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 space-y-8">
-                                {selectedRequest.description ? (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <i className="fa-solid fa-align-left text-orange-400"></i> {t('wishlist.requestDescription')}
-                                        </h4>
-                                        <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
-                                            <p>{selectedRequest.description}</p>
-                                        </div>
-                                    </div>
-                                ) : null}
-
-                                <div>
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <i className="fa-solid fa-list-check text-orange-400"></i> {t('wishlist.sourcingRequirements')}
-                                    </h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetQuantity')}</span>
-                                            <span className="text-sm font-semibold text-white">{selectedRequest.quantity || t('wishlist.notAvailable')}</span>
-                                        </div>
-                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetLocation')}</span>
-                                            <span className="text-sm font-semibold text-white">{selectedRequest.location || t('wishlist.notAvailable')}</span>
-                                        </div>
-                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.targetPrice')}</span>
-                                            <span className="text-sm font-semibold text-white">{selectedRequest.targetPrice || t('wishlist.noneSpecified')}</span>
-                                        </div>
-                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">{t('wishlist.deadline')}</span>
-                                            <span className="text-sm font-semibold text-white">
-                                                {selectedRequest.deadline ? new Date(selectedRequest.deadline).toLocaleDateString() : t('wishlist.asap')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
-                                    <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">{t('wishlist.interestedInRfq')}</div>
-                                    {selectedRequest?.buyerEmail ? (
-                                        <a
-                                            href={`mailto:${selectedRequest.buyerEmail}?subject=${encodeURIComponent(
-                                                `RFQ: ${selectedRequest.title || ''}`
-                                            )}`}
-                                            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                                        >
-                                            <i className="fa-solid fa-envelope" aria-hidden></i> {t('wishlist.emailBuyer')}
-                                        </a>
-                                    ) : (
-                                        <Link
-                                            href="/post-request"
-                                            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                                        >
-                                            <i className="fa-solid fa-plus"></i> {t('wishlist.postRequest')}
-                                        </Link>
-                                    )}
-                                </div>
-
-                                <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">{t('wishlist.postedBy')}</h4>
-                                    <div className="text-sm font-bold text-white mb-1">{selectedRequest.company || t('wishlist.companyFallback')}</div>
-                                    <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
-                                        <i className="fa-solid fa-circle-check"></i> {t('storefront.modal.platformMember')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>,
-            document.body
-        )
-        : null;
 
     return (
         <>
@@ -1050,9 +949,9 @@ function ShopPageContent() {
                                                     <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
                                                         {shop.title || t('storefront.listingCard.untitledListing')}
                                                     </h3>
-                                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
-                                                        <i className="fa-solid fa-store text-orange-400 mr-1"></i>
-                                                        {shop.supplierName}
+                                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 break-words leading-snug flex items-start gap-1.5">
+                                                        <i className="fa-solid fa-store text-orange-400 shrink-0 mt-0.5"></i>
+                                                        <span className="min-w-0">{shop.supplierName}</span>
                                                     </p>
 
                                                     <p className="text-xs text-slate-400 line-clamp-1 mb-4">
@@ -1266,7 +1165,7 @@ function ShopPageContent() {
                                                                 </div>
                                                             )}
                                                             <div className="flex-1 min-w-0">
-                                                                <h3 className="font-heading font-bold text-lg text-white truncate">{store.name}</h3>
+                                                                <h3 className="font-heading font-bold text-lg text-white break-words">{store.name}</h3>
                                                                 <p className="text-xs text-slate-500 uppercase mt-1 truncate">
                                                                     <i className="fa-solid fa-location-dot mr-1"></i>
                                                                     {(() => {
@@ -1281,11 +1180,24 @@ function ShopPageContent() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="mt-auto flex flex-wrap gap-2">
+                                                        <div className="mt-auto flex flex-wrap gap-2 items-center">
                                                             {isStorefrontProfile ? (
-                                                                <span className="px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
-                                                                    {t('storefront.storefrontTag')}
-                                                                </span>
+                                                                <>
+                                                                    <span className="px-2 py-1 rounded bg-orange-500/15 border border-orange-500/30 text-orange-300 text-[10px] font-bold uppercase tracking-wider">
+                                                                        {t('storefront.storefrontTag')}
+                                                                    </span>
+                                                                    {getWebsiteHref(store.website) ? (
+                                                                        <a
+                                                                            href={getWebsiteHref(store.website) as string}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-300 text-[10px] font-bold uppercase tracking-wider hover:text-white hover:border-white/30 transition-all"
+                                                                        >
+                                                                            <i className="fa-solid fa-globe mr-1" aria-hidden></i>
+                                                                            {t('becomeSupplier.companyBasics.website')}
+                                                                        </a>
+                                                                    ) : null}
+                                                                </>
                                                             ) : (
                                                                 capabilityTags.length > 0 ? (
                                                                     capabilityTags.map((tag: string) => (
@@ -1330,7 +1242,11 @@ function ShopPageContent() {
                 listing={selectedListing}
                 onClose={closeListingModal}
             />
-            {sourcingRequestModal}
+            <SourcingRequestModal
+                open={!!selectedRequest && isDomReady}
+                request={selectedRequest}
+                onClose={closeRequestModal}
+            />
         </>
     );
 }

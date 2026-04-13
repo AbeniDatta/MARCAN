@@ -962,9 +962,9 @@ function SearchPageContent() {
                                     <h3 className="font-heading font-bold text-white mb-1 line-clamp-1">
                                       {listing.title || t('storefront.listingCard.untitledListing')}
                                     </h3>
-                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 line-clamp-1">
-                                      <i className="fa-solid fa-store text-orange-400 mr-1"></i>
-                                      {listing.supplier || t('storefront.modal.unknownCompany')}
+                                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-3 break-words leading-snug flex items-start gap-1.5">
+                                      <i className="fa-solid fa-store text-orange-400 shrink-0 mt-0.5"></i>
+                                      <span className="min-w-0">{listing.supplier || t('storefront.modal.unknownCompany')}</span>
                                     </p>
 
                                     <p className="text-xs text-slate-400 line-clamp-1 mb-4">

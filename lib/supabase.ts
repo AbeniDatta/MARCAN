@@ -53,9 +53,6 @@ export type Database = {
                     title: string;
                     description: string | null;
                     price: string | null;
-                    category: string | null;
-                    badge: string | null;
-                    image_url: string | null;
                     created_at: string;
                     updated_at: string;
                 };

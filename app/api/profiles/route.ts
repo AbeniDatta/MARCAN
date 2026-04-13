@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { scheduleSupplierProfileEnrichment } from '@/services/ai-enrichment';
 import { normalizeIndustriesServed } from '@/lib/industryHubNormalize';
 import { syncSupplierCompanyTypeCache } from '@/lib/supplierCompanyTypeCache';
+import { validateWebsiteUrl } from '@/lib/websiteUrl';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -114,6 +115,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const profileEmail = String(email || body.userId || '').trim().toLowerCase();
+    const websiteCheck = validateWebsiteUrl(website ?? '');
+    if (!websiteCheck.valid) {
+      return NextResponse.json({ error: 'Invalid website URL' }, { status: 400 });
+    }
+
     if (!profileEmail || !companyName || !streetAddress) {
       return NextResponse.json({
         error: 'email, companyName, and streetAddress are required'
@@ -250,7 +256,7 @@ export async function POST(request: NextRequest) {
       companyName,
       jobTitle: jobTitle || null,
       businessNumber: businessNumber || null,
-      website: website || null,
+      website: websiteCheck.normalized,
       streetAddress,
       city: city || null,
       province: province || null,
@@ -540,9 +546,9 @@ export async function GET(request: NextRequest) {
           profileType: 'storefront',
           name: storefrontProfile.companyName,
           location: storefrontLocation,
-          description: storefrontProfile.aboutUs || 'No description available.',
-          icon: storefrontProfile.selectedIcon || 'fa-shop',
-          logoUrl: storefrontProfile.logoUrl || null,
+          description: 'No description available.',
+          icon: 'fa-shop',
+          logoUrl: null,
           tags: [],
           capabilities: [],
           certifications: [],
@@ -551,11 +557,11 @@ export async function GET(request: NextRequest) {
           industriesServed: [],
           materials: [],
           website: storefrontProfile.website,
-          phone: storefrontProfile.phone,
+          phone: null,
           city: storefrontProfile.city,
           province: storefrontProfile.province,
           streetAddress: storefrontProfile.streetAddress,
-          businessNumber: storefrontProfile.businessNumber,
+          businessNumber: null,
           jobTitle: storefrontProfile.role,
           capabilitiesByType: {
             PROCESS: [],
@@ -566,7 +572,7 @@ export async function GET(request: NextRequest) {
             COMPANY_TYPE: [],
           },
           email: storefrontProfile.email,
-          aboutUs: storefrontProfile.aboutUs,
+          aboutUs: null,
         },
         {
           headers: { 'Content-Type': 'application/json' },
@@ -740,9 +746,9 @@ export async function GET(request: NextRequest) {
         profileType: 'storefront',
         name: profile.companyName,
         location,
-        description: profile.aboutUs || 'No description available.',
-        icon: profile.selectedIcon || 'fa-shop',
-        logoUrl: profile.logoUrl || null,
+        description: 'No description available.',
+        icon: 'fa-shop',
+        logoUrl: null,
         tags: [],
         capabilities: [],
         certifications: [],
@@ -750,11 +756,11 @@ export async function GET(request: NextRequest) {
         industries: [],
         materials: [],
         website: profile.website,
-        phone: profile.phone,
+        phone: null,
         city: profile.city,
         province: profile.province,
         streetAddress: profile.streetAddress,
-        businessNumber: profile.businessNumber,
+        businessNumber: null,
         jobTitle: profile.role,
         industriesServed: [],
         verified: profile.verified,

@@ -79,6 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       quantity,
       specifications,
       deadline,
+      asap,
       targetPrice,
       targetCity,
       targetProvince,
@@ -108,10 +109,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (typeof specifications === 'string') data.description = specifications;
     if (typeof targetCity === 'string') data.targetCity = targetCity || null;
     if (typeof targetProvince === 'string') data.targetProvince = targetProvince || null;
+    if (typeof asap === 'boolean') {
+      data.isAsap = asap;
+      if (asap) {
+        data.deadline = null;
+      }
+    }
     if (deadline === null) {
       data.deadline = null;
+      data.isAsap = true;
     } else if (typeof deadline === 'string' && deadline.trim()) {
       data.deadline = new Date(deadline);
+      if (typeof asap !== 'boolean') {
+        data.isAsap = false;
+      }
     }
     if (typeof targetPrice === 'string' && targetPrice.trim()) {
       const normalized = formatPrice(targetPrice);
@@ -136,6 +147,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       specifications: updated.description,
       targetPrice: updated.targetPrice || '',
       deadline: updated.deadline ? updated.deadline.toISOString() : null,
+      isAsap: updated.isAsap,
       city: updated.targetCity || null,
       province: updated.targetProvince || null,
       location: [updated.targetCity, updated.targetProvince].filter(Boolean).join(', ') || null,

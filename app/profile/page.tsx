@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import SourcingRequestModal from '@/components/SourcingRequestModal';
 import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
 
 function mergeUniqueStrings(...lists: (string[] | undefined)[]): string[] {
@@ -313,7 +314,7 @@ function ProfilePageContent() {
         setSelectedRequest(null);
     };
 
-    const detailsModal = isDomReady && (selectedListing || selectedRequest)
+    const detailsModal = isDomReady && selectedListing
         ? createPortal(
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
                 <button
@@ -326,10 +327,10 @@ function ProfilePageContent() {
                     <div className="sticky top-0 z-20 flex justify-between items-center p-6 border-b border-white/10 bg-marcan-dark/95 backdrop-blur-md">
                         <div className="flex items-center gap-3 min-w-0">
                             <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded text-[10px] font-bold uppercase shrink-0">
-                                {selectedListing ? (selectedListing.listingType || 'Listing') : (selectedRequest?.category || 'Request')}
+                                {selectedListing.listingType || 'Listing'}
                             </span>
                             <h3 className="font-heading font-bold text-xl md:text-2xl text-white truncate">
-                                {selectedListing?.title || selectedRequest?.title || 'Details'}
+                                {selectedListing.title || 'Details'}
                             </h3>
                         </div>
                         <button
@@ -341,8 +342,7 @@ function ProfilePageContent() {
                             <i className="fa-solid fa-xmark text-lg"></i>
                         </button>
                     </div>
-                    {selectedListing ? (
-                        <div className="p-6 md:p-8 space-y-8 relative z-10">
+                    <div className="p-6 md:p-8 space-y-8 relative z-10">
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
                                     <div>
@@ -425,28 +425,7 @@ function ProfilePageContent() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="p-6 md:p-8 space-y-6">
-                            <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
-                                <p>{selectedRequest?.description || 'No description provided.'}</p>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <div className="glass-card p-4 rounded-xl border border-white/5">
-                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</div>
-                                    <div className="text-sm font-semibold text-white">{selectedRequest?.targetPrice || 'Not specified'}</div>
-                                </div>
-                                <div className="glass-card p-4 rounded-xl border border-white/5">
-                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</div>
-                                    <div className="text-sm font-semibold text-white">{selectedRequest?.location || 'N/A'}</div>
-                                </div>
-                                <div className="glass-card p-4 rounded-xl border border-white/5">
-                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Company</div>
-                                    <div className="text-sm font-semibold text-white">{displayName}</div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>,
             document.body
@@ -789,6 +768,11 @@ function ProfilePageContent() {
                 </div>
             </div>
             {detailsModal}
+            <SourcingRequestModal
+                open={!!selectedRequest && isDomReady}
+                request={selectedRequest}
+                onClose={() => setSelectedRequest(null)}
+            />
         </main>
     );
 }

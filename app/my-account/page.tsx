@@ -101,7 +101,6 @@ export default function MyAccountPage() {
   const [listingFormData, setListingFormData] = useState({
     title: '',
     listingType: '',
-    condition: '',
     price: '',
     location: '',
     description: '',
@@ -201,12 +200,9 @@ export default function MyAccountPage() {
             companyName: sfProfile.companyName || prev.companyName,
             streetAddress: sfProfile.streetAddress || prev.streetAddress,
             jobTitle: sfProfile.role || prev.jobTitle,
-            businessNumber: sfProfile.businessNumber || prev.businessNumber,
             website: sfProfile.website || prev.website,
-            aboutUs: sfProfile.aboutUs || prev.aboutUs,
             city: sfProfile.city || prev.city,
             province: sfProfile.province || prev.province,
-            phone: sfProfile.phone || prev.phone,
           }));
         };
 
@@ -679,7 +675,6 @@ export default function MyAccountPage() {
           role: formData.jobTitle || null,
           city: formData.city || null,
           province: formData.province || null,
-          businessNumber: formData.businessNumber || null,
           streetAddress: formData.streetAddress || '',
         }),
       });
@@ -739,7 +734,7 @@ export default function MyAccountPage() {
       quantity: request.quantity || '',
       specifications: request.specifications || request.description || '',
       deadline: request.deadline ? String(request.deadline).slice(0, 10) : '',
-      asap: !request.deadline,
+      asap: request.isAsap ?? !request.deadline,
       targetPrice: (request.targetPrice || '').replace(/[^0-9.]/g, ''),
       city: request.city || '',
       province: request.province || '',
@@ -760,6 +755,7 @@ export default function MyAccountPage() {
           quantity: requestFormData.quantity || null,
           specifications: requestFormData.specifications.trim(),
           deadline: requestFormData.asap ? null : (requestFormData.deadline || null),
+          asap: requestFormData.asap,
           targetPrice: requestFormData.targetPrice || '',
           targetCity: requestFormData.city || null,
           targetProvince: requestFormData.province || null,
@@ -819,7 +815,6 @@ export default function MyAccountPage() {
     setListingFormData({
       title: listing.title || '',
       listingType: listing.listingType || '',
-      condition: listing.condition || '',
       price: listing.price || '',
       location: listing.location || '',
       description: listing.description || '',
@@ -840,7 +835,6 @@ export default function MyAccountPage() {
           userId: user.email,
           title: listingFormData.title.trim(),
           listingType: listingFormData.listingType,
-          condition: listingFormData.condition.trim() || null,
           price: listingFormData.price.trim(),
           location: listingFormData.location.trim(),
           description: listingFormData.description.trim(),

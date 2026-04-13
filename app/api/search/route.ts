@@ -266,7 +266,6 @@ Now process this query: {USER_QUERY}
         buyerProfile: {
           select: {
             companyName: true,
-            province: true,
           },
         },
       },
@@ -297,7 +296,6 @@ Now process this query: {USER_QUERY}
       supplier: l.supplierProfile.companyName,
       price: l.price || '',
       listingType: l.listingType || '',
-      condition: l.condition || '',
       location: l.location || '',
       description: l.description || '',
       createdAt: l.createdAt.toISOString(),
@@ -310,13 +308,14 @@ Now process this query: {USER_QUERY}
     const formattedRequests = requests.map((r: any) => ({
       id: r.id,
       title: r.title,
-      company: r.companyName,
-      province: r.buyerProfile?.province || '',
+      company: r.buyerProfile?.companyName || '',
+      province: r.targetProvince || '',
       category: r.category || '',
       description: r.description || '',
       quantity: r.quantity || '',
       targetPrice: r.targetPrice || '',
       deadline: r.deadline ? r.deadline.toISOString() : null,
+      isAsap: r.isAsap,
       createdAt: r.createdAt.toISOString(),
       logoUrl: null,
       selectedIcon: null,

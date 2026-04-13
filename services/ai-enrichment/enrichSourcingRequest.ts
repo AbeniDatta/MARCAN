@@ -12,8 +12,6 @@ export async function enrichSourcingRequest(sourcingRequestId: string): Promise<
       buyerProfile: {
         select: {
           companyName: true,
-          city: true,
-          province: true,
         },
       },
     },
@@ -25,7 +23,7 @@ export async function enrichSourcingRequest(sourcingRequestId: string): Promise<
 
   const payload: Record<string, unknown> = {
     title: row.title,
-    company_name: row.companyName,
+    company_name: row.buyerProfile?.companyName,
     category: row.category,
     description: row.description,
     quantity: row.quantity,
@@ -34,8 +32,8 @@ export async function enrichSourcingRequest(sourcingRequestId: string): Promise<
     target_city: row.targetCity,
     target_province: row.targetProvince,
     buyer_company_name: row.buyerProfile?.companyName,
-    buyer_city: row.buyerProfile?.city,
-    buyer_province: row.buyerProfile?.province,
+    buyer_city: row.targetCity,
+    buyer_province: row.targetProvince,
   };
 
   const { system, user } = buildSourcingRequestPrompts(payload);

@@ -14,6 +14,22 @@ export async function GET(request: NextRequest) {
     if (userId) {
       const buyerProfile = await prisma.buyerProfile.findUnique({
         where: { userId },
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyName: true,
+          jobTitle: true,
+          createdAt: true,
+          updatedAt: true,
+          aiSchema: true,
+          aiSummary: true,
+          aiStatus: true,
+          aiEnrichedAt: true,
+          aiError: true,
+        },
       });
 
       if (!buyerProfile) {
@@ -48,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, firstName, lastName, email, companyName, jobTitle, phone, city, province } = body;
+    const { userId, firstName, lastName, email, companyName, jobTitle } = body;
 
     if (!userId || !email) {
       return NextResponse.json(
@@ -60,6 +76,7 @@ export async function POST(request: NextRequest) {
     // Check if profile exists for this user
     const existingProfile = await prisma.buyerProfile.findUnique({
       where: { userId },
+      select: { id: true },
     });
 
     const profileData = {
@@ -72,9 +89,6 @@ export async function POST(request: NextRequest) {
         `${firstName || ''} ${lastName || ''}`.trim() ||
         'Organization',
       jobTitle: jobTitle || null,
-      phone: phone || null,
-      city: city || null,
-      province: province || null,
     };
 
     let profile;
@@ -84,14 +98,46 @@ export async function POST(request: NextRequest) {
       profile = await prisma.buyerProfile.update({
         where: { userId },
         data: profileData,
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyName: true,
+          jobTitle: true,
+          createdAt: true,
+          updatedAt: true,
+          aiSchema: true,
+          aiSummary: true,
+          aiStatus: true,
+          aiEnrichedAt: true,
+          aiError: true,
+        },
       });
       console.log('Buyer profile updated successfully:', profile.id);
     } else {
       // Create new profile
       console.log('Creating new buyer profile for userId:', userId);
-      console.log('Profile data:', { userId, firstName, lastName, email, companyName, jobTitle, phone, city, province });
+      console.log('Profile data:', { userId, firstName, lastName, email, companyName, jobTitle });
       profile = await prisma.buyerProfile.create({
         data: profileData,
+        select: {
+          id: true,
+          userId: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          companyName: true,
+          jobTitle: true,
+          createdAt: true,
+          updatedAt: true,
+          aiSchema: true,
+          aiSummary: true,
+          aiStatus: true,
+          aiEnrichedAt: true,
+          aiError: true,
+        },
       });
       console.log('Buyer profile created successfully:', profile.id);
     }

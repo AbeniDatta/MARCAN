@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { validateWebsiteUrl } from '@/lib/websiteUrl';
 import { scheduleStorefrontProfileEnrichment } from '@/services/ai-enrichment';
 
 export const dynamic = 'force-dynamic';
@@ -35,6 +36,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
+    const websiteCheck = validateWebsiteUrl(body.website ?? '');
+    if (!websiteCheck.valid) {
+      return NextResponse.json({ error: 'Invalid website URL' }, { status: 400 });
+    }
+
     const data = {
       firstName: body.firstName || null,
       lastName: body.lastName || null,
@@ -44,10 +50,7 @@ export async function POST(request: NextRequest) {
       streetAddress: body.streetAddress || '',
       city: body.city || null,
       province: body.province || null,
-      businessNumber: body.businessNumber || null,
-      website: body.website || null,
-      phone: body.phone || null,
-      aboutUs: body.aboutUs || null,
+      website: websiteCheck.normalized,
     };
 
     const existing = await (prisma as any).storefrontProfile.findUnique({
@@ -56,12 +59,12 @@ export async function POST(request: NextRequest) {
 
     const profile = existing
       ? await (prisma as any).storefrontProfile.update({
-          where: { userId },
-          data,
-        })
+        where: { userId },
+        data,
+      })
       : await (prisma as any).storefrontProfile.create({
-          data: { userId, ...data },
-        });
+        data: { userId, ...data },
+      });
 
     scheduleStorefrontProfileEnrichment(profile.id);
 

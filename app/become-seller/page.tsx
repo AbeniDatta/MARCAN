@@ -8,6 +8,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
+import { validateWebsiteUrl } from '@/lib/websiteUrl';
 
 type WizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type View = 'landing' | 'form';
@@ -579,6 +580,13 @@ export default function BecomeSupplierPage() {
           setError(t('becomeSupplier.errors.passwordsNoMatch'));
           return false;
         }
+        if (formData.website.trim()) {
+          const websiteCheck = validateWebsiteUrl(formData.website);
+          if (!websiteCheck.valid) {
+            setError(t('signup.joinSupplier.invalidUrl'));
+            return false;
+          }
+        }
         return true;
       default:
         return true;
@@ -655,6 +663,14 @@ export default function BecomeSupplierPage() {
         )
         : null;
 
+    const websiteCheck = validateWebsiteUrl(formData.website);
+    const websiteForApi = websiteCheck.valid ? websiteCheck.normalized : null;
+    if (!websiteCheck.valid) {
+      setError(t('signup.joinSupplier.invalidUrl'));
+      setIsLoading(false);
+      return;
+    }
+
     const submitData = {
       userId,
       firstName: formData.firstName,
@@ -667,7 +683,7 @@ export default function BecomeSupplierPage() {
       province: formData.province,
       businessNumber: formData.businessNumber || null,
       provincesServed: formData.provincesServed,
-      website: formData.website || null,
+      website: websiteForApi,
       companyType: formData.companyType,
       jobTitle: formData.role,
       // Storefront signups should not appear in the Network Directory.
@@ -719,7 +735,7 @@ export default function BecomeSupplierPage() {
               city: formData.city,
               province: formData.province,
               businessNumber: formData.businessNumber || null,
-              website: formData.website || null,
+              website: websiteForApi,
               phone: formData.phone || null,
               aboutUs: formData.aboutUs || null,
             }
@@ -1666,6 +1682,16 @@ export default function BecomeSupplierPage() {
                 {/* Step 6: Shop Profile Sign Up (temporarily hidden; moved out of supplier step numbering) */}
                 {wizardStep === 0 && (
                   <div className="max-w-5xl mx-auto py-0 pt-0">
+                    <div className="mb-3">
+                      <button
+                        type="button"
+                        onClick={() => router.push('/signup')}
+                        className="text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest flex items-center gap-2"
+                      >
+                        <i className="fa-solid fa-arrow-left"></i>
+                        {t('becomeSupplier.changeOption')}
+                      </button>
+                    </div>
                     <div className="text-center mb-6">
                       <h2 className="font-heading text-3xl font-black text-white uppercase tracking-tight mb-1">
                         Create Your Storefront Profile
@@ -1748,6 +1774,21 @@ export default function BecomeSupplierPage() {
                               </div>
                             </div>
                           </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                              {t('becomeSupplier.companyBasics.website')}
+                            </label>
+                            <input
+                              type="url"
+                              inputMode="url"
+                              autoComplete="url"
+                              placeholder={t('signup.joinSupplier.websiteUrlPlaceholder')}
+                              value={formData.website}
+                              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                            />
+                          </div>
                         </div>
 
                         {/* Column 2: Account Details */}
@@ -1786,19 +1827,17 @@ export default function BecomeSupplierPage() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
-                                Role in Company
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="Owner / Manager"
-                                value={formData.role}
-                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
-                              />
-                            </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">
+                              Role in Company
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Owner / Manager"
+                              value={formData.role}
+                              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white focus:border-orange-500 focus:shadow-[0_0_10px_rgba(249,115,22,0.3)] outline-none transition-all placeholder:text-slate-600"
+                            />
                           </div>
 
                           <div>
@@ -1875,13 +1914,6 @@ export default function BecomeSupplierPage() {
                         </p>
 
                         <div className="flex w-full sm:w-auto gap-4">
-                          <button
-                            type="button"
-                            onClick={() => setWizardStep(1)}
-                            className="w-full sm:w-auto bg-black/30 border border-white/10 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-white/5 transition-all whitespace-nowrap"
-                          >
-                            Back
-                          </button>
                           <button
                             type="button"
                             onClick={() => {

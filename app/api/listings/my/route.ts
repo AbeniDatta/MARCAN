@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { storefrontListingPresentation } from '@/lib/storefrontListingPresentation';
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic';
@@ -75,42 +76,19 @@ export async function GET(request: NextRequest) {
 
     // Format the response
     const formattedListings = listings.map((listing: any) => {
-      // Determine badge and icon based on listing type
-      let badge = 'Available';
-      let badgeColor = 'green';
-      let icon = 'fa-box';
-
-      if (listing.listingType === 'Equipment / Machinery') {
-        icon = 'fa-dolly';
-        badge = listing.condition === 'New' ? 'New' : 'Used';
-        badgeColor = listing.condition === 'New' ? 'green' : 'blue';
-      } else if (listing.listingType === 'Raw Materials') {
-        icon = 'fa-shapes';
-        badge = 'Surplus';
-        badgeColor = 'blue';
-      } else if (listing.listingType === 'Surplus Parts') {
-        icon = 'fa-cog';
-        badge = 'Surplus';
-        badgeColor = 'blue';
-      } else if (listing.listingType === 'Production Capacity') {
-        icon = 'fa-industry';
-        badge = 'Capacity';
-        badgeColor = 'purple';
-      }
+      const { badge, badgeColor, icon } = storefrontListingPresentation(listing.listingType);
 
       return {
         id: listing.id,
         title: listing.title,
         supplier: listing.supplierProfile?.companyName || listing.storefrontProfile?.companyName || 'Unknown',
         price: formatPrice(listing.price || '') || listing.price || '',
-        badge: listing.badge || badge,
+        badge,
         badgeColor,
-        icon: listing.imageUrl ? null : icon,
+        icon,
         listingType: listing.listingType || '',
-        condition: listing.condition || '',
         location: listing.location || '',
         description: listing.description || '',
-        imageUrl: listing.imageUrl,
         createdAt: listing.createdAt.toISOString(),
         timestamp: listing.createdAt.getTime(),
         active: listing.active,
