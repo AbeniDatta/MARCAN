@@ -972,7 +972,7 @@ export default function BecomeSupplierPage() {
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.companyBasics.legalCompanyName')} *</label>
                         <input
                           type="text"
-                          placeholder={isFr ? "NorthYork Précision Ltée." : "NorthYork Precision Ltd."}
+                          placeholder={isFr ? "XYZ Précision Ltée." : "XYZ Precision Ltd."}
                           value={formData.companyName}
                           onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"

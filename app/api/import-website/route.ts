@@ -409,8 +409,16 @@ FIELD: provincesServed
 ────────────────────────────────────────
 Only include provinces explicitly mentioned as service areas.
 Use 2-letter codes: ON, QC, BC, AB, MB, SK, NS, NB, NL, PE, NT, YT, NU
-"Nationwide" or "across Canada" alone is NOT sufficient — output []
-→ [] if none explicitly named.
+
+Priority order:
+1. If the website explicitly names provinces or regions served → use those.
+2. If the website says "nationwide" or "across Canada" → use all provinces:
+   ["ON","QC","BC","AB","MB","SK","NS","NB","NL","PE","NT","YT","NU"]
+3. If neither of the above, but province was successfully extracted → 
+   default to [province] as a minimum (e.g. if province = "ON" → ["ON"]).
+4. If province is also null → []
+
+Never leave this field empty if province is known.
 
 ────────────────────────────────────────
 FIELD: companyType
