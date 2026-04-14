@@ -218,7 +218,7 @@ export default function HomePage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      handleSearch(e);
+                      e.currentTarget.form?.requestSubmit();
                     }
                   }}
                   placeholder={t('home.searchBar.placeholder')}

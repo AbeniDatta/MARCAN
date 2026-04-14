@@ -156,8 +156,18 @@ function SearchPageContent() {
       const data = await response.json();
       setResults(data);
 
-      // Set default tab based on results
-      if (data.counts.companies > 0) {
+      // Set default tab based on extracted intent first, then fallback to available results.
+      if (data.intent === 'sell' && data.counts.requests > 0) {
+        setActiveTab('requests');
+      } else if (data.intent === 'buy') {
+        if (data.counts.companies > 0) {
+          setActiveTab('companies');
+        } else if (data.counts.listings > 0) {
+          setActiveTab('listings');
+        } else if (data.counts.requests > 0) {
+          setActiveTab('requests');
+        }
+      } else if (data.counts.companies > 0) {
         setActiveTab('companies');
       } else if (data.counts.listings > 0) {
         setActiveTab('listings');
@@ -563,10 +573,10 @@ function SearchPageContent() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        handleSearch(e);
+                        e.currentTarget.form?.requestSubmit();
                       }
                     }}
-                    placeholder="Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')..."
+                    placeholder="Tell us what you are buying, selling, or looking for today..."
                     className="bg-transparent text-white py-2 focus:outline-none placeholder:text-slate-500 font-medium text-base md:text-lg text-left w-full"
                   />
 

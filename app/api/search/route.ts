@@ -25,121 +25,150 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You convert a user's natural-language query into structured search parameters for a Canadian manufacturing marketplace.
+          content: `You are a query parser for a Canadian manufacturing marketplace.
 
-Your goal is to maximize relevant search results while staying faithful to the user's intent.
+This marketplace has three types of listings:
+- Companies (manufacturers, suppliers, service providers)
+- Storefront Listings (seller listings: raw materials, excess parts, equipment/machinery for sale or lease, extra space)
+- Sourcing Requests (buyer listings: people looking for specific items, materials, services, or space)
 
-Return EXACTLY ONE JSON object in this format:
+Convert the user query into ONE strict JSON object with exactly these keys:
 
 {
   "keywords": string[],
   "location": string | null,
-  "intent": "buy" | "sell" | "both" | null
+  "intent": "buy" | "sell" | "both" | null,
+  "listing_types": ("company" | "storefront" | "sourcing_request")[]
 }
 
-Return ONLY valid JSON.
-No explanations.
-No extra text.
+Output requirements:
+- Return ONLY valid JSON.
+- No markdown, no comments, no extra keys.
+- Always include all 4 keys.
+- If uncertain, use null (or [] for keywords).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-KEYWORD EXTRACTION RULES
+KEYWORDS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Extract manufacturing-related keywords from the query.
+Extract up to 8 relevant terms covering any of:
+- Manufacturing capabilities or processes
+- Materials (raw or processed)
+- Equipment, machinery, or tools
+- Parts or components
+- Space (warehouse, floor space, storage)
+- Industry verticals (automotive, aerospace, food processing, etc.)
 
-Include BOTH:
-
-1) Direct keywords from the query
-Examples:
-"laser cutting toronto" → ["laser cutting"]
-
-2) Closely related manufacturing capability terms if clearly implied
-Examples:
-"laser cutting" → may also include ["metal fabrication", "sheet metal"]
-"CNC machining" → may also include ["machining", "precision machining"]
-"machine shop" → may include ["machining"]
+Include:
+1) Direct terms from the query
+2) Closely related terms ONLY when strongly implied
 
 Rules:
-- Only include closely related manufacturing terms.
-- Do NOT include unrelated industries.
-- Do NOT include geographic terms in keywords.
-- Use short phrases (1–3 words).
-- Maximum 8 keywords.
-- Remove duplicates.
+- Lowercase all keywords.
+- 1–3 words per keyword.
+- Remove punctuation and duplicates.
+- Remove all geographic words.
+- Exclude low-signal filler: "best", "good", "cheap", "company", "service", "near me", "help", "looking", "available", "want", "need", "some", "specs", "test".
+- Do not invent unrelated industries or capabilities.
+- Prefer canonical phrasing: "cnc machining", "injection molding", "sheet metal", "raw material".
+- Normalize singular/plural to the more common form (e.g. "aluminum extrusion" not "aluminum extrusions").
+- If no meaningful manufacturing terms can be extracted, return [].
 
 Examples:
-
-Query: "laser cutting toronto"
-Valid output:
-["laser cutting", "metal fabrication", "sheet metal"]
-
-Query: "aluminum cnc parts"
-Valid output:
-["CNC machining", "machining", "aluminum"]
-
-Query: "plastic injection molding"
-Valid output:
-["injection molding", "plastic"]
+  "laser cutting toronto"         → ["laser cutting", "metal fabrication", "sheet metal"]
+  "surplus aluminum extrusions"   → ["aluminum extrusion", "surplus material", "aluminum", "raw material"]
+  "cnc lathe available for lease" → ["cnc lathe", "lathe", "cnc machining", "machinery lease"]
+  "warehouse space mississauga"   → ["warehouse space", "storage space", "floor space"]
+  "plastic injection molding"     → ["injection molding", "plastic molding", "plastic"]
+  "i want to sell some test specs"→ []
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-LOCATION RULES
+LOCATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Extract a Canadian city or province if present.
+Extract a Canadian city or province if explicitly present.
+- If multiple locations appear, use the most specific (city over province).
+- If the location is not clearly Canadian, set location = null.
+- Do not guess or infer location.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+INTENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"buy"  → user is seeking suppliers, services, materials, equipment, or space
+         Cues: "looking for", "need", "seeking", "sourcing", "quote for", "where can I find", "anyone selling"
+
+"sell" → user is offering services, listing materials, equipment, or space
+         Cues: "we offer", "for sale", "for lease", "available", "I have", "renting out", "listing", "our shop provides", "i want to sell"
+
+"both" → user explicitly signals both buying and selling
+
+null   → intent is unclear or not stated
+
+Conflict rules:
+- If both buy and sell cues are explicit → "both"
+- If only weak or ambiguous cues → null
+- "need a buyer" → "sell" (user has something, wants to find a buyer)
+- "need a supplier" → "buy" (user wants to find someone to buy from)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LISTING TYPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Return all listing types that are relevant. Must be a non-empty array.
+
+"company"          → user references or seeks a business/service provider
+                     Cues: "machine shop", "supplier", "manufacturer", "company", "shop"
+
+"storefront"       → user references items, materials, equipment, or space being offered for sale or lease
+                     Cues: "for sale", "for lease", "surplus", "excess", "available", "renting out", "used equipment"
+
+"sourcing_request" → user is posting or searching for a buying/sourcing need
+                     Cues: "looking for", "need", "sourcing", "seeking", "anyone who can", "where can I find"
+
+Intent-to-listing-type guidance:
+- intent "sell" → prioritize ["sourcing_request", "storefront"] (find buyers, or list items)
+- intent "buy"  → prioritize ["company", "storefront", "sourcing_request"]
+- intent "both" or null → return all three
+
+Rules:
+- Include all types that clearly apply.
+- For general or ambiguous queries, default to all three: ["company", "storefront", "sourcing_request"]
+- For clearly targeted queries, return only the relevant type(s).
 
 Examples:
-"Toronto CNC machining" → "Toronto"
-"machine shop Ontario" → "Ontario"
-
-If none present → null
-
-Do NOT guess location.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-INTENT RULES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Determine user's role:
-
-buy → looking for suppliers or services
-Examples:
-"looking for CNC machining"
-"need laser cutting"
-
-sell → offering services
-Examples:
-"we offer machining services"
-"I run a machine shop"
-
-both → explicitly both
-
-If unclear → null
+  "laser cutting toronto"               → ["company", "storefront", "sourcing_request"]
+  "cnc lathe for lease"                 → ["storefront"]
+  "looking for aluminum extrusions"     → ["storefront", "sourcing_request"]
+  "we offer injection molding services" → ["company"]
+  "i want to sell some test specs"      → ["sourcing_request", "storefront"]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-VALIDATION RULES
+HARD FALLBACK
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Ensure:
-
-- Keywords are relevant manufacturing terms
-- No unrelated industries
-- No geographic terms in keywords
-- Valid JSON
-- No extra keys
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FINAL OUTPUT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Return EXACTLY:
+If the query is too vague, off-topic, or contains no extractable manufacturing signal, return:
 
 {
   "keywords": [],
   "location": null,
-  "intent": null
+  "intent": null,
+  "listing_types": ["company", "storefront", "sourcing_request"]
 }
 
-Now process this query: {USER_QUERY}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINAL CHECK (before output)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- JSON is valid
+- Exactly 4 keys present
+- keywords contain no locations, no filler words, all lowercase
+- location is explicitly Canadian or null
+- intent is one of: "buy", "sell", "both", null
+- listing_types is a non-empty array of valid values
+
+Now parse this user query:
+{USER_QUERY}
 }`,
         },
         {
@@ -154,13 +183,38 @@ Now process this query: {USER_QUERY}
     const searchIntent = JSON.parse(searchResponse.choices[0]?.message?.content || '{"keywords": []}');
     const keywords: string[] = searchIntent.keywords || [];
     const location: string = searchIntent.location || '';
+    const intent: 'buy' | 'sell' | 'both' | null =
+      searchIntent.intent === 'buy' ||
+        searchIntent.intent === 'sell' ||
+        searchIntent.intent === 'both'
+        ? searchIntent.intent
+        : null;
     const searchTerms: string[] = keywords.length > 0 ? keywords : query.split(' ').filter((w: string) => w.length > 2);
 
-    // Build search conditions
-    const searchConditions = searchTerms.map((term: string) => ({
+    // Build company search conditions from profile text, taxonomy relations, and legacy arrays.
+    const companySearchConditions = searchTerms.map((term: string) => ({
       OR: [
+        { firstName: { contains: term, mode: 'insensitive' as const } },
+        { lastName: { contains: term, mode: 'insensitive' as const } },
+        { email: { contains: term, mode: 'insensitive' as const } },
         { companyName: { contains: term, mode: 'insensitive' as const } },
+        { businessNumber: { contains: term, mode: 'insensitive' as const } },
+        { website: { contains: term, mode: 'insensitive' as const } },
+        { phone: { contains: term, mode: 'insensitive' as const } },
+        { streetAddress: { contains: term, mode: 'insensitive' as const } },
+        { city: { contains: term, mode: 'insensitive' as const } },
+        { province: { contains: term, mode: 'insensitive' as const } },
         { aboutUs: { contains: term, mode: 'insensitive' as const } },
+        { jobTitle: { contains: term, mode: 'insensitive' as const } },
+        { rfqEmail: { contains: term, mode: 'insensitive' as const } },
+        { aiSummary: { contains: term, mode: 'insensitive' as const } },
+        { profileCapabilities: { some: { capability: { name: { contains: term, mode: 'insensitive' as const } } } } },
+        { certifications: { has: term } },
+        { industries: { has: term } },
+        { capabilities: { has: term } },
+        { primaryProcesses: { has: term } },
+        { materials: { has: term } },
+        { finishes: { has: term } },
       ],
     }));
 
@@ -173,17 +227,19 @@ Now process this query: {USER_QUERY}
       }
       : {};
 
+    const companyWhere = {
+      AND: [
+        { searchable: true },
+        ...(companySearchConditions.length > 0 ? [{ OR: companySearchConditions }] : []),
+        ...(location ? [locationCondition] : []),
+      ],
+    };
+
     // Search Companies (Profiles)
     let companies: any[] = [];
     try {
       companies = await db.supplierProfile.findMany({
-        where: {
-          AND: [
-            { searchable: true },
-            ...(searchConditions.length > 0 ? [{ OR: searchConditions }] : []),
-            ...(location ? [locationCondition] : []),
-          ],
-        },
+        where: companyWhere,
         //take: 20,
         include: {
           profileCapabilities: {
@@ -196,13 +252,7 @@ Now process this query: {USER_QUERY}
       // Fallback: query without relations if include fails
       console.warn('Could not load profiles with capabilities, querying without:', error.message);
       companies = await db.supplierProfile.findMany({
-        where: {
-          AND: [
-            { searchable: true },
-            ...(searchConditions.length > 0 ? [{ OR: searchConditions }] : []),
-            ...(location ? [locationCondition] : []),
-          ],
-        },
+        where: companyWhere,
         //take: 20,
         orderBy: [{ updatedAt: 'desc' }],
       });
@@ -218,16 +268,59 @@ Now process this query: {USER_QUERY}
       OR: [
         { title: { contains: term, mode: 'insensitive' as const } },
         { description: { contains: term, mode: 'insensitive' as const } },
+        { price: { contains: term, mode: 'insensitive' as const } },
         { listingType: { contains: term, mode: 'insensitive' as const } },
+        { location: { contains: term, mode: 'insensitive' as const } },
+        { aiSummary: { contains: term, mode: 'insensitive' as const } },
+        {
+          supplierProfile: {
+            is: {
+              OR: [
+                { firstName: { contains: term, mode: 'insensitive' as const } },
+                { lastName: { contains: term, mode: 'insensitive' as const } },
+                { email: { contains: term, mode: 'insensitive' as const } },
+                { companyName: { contains: term, mode: 'insensitive' as const } },
+                { businessNumber: { contains: term, mode: 'insensitive' as const } },
+                { website: { contains: term, mode: 'insensitive' as const } },
+                { phone: { contains: term, mode: 'insensitive' as const } },
+                { streetAddress: { contains: term, mode: 'insensitive' as const } },
+                { city: { contains: term, mode: 'insensitive' as const } },
+                { province: { contains: term, mode: 'insensitive' as const } },
+                { aboutUs: { contains: term, mode: 'insensitive' as const } },
+                { jobTitle: { contains: term, mode: 'insensitive' as const } },
+                { rfqEmail: { contains: term, mode: 'insensitive' as const } },
+                { aiSummary: { contains: term, mode: 'insensitive' as const } },
+                { profileCapabilities: { some: { capability: { name: { contains: term, mode: 'insensitive' as const } } } } },
+                { certifications: { has: term } },
+                { industries: { has: term } },
+                { capabilities: { has: term } },
+                { primaryProcesses: { has: term } },
+                { materials: { has: term } },
+                { finishes: { has: term } },
+              ],
+            },
+          },
+        },
       ],
     }));
+
+    const listingLocationCondition = location
+      ? {
+        OR: [
+          { location: { contains: location, mode: 'insensitive' as const } },
+          { supplierProfile: { is: { city: { contains: location, mode: 'insensitive' as const } } } },
+          { supplierProfile: { is: { province: { contains: location, mode: 'insensitive' as const } } } },
+          { supplierProfile: { is: { streetAddress: { contains: location, mode: 'insensitive' as const } } } },
+        ],
+      }
+      : {};
 
     const listings = await db.storefrontListing.findMany({
       where: {
         AND: [
           { active: true },
           ...(listingSearchConditions.length > 0 ? [{ OR: listingSearchConditions }] : []),
-          ...(location ? [{ location: { contains: location, mode: 'insensitive' as const } }] : []),
+          ...(location ? [listingLocationCondition] : []),
         ],
       },
       //take: 20,
@@ -251,14 +344,43 @@ Now process this query: {USER_QUERY}
         { title: { contains: term, mode: 'insensitive' as const } },
         { description: { contains: term, mode: 'insensitive' as const } },
         { category: { contains: term, mode: 'insensitive' as const } },
+        { quantity: { contains: term, mode: 'insensitive' as const } },
+        { targetPrice: { contains: term, mode: 'insensitive' as const } },
+        { targetCity: { contains: term, mode: 'insensitive' as const } },
+        { targetProvince: { contains: term, mode: 'insensitive' as const } },
+        { aiSummary: { contains: term, mode: 'insensitive' as const } },
+        {
+          buyerProfile: {
+            is: {
+              OR: [
+                { firstName: { contains: term, mode: 'insensitive' as const } },
+                { lastName: { contains: term, mode: 'insensitive' as const } },
+                { email: { contains: term, mode: 'insensitive' as const } },
+                { companyName: { contains: term, mode: 'insensitive' as const } },
+                { jobTitle: { contains: term, mode: 'insensitive' as const } },
+                { aiSummary: { contains: term, mode: 'insensitive' as const } },
+              ],
+            },
+          },
+        },
       ],
     }));
+
+    const requestLocationCondition = location
+      ? {
+        OR: [
+          { targetCity: { contains: location, mode: 'insensitive' as const } },
+          { targetProvince: { contains: location, mode: 'insensitive' as const } },
+        ],
+      }
+      : {};
 
     const requests = await db.sourcingRequest.findMany({
       where: {
         AND: [
           { active: true },
           ...(requestSearchConditions.length > 0 ? [{ OR: requestSearchConditions }] : []),
+          ...(location ? [requestLocationCondition] : []),
         ],
       },
       //take: 20,
@@ -323,6 +445,7 @@ Now process this query: {USER_QUERY}
 
     return NextResponse.json({
       query,
+      intent,
       companies: formattedCompanies,
       listings: formattedListings,
       requests: formattedRequests,

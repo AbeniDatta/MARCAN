@@ -28,6 +28,8 @@ async function main() {
     { slug: 'tooling', name: 'Tooling' },
     { slug: 'forging', name: 'Forging' },
     { slug: 'extrusion', name: 'Extrusion' },
+    { slug: 'grinding', name: 'Grinding' },
+    { slug: 'pressing', name: 'Pressing' },
   ];
 
   // Materials
@@ -42,6 +44,8 @@ async function main() {
     { slug: 'composite', name: 'Composite' },
     { slug: 'ceramic', name: 'Ceramic' },
     { slug: 'rubber', name: 'Rubber' },
+    { slug: 'carbon-fiber', name: 'Carbon Fiber' },
+    { slug: 'inconel', name: 'Inconel' },
   ];
 
   // Finishes

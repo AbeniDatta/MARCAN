@@ -93,12 +93,12 @@
       "invalidUrlError": "Invalid URL. Please include http(s):// and a valid domain."
     },
     "searchBar": {
-      "placeholder": "Describe what you need (e.g., 'ISO 9001 CNC shops near Toronto')...",
+      "placeholder": "Tell us what you are buying, selling, or looking for today...",
       "askAi": "Ask Our AI",
       "tryAsking": "Try asking:",
-      "prompt1": "Plastic injection molding shops",
-      "prompt2": "Copper fabrication companies",
-      "prompt3": "Titanium machining suppliers serving defense industry"
+      "prompt1": "CNC lathe available for lease",
+      "prompt2": "Aluminum extrusions for sale in Ontario",
+      "prompt3": "Who needs injection molded parts in BC?"
     },
     "certifications": {
       "quality": "Quality",
