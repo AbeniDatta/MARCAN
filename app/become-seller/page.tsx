@@ -45,6 +45,36 @@ const CANADIAN_PROVINCES = [
   { code: 'NU', name: 'Nunavut' },
 ];
 
+const PAGE2_PRIMARY_PROCESS_NAMES = [
+  'Assembly',
+  'Casting',
+  'CNC Machining',
+  'Extrusion',
+  'Fabrication',
+  'Forging',
+  'Molding',
+  'Stamping',
+  'Tooling',
+  'Welding',
+  'Grinding',
+  'Pressing',
+];
+
+const PAGE2_MATERIAL_NAMES = [
+  'Aluminum',
+  'Brass',
+  'Ceramic',
+  'Composite',
+  'Copper',
+  'Plastic',
+  'Rubber',
+  'Stainless Steel',
+  'Steel',
+  'Titanium',
+  'Carbon Fiber',
+  'Inconel',
+];
+
 export default function BecomeSupplierPage() {
   const router = useRouter();
   const { t, lang } = useI18n();
@@ -87,6 +117,18 @@ export default function BecomeSupplierPage() {
     INDUSTRY: [],
     COMPANY_TYPE: [],
   });
+  const processByName = new Map(capabilities.PROCESS.map((cap) => [cap.name.toLowerCase(), cap]));
+  const materialByName = new Map(capabilities.MATERIAL.map((cap) => [cap.name.toLowerCase(), cap]));
+  const page2ProcessCapabilities = PAGE2_PRIMARY_PROCESS_NAMES
+    .map((name) => processByName.get(name.toLowerCase()))
+    .filter((cap): cap is Capability => Boolean(cap));
+  const page2MaterialCapabilities = PAGE2_MATERIAL_NAMES
+    .map((name) => materialByName.get(name.toLowerCase()))
+    .filter((cap): cap is Capability => Boolean(cap));
+  const matchedProcessNames = new Set(page2ProcessCapabilities.map((cap) => cap.name.toLowerCase()));
+  const matchedMaterialNames = new Set(page2MaterialCapabilities.map((cap) => cap.name.toLowerCase()));
+  const page2MissingProcessNames = PAGE2_PRIMARY_PROCESS_NAMES.filter((name) => !matchedProcessNames.has(name.toLowerCase()));
+  const page2MissingMaterialNames = PAGE2_MATERIAL_NAMES.filter((name) => !matchedMaterialNames.has(name.toLowerCase()));
 
   // Form state
   const [formData, setFormData] = useState({
@@ -815,6 +857,23 @@ export default function BecomeSupplierPage() {
     return array.includes(item) ? array.filter((i) => i !== item) : [...array, item];
   };
 
+  const parseCommaSeparated = (value: string): string[] =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const toggleCommaSeparatedItem = (value: string, item: string): string => {
+    const currentItems = parseCommaSeparated(value);
+    return currentItems.includes(item)
+      ? currentItems.filter((current) => current !== item).join(', ')
+      : [...currentItems, item].join(', ');
+  };
+
+  const hasCommaSeparatedItem = (value: string, item: string): boolean => {
+    return parseCommaSeparated(value).includes(item);
+  };
+
   const handleRestartRegistration = () => {
     setShowRestartConfirm(true);
   };
@@ -1144,7 +1203,7 @@ export default function BecomeSupplierPage() {
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.coreCapabilities.primaryProcesses')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                          {Array.isArray(capabilities.PROCESS) && capabilities.PROCESS.map((cap) => (
+                          {page2ProcessCapabilities.map((cap) => (
                             <label
                               key={cap.id}
                               className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
@@ -1159,6 +1218,23 @@ export default function BecomeSupplierPage() {
                                 className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                               />
                               <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                          {page2MissingProcessNames.map((processName) => (
+                            <label
+                              key={`missing-process-${processName}`}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={hasCommaSeparatedItem(formData.otherProcesses, processName)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  otherProcesses: toggleCommaSeparatedItem(formData.otherProcesses, processName)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{processName}</span>
                             </label>
                           ))}
                         </div>
@@ -1177,7 +1253,7 @@ export default function BecomeSupplierPage() {
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-3 block">{t('becomeSupplier.coreCapabilities.materials')} *</label>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-                          {Array.isArray(capabilities.MATERIAL) && capabilities.MATERIAL.map((cap) => (
+                          {page2MaterialCapabilities.map((cap) => (
                             <label
                               key={cap.id}
                               className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
@@ -1192,6 +1268,23 @@ export default function BecomeSupplierPage() {
                                 className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                               />
                               <span className="text-[10px] font-bold text-white uppercase">{cap.name}</span>
+                            </label>
+                          ))}
+                          {page2MissingMaterialNames.map((materialName) => (
+                            <label
+                              key={`missing-material-${materialName}`}
+                              className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={hasCommaSeparatedItem(formData.otherMaterials, materialName)}
+                                onChange={() => setFormData({
+                                  ...formData,
+                                  otherMaterials: toggleCommaSeparatedItem(formData.otherMaterials, materialName)
+                                })}
+                                className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
+                              />
+                              <span className="text-[10px] font-bold text-white uppercase">{materialName}</span>
                             </label>
                           ))}
                         </div>
