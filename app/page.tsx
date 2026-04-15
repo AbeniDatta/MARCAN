@@ -6,13 +6,12 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchAccountRoleFromApi } from '@/lib/accountRole';
 
 export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, user, isMounted } = useAuth();
-  /** quick = import CTA · how = How Marcan Works · pending = resolving DB role */
-  const [heroSidePanel, setHeroSidePanel] = useState<'quick' | 'how' | 'pending'>('quick');
+  /** quick = import CTA · how = How Marcan Works */
+  const [heroSidePanel, setHeroSidePanel] = useState<'quick' | 'how'>('quick');
   const [searchQuery, setSearchQuery] = useState('');
   const [quickStartUrl, setQuickStartUrl] = useState('');
   const [quickStartError, setQuickStartError] = useState('');
@@ -46,28 +45,12 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!isMounted || !isAuthenticated || !user?.email) {
+    if (!isMounted || !isAuthenticated) {
       setHeroSidePanel('quick');
       return;
     }
-    if (user.role === 'supplier') {
-      setHeroSidePanel('how');
-      return;
-    }
-    if (user.role === 'buyer' || user.role === 'seller') {
-      setHeroSidePanel('quick');
-      return;
-    }
-    setHeroSidePanel('pending');
-    let cancelled = false;
-    fetchAccountRoleFromApi(user.email).then((role) => {
-      if (cancelled) return;
-      setHeroSidePanel(role === 'supplier' ? 'how' : 'quick');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isMounted, isAuthenticated, user?.email, user?.role]);
+    setHeroSidePanel('how');
+  }, [isMounted, isAuthenticated]);
 
   // Decide whether we need to animate (only when content exceeds container)
   useEffect(() => {
@@ -191,7 +174,7 @@ export default function HomePage() {
     normalizedCapabilityStart + CAPABILITY_WINDOW
   );
   const showCapabilityPager = capabilityCards.length > CAPABILITY_WINDOW;
-  const showJoinNetworkCta = isMounted && !isAuthenticated;
+  const showAccountCta = isMounted;
 
   return (
     <main className="flex-1 relative z-10 overflow-hidden flex flex-col">
@@ -290,12 +273,12 @@ export default function HomePage() {
                 >
                   {t('home.hero.findManufacturers')}
                 </Link>
-                {showJoinNetworkCta && (
+                {showAccountCta && (
                   <Link
-                    href="/signup"
+                    href={isAuthenticated ? '/my-account' : '/signup'}
                     className="border border-white/20 text-white px-7 py-4 rounded-lg font-bold uppercase tracking-wider text-base hover:bg-white/5 hover:border-white/50 transition-all duration-300 inline-block"
                   >
-                    {t('home.hero.joinNetwork')}
+                    {isAuthenticated ? t('header.myAccount') : t('home.hero.joinNetwork')}
                   </Link>
                 )}
               </div>
@@ -346,24 +329,6 @@ export default function HomePage() {
                         </div>
                         <div className="text-slate-400 text-[10px] leading-relaxed">{t('home.howMarcanWorks.node3.body')}</div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              ) : heroSidePanel === 'pending' ? (
-                <div className="p-5 sm:p-6 space-y-4" aria-busy="true">
-                  <div className="h-8 w-3/4 rounded-lg bg-white/10 animate-pulse" />
-                  <div className="space-y-6 pt-2">
-                    <div className="space-y-2">
-                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
-                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
-                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-4 w-1/2 rounded bg-white/10 animate-pulse" />
-                      <div className="h-10 w-full rounded bg-white/5 animate-pulse" />
                     </div>
                   </div>
                 </div>
