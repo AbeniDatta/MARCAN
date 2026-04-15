@@ -504,6 +504,7 @@ export async function GET(request: NextRequest) {
             capabilitiesByType,
             email: profile.email,
             aboutUs: profile.aboutUs,
+            preferredContactMethod: profile.preferredContactMethod ?? null,
             typicalJobSize: profile.typicalJobSize ?? null,
             leadTimeMinDays: profile.leadTimeMinDays ?? null,
             leadTimeMaxDays: profile.leadTimeMaxDays ?? null,
@@ -573,6 +574,7 @@ export async function GET(request: NextRequest) {
           },
           email: storefrontProfile.email,
           aboutUs: null,
+          preferredContactMethod: null,
         },
         {
           headers: { 'Content-Type': 'application/json' },

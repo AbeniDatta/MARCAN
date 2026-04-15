@@ -87,6 +87,7 @@ interface CompanyProfile {
     website?: string;
     phone?: string;
     email?: string;
+    preferredContactMethod?: 'EMAIL' | 'PHONE' | 'PLATFORM_ONLY' | null;
     aboutUs?: string;
     capabilities?: string[];
     certifications?: string[];
@@ -228,6 +229,13 @@ function ProfilePageContent() {
     const displayWebsite = userData?.website || company.website;
     const displayPhone = userData?.phone || company.phone;
     const displayEmail = userData?.email || company.email;
+    const preferredContactMethodRaw = userData?.preferredContactMethod ?? company.preferredContactMethod ?? null;
+    const displayPreferredContactMethod =
+        preferredContactMethodRaw === 'PHONE'
+            ? 'Phone'
+            : preferredContactMethodRaw === 'EMAIL'
+                ? 'Email'
+                : null;
     const displayAboutUs = userData?.aboutUs || company.aboutUs || company.description;
     const displayCapabilities = userData?.capabilities || company.capabilities || [];
     const displayCertifications = userData?.certifications || company.certifications || [];
@@ -611,10 +619,18 @@ function ProfilePageContent() {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         {/* Contact Information */}
-                        {(displayPhone || displayEmail || displayLocation) && (
+                        {(displayPhone || displayEmail || displayLocation || displayPreferredContactMethod) && (
                             <div className="glass-card p-6 rounded-2xl border border-white/5">
                                 <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Contact Information</h3>
                                 <div className="space-y-4">
+                                    {displayPreferredContactMethod && (
+                                        <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
+                                            <div className="text-[10px] font-bold uppercase tracking-widest text-blue-300">
+                                                Preferred Contact Method
+                                            </div>
+                                            <div className="mt-1 text-sm font-semibold text-white">{displayPreferredContactMethod}</div>
+                                        </div>
+                                    )}
                                     {displayPhone && (
                                         <div className="flex items-center gap-3 text-sm text-slate-300">
                                             <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-marcan-red">
