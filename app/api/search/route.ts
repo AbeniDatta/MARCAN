@@ -272,35 +272,6 @@ Now parse this user query:
         { listingType: { contains: term, mode: 'insensitive' as const } },
         { location: { contains: term, mode: 'insensitive' as const } },
         { aiSummary: { contains: term, mode: 'insensitive' as const } },
-        {
-          supplierProfile: {
-            is: {
-              OR: [
-                { firstName: { contains: term, mode: 'insensitive' as const } },
-                { lastName: { contains: term, mode: 'insensitive' as const } },
-                { email: { contains: term, mode: 'insensitive' as const } },
-                { companyName: { contains: term, mode: 'insensitive' as const } },
-                { businessNumber: { contains: term, mode: 'insensitive' as const } },
-                { website: { contains: term, mode: 'insensitive' as const } },
-                { phone: { contains: term, mode: 'insensitive' as const } },
-                { streetAddress: { contains: term, mode: 'insensitive' as const } },
-                { city: { contains: term, mode: 'insensitive' as const } },
-                { province: { contains: term, mode: 'insensitive' as const } },
-                { aboutUs: { contains: term, mode: 'insensitive' as const } },
-                { jobTitle: { contains: term, mode: 'insensitive' as const } },
-                { rfqEmail: { contains: term, mode: 'insensitive' as const } },
-                { aiSummary: { contains: term, mode: 'insensitive' as const } },
-                { profileCapabilities: { some: { capability: { name: { contains: term, mode: 'insensitive' as const } } } } },
-                { certifications: { has: term } },
-                { industries: { has: term } },
-                { capabilities: { has: term } },
-                { primaryProcesses: { has: term } },
-                { materials: { has: term } },
-                { finishes: { has: term } },
-              ],
-            },
-          },
-        },
       ],
     }));
 
@@ -308,9 +279,6 @@ Now parse this user query:
       ? {
         OR: [
           { location: { contains: location, mode: 'insensitive' as const } },
-          { supplierProfile: { is: { city: { contains: location, mode: 'insensitive' as const } } } },
-          { supplierProfile: { is: { province: { contains: location, mode: 'insensitive' as const } } } },
-          { supplierProfile: { is: { streetAddress: { contains: location, mode: 'insensitive' as const } } } },
         ],
       }
       : {};
@@ -349,20 +317,6 @@ Now parse this user query:
         { targetCity: { contains: term, mode: 'insensitive' as const } },
         { targetProvince: { contains: term, mode: 'insensitive' as const } },
         { aiSummary: { contains: term, mode: 'insensitive' as const } },
-        {
-          buyerProfile: {
-            is: {
-              OR: [
-                { firstName: { contains: term, mode: 'insensitive' as const } },
-                { lastName: { contains: term, mode: 'insensitive' as const } },
-                { email: { contains: term, mode: 'insensitive' as const } },
-                { companyName: { contains: term, mode: 'insensitive' as const } },
-                { jobTitle: { contains: term, mode: 'insensitive' as const } },
-                { aiSummary: { contains: term, mode: 'insensitive' as const } },
-              ],
-            },
-          },
-        },
       ],
     }));
 

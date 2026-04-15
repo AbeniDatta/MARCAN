@@ -2456,8 +2456,8 @@ export default function MyAccountPage() {
 
                   {/* Edit RFQ Modal */}
                   {editingRequest && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                      <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl">
+                    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:items-center">
+                      <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-white font-bold uppercase text-sm tracking-wider">Edit Request</h4>
                           <button
@@ -2990,8 +2990,8 @@ export default function MyAccountPage() {
                 )}
 
               {editingListing && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                  <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl">
+                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:items-center">
+                  <div className="glass-card p-6 rounded-2xl border border-white/10 w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto">
                     <div className="flex justify-between items-center mb-5">
                       <h3 className="font-heading text-xl font-bold text-white uppercase">Edit Listing</h3>
                       <button

@@ -995,21 +995,10 @@ function SearchPageContent() {
                                       <button
                                         type="button"
                                         onClick={() => setSelectedListing(searchListingToModal(listing))}
-                                        className="w-full py-2.5 rounded-lg bg-white/5 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors border border-white/5"
+                                        className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
                                       >
-                                        {t('storefront.viewListing')}
+                                        <i className="fa-solid fa-eye"></i> {t('storefront.viewListing')}
                                       </button>
-                                      {listing.supplierEmail ? (
-                                        <a
-                                          href={`mailto:${listing.supplierEmail}?subject=${encodeURIComponent(
-                                            t('storefront.modal.emailSubjectPrefix') +
-                                            (listing.title || t('storefront.listingCard.untitledListing'))
-                                          )}`}
-                                          className="w-full py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_rgba(249,115,22,0.4)] transition-all flex items-center justify-center gap-2 border border-transparent"
-                                        >
-                                          <i className="fa-solid fa-envelope"></i> {t('storefront.modal.emailSupplier')}
-                                        </a>
-                                      ) : null}
                                     </div>
                                   </div>
                                 </div>
