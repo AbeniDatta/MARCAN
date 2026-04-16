@@ -230,9 +230,21 @@ function ProfilePageContent() {
     const [selectedListing, setSelectedListing] = useState<any | null>(null);
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [isDomReady, setIsDomReady] = useState(false);
+    const [trustedByWidgetVisible, setTrustedByWidgetVisible] = useState(true);
 
     useEffect(() => {
         setIsDomReady(true);
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/platform-settings')
+            .then((res) => (res.ok ? res.json() : { trustedByWidgetVisible: true }))
+            .then((json) => {
+                setTrustedByWidgetVisible(json?.trustedByWidgetVisible !== false);
+            })
+            .catch(() => {
+                setTrustedByWidgetVisible(true);
+            });
     }, []);
 
     useEffect(() => {
@@ -627,7 +639,7 @@ function ProfilePageContent() {
                     </div>
                 </div>
 
-                {displayTrustedBy.length > 0 && (
+                {trustedByWidgetVisible && displayTrustedBy.length > 0 && (
                     <div className="glass-card relative mb-8 overflow-hidden rounded-3xl border border-white/5 p-0 shadow-[0_0_32px_rgba(239,68,68,0.07)]">
                         <div
                             className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-marcan-red/10 blur-3xl"

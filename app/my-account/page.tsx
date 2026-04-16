@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { auth as firebaseAuth } from '@/lib/firebase';
 import { useI18n } from '@/contexts/I18nContext';
 import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
+import { isAdminEmail } from '@/lib/admin';
 
 const CANADIAN_PROVINCES = [
   { code: 'ON', name: 'Ontario' },
@@ -161,6 +162,11 @@ export default function MyAccountPage() {
 
     // Load user data from localStorage (saved during signup)
     if (user && isAuthenticated) {
+      if (isAdminEmail(user.email) || user.role === 'admin') {
+        router.replace('/admin');
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         firstName: user.firstName || '',
