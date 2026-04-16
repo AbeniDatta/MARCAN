@@ -13,6 +13,7 @@ import { fetchAccountRoleFromApi } from '@/lib/accountRole';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -171,15 +172,25 @@ export default function LoginPage() {
                   required
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500 mb-4"
                 />
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t('login.passwordPlaceholder')}
-                  required
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t('login.passwordPlaceholder')}
+                    required
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 pr-12 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none placeholder:text-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 px-4 text-slate-400"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-between items-center text-xs text-slate-400">
