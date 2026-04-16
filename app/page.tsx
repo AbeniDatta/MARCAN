@@ -433,14 +433,14 @@ export default function HomePage() {
                 <Link
                   key={card.hub}
                   href={`/directory?industry=${encodeURIComponent(card.hub)}`}
-                  className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer block"
+                  className="glass-card p-6 rounded-2xl group hover:border-marcan-red/50 hover:bg-gradient-to-b hover:from-white/5 hover:to-transparent transition-all duration-300 cursor-pointer h-full flex flex-col"
                 >
                   <div className={`w-14 h-14 rounded-xl ${card.iconWrapClass} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                     <i className={`fa-solid ${card.icon} text-2xl`} />
                   </div>
                   <h4 className="font-heading font-bold text-lg text-white mb-2">{card.title}</h4>
                   <p className="text-xs text-slate-400 leading-relaxed mb-4">{card.description}</p>
-                  <div className={`flex items-center text-[10px] font-bold ${card.ctaClass} uppercase tracking-wider group-hover:text-white transition-colors`}>
+                  <div className={`mt-auto flex items-center text-[10px] font-bold ${card.ctaClass} uppercase tracking-wider group-hover:text-white transition-colors`}>
                     {t('home.industries.exploreIndustry')} <i className="fa-solid fa-arrow-right ml-2"></i>
                   </div>
                 </Link>

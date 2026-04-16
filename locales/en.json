@@ -85,7 +85,7 @@
       "badge": "Instant AI Setup",
       "titleBefore": "Create your",
       "titleHighlight": "Supplier Profile",
-      "body": "Skip tedious forms. Drop your website link and our AI will extract your capabilities, location, and machinery in under 2 minutes.",
+      "body": "Skip tedious forms. Drop your website link and our AI will extract your capabilities, location, and processes in under 2 minutes.",
       "urlPlaceholder": "https://your-company.com",
       "autoGenerate": "Auto-Generate",
       "freeToJoin": "100% free to join",
@@ -546,7 +546,7 @@
       "materials": "Materials",
       "otherMaterials": "Other Materials (comma-separated)",
       "addMaterialsHelp": "Add materials not listed above.",
-      "finishesOptional": "Finishes (Optional)",
+      "finishesOptional": "Finishes",
       "otherFinishes": "Other Finishes (comma-separated)",
       "addFinishesHelp": "Add finishes not listed above.",
       "back": "Back"
@@ -569,7 +569,7 @@
       "oneThreeMonths": "1–3 months",
       "threePlusMonths": "3+ months",
       "depends": "Depends on workload",
-      "maxPartSizeOptional": "Max Part Size (mm) - Optional"
+      "maxPartSizeOptional": "Max Part Size (mm)"
     },
     "trustEnrichment": {
       "title": "Trust & Enrichment",
@@ -586,7 +586,7 @@
       "title": "Contact & RFQ Preferences",
       "step": "Step 5 of 6",
       "rfqEmail": "RFQ Email",
-      "phoneOptional": "Phone Number (Optional)",
+      "phoneOptional": "Phone Number",
       "preferredContactMethod": "Preferred Contact Method",
       "email": "Email",
       "phone": "Phone"

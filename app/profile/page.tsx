@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -102,12 +102,120 @@ interface CompanyProfile {
     businessNumber?: string;
     materials?: string[];
     finishes?: string[];
+    trustedBy?: string[];
     typicalJobSize?: string | null;
     leadTimeMinDays?: number | null;
     leadTimeMaxDays?: number | null;
     maxPartSizeMmX?: number | null;
     maxPartSizeMmY?: number | null;
     maxPartSizeMmZ?: number | null;
+}
+
+/** Horizontal carousel like the homepage manufacturers strip — animates only when chips overflow the container. */
+function TrustedByMarquee({ names }: { names: string[] }) {
+    const [shouldScroll, setShouldScroll] = useState(false);
+    const shouldScrollRef = useRef(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const trackRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        shouldScrollRef.current = shouldScroll;
+    }, [shouldScroll]);
+
+    const displayNames = useMemo(() => {
+        if (names.length === 0) return [];
+        return shouldScroll ? [...names, ...names] : names;
+    }, [names, shouldScroll]);
+
+    useEffect(() => {
+        if (names.length === 0) {
+            setShouldScroll(false);
+            return;
+        }
+
+        const measure = () => {
+            const container = containerRef.current;
+            const track = trackRef.current;
+            if (!container || !track) {
+                setShouldScroll(false);
+                return;
+            }
+            const cw = container.clientWidth;
+            const sw = track.scrollWidth;
+            const singleRowWidth = shouldScrollRef.current ? sw / 2 : sw;
+            const needsCarousel = singleRowWidth > cw + 4;
+            setShouldScroll(needsCarousel);
+        };
+
+        const raf = requestAnimationFrame(measure);
+        const ro = new ResizeObserver(() => {
+            requestAnimationFrame(measure);
+        });
+        const container = containerRef.current;
+        const track = trackRef.current;
+        if (container) ro.observe(container);
+        if (track) ro.observe(track);
+        window.addEventListener('resize', measure);
+
+        return () => {
+            cancelAnimationFrame(raf);
+            ro.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, [names]);
+
+    if (displayNames.length === 0) return null;
+
+    return (
+        <>
+            <div className="trusted-by-marquee-wrap relative -mx-1">
+                {shouldScroll && (
+                    <>
+                        <div
+                            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 sm:w-14 bg-gradient-to-r from-marcan-panel via-marcan-panel/85 to-transparent"
+                            aria-hidden
+                        />
+                        <div
+                            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 sm:w-14 bg-gradient-to-l from-marcan-panel via-marcan-panel/85 to-transparent"
+                            aria-hidden
+                        />
+                    </>
+                )}
+                <div className="trusted-by-marquee overflow-hidden w-full rounded-2xl border border-white/[0.08] bg-black/20 px-2 py-4 sm:px-3 sm:py-5" ref={containerRef}>
+                    <div
+                        className={`trusted-by-track flex items-center gap-3 sm:gap-4 w-max${shouldScroll ? ' trusted-by-track--animate' : ''}`}
+                        ref={trackRef}
+                    >
+                        {displayNames.map((companyName, index) => (
+                            <span
+                                key={`${companyName}-${index}`}
+                                className="trusted-by-chip group inline-flex items-center rounded-lg border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-slate-200 whitespace-nowrap shrink-0 transition-colors duration-200 hover:border-marcan-red/40 hover:bg-white/10 hover:text-white"
+                                title={companyName}
+                            >
+                                {companyName}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <style jsx>{`
+                .trusted-by-track {
+                    animation: none;
+                }
+                .trusted-by-track.trusted-by-track--animate {
+                    animation: trusted-by-marquee-scroll 70s linear infinite;
+                }
+                @keyframes trusted-by-marquee-scroll {
+                    from {
+                        transform: translateX(0);
+                    }
+                    to {
+                        transform: translateX(-50%);
+                    }
+                }
+            `}</style>
+        </>
+    );
 }
 
 function ProfilePageContent() {
@@ -268,6 +376,10 @@ function ProfilePageContent() {
         userData?.finishes,
         company.finishes,
     );
+    const displayTrustedBy = mergeUniqueStrings(
+        userData?.trustedBy,
+        company.trustedBy,
+    );
 
     const typicalJobSizeRaw = userData?.typicalJobSize ?? company.typicalJobSize;
     const typicalJobSizeLabel =
@@ -351,88 +463,88 @@ function ProfilePageContent() {
                         </button>
                     </div>
                     <div className="p-6 md:p-8 space-y-8 relative z-10">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                <div className="lg:col-span-2 space-y-8">
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <i className="fa-solid fa-align-left text-orange-400"></i> Description
-                                        </h4>
-                                        <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
-                                            <p>{selectedListing.description || 'No description provided.'}</p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <i className="fa-solid fa-list-check text-orange-400"></i> Listing Details
-                                        </h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Type</span>
-                                                <span className="text-sm font-semibold text-white">{selectedListing.listingType || 'Not specified'}</span>
-                                            </div>
-                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</span>
-                                                <span className="text-sm font-semibold text-white">{selectedListing.price || 'Negotiable'}</span>
-                                            </div>
-                                            <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
-                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</span>
-                                                <span className="text-sm font-semibold text-white">{selectedListing.location || 'Not specified'}</span>
-                                            </div>
-                                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 space-y-8">
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <i className="fa-solid fa-align-left text-orange-400"></i> Description
+                                    </h4>
+                                    <div className="glass-card p-6 rounded-2xl border border-white/5 text-sm text-slate-300 leading-relaxed">
+                                        <p>{selectedListing.description || 'No description provided.'}</p>
                                     </div>
                                 </div>
-                                <div className="space-y-6">
-                                    <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
-                                        <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Asking Price</div>
-                                        <div className="text-4xl font-black text-white tracking-tight mb-6">
-                                            {selectedListing.price || 'Negotiable'}
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <i className="fa-solid fa-list-check text-orange-400"></i> Listing Details
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Type</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.listingType || 'Not specified'}</span>
                                         </div>
-                                        {displayEmail ? (
-                                            <a
-                                                href={`mailto:${displayEmail}?subject=${encodeURIComponent(`Industrial storefront inquiry: ${selectedListing.title || 'Listing'}`)}`}
-                                                className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-                                            >
-                                                <i className="fa-solid fa-envelope"></i> Email Supplier
-                                            </a>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                disabled
-                                                className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-slate-500 text-sm font-bold uppercase tracking-wider cursor-not-allowed"
-                                            >
-                                                Email Supplier
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="glass-card p-6 rounded-2xl border border-white/5">
-                                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Listed By</h4>
-                                        <div className="flex items-center gap-4 mb-5">
-                                            {displayLogoUrl ? (
-                                                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10 shadow-inner">
-                                                    <img src={displayLogoUrl} alt={displayName} className="w-full h-full object-cover" />
-                                                </div>
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 border border-white/10 shadow-inner">
-                                                    <i className={`fa-solid ${displayIcon || 'fa-industry'} text-xl`}></i>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <div className="text-sm font-bold text-white mb-1">{displayName}</div>
-                                                <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
-                                                    <i className="fa-solid fa-circle-check"></i> Platform Member
-                                                </div>
-                                            </div>
+                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Price</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.price || 'Negotiable'}</span>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={closeModals}
-                                            className="w-full py-2.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/5 hover:text-white transition-all"
-                                        >
-                                            Back to Profile
-                                        </button>
+                                        <div className="glass-card p-4 rounded-xl border border-white/5 flex flex-col">
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mb-1">Location</span>
+                                            <span className="text-sm font-semibold text-white">{selectedListing.location || 'Not specified'}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="space-y-6">
+                                <div className="glass-card p-6 rounded-2xl border border-orange-500/20 bg-gradient-to-b from-orange-500/5 to-transparent shadow-[0_0_30px_rgba(249,115,22,0.05)]">
+                                    <div className="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-2">Asking Price</div>
+                                    <div className="text-4xl font-black text-white tracking-tight mb-6">
+                                        {selectedListing.price || 'Negotiable'}
+                                    </div>
+                                    {displayEmail ? (
+                                        <a
+                                            href={`mailto:${displayEmail}?subject=${encodeURIComponent(`Industrial storefront inquiry: ${selectedListing.title || 'Listing'}`)}`}
+                                            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white text-sm font-bold uppercase tracking-wider hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                                        >
+                                            <i className="fa-solid fa-envelope"></i> Email Supplier
+                                        </a>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            disabled
+                                            className="w-full py-4 rounded-xl bg-white/5 border border-white/10 text-slate-500 text-sm font-bold uppercase tracking-wider cursor-not-allowed"
+                                        >
+                                            Email Supplier
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="glass-card p-6 rounded-2xl border border-white/5">
+                                    <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Listed By</h4>
+                                    <div className="flex items-center gap-4 mb-5">
+                                        {displayLogoUrl ? (
+                                            <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10 shadow-inner">
+                                                <img src={displayLogoUrl} alt={displayName} className="w-full h-full object-cover" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-orange-400 border border-white/10 shadow-inner">
+                                                <i className={`fa-solid ${displayIcon || 'fa-industry'} text-xl`}></i>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div className="text-sm font-bold text-white mb-1">{displayName}</div>
+                                            <div className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase border border-blue-500/20">
+                                                <i className="fa-solid fa-circle-check"></i> Platform Member
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={closeModals}
+                                        className="w-full py-2.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-white/5 hover:text-white transition-all"
+                                    >
+                                        Back to Profile
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>,
@@ -515,8 +627,40 @@ function ProfilePageContent() {
                     </div>
                 </div>
 
+                {displayTrustedBy.length > 0 && (
+                    <div className="glass-card relative mb-8 overflow-hidden rounded-3xl border border-white/5 p-0 shadow-[0_0_32px_rgba(239,68,68,0.07)]">
+                        <div
+                            className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-marcan-red/10 blur-3xl"
+                            aria-hidden
+                        />
+                        <div
+                            className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-marcan-glow/10 blur-3xl"
+                            aria-hidden
+                        />
+                        <div className="relative border-b border-white/5 bg-gradient-to-r from-marcan-dark/40 via-transparent to-transparent px-6 py-6 sm:px-8 sm:py-7">
+                            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-start gap-4">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-marcan-red/35 bg-marcan-red/10 text-marcan-red shadow-neon">
+                                        <i className="fa-solid fa-handshake text-lg" aria-hidden />
+                                    </div>
+                                    <div>
+
+                                        <h3 className="font-heading text-lg font-black tracking-tight text-white sm:text-2xl">
+                                            Trusted By
+                                        </h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="relative px-4 pb-6 pt-2 sm:px-8 sm:pb-8">
+                            <TrustedByMarquee key={displayTrustedBy.join('\u0001')} names={displayTrustedBy} />
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-8">
+
                         {/* About Us */}
                         {displayAboutUs && (
                             <div className="glass-card p-8 rounded-2xl border border-white/5">

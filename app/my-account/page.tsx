@@ -985,11 +985,11 @@ export default function MyAccountPage() {
 
       if (!response.ok) {
         const details = typeof payload.details === 'string' ? payload.details : '';
-        const message = 
+        const message =
           typeof payload.details === 'string' && payload.details
             ? `${payload.error || 'Request failed'}: ${payload.details}`
             : payload.error || 'Failed to delete account'
-        ;
+          ;
         // Firebase requires recent sign-in for account deletion. If the ID token is too old,
         // force a re-login and then retry automatically on the next session.
         if (details.includes('CREDENTIAL_TOO_OLD_LOGIN_AGAIN') || message.includes('CREDENTIAL_TOO_OLD_LOGIN_AGAIN')) {
@@ -1846,7 +1846,7 @@ export default function MyAccountPage() {
                         </div>
                         <div className="mb-8">
                           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">
-                            Finishes (Optional)
+                            Finishes
                           </label>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3 max-h-60 overflow-y-auto p-3 bg-black/20 rounded-lg border border-white/10">
                             {availableCapabilities.FINISH.map((cap) => (

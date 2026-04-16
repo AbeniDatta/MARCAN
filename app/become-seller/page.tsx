@@ -173,6 +173,7 @@ export default function BecomeSupplierPage() {
     firstName: '',
     lastName: '',
     role: '',
+    trustedBy: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -246,6 +247,7 @@ export default function BecomeSupplierPage() {
               phone: parsed.formData.phone || '',
               streetAddress: parsed.formData.streetAddress || '',
               businessNumber: parsed.formData.businessNumber || '',
+              trustedBy: parsed.formData.trustedBy || '',
             };
             setFormData(loadedFormData);
           }
@@ -754,6 +756,7 @@ export default function BecomeSupplierPage() {
       otherFinishes: formData.otherFinishes || null,
       otherCertifications: formData.otherCertifications || null,
       otherIndustries: formData.otherIndustries || null,
+      trustedBy: formData.trustedBy || null,
       otherComments: otherComments || null,
     };
 
@@ -915,6 +918,7 @@ export default function BecomeSupplierPage() {
       firstName: '',
       lastName: '',
       role: '',
+      trustedBy: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -2070,6 +2074,21 @@ export default function BecomeSupplierPage() {
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
                           required
                         />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                          Trusted-By Companies (Comma-separated)
+                        </label>
+                        <textarea
+                          rows={3}
+                          placeholder="e.g., ACME Aerospace, Maple Auto Group, Northern Energy"
+                          value={formData.trustedBy}
+                          onChange={(e) => setFormData({ ...formData, trustedBy: e.target.value })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          These will appear on your public company profile if you want to indicate your clients.
+                        </p>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.email')} *</label>

@@ -143,6 +143,7 @@ model SupplierProfile {
   finishes       String[] @default([]) @db.Text
   certifications String[] @default([]) @db.Text
   industries     String[] @default([]) @db.Text
+  trustedBy      String[] @default([]) @map("trusted_by") @db.Text
 
   // Logistics & coverage (attributes, not taxonomy)
   provincesServed    String[] @default([]) @map("provinces_served") @db.Text // ["ON","QC",...]

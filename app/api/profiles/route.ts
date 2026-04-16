@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       otherFinishes,
       otherCertifications,
       otherIndustries,
+      trustedBy,
     } = body;
 
     const profileEmail = String(email || body.userId || '').trim().toLowerCase();
@@ -222,6 +223,7 @@ export async function POST(request: NextRequest) {
     const otherFinishList = splitCommaSeparated(otherFinishes);
     const otherCertificationList = splitCommaSeparated(otherCertifications);
     const otherIndustryList = splitCommaSeparated(otherIndustries);
+    const trustedByList = splitCommaSeparated(trustedBy);
 
     // Normalize numeric fields that might arrive as strings
     let normalizedLeadTimeMin = parseOptionalInt(leadTimeMinDays);
@@ -282,6 +284,7 @@ export async function POST(request: NextRequest) {
         ...mapCapabilityNames(industries, 'INDUSTRY'),
         ...otherIndustryList,
       ]),
+      trustedBy: trustedByList,
       // New fields
       onboardingMethod: onboardingMethod || null,
       provincesServed: provincesServed || [],
@@ -493,6 +496,7 @@ export async function GET(request: NextRequest) {
             finishes: profile.finishes ?? [],
             industries: profile.industries ?? [],
             industriesServed: profile.capabilities,
+            trustedBy: profile.trustedBy ?? [],
             materials: profile.materials,
             website: profile.website,
             phone: profile.phone,
@@ -557,6 +561,7 @@ export async function GET(request: NextRequest) {
           industries: [],
           industriesServed: [],
           materials: [],
+          trustedBy: [],
           website: storefrontProfile.website,
           phone: null,
           city: storefrontProfile.city,
@@ -723,6 +728,7 @@ export async function GET(request: NextRequest) {
         finishes: profile.finishes ?? [],
         industries: profile.industries ?? [],
         materials: profile.materials,
+        trustedBy: profile.trustedBy ?? [],
         website: profile.website,
         phone: profile.phone,
         city: profile.city,
@@ -757,6 +763,7 @@ export async function GET(request: NextRequest) {
         finishes: [],
         industries: [],
         materials: [],
+        trustedBy: [],
         website: profile.website,
         phone: null,
         city: profile.city,
