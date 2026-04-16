@@ -59,6 +59,9 @@ export default function AdminPage() {
   const [message, setMessage] = useState<string>('');
   const [newCapabilityName, setNewCapabilityName] = useState('');
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
+  const [viewingTarget, setViewingTarget] = useState<string | null>(null);
+  const [isEditingViewJson, setIsEditingViewJson] = useState(false);
+  const [viewJsonDraft, setViewJsonDraft] = useState('');
 
   const sanitizeRecordForView = (target: string, row: any) => {
     if (!row || typeof row !== 'object') return row;
@@ -79,6 +82,68 @@ export default function AdminPage() {
     delete (sanitized as any).aiEnrichedAt;
     delete (sanitized as any).aiError;
     return sanitized;
+  };
+
+  const openRecordViewer = (target: string, row: any) => {
+    const sanitized = sanitizeRecordForView(target, row);
+    setViewingTarget(target);
+    setViewingRecord(sanitized);
+    setViewJsonDraft(JSON.stringify(sanitized, null, 2));
+    setIsEditingViewJson(false);
+  };
+
+  const closeRecordViewer = () => {
+    setViewingRecord(null);
+    setViewingTarget(null);
+    setIsEditingViewJson(false);
+    setViewJsonDraft('');
+  };
+
+  const saveEditedJson = async () => {
+    if (!viewingRecord?.id || !viewingTarget) {
+      setMessage('Cannot save: missing target record context.');
+      return;
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(viewJsonDraft);
+    } catch {
+      setMessage('Invalid JSON format. Please fix and try again.');
+      return;
+    }
+
+    const { id: _ignoreId, createdAt: _ignoreCreatedAt, updatedAt: _ignoreUpdatedAt, ...updateData } = parsed || {};
+
+    setIsBusy(true);
+    setMessage('');
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/admin', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          target: viewingTarget,
+          id: viewingRecord.id,
+          action: 'edit',
+          data: updateData,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || 'Failed to save JSON changes');
+      await loadAdminData();
+      setMessage('Changes saved.');
+      setViewingRecord({ ...viewingRecord, ...updateData });
+      setViewJsonDraft(JSON.stringify({ ...viewingRecord, ...updateData }, null, 2));
+      setIsEditingViewJson(false);
+    } catch (e: any) {
+      setMessage(e?.message || 'Failed to save JSON changes.');
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   const isAdminUser = !!user && (user.role === 'admin' || isAdminEmail(user.email));
@@ -316,7 +381,7 @@ export default function AdminPage() {
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <button
-                              onClick={() => setViewingRecord(sanitizeRecordForView(target, row))}
+                              onClick={() => openRecordViewer(target, row)}
                               disabled={isBusy}
                               className="px-2 py-1 rounded border border-white/20 text-xs text-white hover:border-marcan-red disabled:opacity-50"
                             >
@@ -365,15 +430,50 @@ export default function AdminPage() {
               <h3 className="text-white text-sm font-bold uppercase tracking-wider">Record Details</h3>
               <button
                 type="button"
-                onClick={() => setViewingRecord(null)}
+                onClick={closeRecordViewer}
                 className="text-slate-400 hover:text-white text-xs"
               >
                 Close
               </button>
             </div>
-            <pre className="max-h-[60vh] overflow-auto rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-slate-200">
-              {JSON.stringify(viewingRecord, null, 2)}
-            </pre>
+            <div className="mb-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isEditingViewJson) {
+                    setIsEditingViewJson(false);
+                    setViewJsonDraft(JSON.stringify(viewingRecord, null, 2));
+                    return;
+                  }
+                  setIsEditingViewJson(true);
+                }}
+                disabled={isBusy}
+                className="px-3 py-1.5 rounded border border-white/20 text-xs text-white hover:border-marcan-red disabled:opacity-50"
+              >
+                {isEditingViewJson ? 'Cancel' : 'Edit'}
+              </button>
+              {isEditingViewJson && (
+                <button
+                  type="button"
+                  onClick={saveEditedJson}
+                  disabled={isBusy}
+                  className="px-3 py-1.5 rounded border border-marcan-red bg-marcan-red/20 text-xs text-white hover:bg-marcan-red/30 disabled:opacity-50"
+                >
+                  Save
+                </button>
+              )}
+            </div>
+            {isEditingViewJson ? (
+              <textarea
+                value={viewJsonDraft}
+                onChange={(e) => setViewJsonDraft(e.target.value)}
+                className="h-[60vh] w-full resize-none rounded-lg border border-white/10 bg-black/40 p-3 font-mono text-xs text-slate-200 outline-none focus:border-marcan-red"
+              />
+            ) : (
+              <pre className="max-h-[60vh] overflow-auto rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-slate-200">
+                {JSON.stringify(viewingRecord, null, 2)}
+              </pre>
+            )}
           </div>
         </div>
       )}
