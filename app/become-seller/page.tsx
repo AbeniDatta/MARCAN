@@ -91,6 +91,7 @@ export default function BecomeSupplierPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
+  const [trustedByWidgetVisible, setTrustedByWidgetVisible] = useState<boolean | null>(null);
   const INDUSTRY_HUB_NAMES = isFr
     ? [
       'Usinage de précision',
@@ -219,6 +220,36 @@ export default function BecomeSupplierPage() {
     };
     loadCapabilities();
   }, []);
+
+  useEffect(() => {
+    const loadTrustedByWidgetVisible = async () => {
+      try {
+        const res = await fetch('/api/platform-settings', { cache: 'no-store' });
+        const json = res.ok ? await res.json() : { trustedByWidgetVisible: true };
+        setTrustedByWidgetVisible(json?.trustedByWidgetVisible !== false);
+      } catch {
+        setTrustedByWidgetVisible(true);
+      }
+    };
+
+    void loadTrustedByWidgetVisible();
+  }, []);
+
+  useEffect(() => {
+    if (wizardStep !== 6) return;
+
+    const refreshTrustedByWidgetVisible = async () => {
+      try {
+        const res = await fetch('/api/platform-settings', { cache: 'no-store' });
+        const json = res.ok ? await res.json() : { trustedByWidgetVisible: true };
+        setTrustedByWidgetVisible(json?.trustedByWidgetVisible !== false);
+      } catch {
+        setTrustedByWidgetVisible(true);
+      }
+    };
+
+    void refreshTrustedByWidgetVisible();
+  }, [wizardStep]);
 
   // Load saved form data from localStorage
   useEffect(() => {
@@ -2075,21 +2106,23 @@ export default function BecomeSupplierPage() {
                           required
                         />
                       </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
-                          Trusted-By Companies (Comma-separated)
-                        </label>
-                        <textarea
-                          rows={3}
-                          placeholder="e.g., ACME Aerospace, Maple Auto Group, Northern Energy"
-                          value={formData.trustedBy}
-                          onChange={(e) => setFormData({ ...formData, trustedBy: e.target.value })}
-                          className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                          These will appear on your public company profile if you want to indicate your clients.
-                        </p>
-                      </div>
+                      {trustedByWidgetVisible === true && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">
+                            Trusted-By Companies (Comma-separated)
+                          </label>
+                          <textarea
+                            rows={3}
+                            placeholder="e.g., ACME Aerospace, Maple Auto Group, Northern Energy"
+                            value={formData.trustedBy}
+                            onChange={(e) => setFormData({ ...formData, trustedBy: e.target.value })}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-600"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            These will appear on your public company profile if you want to indicate your clients.
+                          </p>
+                        </div>
+                      )}
                       <div>
                         <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">{t('becomeSupplier.account.email')} *</label>
                         <input
