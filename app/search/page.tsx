@@ -7,6 +7,8 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import StorefrontListingModal, { type StorefrontListingModalData } from '@/components/StorefrontListingModal';
 import { useI18n } from '@/contexts/I18nContext';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
+import { selectCoreAndAdminIndustryNames } from '@/lib/capabilityFilters';
 
 type TabType = 'companies' | 'listings' | 'requests';
 
@@ -97,7 +99,6 @@ function SearchPageContent() {
     requests: [] as any[],
     counts: { companies: 0, listings: 0, requests: 0 },
   });
-  const [industryOptions, setIndustryOptions] = useState<string[]>([]);
 
   // Tab-specific filter bars to mirror dedicated pages
   const [listingsFilters, setListingsFilters] = useState({
@@ -113,27 +114,10 @@ function SearchPageContent() {
     industry: '',
     province: '',
   });
+  const [industryOptions, setIndustryOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS));
 
   useEffect(() => {
     setIsDomReady(true);
-  }, []);
-
-  useEffect(() => {
-    const loadIndustryOptions = async () => {
-      try {
-        const res = await fetch('/api/capabilities?type=INDUSTRY');
-        const data = res.ok ? await res.json() : [];
-        const options = Array.isArray(data)
-          ? data
-            .map((item: any) => String(item?.name || '').trim())
-            .filter((name: string) => name.length > 0)
-          : [];
-        setIndustryOptions(options);
-      } catch {
-        setIndustryOptions([]);
-      }
-    };
-    void loadIndustryOptions();
   }, []);
 
   useEffect(() => {
@@ -278,6 +262,19 @@ function SearchPageContent() {
       return true;
     });
   }, [results.companies, filters]);
+
+  useEffect(() => {
+    const loadIndustryOptions = async () => {
+      try {
+        const res = await fetch('/api/capabilities?type=INDUSTRY');
+        const rows = res.ok ? await res.json() : [];
+        setIndustryOptions(selectCoreAndAdminIndustryNames(Array.isArray(rows) ? rows : []));
+      } catch {
+        setIndustryOptions(Array.from(INDUSTRY_HUBS));
+      }
+    };
+    void loadIndustryOptions();
+  }, []);
 
   const filteredListings = useMemo(() => {
     const normalizedSearch = listingsFilters.search.trim().toLowerCase();
@@ -794,7 +791,7 @@ function SearchPageContent() {
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                       >
                         <option value="">All Capabilities</option>
-                        {industryOptions.map((hub) => (
+                        {INDUSTRY_HUBS.map((hub) => (
                           <option key={hub} value={hub}>
                             {hub}
                           </option>

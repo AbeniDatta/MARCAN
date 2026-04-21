@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
-import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
+import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS, normalizeIndustryHubName } from '@/lib/industryHubNormalize';
+import { selectCoreAndAdminIndustryNames } from '@/lib/capabilityFilters';
 
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
   'Precision Machining': {
@@ -82,13 +83,13 @@ function DirectoryPageContent() {
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [industryOptions, setIndustryOptions] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     search: '',
     industry: '',
     province: '',
     certification: '',
   });
+  const [industryOptions, setIndustryOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS));
 
   useEffect(() => {
     // Fetch companies from API
@@ -110,25 +111,6 @@ function DirectoryPageContent() {
   }, []);
 
   useEffect(() => {
-    const loadIndustryOptions = async () => {
-      try {
-        const response = await fetch('/api/capabilities?type=INDUSTRY');
-        const data = response.ok ? await response.json() : [];
-        const options = Array.isArray(data)
-          ? data
-            .map((item: any) => String(item?.name || '').trim())
-            .filter((name: string) => name.length > 0)
-          : [];
-        setIndustryOptions(options);
-      } catch {
-        setIndustryOptions([]);
-      }
-    };
-
-    void loadIndustryOptions();
-  }, []);
-
-  useEffect(() => {
     setFilters({
       search: (searchParams.get('search') || '').trim(),
       industry: (searchParams.get('industry') || '').trim(),
@@ -136,6 +118,19 @@ function DirectoryPageContent() {
       certification: (searchParams.get('certification') || '').trim(),
     });
   }, [searchParams]);
+
+  useEffect(() => {
+    const loadIndustryOptions = async () => {
+      try {
+        const res = await fetch('/api/capabilities?type=INDUSTRY');
+        const rows = res.ok ? await res.json() : [];
+        setIndustryOptions(selectCoreAndAdminIndustryNames(Array.isArray(rows) ? rows : []));
+      } catch {
+        setIndustryOptions(Array.from(INDUSTRY_HUBS));
+      }
+    };
+    void loadIndustryOptions();
+  }, []);
 
   useEffect(() => {
     if (hasRestoredScrollRef.current) return;

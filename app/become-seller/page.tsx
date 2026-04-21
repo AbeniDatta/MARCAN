@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
 import { validateWebsiteUrl } from '@/lib/websiteUrl';
+import { isCoreOrAdminIndustryCapability, selectCoreAndAdminIndustryNames } from '@/lib/capabilityFilters';
 
 type WizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type View = 'landing' | 'form';
@@ -26,6 +28,7 @@ interface Capability {
   type: string;
   slug: string;
   name: string;
+  aliases?: string[];
 }
 
 const CANADIAN_PROVINCES = [
@@ -91,6 +94,20 @@ export default function BecomeSupplierPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
   const [trustedByWidgetVisible, setTrustedByWidgetVisible] = useState<boolean | null>(null);
+  const [industryHubOptions, setIndustryHubOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS_EN));
+  const INDUSTRY_HUB_FR_LABELS: Record<string, string> = {
+    'Precision Machining': 'Usinage de precision',
+    'Foundries & Casting': 'Fonderies et moulage',
+    'Surface Finishing': 'Finition de surface',
+    'Tooling & Molds': 'Outillage et moules',
+    Automation: 'Automatisation',
+    'Additive Manufacturing': 'Fabrication additive',
+    'Manufacturing Support': 'Support manufacturier',
+  };
+  const INDUSTRY_HUB_OPTIONS = industryHubOptions.map((hub) => ({
+    value: hub,
+    label: isFr ? INDUSTRY_HUB_FR_LABELS[hub] || hub : hub,
+  }));
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];
@@ -114,10 +131,6 @@ export default function BecomeSupplierPage() {
   const page2MaterialCapabilities = PAGE2_MATERIAL_NAMES
     .map((name) => materialByName.get(name.toLowerCase()))
     .filter((cap): cap is Capability => Boolean(cap));
-  const industryHubNames = useMemo(
-    () => Array.from(new Set(capabilities.INDUSTRY.map((cap) => String(cap.name || '').trim()).filter(Boolean))),
-    [capabilities.INDUSTRY],
-  );
   const matchedProcessNames = new Set(page2ProcessCapabilities.map((cap) => cap.name.toLowerCase()));
   const matchedMaterialNames = new Set(page2MaterialCapabilities.map((cap) => cap.name.toLowerCase()));
   const page2MissingProcessNames = PAGE2_PRIMARY_PROCESS_NAMES.filter((name) => !matchedProcessNames.has(name.toLowerCase()));
@@ -189,14 +202,19 @@ export default function BecomeSupplierPage() {
           }
         });
         const results = await Promise.all(promises);
+        const rawIndustryCapabilities = Array.isArray(results[4]) ? results[4] : [];
+        const filteredIndustryCapabilities = rawIndustryCapabilities.filter((cap: Capability) =>
+          isCoreOrAdminIndustryCapability(cap),
+        );
         setCapabilities({
           PROCESS: Array.isArray(results[0]) ? results[0] : [],
           MATERIAL: Array.isArray(results[1]) ? results[1] : [],
           FINISH: Array.isArray(results[2]) ? results[2] : [],
           CERTIFICATION: Array.isArray(results[3]) ? results[3] : [],
-          INDUSTRY: Array.isArray(results[4]) ? results[4] : [],
+          INDUSTRY: filteredIndustryCapabilities,
           COMPANY_TYPE: Array.isArray(results[5]) ? results[5] : [],
         });
+        setIndustryHubOptions(selectCoreAndAdminIndustryNames(rawIndustryCapabilities));
       } catch (err) {
         console.error('Error loading capabilities:', err);
         // Ensure capabilities are always arrays even on error
@@ -208,6 +226,7 @@ export default function BecomeSupplierPage() {
           INDUSTRY: [],
           COMPANY_TYPE: [],
         });
+        setIndustryHubOptions(Array.from(INDUSTRY_HUBS_EN));
       }
     };
     loadCapabilities();
@@ -1140,23 +1159,23 @@ export default function BecomeSupplierPage() {
                           {t('becomeSupplier.companyBasics.industriesServed')} *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {industryHubNames.map((hub) => (
+                          {INDUSTRY_HUB_OPTIONS.map((hub) => (
                             <label
-                              key={hub}
+                              key={hub.value}
                               className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
                             >
                               <input
                                 type="checkbox"
-                                checked={formData.industriesServed.includes(hub)}
+                                checked={formData.industriesServed.includes(hub.value)}
                                 onChange={() =>
                                   setFormData({
                                     ...formData,
-                                    industriesServed: toggleArrayItem(formData.industriesServed, hub),
+                                    industriesServed: toggleArrayItem(formData.industriesServed, hub.value),
                                   })
                                 }
                                 className="rounded bg-transparent border-white/20 text-marcan-red focus:ring-0"
                               />
-                              <span className="text-[10px] font-bold text-white uppercase">{hub}</span>
+                              <span className="text-[10px] font-bold text-white uppercase">{hub.label}</span>
                             </label>
                           ))}
                         </div>
