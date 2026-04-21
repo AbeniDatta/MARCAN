@@ -7,7 +7,6 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import StorefrontListingModal, { type StorefrontListingModalData } from '@/components/StorefrontListingModal';
 import { useI18n } from '@/contexts/I18nContext';
-import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS } from '@/lib/industryHubNormalize';
 
 type TabType = 'companies' | 'listings' | 'requests';
 
@@ -86,7 +85,6 @@ function SearchPageContent() {
   const [activeTab, setActiveTab] = useState<TabType>('companies');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
-  const [industryOptions, setIndustryOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS));
   const [filters, setFilters] = useState({
     search: '',
     industry: '',
@@ -99,6 +97,7 @@ function SearchPageContent() {
     requests: [] as any[],
     counts: { companies: 0, listings: 0, requests: 0 },
   });
+  const [industryOptions, setIndustryOptions] = useState<string[]>([]);
 
   // Tab-specific filter bars to mirror dedicated pages
   const [listingsFilters, setListingsFilters] = useState({
@@ -120,22 +119,21 @@ function SearchPageContent() {
   }, []);
 
   useEffect(() => {
-    const fetchIndustryOptions = async () => {
+    const loadIndustryOptions = async () => {
       try {
-        const response = await fetch('/api/capabilities?type=INDUSTRY');
-        if (!response.ok) throw new Error('Failed to fetch industry options');
-        const data = await response.json();
-        const dynamicOptions = Array.isArray(data)
+        const res = await fetch('/api/capabilities?type=INDUSTRY');
+        const data = res.ok ? await res.json() : [];
+        const options = Array.isArray(data)
           ? data
-            .map((cap: any) => String(cap?.name || '').trim())
-            .filter(Boolean)
+            .map((item: any) => String(item?.name || '').trim())
+            .filter((name: string) => name.length > 0)
           : [];
-        setIndustryOptions(dynamicOptions.length > 0 ? dynamicOptions : Array.from(INDUSTRY_HUBS));
+        setIndustryOptions(options);
       } catch {
-        setIndustryOptions(Array.from(INDUSTRY_HUBS));
+        setIndustryOptions([]);
       }
     };
-    void fetchIndustryOptions();
+    void loadIndustryOptions();
   }, []);
 
   useEffect(() => {
@@ -796,7 +794,7 @@ function SearchPageContent() {
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                       >
                         <option value="">All Capabilities</option>
-                        {INDUSTRY_HUBS.map((hub) => (
+                        {industryOptions.map((hub) => (
                           <option key={hub} value={hub}>
                             {hub}
                           </option>

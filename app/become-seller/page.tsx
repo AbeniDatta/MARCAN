@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/contexts/I18nContext';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
 import { validateWebsiteUrl } from '@/lib/websiteUrl';
 
 type WizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -115,16 +114,14 @@ export default function BecomeSupplierPage() {
   const page2MaterialCapabilities = PAGE2_MATERIAL_NAMES
     .map((name) => materialByName.get(name.toLowerCase()))
     .filter((cap): cap is Capability => Boolean(cap));
+  const industryHubNames = useMemo(
+    () => Array.from(new Set(capabilities.INDUSTRY.map((cap) => String(cap.name || '').trim()).filter(Boolean))),
+    [capabilities.INDUSTRY],
+  );
   const matchedProcessNames = new Set(page2ProcessCapabilities.map((cap) => cap.name.toLowerCase()));
   const matchedMaterialNames = new Set(page2MaterialCapabilities.map((cap) => cap.name.toLowerCase()));
   const page2MissingProcessNames = PAGE2_PRIMARY_PROCESS_NAMES.filter((name) => !matchedProcessNames.has(name.toLowerCase()));
   const page2MissingMaterialNames = PAGE2_MATERIAL_NAMES.filter((name) => !matchedMaterialNames.has(name.toLowerCase()));
-  const industryHubNames = useMemo(() => {
-    const namesFromCapabilities = capabilities.INDUSTRY
-      .map((cap) => String(cap?.name || '').trim())
-      .filter(Boolean);
-    return namesFromCapabilities.length > 0 ? namesFromCapabilities : Array.from(INDUSTRY_HUBS_EN);
-  }, [capabilities.INDUSTRY]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -1143,7 +1140,7 @@ export default function BecomeSupplierPage() {
                           {t('becomeSupplier.companyBasics.industriesServed')} *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {industryHubNames.map((hub: string) => (
+                          {industryHubNames.map((hub) => (
                             <label
                               key={hub}
                               className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"

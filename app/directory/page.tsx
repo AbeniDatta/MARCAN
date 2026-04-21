@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
-import { INDUSTRY_HUBS_EN as INDUSTRY_HUBS, normalizeIndustryHubName } from '@/lib/industryHubNormalize';
+import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
 
 const INDUSTRY_LOGOS: Record<string, { icon: string; bgClass: string; iconClass: string }> = {
   'Precision Machining': {
@@ -82,7 +82,7 @@ function DirectoryPageContent() {
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [industryOptions, setIndustryOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS));
+  const [industryOptions, setIndustryOptions] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     search: '',
     industry: '',
@@ -110,22 +110,22 @@ function DirectoryPageContent() {
   }, []);
 
   useEffect(() => {
-    const fetchIndustryOptions = async () => {
+    const loadIndustryOptions = async () => {
       try {
         const response = await fetch('/api/capabilities?type=INDUSTRY');
-        if (!response.ok) throw new Error('Failed to fetch industry options');
-        const data = await response.json();
-        const dynamicOptions = Array.isArray(data)
+        const data = response.ok ? await response.json() : [];
+        const options = Array.isArray(data)
           ? data
-            .map((cap: any) => String(cap?.name || '').trim())
-            .filter(Boolean)
+            .map((item: any) => String(item?.name || '').trim())
+            .filter((name: string) => name.length > 0)
           : [];
-        setIndustryOptions(dynamicOptions.length > 0 ? dynamicOptions : Array.from(INDUSTRY_HUBS));
+        setIndustryOptions(options);
       } catch {
-        setIndustryOptions(Array.from(INDUSTRY_HUBS));
+        setIndustryOptions([]);
       }
     };
-    void fetchIndustryOptions();
+
+    void loadIndustryOptions();
   }, []);
 
   useEffect(() => {
