@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { readCapabilityMetaFromAliases } from '@/lib/capabilityMeta';
 
 export const dynamic = 'force-dynamic';
 const HIDDEN_CAPABILITY_MARKER = '__hidden__';
@@ -35,8 +36,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const normalized = Array.isArray(capabilities)
+      ? capabilities.map((capability) => {
+        const meta = readCapabilityMetaFromAliases(capability.aliases);
+        return {
+          ...capability,
+          shortDescription: meta.description,
+          logoIcon: meta.icon,
+          logoColor: meta.color,
+        };
+      })
+      : [];
+
     // Always return an array
-    return NextResponse.json(Array.isArray(capabilities) ? capabilities : [], {
+    return NextResponse.json(normalized, {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error: any) {

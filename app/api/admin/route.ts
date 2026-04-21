@@ -4,12 +4,20 @@ import { isAdminEmail } from '@/lib/admin';
 import { verifyFirebaseIdTokenViaLookup } from '@/lib/firebaseServerAuth';
 import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
 import { getTrustedByWidgetVisible, setTrustedByWidgetVisible } from '@/lib/platformSettings';
+import {
+  chooseCapabilityColorKey,
+  chooseRandomCapabilityIcon,
+  readCapabilityMetaFromAliases,
+  sanitizeCapabilityDescription,
+  withCapabilityMetaAliases,
+} from '@/lib/capabilityMeta';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const HIDDEN_CAPABILITY_MARKER = '__hidden__';
 const ADMIN_CAPABILITY_MARKER = '__admin_capability__';
+const CAPABILITY_DESCRIPTION_MAX_LENGTH = 140;
 
 async function requireAdminFromToken(request: NextRequest): Promise<string> {
   const authHeader = request.headers.get('authorization') || '';
@@ -50,10 +58,16 @@ export async function GET(request: NextRequest) {
       storefronts,
       requests,
       listings,
-      capabilities: capabilities.map((c) => ({
-        ...c,
-        hidden: Array.isArray(c.aliases) && c.aliases.includes(HIDDEN_CAPABILITY_MARKER),
-      })),
+      capabilities: capabilities.map((c) => {
+        const meta = readCapabilityMetaFromAliases(c.aliases);
+        return {
+          ...c,
+          hidden: Array.isArray(c.aliases) && c.aliases.includes(HIDDEN_CAPABILITY_MARKER),
+          shortDescription: meta.description,
+          logoIcon: meta.icon,
+          logoColor: meta.color,
+        };
+      }),
       settings: {
         trustedByWidgetVisible,
       },
@@ -196,21 +210,52 @@ export async function POST(request: NextRequest) {
     }
 
     const name = String(data?.name || '').trim();
+    const shortDescription = sanitizeCapabilityDescription(data?.shortDescription || '', CAPABILITY_DESCRIPTION_MAX_LENGTH);
     if (!name) {
       return NextResponse.json({ error: 'Capability name is required' }, { status: 400 });
     }
+    if (!shortDescription) {
+      return NextResponse.json({ error: 'Capability short description is required' }, { status: 400 });
+    }
 
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const randomIcon = chooseRandomCapabilityIcon();
+    const existingAdminCapabilities = await prisma.capability.findMany({
+      where: {
+        type: 'INDUSTRY',
+        aliases: { has: ADMIN_CAPABILITY_MARKER },
+      },
+      select: {
+        aliases: true,
+      },
+    });
+    const usedColorKeys = existingAdminCapabilities
+      .map((row) => readCapabilityMetaFromAliases(row.aliases).color)
+      .filter((value): value is string => Boolean(value));
+    const colorKey = chooseCapabilityColorKey(usedColorKeys);
+    const aliasesWithMeta = withCapabilityMetaAliases([ADMIN_CAPABILITY_MARKER], {
+      description: shortDescription,
+      icon: randomIcon,
+      color: colorKey,
+    });
     const created = await prisma.capability.create({
       data: {
         type: 'INDUSTRY',
         name,
         slug,
-        aliases: [ADMIN_CAPABILITY_MARKER],
+        aliases: aliasesWithMeta,
       },
     });
-
-    return NextResponse.json(created, { status: 201 });
+    const meta = readCapabilityMetaFromAliases(created.aliases);
+    return NextResponse.json(
+      {
+        ...created,
+        shortDescription: meta.description,
+        logoIcon: meta.icon,
+        logoColor: meta.color,
+      },
+      { status: 201 },
+    );
   } catch (error: any) {
     const code = error?.message;
     if (code === 'UNAUTHORIZED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

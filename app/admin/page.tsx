@@ -27,6 +27,7 @@ type AdminData = {
     trustedByWidgetVisible?: boolean;
   };
 };
+const CAPABILITY_BLURB_MAX_LENGTH = 140;
 
 const TAB_LABELS: Record<AdminTab, string> = {
   suppliers: 'Supplier Accounts',
@@ -58,6 +59,7 @@ export default function AdminPage() {
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState<string>('');
   const [newCapabilityName, setNewCapabilityName] = useState('');
+  const [newCapabilityBlurb, setNewCapabilityBlurb] = useState('');
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
   const [viewingTarget, setViewingTarget] = useState<string | null>(null);
   const [isEditingViewJson, setIsEditingViewJson] = useState(false);
@@ -218,15 +220,25 @@ export default function AdminPage() {
 
   const onCreateCapability = async () => {
     const name = newCapabilityName.trim();
+    const shortDescription = newCapabilityBlurb.trim();
     if (!name) {
       setMessage('Capability name is required.');
       return;
     }
+    if (!shortDescription) {
+      setMessage('Capability short description is required.');
+      return;
+    }
+    if (shortDescription.length > CAPABILITY_BLURB_MAX_LENGTH) {
+      setMessage(`Short description must be ${CAPABILITY_BLURB_MAX_LENGTH} characters or less.`);
+      return;
+    }
     await runAction('POST', {
       target: 'capability',
-      data: { name },
+      data: { name, shortDescription },
     });
     setNewCapabilityName('');
+    setNewCapabilityBlurb('');
   };
 
   if (!isMounted || isLoading || !isAuthenticated || !isAdminUser) {
@@ -256,8 +268,8 @@ export default function AdminPage() {
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border-l-4 transition-all ${activeTab === tab
-                      ? 'bg-marcan-red/10 text-white border-marcan-red'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
+                    ? 'bg-marcan-red/10 text-white border-marcan-red'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
                     }`}
                 >
                   {TAB_LABELS[tab]}
@@ -278,20 +290,32 @@ export default function AdminPage() {
                 </div>
 
                 {activeTab === 'capabilities' && (
-                  <div className="mb-4 grid grid-cols-1 sm:grid-cols-4 gap-2">
+                  <div className="mb-4 space-y-2">
                     <input
                       value={newCapabilityName}
                       onChange={(e) => setNewCapabilityName(e.target.value)}
                       placeholder="New capability name"
-                      className="sm:col-span-3 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
                     />
-                    <button
-                      onClick={onCreateCapability}
-                      disabled={isBusy}
-                      className="bg-marcan-red border border-marcan-red text-white rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
-                    >
-                      Create
-                    </button>
+                    <textarea
+                      value={newCapabilityBlurb}
+                      onChange={(e) => setNewCapabilityBlurb(e.target.value.slice(0, CAPABILITY_BLURB_MAX_LENGTH))}
+                      rows={2}
+                      placeholder="Short blurb explaining the capability (max 140 chars)"
+                      className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none placeholder:text-slate-500"
+                    />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-slate-500">
+                        {newCapabilityBlurb.length}/{CAPABILITY_BLURB_MAX_LENGTH}
+                      </span>
+                      <button
+                        onClick={onCreateCapability}
+                        disabled={isBusy}
+                        className="bg-marcan-red border border-marcan-red text-white rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                      >
+                        Create
+                      </button>
+                    </div>
                   </div>
                 )}
                 {activeTab === 'company-profile-page' && (
@@ -314,11 +338,10 @@ export default function AdminPage() {
                           })
                         }
                         disabled={isBusy}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all disabled:opacity-50 ${
-                          data.settings?.trustedByWidgetVisible
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all disabled:opacity-50 ${data.settings?.trustedByWidgetVisible
                             ? 'bg-green-600/20 border-green-500/40 text-green-300'
                             : 'bg-red-600/20 border-red-500/40 text-red-300'
-                        }`}
+                          }`}
                       >
                         {data.settings?.trustedByWidgetVisible ? 'Visible' : 'Hidden'}
                       </button>

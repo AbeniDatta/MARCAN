@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import { useI18n } from '@/contexts/I18nContext';
 import { useAuth } from '@/hooks/useAuth';
+import { getCapabilityColorClasses } from '@/lib/capabilityMeta';
 
 export default function HomePage() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function HomePage() {
   const { t, translateText } = useI18n();
   const CAPABILITY_WINDOW = 5;
   const [capabilityStartIndex, setCapabilityStartIndex] = useState(0);
+  const [customCapabilities, setCustomCapabilities] = useState<any[]>([]);
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -42,6 +44,36 @@ export default function HomePage() {
     };
 
     loadCompanies();
+  }, []);
+
+  useEffect(() => {
+    const loadCustomCapabilities = async () => {
+      try {
+        const response = await fetch('/api/capabilities?type=INDUSTRY');
+        if (!response.ok) throw new Error('Failed to fetch capabilities');
+        const data = await response.json();
+        const dynamicCapabilities = Array.isArray(data)
+          ? data
+            .filter((item: any) => Array.isArray(item?.aliases) && item.aliases.includes('__admin_capability__'))
+            .map((item: any) => {
+              const colors = getCapabilityColorClasses(item?.logoColor);
+              return {
+                hub: String(item?.name || '').trim(),
+                title: String(item?.name || '').trim(),
+                description: String(item?.shortDescription || '').trim() || 'Explore this manufacturing capability.',
+                icon: String(item?.logoIcon || '').trim() || 'fa-industry',
+                iconWrapClass: `${colors.bgClass} ${colors.iconClass}`,
+                ctaClass: colors.ctaClass,
+              };
+            })
+            .filter((item: any) => item.hub.length > 0)
+          : [];
+        setCustomCapabilities(dynamicCapabilities);
+      } catch {
+        setCustomCapabilities([]);
+      }
+    };
+    void loadCustomCapabilities();
   }, []);
 
   useEffect(() => {
@@ -104,7 +136,7 @@ export default function HomePage() {
     router.push(`/become-supplier?start=import&url=${encodeURIComponent(trimmedUrl)}`);
   };
 
-  const capabilityCards = useMemo(() => ([
+  const baseCapabilityCards = useMemo(() => ([
     {
       hub: 'Precision Machining',
       title: t('home.industries.precisionMachining'),
@@ -162,6 +194,11 @@ export default function HomePage() {
       ctaClass: 'text-amber-400',
     },
   ]), [t]);
+
+  const capabilityCards = useMemo(
+    () => [...baseCapabilityCards, ...customCapabilities],
+    [baseCapabilityCards, customCapabilities],
+  );
 
   const maxCapabilityStart = Math.max(0, capabilityCards.length - CAPABILITY_WINDOW);
   const positionCount = maxCapabilityStart + 1;

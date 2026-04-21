@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import SourcingRequestModal from '@/components/SourcingRequestModal';
 import { normalizeIndustryHubName } from '@/lib/industryHubNormalize';
+import { getCapabilityColorClasses } from '@/lib/capabilityMeta';
 
 function mergeUniqueStrings(...lists: (string[] | undefined)[]): string[] {
     const s = new Set<string>();
@@ -231,6 +232,7 @@ function ProfilePageContent() {
     const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
     const [isDomReady, setIsDomReady] = useState(false);
     const [trustedByWidgetVisible, setTrustedByWidgetVisible] = useState(true);
+    const [dynamicIndustryLogos, setDynamicIndustryLogos] = useState<Record<string, { icon: string; bgClass: string; iconClass: string }>>({});
 
     useEffect(() => {
         setIsDomReady(true);
@@ -244,6 +246,30 @@ function ProfilePageContent() {
             })
             .catch(() => {
                 setTrustedByWidgetVisible(true);
+            });
+    }, []);
+
+    useEffect(() => {
+        fetch('/api/capabilities?type=INDUSTRY')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((rows) => {
+                if (!Array.isArray(rows)) return;
+                const next: Record<string, { icon: string; bgClass: string; iconClass: string }> = {};
+                rows.forEach((row: any) => {
+                    const name = String(row?.name || '').trim();
+                    const icon = String(row?.logoIcon || '').trim();
+                    if (!name || !icon) return;
+                    const colors = getCapabilityColorClasses(row?.logoColor);
+                    next[name] = {
+                        icon,
+                        bgClass: colors.bgClass,
+                        iconClass: colors.iconClass,
+                    };
+                });
+                setDynamicIndustryLogos(next);
+            })
+            .catch(() => {
+                setDynamicIndustryLogos({});
             });
     }, []);
 
@@ -426,18 +452,19 @@ function ProfilePageContent() {
     const normalizedWebsiteUrl = displayWebsite
         ? (/^https?:\/\//i.test(displayWebsite) ? displayWebsite : `https://${displayWebsite}`)
         : '';
+    const industryLogos = { ...INDUSTRY_LOGOS, ...dynamicIndustryLogos };
     const getIndustryLogo = (industries: string[], seed: string) => {
         const normalized = Array.isArray(industries) ? industries.map((i) => normalizeIndustryHubName(i)).filter(Boolean) as string[] : [];
-        const valid = normalized.filter((i) => INDUSTRY_LOGOS[i]);
+        const valid = normalized.filter((i) => industryLogos[i]);
         if (valid.length === 0) return null;
-        if (valid.length === 1) return INDUSTRY_LOGOS[valid[0]];
+        if (valid.length === 1) return industryLogos[valid[0]];
         const seedString = `${seed}:${valid.join('|')}`;
         let hash = 0;
         for (let i = 0; i < seedString.length; i += 1) {
             hash = (hash * 31 + seedString.charCodeAt(i)) >>> 0;
         }
         const idx = hash % valid.length;
-        return INDUSTRY_LOGOS[valid[idx]];
+        return industryLogos[valid[idx]];
     };
     const headerIndustryLogo = isStorefrontProfile ? null : getIndustryLogo(displayMarcanCapabilities, company.id || displayName || '');
 
@@ -821,7 +848,7 @@ function ProfilePageContent() {
                                 <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Industries served</h3>
                                 <div className="flex flex-wrap gap-3">
                                     {displayIndustriesTaxonomy.map((industry: string) => {
-                                        const map = INDUSTRY_LOGOS[industry];
+                                        const map = industryLogos[industry];
                                         return (
                                             <div
                                                 key={industry}
