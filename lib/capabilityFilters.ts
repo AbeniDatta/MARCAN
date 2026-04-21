@@ -8,8 +8,8 @@ type CapabilityLike = {
 };
 
 export function selectCoreAndAdminIndustryNames(rows: CapabilityLike[]): string[] {
-  const base = Array.from(INDUSTRY_HUBS_EN);
-  const baseSet = new Set(base);
+  const base = Array.from(INDUSTRY_HUBS_EN) as string[];
+  const baseSet = new Set<string>(base);
   const adminNames = (Array.isArray(rows) ? rows : [])
     .filter((row) => {
       const aliases = Array.isArray(row?.aliases) ? row.aliases : [];
