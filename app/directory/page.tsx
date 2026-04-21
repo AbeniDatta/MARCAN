@@ -82,6 +82,7 @@ function DirectoryPageContent() {
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [aiSearchResults, setAiSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [industryOptions, setIndustryOptions] = useState<string[]>(Array.from(INDUSTRY_HUBS));
   const [filters, setFilters] = useState({
     search: '',
     industry: '',
@@ -106,6 +107,25 @@ function DirectoryPageContent() {
     };
 
     fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    const fetchIndustryOptions = async () => {
+      try {
+        const response = await fetch('/api/capabilities?type=INDUSTRY');
+        if (!response.ok) throw new Error('Failed to fetch industry options');
+        const data = await response.json();
+        const dynamicOptions = Array.isArray(data)
+          ? data
+            .map((cap: any) => String(cap?.name || '').trim())
+            .filter(Boolean)
+          : [];
+        setIndustryOptions(dynamicOptions.length > 0 ? dynamicOptions : Array.from(INDUSTRY_HUBS));
+      } catch {
+        setIndustryOptions(Array.from(INDUSTRY_HUBS));
+      }
+    };
+    void fetchIndustryOptions();
   }, []);
 
   useEffect(() => {
@@ -330,7 +350,7 @@ function DirectoryPageContent() {
                   className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm font-semibold text-white focus:border-marcan-red focus:shadow-neon outline-none transition-all cursor-pointer"
                 >
                   <option value="">{t('directory.allIndustries')}</option>
-                  {INDUSTRY_HUBS.map((hub) => (
+                  {industryOptions.map((hub) => (
                     <option key={hub} value={hub}>
                       {hub}
                     </option>

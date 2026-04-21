@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { useAuth } from '@/hooks/useAuth';
@@ -92,17 +92,6 @@ export default function BecomeSupplierPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isGeneralSupplier, setIsGeneralSupplier] = useState(false);
   const [trustedByWidgetVisible, setTrustedByWidgetVisible] = useState<boolean | null>(null);
-  const INDUSTRY_HUB_NAMES = isFr
-    ? [
-      'Usinage de précision',
-      'Fonderies et moulage',
-      'Finition de surface',
-      'Outillage et moules',
-      'Automatisation',
-      'Fabrication additive',
-      'Support manufacturier',
-    ]
-    : Array.from(INDUSTRY_HUBS_EN);
   const [capabilities, setCapabilities] = useState<{
     PROCESS: Capability[];
     MATERIAL: Capability[];
@@ -130,6 +119,12 @@ export default function BecomeSupplierPage() {
   const matchedMaterialNames = new Set(page2MaterialCapabilities.map((cap) => cap.name.toLowerCase()));
   const page2MissingProcessNames = PAGE2_PRIMARY_PROCESS_NAMES.filter((name) => !matchedProcessNames.has(name.toLowerCase()));
   const page2MissingMaterialNames = PAGE2_MATERIAL_NAMES.filter((name) => !matchedMaterialNames.has(name.toLowerCase()));
+  const industryHubNames = useMemo(() => {
+    const namesFromCapabilities = capabilities.INDUSTRY
+      .map((cap) => String(cap?.name || '').trim())
+      .filter(Boolean);
+    return namesFromCapabilities.length > 0 ? namesFromCapabilities : Array.from(INDUSTRY_HUBS_EN);
+  }, [capabilities.INDUSTRY]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -1148,7 +1143,7 @@ export default function BecomeSupplierPage() {
                           {t('becomeSupplier.companyBasics.industriesServed')} *
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {INDUSTRY_HUB_NAMES.map((hub) => (
+                          {industryHubNames.map((hub: string) => (
                             <label
                               key={hub}
                               className="flex items-center gap-2 p-2 rounded bg-black/40 border border-white/10 cursor-pointer hover:border-marcan-red/50"
