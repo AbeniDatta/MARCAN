@@ -14,7 +14,8 @@ type AdminTab =
   | 'requests'
   | 'listings'
   | 'capabilities'
-  | 'company-profile-page';
+  | 'company-profile-page'
+  | 'manage-disclaimer';
 
 type AdminData = {
   suppliers: any[];
@@ -25,6 +26,9 @@ type AdminData = {
   capabilities: any[];
   settings?: {
     trustedByWidgetVisible?: boolean;
+    developmentDisclaimerVisible?: boolean;
+    developmentDisclaimerTitle?: string;
+    developmentDisclaimerText?: string;
   };
 };
 const CAPABILITY_BLURB_MAX_LENGTH = 140;
@@ -37,6 +41,7 @@ const TAB_LABELS: Record<AdminTab, string> = {
   listings: 'Storefront Listings',
   capabilities: 'Manage Capabilities',
   'company-profile-page': 'Manage Company Profile Page',
+  'manage-disclaimer': 'Manage Disclaimer',
 };
 
 export default function AdminPage() {
@@ -54,16 +59,21 @@ export default function AdminPage() {
     capabilities: [],
     settings: {
       trustedByWidgetVisible: true,
+      developmentDisclaimerVisible: true,
+      developmentDisclaimerTitle: '',
+      developmentDisclaimerText: '',
     },
   });
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState<string>('');
   const [newCapabilityName, setNewCapabilityName] = useState('');
   const [newCapabilityBlurb, setNewCapabilityBlurb] = useState('');
+  const [disclaimerDraftTitle, setDisclaimerDraftTitle] = useState('');
+  const [disclaimerDraftText, setDisclaimerDraftText] = useState('');
   const [viewingRecord, setViewingRecord] = useState<any | null>(null);
   const [viewingTarget, setViewingTarget] = useState<string | null>(null);
   const [isEditingViewJson, setIsEditingViewJson] = useState(false);
-  const [viewJsonDraft, setViewJsonDraft] = useState('');
+  const [viewFieldDrafts, setViewFieldDrafts] = useState<Record<string, string>>({});
 
   const sanitizeRecordForView = (target: string, row: any) => {
     if (!row || typeof row !== 'object') return row;
@@ -90,7 +100,13 @@ export default function AdminPage() {
     const sanitized = sanitizeRecordForView(target, row);
     setViewingTarget(target);
     setViewingRecord(sanitized);
-    setViewJsonDraft(JSON.stringify(sanitized, null, 2));
+    const drafts: Record<string, string> = {};
+    for (const [key, value] of Object.entries(sanitized || {})) {
+      if (value === null || value === undefined) drafts[key] = '';
+      else if (typeof value === 'object') drafts[key] = JSON.stringify(value, null, 2);
+      else drafts[key] = String(value);
+    }
+    setViewFieldDrafts(drafts);
     setIsEditingViewJson(false);
   };
 
@@ -98,7 +114,26 @@ export default function AdminPage() {
     setViewingRecord(null);
     setViewingTarget(null);
     setIsEditingViewJson(false);
-    setViewJsonDraft('');
+    setViewFieldDrafts({});
+  };
+
+  const parseEditedValue = (raw: string, original: any) => {
+    if (typeof original === 'boolean') {
+      const v = raw.trim().toLowerCase();
+      if (v === 'true') return true;
+      if (v === 'false') return false;
+      throw new Error('Boolean fields must be true or false');
+    }
+    if (typeof original === 'number') {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) throw new Error('Number field has invalid value');
+      return n;
+    }
+    if (Array.isArray(original) || (original && typeof original === 'object')) {
+      if (!raw.trim()) return null;
+      return JSON.parse(raw);
+    }
+    return raw;
   };
 
   const saveEditedJson = async () => {
@@ -107,44 +142,53 @@ export default function AdminPage() {
       return;
     }
 
-    let parsed: any;
     try {
-      parsed = JSON.parse(viewJsonDraft);
+      const parsed: Record<string, any> = {};
+      for (const [key, originalValue] of Object.entries(viewingRecord || {})) {
+        if (key === 'id' || key === 'createdAt' || key === 'updatedAt') continue;
+        parsed[key] = parseEditedValue(viewFieldDrafts[key] ?? '', originalValue);
+      }
+
+      const updateData = parsed;
+
+      setIsBusy(true);
+      setMessage('');
+      try {
+        const token = await getToken();
+        const res = await fetch('/api/admin', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            target: viewingTarget,
+            id: viewingRecord.id,
+            action: 'edit',
+            data: updateData,
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || 'Failed to save changes');
+        await loadAdminData();
+        setMessage('Changes saved.');
+        const nextRecord = { ...viewingRecord, ...updateData };
+        setViewingRecord(nextRecord);
+        const nextDrafts: Record<string, string> = {};
+        for (const [key, value] of Object.entries(nextRecord || {})) {
+          if (value === null || value === undefined) nextDrafts[key] = '';
+          else if (typeof value === 'object') nextDrafts[key] = JSON.stringify(value, null, 2);
+          else nextDrafts[key] = String(value);
+        }
+        setViewFieldDrafts(nextDrafts);
+        setIsEditingViewJson(false);
+      } catch (e: any) {
+        setMessage(e?.message || 'Failed to save changes.');
+      } finally {
+        setIsBusy(false);
+      }
     } catch {
-      setMessage('Invalid JSON format. Please fix and try again.');
-      return;
-    }
-
-    const { id: _ignoreId, createdAt: _ignoreCreatedAt, updatedAt: _ignoreUpdatedAt, ...updateData } = parsed || {};
-
-    setIsBusy(true);
-    setMessage('');
-    try {
-      const token = await getToken();
-      const res = await fetch('/api/admin', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          target: viewingTarget,
-          id: viewingRecord.id,
-          action: 'edit',
-          data: updateData,
-        }),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || 'Failed to save JSON changes');
-      await loadAdminData();
-      setMessage('Changes saved.');
-      setViewingRecord({ ...viewingRecord, ...updateData });
-      setViewJsonDraft(JSON.stringify({ ...viewingRecord, ...updateData }, null, 2));
-      setIsEditingViewJson(false);
-    } catch (e: any) {
-      setMessage(e?.message || 'Failed to save JSON changes.');
-    } finally {
-      setIsBusy(false);
+      setMessage('One or more fields has invalid value format.');
     }
   };
 
@@ -187,6 +231,14 @@ export default function AdminPage() {
     void loadAdminData();
   }, [isMounted, isLoading, isAuthenticated, isAdminUser, router]);
 
+  useEffect(() => {
+    setDisclaimerDraftTitle(data.settings?.developmentDisclaimerTitle || '');
+  }, [data.settings?.developmentDisclaimerTitle]);
+
+  useEffect(() => {
+    setDisclaimerDraftText(data.settings?.developmentDisclaimerText || '');
+  }, [data.settings?.developmentDisclaimerText]);
+
   const filteredRows = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
     const rows = Array.isArray((data as any)[activeTab]) ? (data as any)[activeTab] : [];
@@ -210,6 +262,14 @@ export default function AdminPage() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'Admin action failed');
       await loadAdminData();
+      if (
+        body?.target === 'settings' &&
+        (body?.action === 'set_development_disclaimer_visible' ||
+          body?.action === 'set_development_disclaimer_text' ||
+          body?.action === 'set_development_disclaimer_title')
+      ) {
+        window.dispatchEvent(new Event('marcan-platform-settings-changed'));
+      }
       setMessage('Action completed.');
     } catch (e: any) {
       setMessage(e?.message || 'Action failed.');
@@ -239,6 +299,34 @@ export default function AdminPage() {
     });
     setNewCapabilityName('');
     setNewCapabilityBlurb('');
+  };
+
+  const onSaveDisclaimerText = async () => {
+    const text = disclaimerDraftText.trim();
+    if (!text) {
+      setMessage('Disclaimer text cannot be empty.');
+      return;
+    }
+    await runAction('PATCH', {
+      target: 'settings',
+      id: 'development_disclaimer_text',
+      action: 'set_development_disclaimer_text',
+      data: { text },
+    });
+  };
+
+  const onSaveDisclaimerTitle = async () => {
+    const title = disclaimerDraftTitle.trim();
+    if (!title) {
+      setMessage('Disclaimer title cannot be empty.');
+      return;
+    }
+    await runAction('PATCH', {
+      target: 'settings',
+      id: 'development_disclaimer_title',
+      action: 'set_development_disclaimer_title',
+      data: { title },
+    });
   };
 
   if (!isMounted || isLoading || !isAuthenticated || !isAdminUser) {
@@ -284,7 +372,7 @@ export default function AdminPage() {
                   <input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search / filter"
+                    placeholder="Search"
                     className="w-full sm:w-72 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
                   />
                 </div>
@@ -334,17 +422,104 @@ export default function AdminPage() {
                             target: 'settings',
                             id: 'trusted_by_widget',
                             action: 'set_trusted_by_widget_visible',
-                            data: { visible: !(data.settings?.trustedByWidgetVisible ?? true) },
+                            data: { visible: data.settings?.trustedByWidgetVisible === false },
                           })
                         }
                         disabled={isBusy}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all disabled:opacity-50 ${data.settings?.trustedByWidgetVisible
-                            ? 'bg-green-600/20 border-green-500/40 text-green-300'
-                            : 'bg-red-600/20 border-red-500/40 text-red-300'
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all disabled:opacity-50 ${data.settings?.trustedByWidgetVisible === false
+                            ? 'border-green-500/40 text-green-300 hover:bg-green-500/10'
+                            : 'border-red-500/40 text-red-300 hover:bg-red-500/10'
                           }`}
                       >
-                        {data.settings?.trustedByWidgetVisible ? 'Visible' : 'Hidden'}
+                        {data.settings?.trustedByWidgetVisible === false ? 'Make Visible' : 'Hide'}
                       </button>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-400">
+                      Current status:{' '}
+                      <span className="font-semibold text-white">
+                        {data.settings?.trustedByWidgetVisible === false ? 'Hidden' : 'Visible'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {activeTab === 'manage-disclaimer' && (
+                  <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-4 space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h3 className="text-white text-sm font-semibold">Disclaimer Visibility</h3>
+                        <p className="text-xs text-slate-400 mt-1">
+                          Control disclaimer visibility.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            runAction('PATCH', {
+                              target: 'settings',
+                              id: 'development_disclaimer_visibility',
+                              action: 'set_development_disclaimer_visible',
+                              data: { visible: data.settings?.developmentDisclaimerVisible === false },
+                            })
+                          }
+                          disabled={isBusy}
+                          className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border disabled:opacity-50 ${data.settings?.developmentDisclaimerVisible === false
+                              ? 'border-green-500/40 text-green-300 hover:bg-green-500/10'
+                              : 'border-red-500/40 text-red-300 hover:bg-red-500/10'
+                            }`}
+                        >
+                          {data.settings?.developmentDisclaimerVisible === false ? 'Make Visible' : 'Hide'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      Current status:{' '}
+                      <span className="font-semibold text-white">
+                        {data.settings?.developmentDisclaimerVisible === false ? 'Hidden' : 'Visible'}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Disclaimer Title
+                      </label>
+                      <input
+                        value={disclaimerDraftTitle}
+                        onChange={(e) => setDisclaimerDraftTitle(e.target.value)}
+                        placeholder="Enter disclaimer title (e.g., Beta release)"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={onSaveDisclaimerTitle}
+                          disabled={isBusy}
+                          className="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-marcan-red bg-marcan-red/20 text-white hover:bg-marcan-red/30 disabled:opacity-50"
+                        >
+                          Save Title
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                        Disclaimer Text
+                      </label>
+                      <textarea
+                        value={disclaimerDraftText}
+                        onChange={(e) => setDisclaimerDraftText(e.target.value)}
+                        rows={3}
+                        placeholder="Enter disclaimer text"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-marcan-red outline-none"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={onSaveDisclaimerText}
+                          disabled={isBusy}
+                          className="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-marcan-red bg-marcan-red/20 text-white hover:bg-marcan-red/30 disabled:opacity-50"
+                        >
+                          Save Text
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -360,6 +535,11 @@ export default function AdminPage() {
                   {activeTab === 'company-profile-page' && (
                     <div className="text-slate-500 text-sm border border-dashed border-white/10 rounded-xl p-4">
                       Use the toggle above to control the Trusted By widget visibility.
+                    </div>
+                  )}
+                  {activeTab === 'manage-disclaimer' && (
+                    <div className="text-slate-500 text-sm border border-dashed border-white/10 rounded-xl p-4">
+                      Use Hide/Make Visible, Save Title, and Save Text above to manage the disclaimer.
                     </div>
                   )}
                   {filteredRows.map((row: any) => {
@@ -378,6 +558,7 @@ export default function AdminPage() {
                       listings: 'listing',
                       capabilities: 'capability',
                       'company-profile-page': 'settings',
+                      'manage-disclaimer': 'settings',
                     };
                     const target = targetMap[activeTab];
                     const isHidden =
@@ -394,13 +575,23 @@ export default function AdminPage() {
                       capability: 'View Capability',
                     };
                     const viewLabel = viewLabelByTarget[target] || 'View';
+                    const buyerFullName =
+                      target === 'request'
+                        ? [row.buyerFirstName, row.buyerLastName].filter(Boolean).join(' ').trim()
+                        : '';
+                    const secondaryText =
+                      target === 'request'
+                        ? buyerFullName || row.buyerEmail || row.id
+                        : target === 'listing'
+                          ? row.listingCompanyName || row.id
+                        : row.email || row.userId || row.id;
 
                     return (
                       <div key={row.id} className="border border-white/10 rounded-xl p-3 bg-black/20">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div>
                             <div className="text-white text-sm font-semibold">{String(name)}</div>
-                            <div className="text-slate-400 text-xs">{row.email || row.userId || row.id}</div>
+                            <div className="text-slate-400 text-xs">{secondaryText}</div>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -465,7 +656,13 @@ export default function AdminPage() {
                 onClick={() => {
                   if (isEditingViewJson) {
                     setIsEditingViewJson(false);
-                    setViewJsonDraft(JSON.stringify(viewingRecord, null, 2));
+                    const resetDrafts: Record<string, string> = {};
+                    for (const [key, value] of Object.entries(viewingRecord || {})) {
+                      if (value === null || value === undefined) resetDrafts[key] = '';
+                      else if (typeof value === 'object') resetDrafts[key] = JSON.stringify(value, null, 2);
+                      else resetDrafts[key] = String(value);
+                    }
+                    setViewFieldDrafts(resetDrafts);
                     return;
                   }
                   setIsEditingViewJson(true);
@@ -487,11 +684,35 @@ export default function AdminPage() {
               )}
             </div>
             {isEditingViewJson ? (
-              <textarea
-                value={viewJsonDraft}
-                onChange={(e) => setViewJsonDraft(e.target.value)}
-                className="h-[60vh] w-full resize-none rounded-lg border border-white/10 bg-black/40 p-3 font-mono text-xs text-slate-200 outline-none focus:border-marcan-red"
-              />
+              <div className="max-h-[60vh] overflow-auto rounded-lg border border-white/10 bg-black/40 p-3 space-y-3">
+                {Object.entries(viewingRecord || {}).map(([key, value]) => {
+                  const isLocked = key === 'id' || key === 'createdAt' || key === 'updatedAt';
+                  const isComplex = Array.isArray(value) || (value && typeof value === 'object');
+                  return (
+                    <div key={key}>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        {key}
+                      </label>
+                      {isComplex ? (
+                        <textarea
+                          value={viewFieldDrafts[key] ?? ''}
+                          onChange={(e) => setViewFieldDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
+                          disabled={isLocked}
+                          rows={4}
+                          className="w-full resize-y rounded border border-white/10 bg-black/50 px-2 py-2 font-mono text-xs text-slate-200 outline-none focus:border-marcan-red disabled:opacity-60"
+                        />
+                      ) : (
+                        <input
+                          value={viewFieldDrafts[key] ?? ''}
+                          onChange={(e) => setViewFieldDrafts((prev) => ({ ...prev, [key]: e.target.value }))}
+                          disabled={isLocked}
+                          className="w-full rounded border border-white/10 bg-black/50 px-2 py-2 font-mono text-xs text-slate-200 outline-none focus:border-marcan-red disabled:opacity-60"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <pre className="max-h-[60vh] overflow-auto rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-slate-200">
                 {JSON.stringify(viewingRecord, null, 2)}

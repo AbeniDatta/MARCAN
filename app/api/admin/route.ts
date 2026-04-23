@@ -3,7 +3,16 @@ import { prisma } from '@/lib/prisma';
 import { isAdminEmail } from '@/lib/admin';
 import { verifyFirebaseIdTokenViaLookup } from '@/lib/firebaseServerAuth';
 import { INDUSTRY_HUBS_EN } from '@/lib/industryHubNormalize';
-import { getTrustedByWidgetVisible, setTrustedByWidgetVisible } from '@/lib/platformSettings';
+import {
+  getDevelopmentDisclaimerTitle,
+  getDevelopmentDisclaimerText,
+  getDevelopmentDisclaimerVisible,
+  getTrustedByWidgetVisible,
+  setDevelopmentDisclaimerTitle,
+  setDevelopmentDisclaimerText,
+  setDevelopmentDisclaimerVisible,
+  setTrustedByWidgetVisible,
+} from '@/lib/platformSettings';
 import {
   chooseCapabilityColorKey,
   chooseRandomCapabilityIcon,
@@ -33,12 +42,49 @@ export async function GET(request: NextRequest) {
   try {
     await requireAdminFromToken(request);
 
-    const [suppliers, buyers, storefronts, requests, listings, capabilities, trustedByWidgetVisible] = await Promise.all([
+    const [
+      suppliers,
+      buyers,
+      storefronts,
+      requests,
+      listings,
+      capabilities,
+      trustedByWidgetVisible,
+      developmentDisclaimerVisible,
+      developmentDisclaimerText,
+      developmentDisclaimerTitle,
+    ] = await Promise.all([
       prisma.supplierProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
       prisma.buyerProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
       prisma.storefrontProfile.findMany({ orderBy: { updatedAt: 'desc' } }),
-      prisma.sourcingRequest.findMany({ orderBy: { updatedAt: 'desc' } }),
-      prisma.storefrontListing.findMany({ orderBy: { updatedAt: 'desc' } }),
+      prisma.sourcingRequest.findMany({
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          buyerProfile: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              userId: true,
+            },
+          },
+        },
+      }),
+      prisma.storefrontListing.findMany({
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          supplierProfile: {
+            select: {
+              companyName: true,
+            },
+          },
+          storefrontProfile: {
+            select: {
+              companyName: true,
+            },
+          },
+        },
+      }),
       prisma.capability.findMany({
         where: {
           type: 'INDUSTRY',
@@ -50,14 +96,26 @@ export async function GET(request: NextRequest) {
         orderBy: { name: 'asc' },
       }),
       getTrustedByWidgetVisible(),
+      getDevelopmentDisclaimerVisible(),
+      getDevelopmentDisclaimerText(),
+      getDevelopmentDisclaimerTitle(),
     ]);
 
     return NextResponse.json({
       suppliers,
       buyers,
       storefronts,
-      requests,
-      listings,
+      requests: requests.map((req) => ({
+        ...req,
+        buyerFirstName: req.buyerProfile?.firstName || null,
+        buyerLastName: req.buyerProfile?.lastName || null,
+        buyerEmail: req.buyerProfile?.email || req.buyerProfile?.userId || null,
+      })),
+      listings: listings.map((listing) => ({
+        ...listing,
+        listingCompanyName:
+          listing.storefrontProfile?.companyName || listing.supplierProfile?.companyName || null,
+      })),
       capabilities: capabilities.map((c) => {
         const meta = readCapabilityMetaFromAliases(c.aliases);
         return {
@@ -70,6 +128,9 @@ export async function GET(request: NextRequest) {
       }),
       settings: {
         trustedByWidgetVisible,
+        developmentDisclaimerVisible,
+        developmentDisclaimerText,
+        developmentDisclaimerTitle,
       },
     });
   } catch (error: any) {
@@ -93,6 +154,30 @@ export async function PATCH(request: NextRequest) {
       }
       await setTrustedByWidgetVisible(visible);
       return NextResponse.json({ success: true, trustedByWidgetVisible: visible });
+    }
+    if (target === 'settings' && action === 'set_development_disclaimer_visible') {
+      const visible = data?.visible;
+      if (typeof visible !== 'boolean') {
+        return NextResponse.json({ error: 'data.visible must be boolean' }, { status: 400 });
+      }
+      await setDevelopmentDisclaimerVisible(visible);
+      return NextResponse.json({ success: true, developmentDisclaimerVisible: visible });
+    }
+    if (target === 'settings' && action === 'set_development_disclaimer_text') {
+      const text = String(data?.text || '').trim();
+      if (!text) {
+        return NextResponse.json({ error: 'data.text is required' }, { status: 400 });
+      }
+      await setDevelopmentDisclaimerText(text);
+      return NextResponse.json({ success: true, developmentDisclaimerText: text });
+    }
+    if (target === 'settings' && action === 'set_development_disclaimer_title') {
+      const title = String(data?.title || '').trim();
+      if (!title) {
+        return NextResponse.json({ error: 'data.title is required' }, { status: 400 });
+      }
+      await setDevelopmentDisclaimerTitle(title);
+      return NextResponse.json({ success: true, developmentDisclaimerTitle: title });
     }
 
     if (!target || !id || !action) {

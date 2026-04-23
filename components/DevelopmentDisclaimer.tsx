@@ -1,13 +1,44 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { useI18n } from '@/contexts/I18nContext';
 
 export default function DevelopmentDisclaimer() {
   const { t } = useI18n();
   const [dismissed, setDismissed] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [customTitle, setCustomTitle] = useState('');
+  const [customText, setCustomText] = useState('');
 
-  if (dismissed) {
+  useEffect(() => {
+    const loadSettings = () => {
+      fetch('/api/platform-settings', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (!json) return;
+          setVisible(json.developmentDisclaimerVisible !== false);
+          setCustomTitle(String(json.developmentDisclaimerTitle || '').trim());
+          setCustomText(String(json.developmentDisclaimerText || '').trim());
+        })
+        .catch(() => {
+          setVisible(false);
+        });
+    };
+
+    const handleSettingsChanged = () => {
+      loadSettings();
+    };
+
+    loadSettings();
+    window.addEventListener('marcan-platform-settings-changed', handleSettingsChanged);
+
+    return () => {
+      window.removeEventListener('marcan-platform-settings-changed', handleSettingsChanged);
+    };
+  }, []);
+
+  if (dismissed || !visible) {
     return null;
   }
 
@@ -23,8 +54,8 @@ export default function DevelopmentDisclaimer() {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
         </span>
         <p className="text-[10px] md:text-xs font-bold text-orange-400 uppercase tracking-widest text-left sm:text-center min-w-0 leading-snug">
-          <span className="text-white">{t('layout.developerPreviewLabel')}</span>{' '}
-          {t('layout.developmentDisclaimerBody')}
+          <span className="text-white">{customTitle || t('layout.developerPreviewLabel')}</span>{' '}
+          {customText || t('layout.developmentDisclaimerBody')}
         </p>
       </div>
       <button
